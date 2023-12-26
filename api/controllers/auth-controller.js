@@ -1,31 +1,32 @@
 import { send } from "process";
 import User from "../models/user.js";
 import crypto from "crypto";
+import bcrypt from 'bcrypt';
 import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
 
-export const register = async (req, res) => {
+export const register = async (req, res,next) => {
     try {
-        console.log(req.body);
+       
         const { name, email, password, profileImage, userDescription, isTeacher } = req.body;
 
         if (!name || !email || !password) {
             return res.status(400).json({ message: "Please enter all fields" });
         }
+
+        const hash = await bcrypt.hashSync(req.body.password, 5)
+
+       
         const existingUser = await User.findOne({ email: email });
         if (existingUser) {
             return res.status(400).json({ message: "User already exists" });
 
         }
         const newUser = new User({
-            name,
-            email,
-            password,
-            profileImage,
-            userDescription,
-            isTeacher
+          ...req.body,
+            password:hash
         });
         //generate the verification token
         newUser.verificationToken = crypto.randomBytes(20).toString('hex');
@@ -39,11 +40,11 @@ export const register = async (req, res) => {
         res.status(202).json({ message: "User Registered", verification_message: "Email has been sent, please verify", savedUser });
     }
     catch (err) {
-        console.log(err);
-        res.status(400).json({ message: err.message });
+       next(err);
     }
 }
 
+// not a route controller, function to send verification email
 const sendVerificationEmail = async (email, verificationToken, name) => {
 
     const transporter = nodemailer.createTransport({
@@ -73,7 +74,7 @@ const sendVerificationEmail = async (email, verificationToken, name) => {
     }
 }
 
-export const verifyEmail = async (req, res) => {
+export const verifyEmail = async (req, res,next) => {
     try {
         const token = req.params.token;
         const userToken = await User.findOne({ verificationToken: token });
@@ -87,25 +88,45 @@ export const verifyEmail = async (req, res) => {
 
     }
     catch (err) {
-        res.status(400).json({ message: err.message });
+       next(err);
     }
 }
 
-export const login = async (req, res) => {
+export const login = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
-        const user =await User.findOne({ email, password });
-        console.log(user);
+        const { email,password } = req.body;
+        
+        const user =await User.findOne({ email});
+       
         if (!user) {
             return res.status(400).json({ message: "Invalid email or password" });
         }
         if (!user.verified) {
             return res.status(400).json({ message: "Please verify your email" });
         }
-        const token = jwt.sign({ userId: user._id }, process.env.SECRET_KEY);
+        let isCorrect = bcrypt.compareSync(password, user.password)
+        if (!isCorrect) {
+            return res.status(400).json({ message: "Invalid email or password" });
+        }
+        const token = jwt.sign({ userId: user._id, isTeacher:user.isTeacher }, process.env.SECRET_KEY);
         res.status(200).json({ message: "Login successful", token });
     }
     catch (err) {
-        res.status(400).json({ message: err.message, error: "Login Failed" });
+        console.log(err);
+       next(err);
+    }
+}
+
+export const singleUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.userId).select('-password');
+        if (!user) {
+            return res.status(400).json({ message: "User not found" });
+        }
+        
+        res.status(200).json({user});
+    }
+    catch (err) {
+        next(err);
     }
 }

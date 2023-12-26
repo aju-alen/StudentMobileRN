@@ -4,11 +4,12 @@ import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 import authRoute from './routes/auth-route.js';
 import dotenv from 'dotenv';
+import {errorHandler} from './middlewares/errorHandler.js';
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+
 import cors from 'cors';
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true })); 
@@ -28,6 +29,10 @@ const connect = async () => {
 
 app.use('/api/auth',authRoute)
 
+
+app.use(errorHandler)
+
+const port = process.env.PORT || 3000;
 app.listen(port, () => {
     connect();
     console.log(`Server is running on port ${port}`);
