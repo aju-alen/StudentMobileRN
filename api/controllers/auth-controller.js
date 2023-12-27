@@ -124,7 +124,7 @@ export const singleUser = async (req, res) => {
             return res.status(400).json({ message: "User not found" });
         }
         
-        res.status(200).json({user});
+        res.status(200).json(user);
     }
     catch (err) {
         next(err);

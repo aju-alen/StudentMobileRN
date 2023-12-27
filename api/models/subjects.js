@@ -19,7 +19,6 @@ const subjectSchema = new mongoose.Schema({
     },
     subjectBoard: {
         type: String,
-        enum: ['CBSE', 'ICSE'], // Add enum with options 'CBSE' and 'ICSE'
         required: true
     },
     subjectGrade: {
