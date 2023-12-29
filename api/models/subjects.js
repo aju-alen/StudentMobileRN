@@ -22,10 +22,10 @@ const subjectSchema = new mongoose.Schema({
         required: true
     },
     subjectGrade: {
-        type: String,
-        enum: ['1', '2', '3', '4', '5'], // Add enum with options '1', '2', '3', '4', '5'
+        type: Number,
+
         required: true,
-        default:'3',
+        default:10,
     },
     user: {
         type: mongoose.Schema.Types.ObjectId,
@@ -35,7 +35,11 @@ const subjectSchema = new mongoose.Schema({
     reviews: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Review'
-    }]
+    }],
+    createdAt: {
+        type: Date,
+        default: Date.now
+    },
 });
 
  const Subject = mongoose.model('Subject', subjectSchema);

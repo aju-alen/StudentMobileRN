@@ -3,6 +3,7 @@ import  express  from 'express';
 import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 import authRoute from './routes/auth-route.js';
+import subjectRoute from './routes/subject-routes.js';
 import dotenv from 'dotenv';
 import {errorHandler} from './middlewares/errorHandler.js';
 
@@ -28,6 +29,7 @@ const connect = async () => {
 }
 
 app.use('/api/auth',authRoute)
+app.use('/api/subject',subjectRoute)
 
 
 app.use(errorHandler)

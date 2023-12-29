@@ -1,4 +1,3 @@
-import { send } from "process";
 import User from "../models/user.js";
 import crypto from "crypto";
 import bcrypt from 'bcrypt';
@@ -119,7 +118,7 @@ export const login = async (req, res, next) => {
 
 export const singleUser = async (req, res) => {
     try {
-        const user = await User.findById(req.userId).select('-password');
+        const user = await User.findById(req.userId).select('-password').populate('subjects');
         if (!user) {
             return res.status(400).json({ message: "User not found" });
         }

@@ -30,18 +30,19 @@ const ProfilePage = () => {
 
   
   
+  
   return (
     <SafeAreaView style={styles.container}>
     
       <View style={styles.container} >
         <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button} onPress={() => {}}>
-          <Text style={styles.buttonText}>Edit Profile</Text>
+          <Text style={styles.buttonText}>Create a New Subject</Text>
         </TouchableOpacity>
         </View>
         <Image
           style={styles.profileImage}
-          source={{uri: `${user?.profileImage}`}}
+            source={user.profileImage ? { uri: user.profileImage } : require('../../../assets/images/profile-bg.png')}    
         />
         <Text style={styles.title}>{user.name}</Text>
         <View style={styles.rowContainer}>
