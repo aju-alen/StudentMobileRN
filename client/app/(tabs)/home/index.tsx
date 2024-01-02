@@ -8,49 +8,73 @@ import {
   FlatList,
   Image,
 } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import axios from "axios";
+import {ipURL} from "../../utils.js"
+
+//http://localhost:3000/api/subjects - GET
+
+const cardData = [
+  {
+    subjectName: "Maths",
+    subjectDescription:
+      "Maths is the study of topics such as quantity (numbers), structure, space, and change.",
+    subjectImage:
+      "https://cdn.iconscout.com/icon/premium/png-512-thumb/maths-book-5674609-4765400.png?f=webp&w=256",
+    subjectPrice: 100,
+    subjectBoard: "CBSE",
+  },
+  {
+    subjectName: "English",
+    subjectDescription:
+      "English is the study of topics such as quantity (numbers), structure, space, and change.",
+    subjectImage:
+      "https://image.similarpng.com/very-thumbnail/2020/07/English-course--book-and-dvd-on-transparent-PNG.png",
+    subjectPrice: 600,
+    subjectBoard: "ICSE",
+  },
+  {
+    subjectName: "Physics",
+    subjectDescription:
+      "Physics is the study of topics such as quantity (numbers), structure, space, and change.",
+    subjectImage:
+      "https://cdn.iconscout.com/icon/premium/png-512-thumb/physics-book-2054930-1730255.png?f=webp&w=256",
+    subjectPrice: 60,
+    subjectBoard: "CBSE",
+  },
+  {
+    subjectName: "Physics",
+    subjectDescription:
+      "Physics is the study of topics such as quantity (numbers), structure, space, and change.",
+    subjectImage:
+      "https://cdn.iconscout.com/icon/premium/png-512-thumb/physics-book-2054930-1730255.png?f=webp&w=256",
+    subjectPrice: 60,
+    subjectBoard: "CBSE",
+  },
+];
 
 const HomePage = () => {
-  const cardData = [
-    {
-      subjectName: "Maths",
-      subjectDescription:
-        "Maths is the study of topics such as quantity (numbers), structure, space, and change.",
-      subjectImage:
-        "https://cdn.iconscout.com/icon/premium/png-512-thumb/maths-book-5674609-4765400.png?f=webp&w=256",
-      subjectPrice: 100,
-      subjectBoard: "CBSE",
-    },
-    {
-      subjectName: "English",
-      subjectDescription:
-        "English is the study of topics such as quantity (numbers), structure, space, and change.",
-      subjectImage:
-        "https://image.similarpng.com/very-thumbnail/2020/07/English-course--book-and-dvd-on-transparent-PNG.png",
-      subjectPrice: 600,
-      subjectBoard: "ICSE",
-    },
-    {
-      subjectName: "Physics",
-      subjectDescription:
-        "Physics is the study of topics such as quantity (numbers), structure, space, and change.",
-      subjectImage:
-        "https://cdn.iconscout.com/icon/premium/png-512-thumb/physics-book-2054930-1730255.png?f=webp&w=256",
-      subjectPrice: 60,
-      subjectBoard: "CBSE",
-    },
-    {
-      subjectName: "Physics",
-      subjectDescription:
-        "Physics is the study of topics such as quantity (numbers), structure, space, and change.",
-      subjectImage:
-        "https://cdn.iconscout.com/icon/premium/png-512-thumb/physics-book-2054930-1730255.png?f=webp&w=256",
-      subjectPrice: 60,
-      subjectBoard: "CBSE",
-    },
-  ];
+
+  const [subjectData, setSubjectData] = React.useState([]);
+
+  useEffect(() => {
+    const getSubjects = async () => {
+      const token = await AsyncStorage.getItem("authToken");
+      const resp = await axios.get(`http://${ipURL}/api/subjects`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log(resp.data);
+      setSubjectData(resp.data);
+    };
+    getSubjects();
+  },[])
+ 
+  console.log(subjectData);
+  
   const handleLogout = async () => {
     await AsyncStorage.removeItem("authToken");
     router.replace("/(authenticate)/login");
@@ -59,6 +83,7 @@ const HomePage = () => {
   const handleItemPress = (itemId) => {
     // Handle the press event for the item with the given itemId
     console.log("Item pressed:", itemId);
+    router.push(`/(tabs)/home/${123}`);
   };
 
   return (
