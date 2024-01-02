@@ -31,3 +31,14 @@ export const createSubject = async (req, res,next) => {
         next(err);
     }
 }
+
+export const getAllSubjects = async (req, res,next) => {
+    try {
+        const subjects = await Subject.find();
+        res.status(200).json(subjects);
+    }
+    catch (err) {
+        console.log(err);
+        next(err);
+    }
+}
