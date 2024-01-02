@@ -12,58 +12,18 @@ import React, { useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import axios from "axios";
-import {ipURL} from "../../utils.js"
+import { ipURL } from "../../utils.js";
 import HomeFlatlist from "../../components/HomeFlatlist";
 
 //http://localhost:3000/api/subjects - GET
 
-const cardData = [
-  {
-    subjectName: "Maths",
-    subjectDescription:
-      "Maths is the study of topics such as quantity (numbers), structure, space, and change.",
-    subjectImage:
-      "https://cdn.iconscout.com/icon/premium/png-512-thumb/maths-book-5674609-4765400.png?f=webp&w=256",
-    subjectPrice: 100,
-    subjectBoard: "CBSE",
-  },
-  {
-    subjectName: "English",
-    subjectDescription:
-      "English is the study of topics such as quantity (numbers), structure, space, and change.",
-    subjectImage:
-      "https://image.similarpng.com/very-thumbnail/2020/07/English-course--book-and-dvd-on-transparent-PNG.png",
-    subjectPrice: 600,
-    subjectBoard: "ICSE",
-  },
-  {
-    subjectName: "Physics",
-    subjectDescription:
-      "Physics is the study of topics such as quantity (numbers), structure, space, and change.",
-    subjectImage:
-      "https://cdn.iconscout.com/icon/premium/png-512-thumb/physics-book-2054930-1730255.png?f=webp&w=256",
-    subjectPrice: 60,
-    subjectBoard: "CBSE",
-  },
-  {
-    subjectName: "Physics",
-    subjectDescription:
-      "Physics is the study of topics such as quantity (numbers), structure, space, and change.",
-    subjectImage:
-      "https://cdn.iconscout.com/icon/premium/png-512-thumb/physics-book-2054930-1730255.png?f=webp&w=256",
-    subjectPrice: 60,
-    subjectBoard: "CBSE",
-  },
-];
-
 const HomePage = () => {
-
   const [subjectData, setSubjectData] = React.useState([]);
 
   useEffect(() => {
     const getSubjects = async () => {
       const token = await AsyncStorage.getItem("authToken");
-      const resp = await axios.get(`http://${ipURL}/api/subjects`, { 
+      const resp = await axios.get(`http://${ipURL}/api/subjects`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -72,18 +32,16 @@ const HomePage = () => {
       setSubjectData(resp.data);
     };
     getSubjects();
-  },[])
- 
+  }, []);
+
   console.log(subjectData);
-  
+
   const handleLogout = async () => {
     await AsyncStorage.removeItem("authToken");
     router.replace("/(authenticate)/login");
   };
 
-  const handleItemPress = (itemId) => {
-    // Handle the press event for the item with the given itemId
-    console.log("Item pressed:", itemId);
+  const handleItemPress = (itemId: { _id: any }) => {
     router.push(`/(tabs)/home/${itemId._id}`);
   };
 
@@ -100,17 +58,7 @@ const HomePage = () => {
           </TouchableOpacity>
         </View>
         <TextInput
-          style={[
-            {
-              height: 40,
-              borderColor: "gray",
-              borderWidth: 1,
-              margin: 16,
-              padding: 10,
-              borderRadius: 5,
-            },
-            styles.text1,
-          ]}
+          style={[styles.line, styles.text1]}
           placeholder="Search Subjects"
         />
         <View
@@ -122,8 +70,10 @@ const HomePage = () => {
           }}
         ></View>
 
-        <HomeFlatlist homeData={subjectData}  handleItemPress={handleItemPress}/>
-        
+        <HomeFlatlist
+          homeData={subjectData}
+          handleItemPress={handleItemPress}
+        />
       </View>
     </SafeAreaView>
   );
@@ -136,6 +86,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  line: {
+    height: 40,
+    borderColor: "gray",
+    borderWidth: 1,
+    margin: 16,
+    padding: 10,
+    borderRadius: 5,
   },
   text: {
     fontSize: 40,
