@@ -13,6 +13,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import axios from "axios";
 import {ipURL} from "../../utils.js"
+import HomeFlatlist from "../../components/HomeFlatlist";
 
 //http://localhost:3000/api/subjects - GET
 
@@ -62,7 +63,7 @@ const HomePage = () => {
   useEffect(() => {
     const getSubjects = async () => {
       const token = await AsyncStorage.getItem("authToken");
-      const resp = await axios.get(`http://${ipURL}/api/subjects`, {
+      const resp = await axios.get(`http://${ipURL}/api/subjects`, { 
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -83,7 +84,7 @@ const HomePage = () => {
   const handleItemPress = (itemId) => {
     // Handle the press event for the item with the given itemId
     console.log("Item pressed:", itemId);
-    router.push(`/(tabs)/home/${123}`);
+    router.push(`/(tabs)/home/${itemId._id}`);
   };
 
   return (
@@ -120,49 +121,9 @@ const HomePage = () => {
             marginHorizontal: 20, //Adjust the margin as needed
           }}
         ></View>
-        <View style={{ flex: 1 }}>
-          <FlatList
-            data={cardData}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                onPress={() => handleItemPress(item.subjectName)}
-              >
-                <View style={styles.card}>
-                  <View style={styles.rowContainer}>
-                    <Image
-                      source={{ uri: item.subjectImage }}
-                      style={styles.image}
-                    />
-                    <View style={styles.textContainer}>
-                      <View style={styles.titlePriceContainer}>
-                        <Text style={styles.text1}>{item.subjectName}</Text>
-                        <Text
-                          style={[
-                            styles.text1,
-                            {
-                              marginLeft: 120,
-                              backgroundColor: "red",
-                              borderRadius: 10,
-                              paddingLeft: 5,
-                              paddingRight: 5,
-                            },
-                          ]}
-                        >
-                          {item.subjectBoard}
-                        </Text>
-                      </View>
-                      <Text style={styles.text2}>
-                        {item.subjectDescription}
-                      </Text>
-                      <Text style={styles.text1}>Price: {item.subjectPrice}</Text>
-                    </View>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            )}
-            // keyExtractor={(item) => item.subjectId.toString()}
-          />
-        </View>
+
+        <HomeFlatlist homeData={subjectData}  handleItemPress={handleItemPress}/>
+        
       </View>
     </SafeAreaView>
   );

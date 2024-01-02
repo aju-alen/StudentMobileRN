@@ -29,7 +29,7 @@ const connect = async () => {
 }
 
 app.use('/api/auth',authRoute)
-app.use('/api/subject',subjectRoute)
+app.use('/api/subjects',subjectRoute)
 
 
 app.use(errorHandler)
