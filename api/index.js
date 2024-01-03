@@ -4,6 +4,7 @@ import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 import authRoute from './routes/auth-route.js';
 import subjectRoute from './routes/subject-routes.js';
+import paymentRoute from './routes/payment-route.js';
 import dotenv from 'dotenv';
 import {errorHandler} from './middlewares/errorHandler.js';
 
@@ -30,6 +31,7 @@ const connect = async () => {
 
 app.use('/api/auth',authRoute)
 app.use('/api/subjects',subjectRoute)
+app.use('/api/payments',paymentRoute)
 
 
 app.use(errorHandler)

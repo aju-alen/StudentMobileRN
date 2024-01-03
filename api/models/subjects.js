@@ -27,6 +27,10 @@ const subjectSchema = new mongoose.Schema({
         required: true,
         default:10,
     },
+    subjectVerification: {
+        type: Boolean,
+        default: false
+    },
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
