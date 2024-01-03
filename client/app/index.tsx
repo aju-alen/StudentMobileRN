@@ -1,9 +1,9 @@
 import { Redirect } from "expo-router";
-import { StyleSheet, View } from "react-native";
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 
 SplashScreen.preventAutoHideAsync();
+
 export default function Page() {
   const [fontsLoaded, fontError] = useFonts({
     'SpaceMono-Regular': require('../assets/fonts/SpaceMono-Regular.ttf'),

@@ -10,6 +10,7 @@ import React, { useEffect } from "react";
 import { useLocalSearchParams } from "expo-router";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ipURL } from "../../utils";
 
 interface SubjectData {
   subjectImage?: string;
@@ -31,7 +32,7 @@ const SubjectId = () => {
       try {
         const token = await AsyncStorage.getItem("authToken");
         const resp = await axios.get(
-          `http://localhost:3000/api/subjects/${subjectId}`,
+          `http://${ipURL}/api/subjects/${subjectId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -50,9 +51,9 @@ const SubjectId = () => {
   console.log("Single Subject Data:", singleSubjectData);
 
   return (
-    <SafeAreaView>
-      <View style={{ flex: 1 }}>
-        <View style={{ flex: 1 }}>
+    <SafeAreaView >
+      <View >
+        <View >
           <View style={[styles.container]}>
             <Image
               source={{ uri: singleSubjectData.subjectImage }}

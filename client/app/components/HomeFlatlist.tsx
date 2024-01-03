@@ -23,9 +23,9 @@ const HomeFlatlist = ({homeData,handleItemPress}) => {
                     style={[
                       styles.text1,
                       {
-                        marginLeft: 120,
-                        backgroundColor: "red",
-                        borderRadius: 10,
+                        
+                        backgroundColor: "lightblue",
+                        borderRadius: 20,
                         paddingLeft: 5,
                         paddingRight: 5,
                       },
@@ -125,6 +125,7 @@ const styles = StyleSheet.create({
     titlePriceContainer: {
       flexDirection: "row",
       alignItems: "center",
+      justifyContent: "space-between",
     },
     button1: {
       backgroundColor: "#808080", // Default background color

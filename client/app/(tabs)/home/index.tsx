@@ -20,6 +20,7 @@ import HomeFlatlist from "../../components/HomeFlatlist";
 const HomePage = () => {
   const [subjectData, setSubjectData] = React.useState([]);
 
+
   useEffect(() => {
     const getSubjects = async () => {
       const token = await AsyncStorage.getItem("authToken");
@@ -38,6 +39,7 @@ const HomePage = () => {
 
   const handleLogout = async () => {
     await AsyncStorage.removeItem("authToken");
+    await AsyncStorage.removeItem("isTeacher");
     router.replace("/(authenticate)/login");
   };
 

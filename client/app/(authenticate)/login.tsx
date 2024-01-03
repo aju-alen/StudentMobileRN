@@ -18,6 +18,7 @@ const LoginPage = () => {
             const token = await AsyncStorage.getItem('authToken');
             if (token) {
                 router.replace('/(tabs)/home');
+                
             }
         }
         checkLogin();
@@ -34,6 +35,7 @@ const LoginPage = () => {
             console.log(resp.data, 'Logged in succesfully');
             
             AsyncStorage.setItem('authToken', resp.data.token);
+            AsyncStorage.setItem('isTeacher', (resp.data.isTeacher).toString());
             router.replace('/(tabs)/home');
 
         }
