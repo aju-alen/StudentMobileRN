@@ -48,9 +48,9 @@ export const getAllSubjects = async (req, res,next) => {
         next(err);
     }
 }
-export const getOneSubject = async (req, res,next) => {
+export const getOneSubject = async (req, res, next) => {
     try {
-        const subject = await Subject.findById(req.params.subjectId).populate('user');
+        const subject = await Subject.findById(req.params.subjectId).populate('user', '-password');
         if (!subject) {
             return res.status(400).json({ message: "Subject not found" });
         }
