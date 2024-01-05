@@ -11,18 +11,24 @@ export const createSubject = async (req, res,next) => {
     }
 
     try{
-        const newSubject = new Subject({
-            ...req.body,
-            user: req.userId
-        });
-        const savedSubject = await newSubject.save();
-        const updateUser = await User.findById(req.userId);
-        updateUser.subjects.push(savedSubject._id);
-        await updateUser.save();
+        if( req.isTeacher === true ){
 
-
-
-        res.status(202).json({ message: "Subject Created", savedSubject });
+            const newSubject = new Subject({
+                ...req.body,
+                user: req.userId
+            });
+            const savedSubject = await newSubject.save();
+            const updateUser = await User.findById(req.userId);
+            updateUser.subjects.push(savedSubject._id);
+            await updateUser.save();
+    
+    
+    
+            res.status(202).json({ message: "Subject Created", savedSubject });
+        }
+        else{
+            res.status(400).json({ message: "Only teachers can create subjects" });
+        }
 
         
     }
@@ -44,7 +50,7 @@ export const getAllSubjects = async (req, res,next) => {
 }
 export const getOneSubject = async (req, res,next) => {
     try {
-        const subject = await Subject.findById(req.params.subjectId);
+        const subject = await Subject.findById(req.params.subjectId).populate('user');
         if (!subject) {
             return res.status(400).json({ message: "Subject not found" });
         }

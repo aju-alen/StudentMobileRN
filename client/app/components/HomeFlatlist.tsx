@@ -17,9 +17,8 @@ const HomeFlatlist = ({homeData,handleItemPress}) => {
                 style={styles.image}
               />
               <View style={styles.textContainer}>
-                <View style={styles.titlePriceContainer}>
-                  <Text style={styles.text1}>{item.subjectName}</Text>
-                  <Text
+                <View>
+                <Text
                     style={[
                       styles.text1,
                       {
@@ -33,6 +32,10 @@ const HomeFlatlist = ({homeData,handleItemPress}) => {
                   >
                     {item.subjectBoard}
                   </Text>
+                </View>
+                <View style={styles.titlePriceContainer}>
+                  <Text style={styles.text1}>{item.subjectName}</Text>
+                 
                 </View>
                 <Text style={styles.text2}>
                   {item.subjectDescription}

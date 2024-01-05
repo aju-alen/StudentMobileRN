@@ -23,13 +23,17 @@ const subjectSchema = new mongoose.Schema({
     },
     subjectGrade: {
         type: Number,
-
         required: true,
-        default:10,
+        default: 10,
     },
     subjectVerification: {
         type: Boolean,
         default: false
+    },
+    teacherVerification: {
+        type: [String], 
+        default: [],
+        required: true
     },
     user: {
         type: mongoose.Schema.Types.ObjectId,
@@ -46,5 +50,5 @@ const subjectSchema = new mongoose.Schema({
     },
 });
 
- const Subject = mongoose.model('Subject', subjectSchema);
- export default Subject;
+const Subject = mongoose.model('Subject', subjectSchema);
+export default Subject;

@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { ipURL } from "../../utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 
 
 interface User {
@@ -22,9 +23,14 @@ interface User {
   userDescription?: string;
 }
 
+interface UserDetails {
+  isTeacher?: boolean;
+  isAdmin?: boolean;
+}
+
 const ProfilePage = () => {
   const [user, setUser] = useState<User>({});
-
+  const [userDetails, setUserDetails] = useState<UserDetails>({});
   useEffect(() => {
     const getUser = async () => {
       const apiUser = await axios.get(`http://${ipURL}/api/auth/me`, {
@@ -34,6 +40,9 @@ const ProfilePage = () => {
       });
       setUser(apiUser.data);
       console.log("User", apiUser.data);
+       const user = JSON.parse(await AsyncStorage.getItem("userDetails"));
+       setUserDetails(user);
+     
     };
     getUser();
   }, []);
@@ -41,11 +50,13 @@ const ProfilePage = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.container}>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={() => {}}>
-            <Text style={styles.buttonText}>vvk123 Profile</Text>
+       {userDetails?.isTeacher && <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.button} onPress={() => {
+            router.push("/(tabs)/profile/createSubject");
+          }}>
+            <Text style={styles.buttonText}>Create a New Subject to Teach</Text>
           </TouchableOpacity>
-        </View>
+        </View>}
         <Image
           style={styles.profileImage}
           source={{ uri: `${user?.profileImage}` }}

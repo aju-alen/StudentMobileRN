@@ -16,6 +16,10 @@ const LoginPage = () => {
     useEffect(() => {
         const checkLogin = async () => {
             const token = await AsyncStorage.getItem('authToken');
+            const user = await AsyncStorage.getItem('userDetails');
+            console.log(token,'this is token');
+            console.log(JSON.parse(user),'this is userDetails');
+            
             if (token) {
                 router.replace('/(tabs)/home');
                 
@@ -35,7 +39,7 @@ const LoginPage = () => {
             console.log(resp.data, 'Logged in succesfully');
             
             AsyncStorage.setItem('authToken', resp.data.token);
-            AsyncStorage.setItem('isTeacher', (resp.data.isTeacher).toString());
+            AsyncStorage.setItem('userDetails', JSON.stringify({isTeacher:resp.data.isTeacher, isAdmin:resp.data.isAdmin}));
             router.replace('/(tabs)/home');
 
         }

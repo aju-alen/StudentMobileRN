@@ -10,7 +10,8 @@ export const verifyToken = (req,res,next)=>{
         if(err) return ResizeObserverSize.status(403).send("Token is not valid");
         req.userId = payload.userId;
         req.isTeacher = payload.isTeacher;
-        console.log(req.userId,req.isTeacher);
+        req.isAdmin = payload.isAdmin;
+        console.log(req.userId,req.isTeacher,req.isAdmin,'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz');
         next()
     });
 }
