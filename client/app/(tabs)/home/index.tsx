@@ -20,7 +20,6 @@ import HomeFlatlist from "../../components/HomeFlatlist";
 const HomePage = () => {
   const [subjectData, setSubjectData] = React.useState([]);
 
-
   useEffect(() => {
     const getSubjects = async () => {
       const token = await AsyncStorage.getItem("authToken");
@@ -51,26 +50,19 @@ const HomePage = () => {
     <SafeAreaView style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
         <View style={styles.titlePriceContainer}>
-          <Text style={[styles.text, { marginLeft: 10 }]}>Welcome</Text>
+          <Text style={[styles.text]}>Welcome</Text>
           <TouchableOpacity
             onPress={handleLogout}
-            style={[styles.button1, { left: 120 }]}
+            style={[styles.button1]}
           >
             <Text style={[styles.text1]}>Logout</Text>
           </TouchableOpacity>
         </View>
         <TextInput
-          style={[styles.line, styles.text1]}
+          style={[styles.search]}
           placeholder="Search Subjects"
         />
-        <View
-          style={{
-            borderBottomColor: "black", // Change the color as needed
-            borderBottomWidth: 1,
-            marginVertical: 1, // Adjust the margin as needed
-            marginHorizontal: 20, //Adjust the margin as needed
-          }}
-        ></View>
+        <View style={styles.line}></View>
 
         <HomeFlatlist
           homeData={subjectData}
@@ -89,13 +81,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  line: {
+  search: {
     height: 40,
     borderColor: "gray",
     borderWidth: 1,
     margin: 16,
     padding: 10,
     borderRadius: 5,
+  },
+  line: {
+    borderBottomColor: "black", 
+    borderBottomWidth: 1,
+    marginVertical: 1, 
+    marginHorizontal: 20,
   },
   text: {
     fontSize: 40,
@@ -144,28 +142,30 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
-    elevation: 5, // Android
+    elevation: 5,
   },
   image: {
-    width: 100, // Adjust the width as needed
-    height: 100, // Adjust the height as needed
-    resizeMode: "cover", // or 'contain' or 'stretch' or 'center'
-    borderRadius: 8, // Adjust as needed for rounded corners
+    width: 100,
+    height: 100,
+    resizeMode: "cover",
+    borderRadius: 8,
   },
   rowContainer: {
     flexDirection: "row",
-    alignItems: "center", // Optional: Align items vertically in the middle
+    alignItems: "center",
   },
   textContainer: {
-    marginLeft: 1, // Add space between image and text
+    marginLeft: 1,
     flex: 1,
   },
   titlePriceContainer: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
+    padding: 11,
   },
   button1: {
-    backgroundColor: "#808080", // Default background color
+    backgroundColor: "#808080",
     paddingLeft: 5,
     paddingRight: 5,
     borderRadius: 5,
