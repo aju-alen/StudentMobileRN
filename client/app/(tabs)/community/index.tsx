@@ -127,23 +127,23 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
-    elevation: 5, // Android
+    elevation: 5, 
   },
   image: {
-    width: 100, // Adjust the width as needed
-    height: 100, // Adjust the height as needed
-    resizeMode: "cover", // or 'contain' or 'stretch' or 'center'
-    borderRadius: 8, // Adjust as needed for rounded corners
+    width: 100, 
+    height: 100,
+    resizeMode: "cover", 
+    borderRadius: 8, 
   },
   rowContainer: {
     flexDirection: "row",
-    alignItems: "center", // Optional: Align items vertically in the middle
+    alignItems: "center", 
   },
   rowContainer1: {
-    flexDirection: "row", // Optional: Align items vertically in the middle
+    flexDirection: "row", 
   },
   textContainer: {
-    marginLeft: 1, // Add space between image and text
+    marginLeft: 1, 
     flex: 1,
   },
   titlePriceContainer: {
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   button1: {
-    backgroundColor: "#808080", // Default background color
+    backgroundColor: "#808080",
     paddingLeft: 5,
     paddingRight: 5,
     borderRadius: 5,

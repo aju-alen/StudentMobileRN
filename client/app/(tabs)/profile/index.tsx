@@ -10,17 +10,19 @@ import {
   SafeAreaView,
   Pressable,
   StatusBar,
+  ScrollView,
+  FlatList,
 } from "react-native";
 import { ipURL } from "../../utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-
 
 interface User {
   email?: string;
   name?: string;
   profileImage?: string;
   userDescription?: string;
+  subjects?: string[];
 }
 
 interface UserDetails {
@@ -40,23 +42,33 @@ const ProfilePage = () => {
       });
       setUser(apiUser.data);
       console.log("User", apiUser.data);
-       const user = JSON.parse(await AsyncStorage.getItem("userDetails"));
-       setUserDetails(user);
-     
+      const user = JSON.parse(await AsyncStorage.getItem("userDetails"));
+      setUserDetails(user);
     };
     getUser();
   }, []);
 
+  console.log("user", user);
+  const subjectsArray = user.subjects;
+  console.log("subjects", subjectsArray);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.container}>
-       {userDetails?.isTeacher && <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={() => {
-            router.push("/(tabs)/profile/createSubject");
-          }}>
-            <Text style={styles.buttonText}>Create a New Subject to Teach</Text>
-          </TouchableOpacity>
-        </View>}
+        {userDetails?.isTeacher && (
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => {
+                router.push("/(tabs)/profile/createSubject");
+              }}
+            >
+              <Text style={styles.buttonText}>
+                Create a New Subject to Teach
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
         <Image
           style={styles.profileImage}
           source={{ uri: `${user?.profileImage}` }}
@@ -70,9 +82,19 @@ const ProfilePage = () => {
           <Text style={styles.descriptionText}>{user.userDescription}</Text>
         </View>
         <View style={styles.horizontalLine} />
-        <View>
-          <Text style={styles.title}>Available Subjects</Text>
-        </View>
+        <Text style={styles.title}>Available Subjects</Text>
+        <ScrollView>
+          <View>
+            {/* <FlatList
+              data={[subjectsArray]}
+              renderItem={({ item }) => (
+                <View>
+                  <Text >{item.subjectName}</Text>
+                </View>
+              )}
+            /> */}
+          </View>
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
