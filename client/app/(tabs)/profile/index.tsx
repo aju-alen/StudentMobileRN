@@ -22,7 +22,17 @@ interface User {
   name?: string;
   profileImage?: string;
   userDescription?: string;
-  subjects?: string[];
+  subjects?: SubjectItem[];
+}
+
+interface SubjectItem {
+  _id: string;
+  subjectName: string;
+  subjectDescription?: string;
+  subjectImage?: string;
+  subjectPrice?: number;
+  subjectBoard?: string;
+  subjectGrade?: number;
 }
 
 interface UserDetails {
@@ -49,11 +59,15 @@ const ProfilePage = () => {
   }, []);
 
   console.log("user", user);
-  const subjectsArray = user.subjects;
-  console.log("subjects", subjectsArray);
+  const subjectArray = user.subjects;
+  console.log("subjects", subjectArray);
+
+  const handleItemPress = (itemId: { _id: any }) => {
+    router.push(`/(tabs)/profile/${itemId._id}`);
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
         {userDetails?.isTeacher && (
           <View style={styles.buttonContainer}>
@@ -83,18 +97,40 @@ const ProfilePage = () => {
         </View>
         <View style={styles.horizontalLine} />
         <Text style={styles.title}>Available Subjects</Text>
-        <ScrollView>
-          <View>
-            {/* <FlatList
-              data={[subjectsArray]}
-              renderItem={({ item }) => (
-                <View>
-                  <Text >{item.subjectName}</Text>
+      </View>
+      <View style={{ flex: 1 }}>
+        <FlatList
+          data={subjectArray}
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => handleItemPress(item)}>
+              <View style={styles.card}>
+                <View style={styles.titlePriceContainer}>
+                  <Text style={styles.text1}>{item.subjectName}</Text>
+                  <Text style={[styles.text2, styles.button2]}>
+                    {item.subjectBoard}
+                  </Text>
                 </View>
-              )}
-            /> */}
-          </View>
-        </ScrollView>
+                <View style={styles.rowContainer}>
+                  <Image
+                    source={{ uri: item.subjectImage }}
+                    style={styles.image}
+                  />
+                  <View style={styles.textContainer}>
+                    <Text style={styles.text2}>{item.subjectDescription}</Text>
+                    <View style={styles.priceGradeContainer}>
+                      <Text style={styles.text2}>
+                        Price: {item.subjectPrice}
+                      </Text>
+                      <Text style={styles.text2}>
+                        Grade: {item.subjectGrade}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
       </View>
     </SafeAreaView>
   );
@@ -102,10 +138,39 @@ const ProfilePage = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     width: "100%",
     alignItems: "center",
     backgroundColor: "light-gray",
+  },
+  priceGradeContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  textContainer: {
+    marginLeft: 5,
+    flex: 1,
+  },
+  image: {
+    width: 75,
+    height: 75,
+    resizeMode: "cover",
+    borderRadius: 10,
+  },
+  button2: {
+    backgroundColor: "orange",
+    borderRadius: 20,
+    paddingLeft: 6,
+    paddingRight: 6,
+  },
+  text1: {
+    fontSize: 20,
+    fontFamily: "SpaceMono-Regular",
+    fontWeight: "bold",
+  },
+  text2: {
+    fontSize: 15,
+    fontFamily: "SpaceMono-Regular",
+    fontWeight: "bold",
   },
   descriptionContainer: {
     width: "95%",
@@ -170,6 +235,26 @@ const styles = StyleSheet.create({
   },
   descriptionText: {
     textAlign: "justify",
+  },
+  card: {
+    backgroundColor: "white",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    padding: 10,
+    margin: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  titlePriceContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingLeft: 2,
+    paddingBottom: 3,
   },
 });
 
