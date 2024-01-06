@@ -15,6 +15,8 @@ export const createSubject = async (req, res,next) => {
 
             const newSubject = new Subject({
                 ...req.body,
+                subjectPrice: parseInt(subjectPrice),
+                subjectGrade: parseInt(subjectGrade),
                 user: req.userId
             });
             const savedSubject = await newSubject.save();
@@ -40,7 +42,10 @@ export const createSubject = async (req, res,next) => {
 
 export const getAllSubjects = async (req, res,next) => {
     try {
-        const subjects = await Subject.find();
+        if (!req.isTeacher) {
+            res.status(400).json({ message: "Only teachers can view all subjects" });
+        }
+        const subjects = await Subject.find({subjectVerification:true});
         res.status(200).json(subjects);
     }
     catch (err) {
@@ -48,6 +53,23 @@ export const getAllSubjects = async (req, res,next) => {
         next(err);
     }
 }
+
+export const getSubjectsToVerify = async (req, res,next) => {
+
+    try{
+        if(!isAdmin){
+            return res.status(400).json({message:"Only admin can Verify Subjects"});
+        }
+        const subjects = await Subject.find({subjectVerification:false});
+        res.status(200).json(subjects);
+    }
+    catch(err){
+        console.log(err);
+        next(err);
+    }
+}
+
+
 export const getOneSubject = async (req, res, next) => {
     try {
         const subject = await Subject.findById(req.params.subjectId).populate('user', '-password');

@@ -78,7 +78,7 @@ const ProfilePage = () => {
               }}
             >
               <Text style={styles.buttonText}>
-                Create a New Subject to Teach
+                Create a Subject 
               </Text>
             </TouchableOpacity>
           </View>

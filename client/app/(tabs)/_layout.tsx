@@ -1,8 +1,26 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Tabs } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
+// interface UserDetails {
+//   isTeacher?: boolean;
+//   isAdmin?: boolean;
+// }
 const TabsLayout = () => {
+  // const [userDetails, setUserDetails] = useState<UserDetails>({});
+  
+  // useEffect(() => {
+  //  const getUserDetails = async () => {
+  //     const user = await AsyncStorage.getItem("userDetails");
+  //     setUserDetails(JSON.parse(user));
+  //  }
+  //  getUserDetails();
+    
+  // }, []);
+  
+  // console.log(userDetails.isAdmin,'zzzzz');
+  
   return (
     <Tabs
       screenOptions={({ route }) => ({
@@ -43,6 +61,10 @@ const TabsLayout = () => {
         name="profile"
         options={{ headerShown: false, tabBarLabel: "Profile" }}
       />
+      {/* {userDetails.isAdmin &&<Tabs.Screen
+        name="verification"
+        options={{ headerShown: false, tabBarLabel: "Verification" }}
+      />} */}
       
       
     </Tabs>
