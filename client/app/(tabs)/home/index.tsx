@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   FlatList,
   Image,
+  Button,
 } from "react-native";
 import React, { useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -16,62 +17,86 @@ import { ipURL } from "../../utils.js";
 import HomeFlatlist from "../../components/HomeFlatlist";
 
 //http://localhost:3000/api/subjects - GET
+import { debounce } from "lodash";
 
-const HomePage = () => {
-  const [subjectData, setSubjectData] = React.useState([]);
+  const HomePage = () => {
+    const [subjectData, setSubjectData] = React.useState([]);
+    const [search, setSearch] = React.useState("");
 
-  useEffect(() => {
-    const getSubjects = async () => {
+    const handleSearch = debounce(async () => {
       const token = await AsyncStorage.getItem("authToken");
       const resp = await axios.get(`http://${ipURL}/api/subjects`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log(resp.data);
-      setSubjectData(resp.data);
+      console.log(resp.data, 'resp data normal function');
+
+      const filtered = resp.data.filter((subject: { subjectName: string }) => {
+        return subject.subjectName.toLowerCase().includes(search.toLowerCase());
+      });
+      setSubjectData(filtered);
+    }, 400);
+
+    useEffect(() => {
+      const getSubjects = async () => {
+        const token = await AsyncStorage.getItem("authToken");
+        const resp = await axios.get(`http://${ipURL}/api/subjects`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log(resp.data, 'resp data in useEffect');
+        setSubjectData(resp.data);
+      };
+      getSubjects();
+    }, []);
+
+    console.log(subjectData, 'outside');
+
+    const handleLogout = async () => {
+      await AsyncStorage.removeItem("authToken");
+      await AsyncStorage.removeItem("isTeacher");
+      router.replace("/(authenticate)/login");
     };
-    getSubjects();
-  }, []);
 
-  console.log(subjectData);
+    const handleItemPress = (itemId: { _id: any }) => {
+      router.push(`/(tabs)/home/${itemId._id}`);
+    };
 
-  const handleLogout = async () => {
-    await AsyncStorage.removeItem("authToken");
-    await AsyncStorage.removeItem("isTeacher");
-    router.replace("/(authenticate)/login");
-  };
+    return (
+      <SafeAreaView style={{ flex: 1 }}>
+        <View style={{ flex: 1 }}>
+          <View style={styles.titlePriceContainer}>
+            <Text style={[styles.text]}>Welcome</Text>
+            <TouchableOpacity
+              onPress={handleLogout}
+              style={[styles.button1]}
+            >
+              <Text style={[styles.text1]}>Logout</Text>
+            </TouchableOpacity>
+          </View>
+          <View>
+            <TextInput
+              style={[styles.search]}
+              placeholder="Search Subjects"
+              value={search}
+              onChangeText={(text) => {
+                setSearch(text);
+                handleSearch();
+              }}
+            />
+          </View>
+          <View style={styles.line}></View>
 
-  const handleItemPress = (itemId: { _id: any }) => {
-    router.push(`/(tabs)/home/${itemId._id}`);
-  };
-
-  return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <View style={{ flex: 1 }}>
-        <View style={styles.titlePriceContainer}>
-          <Text style={[styles.text]}>Welcome</Text>
-          <TouchableOpacity
-            onPress={handleLogout}
-            style={[styles.button1]}
-          >
-            <Text style={[styles.text1]}>Logout</Text>
-          </TouchableOpacity>
+          <HomeFlatlist
+            homeData={subjectData}
+            handleItemPress={handleItemPress}
+          />
         </View>
-        <TextInput
-          style={[styles.search]}
-          placeholder="Search Subjects"
-        />
-        <View style={styles.line}></View>
-
-        <HomeFlatlist
-          homeData={subjectData}
-          handleItemPress={handleItemPress}
-        />
-      </View>
-    </SafeAreaView>
-  );
-};
+      </SafeAreaView>
+    );
+  };
 
 export default HomePage;
 
