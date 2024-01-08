@@ -42,9 +42,7 @@ export const createSubject = async (req, res,next) => {
 
 export const getAllSubjects = async (req, res,next) => {
     try {
-        if (!req.isTeacher) {
-            res.status(400).json({ message: "Only teachers can view all subjects" });
-        }
+        
         const subjects = await Subject.find({subjectVerification:true});
         res.status(200).json(subjects);
     }
