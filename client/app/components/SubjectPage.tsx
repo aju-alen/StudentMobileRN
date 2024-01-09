@@ -12,7 +12,8 @@ import { useLocalSearchParams } from "expo-router";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ipURL } from "../utils";
-
+import {Ionicons} from '@expo/vector-icons';
+import { FlatList } from "react-native-gesture-handler";
 interface SubjectData {
   subjectImage?: string;
   subjectName?: string;
@@ -20,12 +21,26 @@ interface SubjectData {
   subjectDescription?: string;
   subjectGrade?: number;
   subjectPrice?: number;
+  subjectTags?: [string]; 
+  user?: User;
+  profileImage?: User;
 }
+
+interface User {
+  name?: string;
+  profileImage: string;
+}
+
+
 
 const SubjectPage = ({subjectId}) => {
   const [singleSubjectData, setSingleSubjectData] = React.useState<SubjectData>(
     {}
   );
+  
+  const name=singleSubjectData.user?.name
+  const profileImage=singleSubjectData.user?.profileImage
+const [userData, setUserData] = React.useState<User>({});
 
   useEffect(() => {
     const getSubjects = async () => {
@@ -51,74 +66,75 @@ const SubjectPage = ({subjectId}) => {
   console.log("Single Subject Data:", singleSubjectData);
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex:1}}>
       <ScrollView>
-        <View style={{ flex: 1 }}>
-          <View style={{ flex: 1 }}>
-            <View style={[styles.container]}>
-              <Image
-                source={{ uri: singleSubjectData.subjectImage }}
-                style={styles.image}
-              />
-              <Text style={styles.text}>{singleSubjectData.subjectName}</Text>
-            </View>
-            <View style={[styles.text1]}>
-              <Text>Board: {singleSubjectData.subjectBoard}</Text>
-              <Text>Grade: {singleSubjectData.subjectGrade}</Text>
-              <Text>Price: {singleSubjectData.subjectPrice}</Text>
-            </View>
+        <View style={{width:'100%',height:200}}>
+          <Image source={{ uri: singleSubjectData?.subjectImage }} style={styles.image} />
           </View>
-          <View style={styles.line}></View>
-          <Text style={styles.descriptionText}>
-            {singleSubjectData.subjectDescription}.{"\n"} 
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat. Duis aute irure dolor in
-            reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-            pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-            culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum
-            dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-            incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-            veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex
-            ea commodo consequat. Duis aute irure dolor in reprehenderit in
-            voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-            Excepteur sint occaecat cupidatat non proident, sunt in culpa qui
-            officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit
-            amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
-            ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
-            nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-            consequat. Duis aute irure dolor in reprehenderit in voluptate velit
-            esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat
-            cupidatat non proident, sunt in culpa qui officia deserunt mollit
-            anim id est laborum. Lorem ipsum dolor sit amet, consectetur
-            adipiscing elit, sed do eiusmod tempor incididunt ut labore et
-            dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-            exercitation ullamco laboris nisi ut aliquip ex ea commodo
-            consequat. Duis aute irure dolor in reprehenderit in voluptate velit
-            esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat
-            cupidatat non proident, sunt in culpa qui officia deserunt mollit
-            anim id est laborum.
+        <View style={{marginLeft:15,marginRight:10}}>
+          <Text style={styles.text}>{singleSubjectData?.subjectName}</Text>
+          <View style={{flexDirection:'row',paddingTop:5}}>
+
+          <Text style={{fontSize:18}}>Course Tutor: {name} </Text>
+          <Text style={styles.text1}>
+            {singleSubjectData?.subjectBoard} - {singleSubjectData?.subjectGrade}
           </Text>
+          </View>
+          <Text style={{fontWeight:'bold', fontSize:18,paddingTop:10}}>About this course</Text>
+          <Text style={styles.course}>{singleSubjectData?.subjectDescription}</Text>
+        
+        <View style={{paddingBottom:25,paddingLeft:25}}>
+        <View style={{flexDirection:'row', paddingTop:25}}>
+          <Ionicons name='globe' size={30} color={'black'} />
+          <Text style={styles.detail}>100% Online</Text>
         </View>
-      </ScrollView>
+        <View style={{flexDirection:'row'}}>
+          <Ionicons name='calendar' size={30} color={'black'} />
+          <Text style={styles.detail}>Flexible Deadlines</Text>
+        </View>
+        <View style={{flexDirection:'row'}}>
+          <Ionicons name='chatbox-ellipses'size={30} color={'black'} />
+          <Text style={styles.detail}>Medium of Instruction: English</Text>
+        </View>
+        </View>
+        <Text style={{fontSize:16}}>Skills you will gain</Text>
+        {/* <View style={{paddingTop:10,flexDirection:'row'}}>
+          <FlatList data={singleSubjectData?.subjectTags} renderItem={({ item }) => 
+          <View style={{borderRadius:10,backgroundColor:'#b54034',marginTop:8,justifyContent:'center',marginRight:5}}>
+          <Text style={{padding:10,fontSize:16,color:'white'}}>{item} </Text>
+          </View>
+          } keyExtractor={(item) => item} />
+        </View> */}
+        <Text style={{fontWeight:'bold',fontSize:20,paddingTop:20}}>Course Instructor</Text>
+        <View style={{flexDirection:'row',alignItems:'center', paddingBottom:25,paddingTop:20 }}>
+        <Image source={{ uri: singleSubjectData?.user?.profileImage }} style={{width:150,height:150, borderRadius:100}} />
+          <View style={{flexDirection:'column'}}>
+          <Text style={{fontSize:18,paddingLeft:20}}>{name}</Text>
+          <Text style={{paddingLeft:20}}>UI/UX Expert</Text>
+          </View>
+
+        </View>
+        <View>
+        </View>
+          </View>
       <View> 
         <View style={[styles.buttonContainer]}>
           <TouchableOpacity
             style={styles.fixedButton}
             onPress={() => console.log("Button 1 pressed")}
           >
-            <Text style={styles.buttonText}>Chat Now </Text>
+            <Text style={styles.buttonText}>Enrol Now - AED {singleSubjectData?.subjectPrice}</Text>
           </TouchableOpacity>
-
           <TouchableOpacity
-            style={styles.fixedButton}
+            style={styles.chatbutton}
             onPress={() => console.log("Button 2 pressed")}
           >
-            <Text style={styles.buttonText}>Book Session Now</Text>
+            <Ionicons name='chatbox-ellipses'size={30} color={'white'} />
+            <Text style={styles.buttonText}>Chat Now</Text>
           </TouchableOpacity>
         </View>
       </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -126,14 +142,19 @@ const SubjectPage = ({subjectId}) => {
 export default SubjectPage;
 
 const styles = StyleSheet.create({
-  image: { width: 120, height: 120 },
+  image: { 
+    width: "100%",
+     height: 200, 
+     alignSelf: "center" ,
+     resizeMode:'cover', 
+    },
   container: {
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 20,
   },
   text: {
-    fontSize: 30,
+    fontSize: 25,
+    paddingTop: 5,
     fontFamily: "SpaceMono-Regular",
     fontWeight: "bold",
   },
@@ -141,11 +162,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: 20,
+    fontSize: 16,
+    fontFamily: "SpaceMono-Regular",
+    fontWeight: "bold",
   },
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
+    paddingLeft:10,
     backgroundColor: "#f3f3f3",
   },
   line: {
@@ -174,8 +197,42 @@ const styles = StyleSheet.create({
   fixedButton: {
     bottom: 1,
     backgroundColor: "#b54034",
-    padding: 15,
-    borderRadius: 100,
+    borderRadius: 10,
     marginVertical: 5,
+    width:'65%',
+    justifyContent:'center',
+    alignItems: 'center',
   },
+  chatbutton:{
+    bottom: 1,
+    backgroundColor: "#b54034",
+    padding: 15,
+    borderRadius: 10,
+    marginVertical: 5,
+    width:'30%',
+    justifyContent:'center',
+    alignItems: 'center',
+    height:70,
+    marginRight:10,
+    marginLeft:10,
+  },
+  detail:{
+    fontSize:17,
+    color:'black',
+    paddingLeft:20
+  },
+  course:{
+    textAlign:'justify',
+    fontSize:16,
+    alignItems: 'center',
+    flex:1,
+    paddingRight:8,
+  },
+  skill:{
+    fontSize:18,
+  },
+  coursegain:{
+    color:'red'
+
+  }
 });
