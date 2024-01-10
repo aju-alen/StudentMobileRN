@@ -6,10 +6,13 @@ import {
   FlatList,
   Image,
 } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 
 const HomeFlatlist = ({ homeData, handleItemPress }) => {
   console.log(homeData, "child component");
+
+  const [showAllText, setShowAllText] = useState(false);
+  const maxLines = 2;
 
   return (
     <View style={{ flex: 1 }}>
@@ -30,7 +33,9 @@ const HomeFlatlist = ({ homeData, handleItemPress }) => {
                   style={styles.image}
                 />
                 <View style={styles.textContainer}>
-                  <Text style={styles.text2}>{item.subjectDescription}</Text>
+                  <Text numberOfLines={showAllText ? undefined : maxLines}>
+                    {item.subjectDescription}
+                  </Text>
                   <View style={styles.priceGradeContainer}>
                     <Text style={styles.text2}>Price: {item.subjectPrice}</Text>
                     <Text style={styles.text2}>Grade: {item.subjectGrade}</Text>
@@ -56,18 +61,15 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 40,
-    fontFamily: "SpaceMono-Regular",
-    fontWeight: "bold",
+    fontFamily: "Roboto-Regular",
   },
   text1: {
     fontSize: 20,
-    fontFamily: "SpaceMono-Regular",
-    fontWeight: "bold",
+    fontFamily: "Roboto-Regular",
   },
   text2: {
     fontSize: 15,
-    fontFamily: "SpaceMono-Regular",
-    fontWeight: "bold",
+    fontFamily: "Roboto-Regular",
   },
   button: {
     marginTop: 10,
@@ -140,5 +142,6 @@ const styles = StyleSheet.create({
   priceGradeContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
+    paddingTop: 5,
   },
 });

@@ -62,41 +62,55 @@ const ProfilePage = () => {
   const subjectArray = user.subjects;
   console.log("subjects", subjectArray);
 
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem("authToken");
+    await AsyncStorage.removeItem("isTeacher");
+    router.replace("/(authenticate)/login");
+  };
+
   const handleItemPress = (itemId: { _id: any }) => {
     router.push(`/(tabs)/profile/${itemId._id}`);
   };
 
+  const [showAllText, setShowAllText] = useState(false);
+  const maxLines = 2;
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
-        {userDetails?.isTeacher && (
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => {
-                router.push("/(tabs)/profile/createSubject");
-              }}
-            >
-              <Text style={styles.buttonText}>
-                Create a Subject 
-              </Text>
-            </TouchableOpacity>
+        <View style={styles.buttonContainer}>
+          {userDetails?.isTeacher && (
+            <View>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => {
+                  router.push("/(tabs)/profile/createSubject");
+                }}
+              >
+                <Text style={styles.text1}>Create a Subject</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          <TouchableOpacity onPress={handleLogout} style={[styles.button]}>
+            <Text style={[styles.text1]}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.profileContainer}>
+          <Image
+            style={styles.profileImage}
+            source={{ uri: `${user?.profileImage}` }}
+          />
+          <Text style={styles.title}>{user.name}</Text>
+          <View style={styles.rowContainer}>
+            <Text style={styles.ratingText}>Rating: 4.5</Text>
+            <Text style={styles.sessionsText}>Sessions Done: 10</Text>
           </View>
-        )}
-        <Image
-          style={styles.profileImage}
-          source={{ uri: `${user?.profileImage}` }}
-        />
-        <Text style={styles.title}>{user.name}</Text>
-        <View style={styles.rowContainer}>
-          <Text style={styles.ratingText}>Rating: 4.5</Text>
-          <Text style={styles.sessionsText}>Sessions Done: 10</Text>
+          <View style={styles.descriptionContainer}>
+            <Text style={styles.descriptionText}>{user.userDescription}</Text>
+          </View>
+          <View style={styles.horizontalLine} />
+          <Text style={styles.title}>Available Subjects</Text>
         </View>
-        <View style={styles.descriptionContainer}>
-          <Text style={styles.descriptionText}>{user.userDescription}</Text>
-        </View>
-        <View style={styles.horizontalLine} />
-        <Text style={styles.title}>Available Subjects</Text>
       </View>
       <View style={{ flex: 1 }}>
         <FlatList
@@ -116,7 +130,9 @@ const ProfilePage = () => {
                     style={styles.image}
                   />
                   <View style={styles.textContainer}>
-                    <Text style={styles.text2}>{item.subjectDescription}</Text>
+                  <Text numberOfLines={showAllText ? undefined : maxLines}>
+                    {item.subjectDescription}
+                  </Text>
                     <View style={styles.priceGradeContainer}>
                       <Text style={styles.text2}>
                         Price: {item.subjectPrice}
@@ -130,21 +146,25 @@ const ProfilePage = () => {
               </View>
             </TouchableOpacity>
           )}
+          keyExtractor={(item) => item._id}
         />
       </View>
     </SafeAreaView>
   );
 };
 
+
 const styles = StyleSheet.create({
   container: {
-    width: "100%",
-    alignItems: "center",
     backgroundColor: "light-gray",
+  },
+  profileContainer: {
+    alignItems: "center",
   },
   priceGradeContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
+    paddingTop: 5,
   },
   textContainer: {
     marginLeft: 5,
@@ -164,13 +184,11 @@ const styles = StyleSheet.create({
   },
   text1: {
     fontSize: 20,
-    fontFamily: "SpaceMono-Regular",
-    fontWeight: "bold",
+    fontFamily: "Roboto-Regular",
   },
   text2: {
     fontSize: 15,
-    fontFamily: "SpaceMono-Regular",
-    fontWeight: "bold",
+    fontFamily: "Roboto-Regular",
   },
   descriptionContainer: {
     width: "95%",
@@ -212,26 +230,16 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "black",
   },
-  bulletPoint: {
-    marginBottom: 8,
-    color: "black",
-  },
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "flex-end", // Pushes the button to the right
-    marginBottom: 10,
-    width: "95%",
-    marginTop: 20,
+    justifyContent: "space-between",
+    marginHorizontal: 10,
+    marginVertical: 10,
   },
   button: {
     backgroundColor: "#36A0E2",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
     borderRadius: 5,
-  },
-  buttonText: {
-    color: "white",
-    fontWeight: "bold",
+    padding:4,
   },
   descriptionText: {
     textAlign: "justify",
