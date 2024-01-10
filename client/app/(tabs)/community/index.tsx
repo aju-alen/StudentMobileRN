@@ -71,12 +71,12 @@ export default CommunityPage;
 const styles = StyleSheet.create({
   text1: {
     fontSize: 20,
-    fontFamily: "Roboto",
+    fontFamily: "Roboto-Regular",
     padding: 10,
   },
   text2: {
     fontSize: 18,
-    fontFamily: "Roboto",
+    fontFamily: "Roboto-Regular",
   },
   card: {
     backgroundColor: "white",
