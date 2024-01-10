@@ -119,6 +119,12 @@ const ProfilePage = () => {
         handleItemPress={handleItemPress}
         />
       </View>
+      {/* This is the test modal */}
+      <View> 
+        <TouchableOpacity
+          onPress={() =>router.push("/(tabs)/profile/editSubject/123") }
+          style={styles.button}><Text>Open Modal</Text></TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 };
