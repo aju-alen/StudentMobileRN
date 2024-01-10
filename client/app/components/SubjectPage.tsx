@@ -28,7 +28,7 @@ interface SubjectData {
 
 interface User {
   name?: string;
-  profileImage: string;
+  profileImage?: string;
 }
 
 
