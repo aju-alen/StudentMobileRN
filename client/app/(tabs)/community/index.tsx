@@ -7,7 +7,7 @@ import {
   Image,
 } from "react-native";
 import React from "react";
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
 
 const CommunityPage = () => {
   const communites = [
@@ -43,17 +43,11 @@ const CommunityPage = () => {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <Text style={[styles.text1, { padding: 10 }]}>
-        <Ionicons name="people-outline" size={20} color="#900" /> Discover New Communities
+      <Text style={[styles.text1]}>
+        <Ionicons name="people-outline" size={20} color="#900" /> Discover New
+        Communities
       </Text>
-      <View
-          style={{
-            borderBottomColor: "black", // Change the color as needed
-            borderBottomWidth: 1,
-            marginVertical: 1, // Adjust the margin as needed
-            marginHorizontal: 20, //Adjust the margin as needed
-          }} 
-        ></View>
+      <View style={styles.line}></View>
       <FlatList
         data={communites}
         renderItem={({ item }) => (
@@ -75,46 +69,14 @@ const CommunityPage = () => {
 export default CommunityPage;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  text: {
-    fontSize: 40,
-    fontFamily: "SpaceMono-Regular",
-    fontWeight: "bold",
-  },
   text1: {
     fontSize: 20,
-    fontFamily: "SpaceMono-Regular",
-    fontWeight: "bold",
+    fontFamily: "Roboto",
+    padding: 10,
   },
   text2: {
     fontSize: 18,
-    fontFamily: "SpaceMono-Regular",
-    fontWeight: "bold",
-  },
-  button: {
-    marginTop: 10,
-    padding: 10,
-    backgroundColor: "blue",
-    borderRadius: 5,
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  searchInput: {
-    width: "100%",
-    height: "100%",
-  },
-  searchContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    flexDirection: "row",
-    height: 50,
+    fontFamily: "Roboto",
   },
   card: {
     backgroundColor: "white",
@@ -127,35 +89,25 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
-    elevation: 5, 
+    elevation: 5,
   },
   image: {
-    width: 100, 
+    width: 100,
     height: 100,
-    resizeMode: "cover", 
-    borderRadius: 8, 
-  },
-  rowContainer: {
-    flexDirection: "row",
-    alignItems: "center", 
+    resizeMode: "cover",
+    borderRadius: 8,
   },
   rowContainer1: {
-    flexDirection: "row", 
+    flexDirection: "row",
   },
   textContainer: {
-    marginLeft: 1, 
+    marginLeft: 1,
     flex: 1,
   },
-  titlePriceContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  button1: {
-    backgroundColor: "#808080",
-    paddingLeft: 5,
-    paddingRight: 5,
-    borderRadius: 5,
-    alignItems: "center",
-    justifyContent: "center",
+  line: {
+    borderBottomColor: "black",
+    borderBottomWidth: 1,
+    marginVertical: 1,
+    marginHorizontal: 20,
   },
 });
