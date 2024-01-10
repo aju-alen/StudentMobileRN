@@ -16,6 +16,7 @@ import {
 import { ipURL } from "../../utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import HomeFlatlist from "../../components/HomeFlatlist";
 
 interface User {
   email?: string;
@@ -113,40 +114,9 @@ const ProfilePage = () => {
         </View>
       </View>
       <View style={{ flex: 1 }}>
-        <FlatList
-          data={subjectArray}
-          renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => handleItemPress(item)}>
-              <View style={styles.card}>
-                <View style={styles.titlePriceContainer}>
-                  <Text style={styles.text1}>{item.subjectName}</Text>
-                  <Text style={[styles.text2, styles.button2]}>
-                    {item.subjectBoard}
-                  </Text>
-                </View>
-                <View style={styles.rowContainer}>
-                  <Image
-                    source={{ uri: item.subjectImage }}
-                    style={styles.image}
-                  />
-                  <View style={styles.textContainer}>
-                  <Text numberOfLines={showAllText ? undefined : maxLines}>
-                    {item.subjectDescription}
-                  </Text>
-                    <View style={styles.priceGradeContainer}>
-                      <Text style={styles.text2}>
-                        Price: {item.subjectPrice}
-                      </Text>
-                      <Text style={styles.text2}>
-                        Grade: {item.subjectGrade}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            </TouchableOpacity>
-          )}
-          keyExtractor={(item) => item._id}
+        <HomeFlatlist 
+        homeData={subjectArray}
+        handleItemPress={handleItemPress}
         />
       </View>
     </SafeAreaView>

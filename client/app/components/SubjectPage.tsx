@@ -8,7 +8,6 @@ import {
   ScrollView,
 } from "react-native";
 import React, { useEffect } from "react";
-import { useLocalSearchParams } from "expo-router";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ipURL } from "../utils";
