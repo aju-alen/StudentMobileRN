@@ -81,3 +81,49 @@ export const getOneSubject = async (req, res, next) => {
         next(err);
     }
 }
+
+export const updateSubject = async (req, res, next) => {
+    try {
+        if(!req.isTeacher){
+            return res.status(400).json({message:"Only teachers can view subjects"});
+        }
+        const user = await User.findById(req.userId);
+        if (!(user.subjects.includes(req.params.subjectId))) {
+            return res.status(400).json({ message: "You are not authorized to Edit this subject" });
+
+        }
+        const subject = await Subject.findById(req.params.subjectId);
+        if (!subject) {
+            return res.status(400).json({ message: "Subject not found" });
+        }
+        const updatedSubject = await Subject.findByIdAndUpdate(req.params.subjectId, req.body, { new: true });
+        res.status(200).json({ message: "Subject Updated", updatedSubject });
+    }
+    catch (err) {
+        console.log(err);
+        next(err);
+    }
+}
+
+export const deleteSubject = async (req, res, next) => {
+    try {
+        if(!req.isTeacher){
+            return res.status(400).json({message:"Only teachers can view subjects"});
+        }
+        const user = await User.findById(req.userId);
+        if (!(user.subjects.includes(req.params.subjectId))) {
+            return res.status(400).json({ message: "You are not authorized to Edit this subject" });
+
+        }
+        const subject = await Subject.findById(req.params.subjectId);
+        if (!subject) {
+            return res.status(400).json({ message: "Subject not found" });
+        }
+        await Subject.findByIdAndDelete(req.params.subjectId);
+        res.status(200).json({ message: "Subject Deleted" });
+    }
+    catch (err) {
+        console.log(err);
+        next(err);
+    }
+}
