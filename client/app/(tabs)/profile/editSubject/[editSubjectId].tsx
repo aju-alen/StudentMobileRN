@@ -11,15 +11,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { ipURL } from "../../../utils";
 import { useLocalSearchParams } from "expo-router";
-interface SubjectData {
-  subjectImage?: string;
-  subjectName?: string;
-  subjectBoard?: string;
-  subjectDescription?: string;
-  subjectGrade?: number;
-  subjectPrice?: number;
-  subjectTags?: [string];
-}
 
 const EditSingleSubject = () => {
   const [subjectName, setSubjectName] = useState("");
@@ -29,13 +20,8 @@ const EditSingleSubject = () => {
   const [subjectBoard, setSubjectBoard] = useState("");
   const [subjectGrade, setSubjectGrade] = useState("");
   const [subjectLanguage, setSubjectLanguage] = useState("");
-  const [skillTags, setSkillTags] = useState([]);
-  const [inputText, setInputText] = useState("");
-  const [singleSubjectData, setSingleSubjectData] = React.useState<SubjectData>(
-    {}
-  );
+
   const { editSubjectId } = useLocalSearchParams();
-  console.log("local search params", useLocalSearchParams());
 
   useEffect(() => {
     const getSubjects = async () => {
@@ -49,9 +35,15 @@ const EditSingleSubject = () => {
             },
           }
         );
-        console.log("this is resp", resp.data);
+        console.log("resp data in useEffect", resp.data);
 
-        setSingleSubjectData(resp.data);
+        setSubjectName(resp.data.subjectName);
+        setSubjectBoard(resp.data.subjectBoard);
+        setSubjectDescription(resp.data.subjectDescription);
+        setSubjectGrade(resp.data.subjectGrade);
+        setSubjectPrice(resp.data.subjectPrice);
+        setSubjectLanguage(resp.data.subjectLanguage);
+        setSubjectImage(resp.data.subjectImage);
       } catch (error) {
         console.error("Error fetching subject data:", error);
       }
@@ -69,18 +61,17 @@ const EditSingleSubject = () => {
       subjectBoard,
       subjectGrade,
       subjectLanguage,
-      skillTags,
     };
     console.log("this is subject", subject);
-  };
-
-  const handleInputChange = (text) => {
-    setInputText(text);
-  };
-  const handleAddItem = () => {
-    if (inputText.trim() !== "") {
-      setSkillTags([...skillTags, inputText]);
-      setInputText("");
+    try{
+      const token = await AsyncStorage.getItem("authToken");
+      axios.post(`https://${ipURL}/api/subjects/${editSubjectId}`, subject, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+    }catch(error){
+      console.log(error);
     }
   };
 
@@ -90,17 +81,20 @@ const EditSingleSubject = () => {
         <Ionicons name="book-outline" size={20} color="#900" />
         <TextInput
           style={styles.input1}
-          placeholder="Subject Name"
-          value={subjectName}
-          onChangeText={setSubjectName}
+          placeholder={subjectName}
+          defaultValue={subjectName}
+          onChangeText={(text) => {
+            setSubjectName(text);
+          }}
         />
       </View>
-      <View style={styles.inputContainer}>
+      <View style={styles.inputContainerDesc}>
         <Ionicons name="book-outline" size={20} color="#900" />
         <TextInput
-          style={styles.input1}
-          placeholder="Subject Description"
-          value={subjectDescription}
+          editable
+          multiline
+          placeholder={subjectDescription}
+          defaultValue={subjectDescription}
           onChangeText={setSubjectDescription}
         />
       </View>
@@ -108,7 +102,7 @@ const EditSingleSubject = () => {
         <Ionicons name="book-outline" size={20} color="#900" />
         <TextInput
           style={styles.input1}
-          placeholder="Subject Image"
+          placeholder={subjectImage}
           value={subjectImage}
           onChangeText={setSubjectImage}
         />
@@ -117,7 +111,7 @@ const EditSingleSubject = () => {
         <Ionicons name="book-outline" size={20} color="#900" />
         <TextInput
           style={styles.input1}
-          placeholder="Subject Price"
+          placeholder={subjectPrice}
           value={subjectPrice}
           onChangeText={setSubjectPrice}
         />
@@ -126,7 +120,7 @@ const EditSingleSubject = () => {
         <Ionicons name="book-outline" size={20} color="#900" />
         <TextInput
           style={styles.input1}
-          placeholder="Subject Board"
+          placeholder={subjectBoard}
           value={subjectBoard}
           onChangeText={setSubjectBoard}
         />
@@ -135,7 +129,7 @@ const EditSingleSubject = () => {
         <Ionicons name="book-outline" size={20} color="#900" />
         <TextInput
           style={styles.input1}
-          placeholder="Subject Grade"
+          placeholder={subjectGrade}
           value={subjectGrade}
           onChangeText={setSubjectGrade}
         />
@@ -144,28 +138,14 @@ const EditSingleSubject = () => {
         <Ionicons name="book-outline" size={20} color="#900" />
         <TextInput
           style={styles.input1}
-          placeholder="Subject Language"
+          placeholder={subjectLanguage}
           value={subjectLanguage}
           onChangeText={setSubjectLanguage}
         />
       </View>
-      <View style={styles.inputContainer}>
-        <Ionicons name="construct-outline" size={20} color="#900" />
-        <TextInput
-          style={styles.input1}
-          value={inputText}
-          onChangeText={handleInputChange}
-          placeholder="Add One Skill At A Time"
-        />
-        <TouchableOpacity onPress={handleAddItem}>
-          <View style={styles.addButton}>
-            <Ionicons name="add-circle-outline" size={20} color="#900" />
-            <Text>Add</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
+      
       <TouchableOpacity style={styles.button} onPress={handleCreateSubject}>
-        <Text style={styles.text}>Create Your Subject</Text>
+        <Text style={styles.text}>Edit Your Subject</Text>
       </TouchableOpacity>
     </View>
   );
@@ -185,6 +165,14 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     borderWidth: 1,
     borderColor: "gray",
+  },
+  inputContainerDesc: {
+    marginBottom: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: "gray",
+    borderRadius: 20,
   },
   input1: {
     flex: 1,
