@@ -18,6 +18,7 @@ interface SubjectData {
   subjectName?: string;
   subjectBoard?: string;
   subjectDescription?: string;
+  subjectLanguage?: string;
   subjectGrade?: number;
   subjectPrice?: number;
   subjectTags?: [string]; 
@@ -93,7 +94,7 @@ const [userData, setUserData] = React.useState<User>({});
         </View>
         <View style={{flexDirection:'row'}}>
           <Ionicons name='chatbox-ellipses'size={30} color={'black'} />
-          <Text style={styles.detail}>Medium of Instruction: English</Text>
+          <Text style={styles.detail}>Medium of Instruction: {singleSubjectData.subjectLanguage}</Text>
         </View>
         </View>
         <Text style={{fontSize:16}}>Skills you will gain</Text>

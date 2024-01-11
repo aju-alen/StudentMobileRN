@@ -23,7 +23,7 @@ const CreateSubject = () => {
   const [subjectGrade, setSubjectGrade] = useState("");
   const [teacherVerification, setTeacherVerification] = useState([""]);
   const [subjectLanguage, setSubjectLanguage] = useState("");
-  const [skillTags, setSkillTags] = useState([]);
+  const [subjectTags, setsubjectTags] = useState([]);
 
   const addTeacherVerificationField = () => {
     setTeacherVerification([...teacherVerification, ""]);
@@ -50,7 +50,7 @@ const CreateSubject = () => {
       subjectGrade,
       teacherVerification,
       subjectLanguage,
-      skillTags,
+      subjectTags,
     };
     const token = await AsyncStorage.getItem("authToken");
     try {
@@ -75,7 +75,6 @@ const CreateSubject = () => {
     subjectGrade,
     teacherVerification
   );
-  // desc big textarea also + sign vennam iphone placeholder not working google chyannam
 
   const [inputText, setInputText] = useState("");
 
@@ -85,11 +84,11 @@ const CreateSubject = () => {
 
   const handleAddItem = () => {
     if (inputText.trim() !== "") {
-      setSkillTags([...skillTags, inputText]);
+      setsubjectTags([...subjectTags, inputText]);
       setInputText("");
     }
   };
-  console.log("dataArray", skillTags);
+  console.log("dataArray", subjectTags);
 
   return (
     <View style={styles.container}>
@@ -102,13 +101,13 @@ const CreateSubject = () => {
           onChangeText={setSubjectName}
         />
       </View>
-      <View style={styles.inputContainer}>
-        <Ionicons name="reorder-four-outline" size={20} color="#900" />
+      <View style={styles.inputContainerDesc}>
+        <Ionicons name="book-outline" size={20} color="#900" />
         <TextInput
           editable
           multiline
-          style={styles.input1}
-          placeholder="Subject Description"
+          numberOfLines={10}
+          placeholder={subjectDescription}
           value={subjectDescription}
           onChangeText={setSubjectDescription}
         />
@@ -236,6 +235,14 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     borderWidth: 1,
     borderColor: "gray",
+  },
+  inputContainerDesc: {
+    marginBottom: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: "gray",
+    borderRadius: 20,
   },
   inputContainer1: {
     flexDirection: "row",
