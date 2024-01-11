@@ -3,13 +3,14 @@ import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons';
 import { PanGestureHandler, State, TextInput } from 'react-native-gesture-handler';
+import { router } from 'expo-router';
 
-const App = () => {
+const chatId = 123;
   const handlePress = () => {
     console.log('Button clicked!');
+    router.push(`/(tabs)/chat/${chatId}`);
     // Perform any other actions you want when the button is clicked
   };
-}
 
 const ChatPage = () => {
   return (
@@ -27,7 +28,10 @@ const ChatPage = () => {
         <View style={{backgroundColor:'#45B08C',height:75,width:'100%',
     justifyContent: 'center',borderColor:'black', borderWidth:0,borderRadius:10 ,flexDirection: 'row', }}>
           <View style={{flexDirection:'column'}}>
-          <Text style={styles.name}>Teacher 2</Text>
+          <TouchableOpacity onPress={handlePress}>
+            <Text style={styles.name}>
+            Teacher 2
+              </Text></TouchableOpacity>
           <Text style={styles.message}>Chat 3</Text>
           </View>
           <Text style={{color:'white', paddingTop:17,fontSize:14,alignItems:'flex-end',textAlign:'right',flex:1,paddingRight:10}}>4:20 am</Text>
