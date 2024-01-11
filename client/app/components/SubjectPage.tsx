@@ -36,7 +36,7 @@ const SubjectPage = ({subjectId}) => {
   const [singleSubjectData, setSingleSubjectData] = React.useState<SubjectData>(
     {}
   );
-  
+  console.log("this is subjectId", subjectId);
   const name=singleSubjectData.user?.name
   const profileImage=singleSubjectData.user?.profileImage
 const [userData, setUserData] = React.useState<User>({});
@@ -60,7 +60,7 @@ const [userData, setUserData] = React.useState<User>({});
     };
 
     getSubjects();
-  }, [subjectId]);
+  }, []);
 
   console.log("Single Subject Data:", singleSubjectData);
 

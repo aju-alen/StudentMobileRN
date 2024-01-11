@@ -73,9 +73,6 @@ const ProfilePage = () => {
     router.push(`/(tabs)/profile/${itemId._id}`);
   };
 
-  const [showAllText, setShowAllText] = useState(false);
-  const maxLines = 2;
-
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
@@ -85,7 +82,7 @@ const ProfilePage = () => {
               <TouchableOpacity
                 style={styles.button}
                 onPress={() => {
-                  router.push("/(tabs)/profile/createSubject");
+                  router.push(`/(tabs)/profile/createSubject`);
                 }}
               >
                 <Text style={styles.text1}>Create a Subject</Text>
@@ -118,12 +115,6 @@ const ProfilePage = () => {
         homeData={subjectArray}
         handleItemPress={handleItemPress}
         />
-      </View>
-      {/* This is the test modal */}
-      <View> 
-        <TouchableOpacity
-          onPress={() =>router.push("/(tabs)/profile/editSubject/123") }
-          style={styles.button}><Text>Open Modal</Text></TouchableOpacity>
       </View>
     </SafeAreaView>
   );
