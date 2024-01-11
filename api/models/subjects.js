@@ -21,6 +21,14 @@ const subjectSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    subjectLanguage: {
+        type: String,
+        required: true
+    },
+    subjectTags: {
+        type: [String],
+        required: true
+    },
     subjectGrade: {
         type: Number,
         required: true,
