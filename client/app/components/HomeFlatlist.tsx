@@ -21,8 +21,23 @@ const HomeFlatlist = ({ homeData, handleItemPress }) => {
     console.log("Edit item", item._id);
     router.push(`../profile/editSubject/${item._id}`);
   };
-  const handleIPressDelete = (item) => {
+
+  const handleIPressDelete = async (item) => {
     console.log("Delete item", item);
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      const resp = await axios.delete(
+        `http://${ipURL}/api/subjects/${item._id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      alert("Subject deleted successfully");
+    } catch (error) {
+      console.error("Error fetching subject data:", error);
+    }
   };
   const routeInfo = usePathname();
   interface User {
