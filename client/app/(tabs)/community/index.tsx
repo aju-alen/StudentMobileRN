@@ -5,9 +5,11 @@ import {
   SafeAreaView,
   FlatList,
   Image,
+  TouchableOpacity,
 } from "react-native";
 import React from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 const CommunityPage = () => {
   const communites = [
@@ -41,6 +43,10 @@ const CommunityPage = () => {
     },
   ];
 
+  const handlePress = (item) => {
+    router.push(`/(tabs)/community/${item.name}`);
+  }
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <Text style={[styles.text1]}>
@@ -51,14 +57,18 @@ const CommunityPage = () => {
       <FlatList
         data={communites}
         renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View style={styles.rowContainer1}>
-              <Image source={{ uri: item.imagePic }} style={styles.image} />
-              <View style={[styles.textContainer, { marginLeft: 10 }]}>
-                <Text style={styles.text2}>{item.name}</Text>
-                <Text style={styles.text2}>{item.count}+ Members</Text>
+          <View>
+            <TouchableOpacity onPress={() => handlePress(item)}>
+              <View style={styles.card}>
+                <View style={styles.rowContainer1}>
+                  <Image source={{ uri: item.imagePic }} style={styles.image} />
+                  <View style={[styles.textContainer, { marginLeft: 10 }]}>
+                    <Text style={styles.text2}>{item.name}</Text>
+                    <Text style={styles.text2}>{item.count}+ Members</Text>
+                  </View>
+                </View>
               </View>
-            </View>
+            </TouchableOpacity>
           </View>
         )}
       />

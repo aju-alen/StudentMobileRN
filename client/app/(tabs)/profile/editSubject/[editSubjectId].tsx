@@ -1,4 +1,5 @@
 import {
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -11,6 +12,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { ipURL } from "../../../utils";
 import { useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 interface SubjectData {
   subjectImage?: string;
   subjectName?: string;
@@ -90,10 +92,10 @@ const EditSingleSubject = () => {
         }
       );
       console.log("this is resp", resp.data);
+      router.replace("/(tabs)/profile");
     } catch (error) {
       console.error("Error updating subject data:", error);
     }
-    
   };
 
   const handleInputChange = (text) => {
@@ -107,89 +109,87 @@ const EditSingleSubject = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.inputContainer}>
-        <Ionicons name="book-outline" size={20} color="#900" />
-        <TextInput
-          style={styles.input1}
-          placeholder="Subject Name"
-          value={subjectName}
-          onChangeText={setSubjectName}
-        />
-      </View>
-      <View style={styles.inputContainer}>
-        <Ionicons name="book-outline" size={20} color="#900" />
-        <TextInput
-          style={styles.input1}
-          placeholder="Subject Description"
-          value={subjectDescription}
-          onChangeText={setSubjectDescription}
-        />
-      </View>
-      <View style={styles.inputContainer}>
-        <Ionicons name="book-outline" size={20} color="#900" />
-        <TextInput
-          style={styles.input1}
-          placeholder="Subject Image"
-          value={subjectImage}
-          onChangeText={setSubjectImage}
-        />
-      </View>
-      <View style={styles.inputContainer}>
-        <Ionicons name="book-outline" size={20} color="#900" />
-        <TextInput
-          style={styles.input1}
-          placeholder="Subject Price"
-          value={subjectPrice}
-          onChangeText={setSubjectPrice}
-        />
-      </View>
-      <View style={styles.inputContainer}>
-        <Ionicons name="book-outline" size={20} color="#900" />
-        <TextInput
-          style={styles.input1}
-          placeholder="Subject Board"
-          value={subjectBoard}
-          onChangeText={setSubjectBoard}
-        />
-      </View>
-      <View style={styles.inputContainer}>
-        <Ionicons name="book-outline" size={20} color="#900" />
-        <TextInput
-          style={styles.input1}
-          placeholder="Subject Grade"
-          value={subjectGrade}
-          onChangeText={setSubjectGrade}
-        />
-      </View>
-      <View style={styles.inputContainer}>
-        <Ionicons name="book-outline" size={20} color="#900" />
-        <TextInput
-          style={styles.input1}
-          placeholder="Subject Language"
-          value={subjectLanguage}
-          onChangeText={setSubjectLanguage}
-        />
-      </View>
-      <View style={styles.inputContainer}>
-        <Ionicons name="construct-outline" size={20} color="#900" />
-        <TextInput
-          style={styles.input1}
-          value={inputText}
-          onChangeText={handleInputChange}
-          placeholder="Add One Skill At A Time"
-        />
-        <TouchableOpacity onPress={handleAddItem}>
-          <View style={styles.addButton}>
-            <Ionicons name="add-circle-outline" size={20} color="#900" />
-            <Text>Add</Text>
-          </View>
+    <ScrollView>
+      <View style={styles.container}>
+        <View style={styles.inputContainer}>
+          <Ionicons name="book-outline" size={20} color="#900" />
+          <TextInput
+            style={styles.input1}
+            value={subjectName}
+            onChangeText={setSubjectName}
+          />
+        </View>
+        <View style={styles.inputContainerDesc}>
+          <Ionicons name="menu-outline" size={20} color="#900" />
+          <TextInput
+            editable
+            multiline
+            numberOfLines={10}
+            style={styles.input1}
+            value={subjectDescription}
+            onChangeText={setSubjectDescription}
+          />
+        </View>
+        <View style={styles.inputContainer}>
+          <Ionicons name="camera-outline" size={20} color="#900" />
+          <TextInput
+            style={styles.input1}
+            value={subjectImage}
+            onChangeText={setSubjectImage}
+          />
+        </View>
+        <View style={styles.inputContainer}>
+          <Ionicons name="cash-outline" size={20} color="#900" />
+          <TextInput
+            style={styles.input1}
+            value={subjectPrice}
+            onChangeText={setSubjectPrice}
+          />
+        </View>
+        <View style={styles.inputContainer}>
+          <Ionicons name="school-outline" size={20} color="#900" />
+          <TextInput
+            style={styles.input1}
+            value={subjectBoard}
+            onChangeText={setSubjectBoard}
+          />
+        </View>
+        <View style={styles.inputContainer}>
+          <Ionicons name="trophy-outline" size={20} color="#900" />
+          <TextInput
+            style={styles.input1}
+            value={subjectGrade}
+            onChangeText={setSubjectGrade}
+          />
+        </View>
+        <View style={styles.inputContainer}>
+          <Ionicons name="chatbox-ellipses-outline" size={20} color="#900" />
+          <TextInput
+            style={styles.input1}
+            value={subjectLanguage}
+            onChangeText={setSubjectLanguage}
+          />
+        </View>
+        <View style={styles.inputContainer}>
+          <Ionicons name="construct-outline" size={20} color="#900" />
+          <TextInput
+            style={styles.input1}
+            value={inputText}
+            onChangeText={handleInputChange}
+            placeholder="Add One Skill At A Time"
+          />
+          <TouchableOpacity onPress={handleAddItem}>
+            <View style={styles.addButton}>
+              <Ionicons name="add-circle-outline" size={20} color="#900" />
+              <Text>Add</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity style={styles.button} onPress={handleUpdateSubject}>
+          <Text style={styles.text}>Create Your Subject</Text>
         </TouchableOpacity>
       </View>
-      <TouchableOpacity style={styles.button} onPress={handleUpdateSubject}>
-        <Text style={styles.text}>Create Your Subject</Text>
-      </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -207,6 +207,14 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     borderWidth: 1,
     borderColor: "gray",
+  },
+  inputContainerDesc: {
+    marginBottom: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: "gray",
+    borderRadius: 20,
   },
   input1: {
     flex: 1,
