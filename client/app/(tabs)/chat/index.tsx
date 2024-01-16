@@ -6,8 +6,11 @@ import {
   TextInput,
   FlatList,
 } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { ipURL } from "../../utils";
 
 const ChatPage = () => {
   const teachersInformation = [
@@ -37,10 +40,33 @@ const ChatPage = () => {
       subject: "Physical Education",
     },
   ];
-  const handlePress = (item) => {
-    router.push(`/(tabs)/chat/${item.name}`);
-  };
+  const [conversation, setConversation] = React.useState([]);
+  useEffect(() => {
 
+    const getConversation = async () => {
+    const token = await AsyncStorage.getItem("authToken");
+    const resp = await axios.get(`http://${ipURL}/api/conversation`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    setConversation(resp.data);
+    console.log('this is useeffect in chat');
+  
+  }
+    getConversation();
+  }, []);
+  
+
+  const handlePress = (item) => {
+    const conversationId = item.userId + item.clientId._id;
+    console.log(conversationId, "this is conversationId");
+    
+    router.push(`/(tabs)/chat/${conversationId}`);
+  };
+  console.log(conversation, "this is conversation");
+  
   return (
     <View style={styles.container}>
       <View style={styles.searchContainer}>
@@ -52,20 +78,21 @@ const ChatPage = () => {
       <View style={styles.mainContainer}>
         <View style={styles.checkq}>
           <FlatList
-            data={teachersInformation}
+            data={conversation}
             renderItem={({ item }) => (
+              <TouchableOpacity onPress={() => handlePress(item)} style={[styles.shadowProp,styles.card]}>
               <View>
-                <TouchableOpacity onPress={() => handlePress(item)}>
                   <View style={styles.listContainer}>
                     <View>
-                      <Text style={styles.name}>{item.name}</Text>
-                      <Text style={styles.message}>{item.subject}</Text>
+                      <Text style={styles.name}>{item.clientId.name}</Text>
+                      <Text style={styles.message}>{}</Text>
+                      
                     </View>
                   </View>
-                </TouchableOpacity>
               </View>
+              </TouchableOpacity>
             )}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item) => item._id}
           />
         </View>
       </View>
@@ -119,5 +146,19 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "lightgrey",
     fontFamily: "Roboto-Regular",
+  },
+  card: {
+    
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    width: '100%',
+    marginVertical: 2,
+  },
+  shadowProp: {
+    shadowColor: '#171717',
+    shadowOffset: {width: -2, height: 4},
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
   },
 });

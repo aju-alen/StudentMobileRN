@@ -1,7 +1,36 @@
-import { StyleSheet, Text, View, SafeAreaView, TextInput } from "react-native";
+import { StyleSheet, Text, View, SafeAreaView, TextInput, TouchableOpacity } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { ipURL } from "../utils";
+import React from "react";
 const ChatId = ({chatName}) => {
+  const [messages, setMessages] = React.useState([]);
+  const [newMessage, setNewMessage] = React.useState("");
+  const isUser = true;
+
+const handleSendMessage = async () => {
+  //THis is to send a message and store it in the backend.
+
+  // we send the conversationId and the message to the backend with the senderId .
+}
+
+useEffect(() => {
+  const getMessages = async () => {
+    const token = await AsyncStorage.getItem('authToken')
+    const userDetails = await AsyncStorage.getItem('userDetails')
+    const user = JSON.parse(userDetails)
+    const resp = await axios.get(`http://${ipURL}/api/message/${chatName}`,{
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    console.log(resp.data,'this is resp.data');
+    }
+    getMessages();
+}, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -20,16 +49,61 @@ const ChatId = ({chatName}) => {
           style={styles.icon}
         />
       </View>
-      <View style={styles.messageContainer}>
+      
+        {isUser?(
+        <View style={styles.messageContainerLeft}>
         <View style={styles.messageContainer2}>
           <Text style={styles.message}>Hi</Text>
           <Text style={styles.time}>9:30PM</Text>
         </View>
-        <View style={styles.messageContainer2}>
-          <Text style={styles.message}>Why</Text>
-          <Text style={styles.time}>10:30AM</Text>
         </View>
-      </View>
+        )
+        :(
+        
+          <View style={styles.messageContainerRight}>
+          <View style={styles.messageContainer2}>
+            <Text style={styles.message}>Hi</Text>
+            <Text style={styles.time}>9:30PM</Text>
+          </View>
+          </View>
+      )}
+        {!isUser?(
+        <View style={styles.messageContainerLeft}>
+        <View style={styles.messageContainer2}>
+          <Text style={styles.message}>Hi</Text>
+          <Text style={styles.time}>9:30PM</Text>
+        </View>
+        </View>
+        )
+        :(
+        
+          <View style={styles.messageContainerRight}>
+          <View style={styles.messageContainer2}>
+            <Text style={styles.message}>Hi</Text>
+            <Text style={styles.time}>9:30PM</Text>
+          </View>
+          </View>
+      
+      )}
+        {!isUser?(
+        <View style={styles.messageContainerLeft}>
+        <View style={styles.messageContainer2}>
+          <Text style={styles.message}>Hi</Text>
+          <Text style={styles.time}>9:30PM</Text>
+        </View>
+        </View>
+        )
+        :(
+        
+          <View style={styles.messageContainerRight}>
+          <View style={styles.messageContainer2}>
+            <Text style={styles.message}>Hi</Text>
+            <Text style={styles.time}>9:30PM</Text>
+          </View>
+          </View>
+      
+      )}
+      
       <View style={styles.keyboardContainer}>
         <View style={styles.inputConatiner}>
           <Ionicons name="happy" size={30} color="grey" />
@@ -37,8 +111,12 @@ const ChatId = ({chatName}) => {
             placeholder="Message"
             placeholderTextColor="grey"
             style={styles.textInput}
+            value={newMessage}
+            onChangeText={setNewMessage}
           />
-          <Ionicons name="camera" size={30} color="grey" />
+          <TouchableOpacity onPress={handleSendMessage}>
+          <Ionicons name="send" size={30} color="grey" />
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
@@ -83,10 +161,15 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "right",
   },
-  messageContainer: {
+  messageContainerLeft: {
     backgroundColor: "#93E9BE",
-    flex: 1,
-    flexDirection: "column",
+    justifyContent: "flex-start",
+    flexDirection: "row",
+  },
+  messageContainerRight: {
+    backgroundColor: "#93E9BE",
+    justifyContent: "flex-end",
+    flexDirection: "row",
   },
   messageContainer2: {
     backgroundColor: "#81B69D",
