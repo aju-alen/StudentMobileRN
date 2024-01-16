@@ -39,7 +39,7 @@ const LoginPage = () => {
             console.log(resp.data, 'Logged in succesfully');
             
             AsyncStorage.setItem('authToken', resp.data.token);
-            AsyncStorage.setItem('userDetails', JSON.stringify({isTeacher:resp.data.isTeacher, isAdmin:resp.data.isAdmin}));
+            AsyncStorage.setItem('userDetails', JSON.stringify({isTeacher:resp.data.isTeacher, isAdmin:resp.data.isAdmin,userId:resp.data.userId}));
             router.replace('/(tabs)/home');
 
         }
@@ -59,7 +59,8 @@ const LoginPage = () => {
                     <Ionicons name="mail" size={24} color="gray" style={styles.icon} />
                     <TextInput
                         style={styles.input}
-                        placeholder="Email"
+                        placeholder="Enter your Email"
+                        placeholderTextColor="gray"
                         value={email}
                         onChangeText={setEmail}
                     />
@@ -68,7 +69,8 @@ const LoginPage = () => {
                     <Ionicons name="lock-closed" size={24} color="gray" style={styles.icon} />
                     <TextInput
                         style={styles.input}
-                        placeholder="Password"
+                        placeholder="Enter Your Password"
+                        placeholderTextColor="gray"
                         secureTextEntry
                         value={password}
                         onChangeText={setPassword}

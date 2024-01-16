@@ -46,7 +46,8 @@ const RegisterPage = () => {
                     <Ionicons name="person" size={24} color="gray" style={styles.icon} />
                     <TextInput
                         style={styles.input}
-                        placeholder="Name"
+                        placeholder="Enter Your Name"
+                        placeholderTextColor="gray"
                         value={name}
                         onChangeText={setName}
                     />
@@ -56,7 +57,8 @@ const RegisterPage = () => {
                     <Ionicons name="mail" size={24} color="gray" style={styles.icon} />
                     <TextInput
                         style={styles.input}
-                        placeholder="Email"
+                        placeholder="Enter Your Email"
+                        placeholderTextColor="gray"
                         value={email}
                         onChangeText={setEmail}
                     />
@@ -66,7 +68,8 @@ const RegisterPage = () => {
                     <Ionicons name="lock-closed" size={24} color="gray" style={styles.icon} />
                     <TextInput
                         style={styles.input}
-                        placeholder="Password"
+                        placeholder="Enter Your Password"
+                        placeholderTextColor="gray"
                         secureTextEntry
                         value={password}
                         onChangeText={setPassword}
@@ -77,7 +80,8 @@ const RegisterPage = () => {
                     <Ionicons name="image" size={24} color="gray" style={styles.icon} />
                     <TextInput
                         style={styles.input}
-                        placeholder="Profile Image"
+                        placeholder="Enter Your Profile Image url/ Temp till S3"
+                        placeholderTextColor="gray"
                         value={profileImage}
                         onChangeText={setProfileImage}
                     />
@@ -87,7 +91,8 @@ const RegisterPage = () => {
                     <Ionicons name="person-circle" size={24} color="gray" style={styles.icon} />
                     <TextInput
                         style={styles.input}
-                        placeholder="User Description"
+                        placeholder="Write Something About Yourself"
+                        placeholderTextColor="gray"
                         value={userDescription}
                         onChangeText={setUserDescription}
                     />
@@ -105,7 +110,7 @@ const RegisterPage = () => {
 
                 <View>
                     <Pressable onPress={() => router.replace('/(authenticate)/login')} style={styles.link}>
-                        <Text>Don't have an account? Register Here</Text>
+                        <Text>Already Have an account? Login Here</Text>
                     </Pressable>
                 </View>
 
