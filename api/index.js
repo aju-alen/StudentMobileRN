@@ -6,6 +6,7 @@ import authRoute from './routes/auth-route.js';
 import subjectRoute from './routes/subject-routes.js';
 import paymentRoute from './routes/payment-route.js';
 import conversationRoute from './routes/conversation-route.js';
+import messageRoute from './routes/message.route.js';
 import dotenv from 'dotenv';
 import {errorHandler} from './middlewares/errorHandler.js';
 
@@ -34,6 +35,7 @@ app.use('/api/auth',authRoute)
 app.use('/api/subjects',subjectRoute)
 app.use('/api/payments',paymentRoute)
 app.use('/api/conversation',conversationRoute)
+app.use('/api/message',messageRoute)
 
 
 app.use(errorHandler)

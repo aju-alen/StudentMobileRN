@@ -52,22 +52,6 @@ export const getAllSubjects = async (req, res,next) => {
     }
 }
 
-export const getSubjectsToVerify = async (req, res,next) => {
-
-    try{
-        if(!isAdmin){
-            return res.status(400).json({message:"Only admin can Verify Subjects"});
-        }
-        const subjects = await Subject.find({subjectVerification:false});
-        res.status(200).json(subjects);
-    }
-    catch(err){
-        console.log(err);
-        next(err);
-    }
-}
-
-
 export const getOneSubject = async (req, res, next) => {
     try {
         const subject = await Subject.findById(req.params.subjectId).populate('user', '-password');
@@ -96,7 +80,7 @@ export const updateSubject = async (req, res, next) => {
         if (!subject) {
             return res.status(400).json({ message: "Subject not found" });
         }
-        const updatedSubject = await Subject.findByIdAndUpdate(req.params.subjectId, req.body, { new: true });
+        const updatedSubject = await Subject.findByIdAndUpdate(req.params.subjectId, {...req.body,subjectVerification:false}, { new: true });
         res.status(200).json({ message: "Subject Updated", updatedSubject });
     }
     catch (err) {
@@ -123,6 +107,46 @@ export const deleteSubject = async (req, res, next) => {
         res.status(200).json({ message: "Subject Deleted" });
     }
     catch (err) {
+        console.log(err);
+        next(err);
+    }
+}
+
+export const getAllSubjectsToVerify = async (req, res,next) => {
+    try {
+        
+        const subjects = await Subject.find({subjectVerification:false});
+        res.status(200).json(subjects);
+    }
+    catch (err) {
+        console.log(err);
+        next(err);
+    }
+}
+
+export const verifySubject = async (req, res,next) => {
+    console.log('inside verifySubject routeeeeee');
+    try{
+        if(!req.isAdmin){
+            return res.status(400).json({message:"Only admin can Verify Subjects"});
+        }
+        console.log('qqqqqqqqqqqqqqqqqqqqqq');
+        const subject = await Subject.findById(req.params.subjectId);
+        console.log(subject,'aaaaaaaaaaaaaaaaaaa')
+        if(!subject){
+            return res.status(400).json({message:"Subject not found"});
+        }
+        console.log(subject, "subject in route");
+        if(subject.subjectVerification === true){
+            return res.status(400).json({message:"Subject already verified"});
+        }
+        subject.subjectVerification = true;
+        const newUpdatedSubject = await subject.save();
+        console.log(newUpdatedSubject,'newUpdatedSubject');
+        res.status(200).json({message:"Subject Verified"});
+
+    }
+    catch(err){
         console.log(err);
         next(err);
     }
