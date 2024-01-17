@@ -1,25 +1,28 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import React, { useEffect, useState } from "react";
-import { Tabs } from "expo-router";
+import { Tabs, useSegments } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// interface UserDetails {
-//   isTeacher?: boolean;
-//   isAdmin?: boolean;
-// }
+interface UserDetails {
+  isTeacher?: boolean;
+  isAdmin?: boolean;
+}
 const TabsLayout = () => {
-  // const [userDetails, setUserDetails] = useState<UserDetails>({});
+  const segment = useSegments();
+  console.log(segment, "segment");
   
-  // useEffect(() => {
-  //  const getUserDetails = async () => {
-  //     const user = await AsyncStorage.getItem("userDetails");
-  //     setUserDetails(JSON.parse(user));
-  //  }
-  //  getUserDetails();
+  const [userDetails, setUserDetails] = useState<UserDetails>({});
+  
+  useEffect(() => {
+   const getUserDetails = async () => {
+      const user = await AsyncStorage.getItem("userDetails");
+      setUserDetails(JSON.parse(user));
+   }
+   getUserDetails();
     
-  // }, []);
+  }, []);
   
-  // console.log(userDetails.isAdmin,'zzzzz');
+  console.log(userDetails.isAdmin,'zzzzz');
   
   return (
     <Tabs
@@ -34,6 +37,8 @@ const TabsLayout = () => {
             iconName = focused ? "chatbubbles" : "chatbubbles-outline";
           } else if (route.name === "profile") {
             iconName = focused ? "person" : "person-outline";
+          } else if (route.name === "verification") {
+            iconName = focused ? "file-tray-full" : "file-tray-full-outline";
           }
           return <Ionicons name={iconName} size={size} color={"black"} />;
         },
@@ -61,10 +66,11 @@ const TabsLayout = () => {
         name="profile"
         options={{ headerShown: false, tabBarLabel: "Profile" }}
       />
-      {/* {userDetails.isAdmin &&<Tabs.Screen
+      <Tabs.Screen
         name="verification"
-        options={{ headerShown: false, tabBarLabel: "Verification" }}
-      />} */}
+        options={{ headerShown: false, tabBarLabel: "Verification",
+        href: !(userDetails.isAdmin)? null : "/verification"  }}
+      />
       
       
     </Tabs>

@@ -94,9 +94,10 @@ const ProfilePage = () => {
           </TouchableOpacity>
         </View>
         <View style={styles.profileContainer}>
+         
           <Image
+            source={{ uri: user.profileImage }}
             style={styles.profileImage}
-            source={{ uri: `${user?.profileImage}` }}
           />
           <Text style={styles.title}>{user.name}</Text>
           <View style={styles.rowContainer}>

@@ -10,9 +10,8 @@ import React, { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { ipURL } from "../../../utils";
-import { useLocalSearchParams } from "expo-router";
-import { router } from "expo-router";
+import { ipURL } from '../../utils'
+import { router, useLocalSearchParams, usePathname } from "expo-router";
 interface SubjectData {
   subjectImage?: string;
   subjectName?: string;
@@ -23,7 +22,7 @@ interface SubjectData {
   subjectTags?: [string];
 }
 
-const EditSingleSubject = () => {
+const VerifySingleSubject = () => {
   const [subjectName, setSubjectName] = useState("");
   const [subjectDescription, setSubjectDescription] = useState("");
   const [subjectImage, setSubjectImage] = useState("");
@@ -33,18 +32,24 @@ const EditSingleSubject = () => {
   const [subjectLanguage, setSubjectLanguage] = useState("");
   const [skillTags, setSkillTags] = useState([]);
   const [inputText, setInputText] = useState("");
+  const [teacherVerification, setTeacherVerification] = useState(['']);
   const [singleSubjectData, setSingleSubjectData] = React.useState<SubjectData>(
     {}
   );
-  const { editSubjectId } = useLocalSearchParams();
+  const { verifySingleSubject } = useLocalSearchParams();
   console.log("local search params", useLocalSearchParams());
+  const routeInfo = usePathname();
+  console.log(routeInfo, 'route info');
+
+
+
 
   useEffect(() => {
     const getSubjects = async () => {
       try {
         const token = await AsyncStorage.getItem("authToken");
         const resp = await axios.get(
-          `http://${ipURL}/api/subjects/${editSubjectId}`,
+          `http://${ipURL}/api/subjects/${verifySingleSubject}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -60,6 +65,8 @@ const EditSingleSubject = () => {
         setSubjectPrice((resp.data.subjectPrice).toString());
         setSubjectLanguage(resp.data.subjectLanguage);
         setSubjectImage(resp.data.subjectImage);
+        setTeacherVerification(resp.data.teacherVerification);
+
       } catch (error) {
         console.error("Error fetching subject data:", error);
       }
@@ -67,36 +74,28 @@ const EditSingleSubject = () => {
 
     getSubjects();
   }, []);
+  console.log(teacherVerification, 'teacher verification');
 
-  const handleUpdateSubject = async () => {
-    const subject = {
-      subjectName,
-      subjectDescription,
-      subjectImage,
-      subjectPrice,
-      subjectBoard,
-      subjectGrade,
-      subjectLanguage,
-      skillTags,
-    };
-    console.log("this is subject", subject);
+
+  const handleVerifySubject = async () => {
     try {
       const token = await AsyncStorage.getItem("authToken");
-      const resp = await axios.post(
-        `http://${ipURL}/api/subjects/${editSubjectId}`,
-        subject,
+      const resp = await axios.put(
+        `http://${ipURL}/api/subjects/verify/${verifySingleSubject}`,
+        {},
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-      console.log("this is resp", resp.data);
-      router.replace("/(tabs)/profile");
+      console.log("resp data in useEffect", resp.data);
+      router.replace('/(tabs)/verification');
     } catch (error) {
-      console.error("Error updating subject data:", error);
+      console.error("Error fetching subject data:", error);
     }
-  };
+  }
+  const handleRejectSubject = async () => {}
 
   const handleInputChange = (text) => {
     setInputText(text);
@@ -117,17 +116,19 @@ const EditSingleSubject = () => {
             style={styles.input1}
             value={subjectName}
             onChangeText={setSubjectName}
+            editable={false}
           />
         </View>
         <View style={styles.inputContainerDesc}>
           <Ionicons name="menu-outline" size={20} color="#900" />
           <TextInput
-            editable
+
             multiline
             numberOfLines={10}
             style={styles.input1}
             value={subjectDescription}
             onChangeText={setSubjectDescription}
+            editable={false}
           />
         </View>
         <View style={styles.inputContainer}>
@@ -136,6 +137,7 @@ const EditSingleSubject = () => {
             style={styles.input1}
             value={subjectImage}
             onChangeText={setSubjectImage}
+            editable={false}
           />
         </View>
         <View style={styles.inputContainer}>
@@ -144,6 +146,7 @@ const EditSingleSubject = () => {
             style={styles.input1}
             value={subjectPrice}
             onChangeText={setSubjectPrice}
+            editable={false}
           />
         </View>
         <View style={styles.inputContainer}>
@@ -152,6 +155,7 @@ const EditSingleSubject = () => {
             style={styles.input1}
             value={subjectBoard}
             onChangeText={setSubjectBoard}
+            editable={false}
           />
         </View>
         <View style={styles.inputContainer}>
@@ -160,6 +164,7 @@ const EditSingleSubject = () => {
             style={styles.input1}
             value={subjectGrade}
             onChangeText={setSubjectGrade}
+            editable={false}
           />
         </View>
         <View style={styles.inputContainer}>
@@ -168,32 +173,59 @@ const EditSingleSubject = () => {
             style={styles.input1}
             value={subjectLanguage}
             onChangeText={setSubjectLanguage}
+            editable={false}
           />
         </View>
-        <View style={styles.inputContainer}>
+
+        {teacherVerification.map((item) => {
+          
+          return (
+            <View key={item}  style={styles.inputContainer}>
+              <Ionicons name="chatbox-ellipses-outline" size={20} color="#900" />
+              <TextInput
+                style={styles.input1}
+                value={item}
+                onChangeText={setSubjectLanguage}
+                editable={false}
+              />
+            </View>
+          );
+        })}
+
+
+        {/* <View style={styles.inputContainer}>
           <Ionicons name="construct-outline" size={20} color="#900" />
           <TextInput
             style={styles.input1}
             value={inputText}
             onChangeText={handleInputChange}
             placeholder="Add One Skill At A Time"
-          />
-          <TouchableOpacity onPress={handleAddItem}>
+            editable = {false}
+          /> */}
+        {/* <TouchableOpacity onPress={handleAddItem}>
             <View style={styles.addButton}>
               <Ionicons name="add-circle-outline" size={20} color="#900" />
               <Text>Add</Text>
             </View>
-          </TouchableOpacity>
-        </View>
-        <TouchableOpacity style={styles.button} onPress={handleUpdateSubject}>
+          </TouchableOpacity> */}
+        {/* </View> */}
+        {/* <TouchableOpacity style={styles.button} onPress={handleUpdateSubject}>
           <Text style={styles.text}>Create Your Subject</Text>
+        </TouchableOpacity> */}
+      </View>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={styles.verifybutton} onPress={handleVerifySubject}>
+          <Text style={styles.text}>Verify Subject</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={handleRejectSubject}>
+          <Text style={styles.text}>Reject Subject</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
   );
 };
 
-export default EditSingleSubject;
+export default VerifySingleSubject;
 
 const styles = StyleSheet.create({
   container: {
@@ -241,4 +273,13 @@ const styles = StyleSheet.create({
     borderRadius: 100,
     margin: 12,
   },
+  verifybutton: {
+    backgroundColor: "green",
+    padding: 10,
+    borderRadius: 100,
+    margin: 12,
+  },
+  buttonContainer: { flexDirection: "row", justifyContent: "center" }
 });
+
+
