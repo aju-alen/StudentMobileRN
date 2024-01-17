@@ -12,6 +12,7 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ipURL } from "../utils";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 interface SubjectData {
   subjectImage?: string;
   subjectName?: string;
@@ -28,6 +29,7 @@ interface SubjectData {
 interface User {
   name?: string;
   profileImage?: string;
+  _id?: string;
 }
 
 const SubjectPage = ({ subjectId }) => {
@@ -38,6 +40,32 @@ const SubjectPage = ({ subjectId }) => {
   const name = singleSubjectData.user?.name;
   const profileImage = singleSubjectData.user?.profileImage;
   const [userData, setUserData] = React.useState<User>({});
+
+  const handleChatNow = async() => {
+    const token = await AsyncStorage.getItem('authToken')
+  const userDetails = await AsyncStorage.getItem('userDetails')
+  const userId = JSON.parse(userDetails).userId
+  const clientId = singleSubjectData.user?._id
+  const createConversationObject={
+    userId,
+    clientId 
+  }
+
+    try{
+
+  console.log(createConversationObject,'this is createConversationObject');
+  const resp = await axios.post(`http://${ipURL}/api/conversation`,createConversationObject,{
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+  router.replace('/(tabs)/chat')
+
+}
+catch(error){
+  console.error('Error fetching user data:',error);
+}
+  };
 
   useEffect(() => {
     const getSubjects = async () => {
@@ -145,7 +173,7 @@ const SubjectPage = ({ subjectId }) => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.chatbutton}
-              onPress={() => console.log("Button 2 pressed")}
+              onPress={handleChatNow}
             >
               <Ionicons name="chatbox-ellipses" size={30} color={"white"} />
               <Text style={styles.buttonText}>Chat Now</Text>
