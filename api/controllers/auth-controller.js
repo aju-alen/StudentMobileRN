@@ -116,7 +116,7 @@ export const login = async (req, res, next) => {
     }
 }
 
-export const singleUser = async (req, res) => {
+export const singleUser = async (req, res,next) => {
     try {
         const user = await User.findById(req.userId).select('-password').populate('subjects');
         if (!user) {
