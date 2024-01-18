@@ -12,6 +12,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { ipURL } from "../../utils";
 
+interface User {
+  userId?: string;
+}
+
 const ChatPage = () => {
   const teachersInformation = [
     {
@@ -41,6 +45,7 @@ const ChatPage = () => {
     },
   ];
   const [conversation, setConversation] = React.useState([]);
+  const [user, setUser] = React.useState<User>({});
   useEffect(() => {
 
     const getConversation = async () => {
@@ -59,11 +64,21 @@ const ChatPage = () => {
   }, []);
   
 
-  const handlePress = (item) => {
-    const conversationId = item.userId + item.clientId._id;
+  const handlePress = async (item) => {
+    try{
+      const conversationId = item.userId + item.clientId._id;
     console.log(conversationId, "this is conversationId");
+
+    const token = await AsyncStorage.getItem("authToken");
+    const userDetails = await AsyncStorage.getItem("userDetails");
+    setUser(JSON.parse(userDetails));
     
     router.push(`/(tabs)/chat/${conversationId}`);
+    }
+    catch(error){
+      console.error('Error fetching user data:',error);
+    }
+    
   };
   console.log(conversation, "this is conversation");
   
@@ -84,7 +99,11 @@ const ChatPage = () => {
               <View>
                   <View style={styles.listContainer}>
                     <View>
-                      <Text style={styles.name}>{item.clientId.name}</Text>
+                      
+                      {user.userId == item.userId._id? <Text style={styles.name}>{item.clientId.name}</Text>
+                      : 
+                      (<Text style={styles.name}>{item.userId.name}</Text>)}
+
                       <Text style={styles.message}>{}</Text>
                       
                     </View>

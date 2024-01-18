@@ -1,15 +1,22 @@
-import { StyleSheet, Text, View, SafeAreaView, TextInput, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, View, SafeAreaView, TextInput, TouchableOpacity, FlatList } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { ipURL } from "../utils";
 import React from "react";
+
+interface User {
+  userId?: string;
+ isTeacher?: boolean;
+ isAdmin?: boolean;
+}
 const ChatId = ({chatName}) => {
-  const [messages, setMessages] = React.useState([]);
+  const [allMessages, setAllMessages] = React.useState([]);
   const [newMessage, setNewMessage] = React.useState("");
-  const isUser = true;
+  const [user, setUser] = React.useState<User>({});
+
 
 const handleSendMessage = async () => {
   //THis is to send a message and store it in the backend.
@@ -21,16 +28,20 @@ useEffect(() => {
   const getMessages = async () => {
     const token = await AsyncStorage.getItem('authToken')
     const userDetails = await AsyncStorage.getItem('userDetails')
-    const user = JSON.parse(userDetails)
+     
     const resp = await axios.get(`http://${ipURL}/api/message/${chatName}`,{
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    console.log(resp.data,'this is resp.data');
+    setUser(JSON.parse(userDetails))
+    setAllMessages(resp.data);
+    
     }
     getMessages();
 }, []);
+console.log(allMessages,'this is resp.data for getting chat messages');
+console.log(user,'this is user details in chat');
 
   return (
     <SafeAreaView style={styles.container}>
@@ -49,60 +60,22 @@ useEffect(() => {
           style={styles.icon}
         />
       </View>
-      
-        {isUser?(
-        <View style={styles.messageContainerLeft}>
+
+      <FlatList data = {allMessages[0]?.messages}
+      renderItem={({item}) => (
+        <View style={item.senderId == user.userId ? styles.messageContainerRight:styles.messageContainerLeft }>
         <View style={styles.messageContainer2}>
-          <Text style={styles.message}>Hi</Text>
+          <Text style={styles.message}>{item?.message}</Text>
           <Text style={styles.time}>9:30PM</Text>
         </View>
         </View>
-        )
-        :(
         
-          <View style={styles.messageContainerRight}>
-          <View style={styles.messageContainer2}>
-            <Text style={styles.message}>Hi</Text>
-            <Text style={styles.time}>9:30PM</Text>
-          </View>
-          </View>
       )}
-        {!isUser?(
-        <View style={styles.messageContainerLeft}>
-        <View style={styles.messageContainer2}>
-          <Text style={styles.message}>Hi</Text>
-          <Text style={styles.time}>9:30PM</Text>
-        </View>
-        </View>
-        )
-        :(
-        
-          <View style={styles.messageContainerRight}>
-          <View style={styles.messageContainer2}>
-            <Text style={styles.message}>Hi</Text>
-            <Text style={styles.time}>9:30PM</Text>
-          </View>
-          </View>
+      > 
+      </FlatList>
       
-      )}
-        {!isUser?(
-        <View style={styles.messageContainerLeft}>
-        <View style={styles.messageContainer2}>
-          <Text style={styles.message}>Hi</Text>
-          <Text style={styles.time}>9:30PM</Text>
-        </View>
-        </View>
-        )
-        :(
-        
-          <View style={styles.messageContainerRight}>
-          <View style={styles.messageContainer2}>
-            <Text style={styles.message}>Hi</Text>
-            <Text style={styles.time}>9:30PM</Text>
-          </View>
-          </View>
-      
-      )}
+       
+       
       
       <View style={styles.keyboardContainer}>
         <View style={styles.inputConatiner}>

@@ -6,7 +6,7 @@ dotenv.config();
 export const getAllConversations = async (req, res, next) => {
     console.log(req.params.conversationId)
     try{
-        const conversations = await Conversation.find({userId:req.userId}).populate('clientId');
+        const conversations = await Conversation.find(!req.isTeacher?{userId:req.userId} : {clientId:req.userId}).populate('userId').populate('clientId');
         res.status(200).json(conversations);
     }
     catch(err){
