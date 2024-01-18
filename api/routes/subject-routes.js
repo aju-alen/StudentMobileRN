@@ -3,14 +3,14 @@ import { createSubject,getAllSubjects,getOneSubject,updateSubject,deleteSubject,
 import { verifyToken } from "../middlewares/jwt.js";
 const router = express.Router()
 
+router.get('/',verifyToken, getAllSubjects);
 router.get('/verify',verifyToken, getAllSubjectsToVerify);
-router.put('/verify/:subjectId',verifyToken, verifySubject);
+router.post('/create',verifyToken, createSubject);
 
+router.put('/verify/:subjectId',verifyToken, verifySubject);
 router.get('/:subjectId',verifyToken, getOneSubject);
 router.post('/:subjectId',verifyToken, updateSubject);
 router.delete('/:subjectId',verifyToken, deleteSubject);
 
-router.post('/create',verifyToken, createSubject);
-router.get('/',verifyToken, getAllSubjects);
 
 export default router;

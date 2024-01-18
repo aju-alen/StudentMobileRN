@@ -5,10 +5,11 @@ import {
   TextInput,
   SafeAreaView,
   Image,
+  TouchableOpacity,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import axios from "axios";
 import { ipURL } from "../../utils.js";
 import HomeFlatlist from "../../components/HomeFlatlist";
@@ -26,12 +27,14 @@ interface User {
 const HomePage = () => {
   const [subjectData, setSubjectData] = React.useState([]);
   const [search, setSearch] = React.useState("");
-  // const [isFocused, setIsFocused] = useState(false);
-  // setIsFocused(!isFocused);
+  const params = useLocalSearchParams();
+const { subjectGrade,subjectBoard,subjectTeacher,subjectTags} = params;
+console.log(params,'this is params in homeeee');
+
 
   const handleSearch = debounce(async () => {
     const token = await AsyncStorage.getItem("authToken");
-    const resp = await axios.get(`http://${ipURL}/api/subjects`, {
+    const resp = await axios.get(`http://${ipURL}/api/subjects?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -42,7 +45,7 @@ const HomePage = () => {
       return subject.subjectName.toLowerCase().includes(search.toLowerCase());
     });
     setSubjectData(filtered);
-  }, 400);
+  }, 1000);
 
   const [user, setUser] = useState<User>({});
   useEffect(() => {
@@ -57,18 +60,22 @@ const HomePage = () => {
     getUser();
   }, []);
 
-  console.log("User>>>>", user);
+  console.log("User11>>>>", user);
 
   useEffect(() => {
     const getSubjects = async () => {
       const token = await AsyncStorage.getItem("authToken");
-      const resp = await axios.get(`http://${ipURL}/api/subjects`, {
+
+      const resp = await axios.get(`http://${ipURL}/api/subjects?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       console.log(resp.data, "resp data in useEffect");
       setSubjectData(resp.data);
+
+      console.log("THIS IS RERENDERING AGAIN AFTER MODAL");
+
     };
     getSubjects();
   }, []);
@@ -94,6 +101,7 @@ const HomePage = () => {
             </Text>
           </View>
         </View>
+        <View style={{flexDirection:"row"}}>
         <View style={styles.inputContainer}>
           <Ionicons name={"search"} size={20} />
           <TextInput
@@ -105,6 +113,18 @@ const HomePage = () => {
               handleSearch();
             }}
           />
+         
+        </View>
+        <View style={styles.filterContainer}>
+        <TouchableOpacity onPress={()=>router.push('/home/filter')}>
+          <Ionicons name={"filter"} size={25} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.filterContainer}>
+        <TouchableOpacity onPress={()=>router.replace('/home/')}>
+          <Ionicons name={"close-circle-outline"} size={25} />
+          </TouchableOpacity>
+        </View>
         </View>
         <View style={styles.line}></View>
         <Text style={[styles.text, { paddingLeft: 20 }, { paddingVertical: 7 }]}>
@@ -129,12 +149,18 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    margin: 12,
+    marginLeft: 10,
+    marginVertical: 10,
     paddingHorizontal: 8,
-    borderRadius: 100,
+    borderRadius:10,
     borderWidth: 1,
     borderColor: "gray",
-    backgroundColor: "orange",
+    backgroundColor: "#C15E49",
+    width: "75%",
+  },
+  filterContainer:{
+    justifyContent:"center",
+    marginHorizontal:7,
   },
   input1: {
     flex: 1,
@@ -173,4 +199,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
   },
+  inputBox:{
+    backgroundColor: "white",
+    borderRadius: 10,
+    height: 45,
+    marginVertical: 5,
+    paddingLeft: 10,
+  }
 });

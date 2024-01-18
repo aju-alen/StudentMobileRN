@@ -40,13 +40,29 @@ export const createSubject = async (req, res,next) => {
     }
 }
 
-export const getAllSubjects = async (req, res,next) => {
+export const getAllSubjects = async (req, res, next) => {
+    const { subjectGrade,subjectBoard,subjectTeacher,subjectTags } = req.query;
+    const grade = parseInt(subjectGrade);
+    console.log('subjectTags',typeof subjectTags);
+   
     try {
-        
-        const subjects = await Subject.find({subjectVerification:true});
+        let filter = { subjectVerification: true };
+        if (!isNaN(grade)) {
+            filter.subjectGrade = grade;
+        }
+        if (subjectBoard !== undefined) {
+            filter.subjectBoard = subjectBoard;
+        }
+        let newfilter ={subjectVerification:true,
+            ...(!isNaN(grade) && {subjectGrade:grade}),
+            ...(subjectBoard !== "undefined" && {subjectBoard:{$regex:subjectBoard,$options:'i'}}),
+            ...(subjectTags !== "undefined" && {subjectTags:{$regex:subjectTags,$options:'i'}}),
+        };
+        console.log('newfilter',newfilter);
+
+        const subjects = await Subject.find(newfilter);
         res.status(200).json(subjects);
-    }
-    catch (err) {
+    } catch (err) {
         console.log(err);
         next(err);
     }
@@ -73,7 +89,7 @@ export const updateSubject = async (req, res, next) => {
         }
         const user = await User.findById(req.userId);
         if (!(user.subjects.includes(req.params.subjectId))) {
-            return res.status(400).json({ message: "You are not authorized to Edit this subject" });
+            return res.status(400).json({ message: "You are not authorized to Edit11 this subject" });
 
         }
         const subject = await Subject.findById(req.params.subjectId);
@@ -96,7 +112,7 @@ export const deleteSubject = async (req, res, next) => {
         }
         const user = await User.findById(req.userId);
         if (!(user.subjects.includes(req.params.subjectId))) {
-            return res.status(400).json({ message: "You are not authorized to Edit this subject" });
+            return res.status(400).json({ message: "You are not authorized to Delete this subject" });
 
         }
         const subject = await Subject.findById(req.params.subjectId);
