@@ -9,12 +9,12 @@ import conversationRoute from './routes/conversation-route.js';
 import messageRoute from './routes/message.route.js';
 import dotenv from 'dotenv';
 import {errorHandler} from './middlewares/errorHandler.js';
-
+import cors from 'cors';
 dotenv.config();
 
 const app = express();
 
-import cors from 'cors';
+
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true })); 
 app.use(bodyParser.json());

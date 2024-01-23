@@ -1,1 +1,1 @@
-export const ipURL = "192.168.129.186:3000";
+export const ipURL = "10.65.0.179:3000";
