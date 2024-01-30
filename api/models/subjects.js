@@ -5,8 +5,21 @@ const subjectSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    subjectNameSubHeading: {
+        type: String,
+        required: true
+    },
+    subjectDuration: {
+        type: Number,
+        required: true
+    },
+
     subjectDescription: {
         type: String,
+        required: true
+    },
+    subjectPoints: {
+        type: [String],
         required: true
     },
     subjectImage: {
@@ -25,6 +38,7 @@ const subjectSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    
     subjectTags: {
         type: [String],
         required: true

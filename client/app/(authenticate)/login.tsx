@@ -5,7 +5,7 @@ import { Link, router } from 'expo-router';
 import { Router } from 'expo-router';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ipURL } from '../utils';
+import { ipURL } from '../utils/utils';
 
 
 const LoginPage = () => {

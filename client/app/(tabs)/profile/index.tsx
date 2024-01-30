@@ -13,7 +13,7 @@ import {
   ScrollView,
   FlatList,
 } from "react-native";
-import { ipURL } from "../../utils";
+import { ipURL } from "../../utils/utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import HomeFlatlist from "../../components/HomeFlatlist";

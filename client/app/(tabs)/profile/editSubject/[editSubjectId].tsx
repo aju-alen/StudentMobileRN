@@ -10,7 +10,7 @@ import React, { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { ipURL } from "../../../utils";
+import { ipURL } from "../../../utils/utils";
 import { useLocalSearchParams } from "expo-router";
 import { router } from "expo-router";
 interface SubjectData {

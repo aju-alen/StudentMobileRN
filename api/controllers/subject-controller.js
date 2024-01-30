@@ -4,7 +4,7 @@ import Subject from "../models/subjects.js";
 dotenv.config();
 
 export const createSubject = async (req, res,next) => {
-    const { subjectName, subjectDescription, subjectImage, subjectPrice, subjectBoard, subjectGrade } = req.body;
+    const { subjectName, subjectDescription, subjectImage, subjectPrice, subjectBoard, subjectGrade,subjectDuration } = req.body;
 
     if (!subjectName || !subjectDescription || !subjectImage || !subjectPrice || !subjectBoard || !subjectGrade) {
         return res.status(400).json({ message: "Please enter all fields" });
@@ -17,6 +17,7 @@ export const createSubject = async (req, res,next) => {
                 ...req.body,
                 subjectPrice: parseInt(subjectPrice),
                 subjectGrade: parseInt(subjectGrade),
+                subjectDuration: parseInt(subjectDuration),
                 user: req.userId
             });
             const savedSubject = await newSubject.save();
@@ -60,7 +61,7 @@ export const getAllSubjects = async (req, res, next) => {
         };
         console.log('newfilter',newfilter);
 
-        const subjects = await Subject.find(newfilter);
+        const subjects = await Subject.find(newfilter).populate('user', 'name profileImage');
         res.status(200).json(subjects);
     } catch (err) {
         console.log(err);

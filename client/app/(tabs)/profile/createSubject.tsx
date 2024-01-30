@@ -10,7 +10,7 @@ import {
   Button,
   ScrollView,
 } from "react-native";
-import { ipURL } from "../../utils";
+import { ipURL } from "../../utils/utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -24,7 +24,9 @@ const CreateSubject = () => {
   const [subjectGrade, setSubjectGrade] = useState("");
   const [teacherVerification, setTeacherVerification] = useState([""]);
   const [subjectLanguage, setSubjectLanguage] = useState("");
-  const [subjectTags, setsubjectTags] = useState([]);
+  const [subjectNameSubHeading, setSubjectNameSubHeading] = useState("");
+  const [subjectDuration, setSubjectDuration] = useState("");
+  const [subjectPoints, setsubjectPoints] = useState([]);
 
   const addTeacherVerificationField = () => {
     setTeacherVerification([...teacherVerification, ""]);
@@ -50,8 +52,10 @@ const CreateSubject = () => {
       subjectBoard,
       subjectGrade,
       teacherVerification,
-      subjectLanguage,
-      subjectTags,
+      subjectNameSubHeading,
+      subjectDuration,
+      subjectPoints,
+      subjectLanguage
     };
     const token = await AsyncStorage.getItem("authToken");
     try {
@@ -85,11 +89,11 @@ const CreateSubject = () => {
 
   const handleAddItem = () => {
     if (inputText.trim() !== "") {
-      setsubjectTags([...subjectTags, inputText]);
+      setsubjectPoints([...subjectPoints, inputText]);
       setInputText("");
     }
   };
-  console.log("dataArray", subjectTags);
+  console.log("dataArray", subjectPoints);
 
   return (
     <ScrollView>
@@ -161,12 +165,31 @@ const CreateSubject = () => {
           />
         </View>
         <View style={styles.inputContainer}>
+          <Ionicons name="chatbox-ellipses-outline" size={20} color="#900" />
+          <TextInput
+            style={styles.input1}
+            placeholder="Subject Sub Heading"
+            value={subjectNameSubHeading}
+            onChangeText={setSubjectNameSubHeading}
+          />
+        </View>
+        <View style={styles.inputContainer}>
+          <Ionicons name="chatbox-ellipses-outline" size={20} color="#900" />
+          <TextInput
+            style={styles.input1}
+            placeholder="Subject Duration"
+            value={subjectDuration}
+            onChangeText={setSubjectDuration}
+          />
+        </View>
+        <View style={styles.inputContainer}>
           <Ionicons name="construct-outline" size={20} color="#900" />
           <TextInput
             style={styles.input1}
             value={inputText}
             onChangeText={handleInputChange}
             placeholder="Add One Skill At A Time"
+            placeholderTextColor={"gray"}
           />
           <TouchableOpacity onPress={handleAddItem}>
             <View style={styles.addButton}>

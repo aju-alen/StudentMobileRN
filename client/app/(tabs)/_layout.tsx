@@ -2,6 +2,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import React, { useEffect, useState } from "react";
 import { Tabs, useSegments } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { COLORS } from "../../constants";
 
 interface UserDetails {
   isTeacher?: boolean;
@@ -40,7 +41,7 @@ const TabsLayout = () => {
           } else if (route.name === "verification") {
             iconName = focused ? "file-tray-full" : "file-tray-full-outline";
           }
-          return <Ionicons name={iconName} size={size} color={"black"} />;
+          return <Ionicons name={iconName} size={25} color={"black"} />;
         },
         tabBarLabelStyle: {
           color: "black",
@@ -48,6 +49,7 @@ const TabsLayout = () => {
         tabBarStyle: {
           backgroundColor: "white",
         },
+        
       })}
     >
       <Tabs.Screen

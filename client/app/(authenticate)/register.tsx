@@ -5,7 +5,7 @@ import {  router } from 'expo-router';
 import Checkbox from 'expo-checkbox';
 import axios from 'axios';
 import { z } from 'zod';
-import { ipURL } from '../utils';
+import { ipURL } from '../utils/utils';
 
 const RegisterPage = () => {
     const [name, setName] = useState('');

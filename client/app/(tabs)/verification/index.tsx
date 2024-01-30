@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import HomeFlatlist from '../../components/HomeFlatlist'
 import axios from 'axios'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { ipURL } from '../../utils'
+import { ipURL } from '../../utils/utils'
 import { router } from 'expo-router'
 
 

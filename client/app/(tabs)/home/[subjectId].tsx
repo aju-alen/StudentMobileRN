@@ -1,8 +1,12 @@
 import {
+  SafeAreaView,
   StyleSheet,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 import SubjectPage from "../../components/SubjectPage";
+import { COLORS } from "../../../constants/theme";
+import { Ionicons } from "@expo/vector-icons";
+
 
 const SubjectId = () => {
   const { subjectId } = useLocalSearchParams();

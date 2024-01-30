@@ -10,7 +10,8 @@ import React, { useEffect, useState } from "react";
 import { router, usePathname } from "expo-router";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { ipURL } from "../utils";
+import { ipURL } from "../utils/utils";
+import { SIZES } from "../../constants";
 
 const HomeFlatlist = ({ homeData, handleItemPress }) => {
   const [showAllText, setShowAllText] = useState(false);
@@ -70,7 +71,8 @@ const HomeFlatlist = ({ homeData, handleItemPress }) => {
   console.log("User>>>>", user);
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex:1 }}>
+      <View style={styles.cardsContainer}>
       <FlatList
         data={homeData}
         renderItem={({ item }) => (
@@ -118,6 +120,7 @@ const HomeFlatlist = ({ homeData, handleItemPress }) => {
         )}
         keyExtractor={(item) => item._id}
       />
+      </View>
     </View>
   );
 };
@@ -181,5 +184,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     paddingTop: 5,
+  },
+  cardsContainer: {
+    marginTop: SIZES.medium,
+    gap: SIZES.small,
   },
 });
