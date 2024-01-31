@@ -94,6 +94,7 @@ const SubjectPage = ({ subjectId }) => {
     getSubjects();
   }, []);
 
+  console.log(singleSubjectData, "this is singleSubjectData");
   
 
   return (
