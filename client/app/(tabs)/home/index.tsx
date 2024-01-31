@@ -126,15 +126,12 @@ console.log(params,'this is params in homeeee');
        <TouchableOpacity onPress={()=>router.push('/home/filter')}>
        <Ionicons name={"filter"} size={moderateScale(26)} color={"gray"} />
        </TouchableOpacity>
-       
       </View>
       </View>
-      <SafeAreaView >
       <View style={styles.flatlistHeaderContainer}>
         <Text style={styles.flatlistHeaderTextLeft}>Recommended Courses</Text>
         <Text style={styles.flatlistHeaderTextRight}>See All</Text>
       </View>
-      
       <FlatList 
       data={subjectData}
       keyExtractor={(item)=>item._id}
@@ -170,8 +167,6 @@ console.log(params,'this is params in homeeee');
       </View>
       </TouchableOpacity>
       )}/> 
-      
-    </SafeAreaView>
     </View>
   );
 };

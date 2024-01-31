@@ -110,19 +110,20 @@ const SubjectPage = ({ subjectId }) => {
             <Text style={styles.subjectHeaderText}>{singleSubjectData.subjectName}</Text>
             <Text style={styles.subjectSubHeaderText}>{singleSubjectData.subjectNameSubHeading && singleSubjectData.subjectNameSubHeading}</Text>
           </View>
-          <View style={styles.subjectDetailsContainer}>
-            <Text style={styles.subjectDetailsText}>{singleSubjectData.subjectDuration && `${singleSubjectData.subjectDuration} h`}</Text>
-            <Text style={styles.subjectDetailsText}>•</Text>
-            <Text style={styles.subjectDetailsText}>{singleSubjectData.subjectLanguage}</Text>
-            <Text style={styles.subjectDetailsText}>•</Text>
-            <Text style={styles.subjectDetailsText}>100% Online & Flexible Deadlines</Text>
-          </View>
+         
           <View style={styles.userDetailsContainer}>
             <Image source={{ uri: singleSubjectData?.user?.profileImage }} style={styles.userDetailsImage} />
             <View style={styles.userDetailsTextContainer}>
               <Text style={styles.userDetailsText1}>{singleSubjectData.user?.name}</Text>
               <Text style={styles.userDetailsText2}>Sr.French Professor</Text>
             </View>
+          </View>
+          <View style={styles.subjectDetailsContainer}>
+            <Text style={styles.subjectDetailsText}>{singleSubjectData.subjectDuration && `${singleSubjectData.subjectDuration} h`}</Text>
+            <Text style={styles.subjectDetailsText}>•</Text>
+            <Text style={styles.subjectDetailsText}>{singleSubjectData.subjectLanguage}</Text>
+            <Text style={styles.subjectDetailsText}>•</Text>
+            <Text style={styles.subjectDetailsText}>100% Online & Flexible Deadlines</Text>
           </View>
           {singleSubjectData.subjectDescription && <View style={styles.moreDetailsContainer}>
             <Text style={styles.moreDetailsHeadingText} >Description</Text>
@@ -134,7 +135,7 @@ const SubjectPage = ({ subjectId }) => {
           <View style={styles.moreDetailsContainer}>
             <Text style={styles.moreDetailsHeadingText} >More Details</Text>
             {singleSubjectData?.subjectPoints?.map((point, i) => ( 
-              <Text key={i} style={styles.moreDetailsPointText} >●{point}</Text>
+              <Text key={i} style={styles.moreDetailsPointText} >● {point}</Text>
              ))}
           </View>
           }
@@ -158,6 +159,7 @@ const SubjectPage = ({ subjectId }) => {
 
         </SafeAreaView>
       </ScrollView>
+      {/* Another View for Purchase and chat UI */}
       {/* <View style={styles.buttonsContainer}>
         <TouchableOpacity style={styles.buyNowButton}>
           <Text style={styles.buttonText}>ENROLL NOW FOR </Text>
@@ -315,8 +317,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     // marginHorizontal:horizontalScale(10),
     height: verticalScale(150),
-    borderStartStartRadius: 30,
-    borderStartEndRadius: 30,
+    borderStartStartRadius: 20,
+    borderStartEndRadius: 20,
     backgroundColor: '#1A4C6E',
     padding: 10,
 
@@ -326,14 +328,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
 
-    borderRadius: 30,
+    borderRadius: 10,
     height: verticalScale(50),
     backgroundColor: '#2DCB63',
 
   },
   ChatNowButton2: {
     justifyContent: 'center',
-    borderRadius: 30,
+    borderRadius: 10,
     height: verticalScale(50),
     backgroundColor: '#147eb2',
   },
