@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { horizontalScale, verticalScale, moderateScale } from '../utils/metrics'
 import { FONT } from "../../constants";
+import {socket} from '../utils/socket'
 interface SubjectData {
   subjectImage?: string;
   subjectName?: string;
@@ -50,27 +51,22 @@ const SubjectPage = ({ subjectId }) => {
   const handleChatNow = async () => {
     const token = await AsyncStorage.getItem('authToken')
     const userDetails = await AsyncStorage.getItem('userDetails')
-    const userId = JSON.parse(userDetails).userId
-    const clientId = singleSubjectData.user?._id
-    const createConversationObject = {
-      userId,
-      clientId
-    }
-
-    try {
-
-      console.log(createConversationObject, 'this is createConversationObject');
-      const resp = await axios.post(`http://${ipURL}/api/conversation`, createConversationObject, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    const userId = JSON.parse(userDetails).userId;
+    const clientId = singleSubjectData.user?._id;
+    try{
+      socket.emit('send-chat-details', {userId, clientId, subjectId})
+     
+      socket.on("chat-details",(data)=>{
+        console.log(data,'this is the chat room details from server');
+        
       })
-      router.replace('/(tabs)/chat')
 
     }
-    catch (error) {
-      console.error('Error fetching user data:', error);
+    catch(err){
+
     }
+    
+    
   };
 
   useEffect(() => {
@@ -152,7 +148,7 @@ const SubjectPage = ({ subjectId }) => {
               <Text style={styles.buttonBoldText2Static}>(Premium Service) </Text>
             </TouchableOpacity>
             <Text style={styles.orText}>OR</Text>
-            <TouchableOpacity style={styles.ChatNowButton2}>
+            <TouchableOpacity onPress={handleChatNow} style={styles.ChatNowButton2}>
               <Text style={styles.buttonText2}>CHAT NOW</Text>
               <Text style={styles.buttonText2}>(Subscription Service)</Text>
             </TouchableOpacity>

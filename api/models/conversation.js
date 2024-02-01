@@ -19,10 +19,25 @@ const ConversationSchema = new Schema(
       ref: 'Subject',
       required: true
     },
-    messages: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Message'
-  }],
+    messages: [
+      {
+       senderId:{
+        type:String,
+        required:true
+       },
+        text:{
+         type:String,
+         required:true
+        },
+        messageId:{
+          type:String,
+          required:true
+         }, 
+      },
+      {
+        timestamps: true,
+      }
+    ]
   },
   {
     timestamps: true,

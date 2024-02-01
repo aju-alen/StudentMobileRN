@@ -4,36 +4,39 @@ import Conversation from "../models/conversation.js"
 dotenv.config();
 
 export const getAllConversations = async (req, res, next) => {
-    console.log(req.params.conversationId)
+    console.log('req.params',req.params);
     try{
-        const conversations = await Conversation.find(!req.isTeacher?{userId:req.userId} : {clientId:req.userId}).populate('userId').populate('clientId');
+        const conversations = await Conversation.find({$or: [
+            {userId: req.params.userId},
+            {clientId: req.params.userId}
+          ]}).populate('userId','name').populate('clientId','name').populate('subjectId','subjectName');
+          if(!conversations){
+              return res.status(400).json({message:"No conversations found"});
+          }
         res.status(200).json(conversations);
     }
     catch(err){
+        console.log(err);
         next(err);
     }
 
-
 }
+export const getSingleConversation = async (req, res, next) => {
+    console.log('req.params for single convo',req.params);
+    try {
+        const conversation = await Conversation.findOne({_id:req.params.conversationId});
+        if (!conversation) {
+            return res.status(400).json({ message: "No conversation found" });
+        }
+        res.status(200).json(conversation);
 
+    }
+    catch (err) {
+        console.log(err);
+        next(err);
+    }
+}
 export const createConversation = async (req, res, next) => {
-    const {userId,clientId} = req.body;
-    console.log(userId,clientId,'userId,clientId');
-        try{
-            const checkIfConversationExists = await Conversation.findOne({userId,clientId});
-            console.log(checkIfConversationExists,'checkIfConversationExists');
-            if(checkIfConversationExists){
-                return res.status(200).json({message:"Conversation Already Exists, Go chat"});
-            }
-            const newConversation = new Conversation({
-               userId,
-               clientId
-            });
-            const savedConversation = await newConversation.save();
-            res.status(202).json({message:"Conversation Created",savedConversation});
     
-        }
-        catch(err){
-            next(err);
-        }
 }
+    

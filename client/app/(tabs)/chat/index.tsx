@@ -5,179 +5,89 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
+  SafeAreaView,
 } from "react-native";
 import React, { useEffect } from "react";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { ipURL } from "../../utils/utils";
+import { horizontalScale,verticalScale,moderateScale } from "../../utils/metrics";
+import { socket } from "../../utils/socket";
 
 interface User {
   userId?: string;
 }
 
 const ChatPage = () => {
-  const teachersInformation = [
-    {
-      id: 1,
-      name: "John Smith",
-      subject: "Mathematics",
-    },
-    {
-      id: 2,
-      name: "Emily Johnson",
-      subject: "English",
-    },
-    {
-      id: 3,
-      name: "Michael Davis",
-      subject: "Science",
-    },
-    {
-      id: 4,
-      name: "Lisa Williams",
-      subject: "History",
-    },
-    {
-      id: 5,
-      name: "Daniel Miller",
-      subject: "Physical Education",
-    },
-  ];
+ 
   const [conversation, setConversation] = React.useState([]);
-  const [user, setUser] = React.useState<User>({});
+  const [user, setUser] = React.useState("");
   useEffect(() => {
 
     const getConversation = async () => {
     const token = await AsyncStorage.getItem("authToken");
-    const resp = await axios.get(`http://${ipURL}/api/conversation`, {
+    const userDetails = JSON.parse( await AsyncStorage.getItem("userDetails"));
+    console.log(userDetails.userId, "this is user.userId");
+    
+    const resp = await axios.get(`http://${ipURL}/api/conversation/${userDetails.userId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
 
     setConversation(resp.data);
-    console.log('this is useeffect in chat');
-  
+    setUser(userDetails.userId);
+    
   }
     getConversation();
   }, []);
+
+
+  console.log(conversation, "this is the conversation for the user");
   
 
-  const handlePress = async (item) => {
-    try{
-      const conversationId = item.userId + item.clientId._id;
-    console.log(conversationId, "this is conversationId");
-
-    const token = await AsyncStorage.getItem("authToken");
-    const userDetails = await AsyncStorage.getItem("userDetails");
-    setUser(JSON.parse(userDetails));
+  const handlePress = async (id) => {
     
-    router.push(`/(tabs)/chat/${conversationId}`);
-    }
-    catch(error){
-      console.error('Error fetching user data:',error);
-    }
+    socket.emit("chat-room",id)
+    router.push(`/(tabs)/chat/${id}`);
+    
     
   };
   console.log(conversation, "this is conversation");
+  console.log(user, "this is user");
+  
   
   return (
-    <View style={styles.container}>
-      <View style={styles.searchContainer}>
-        <TextInput
-          placeholder="Search for your chats here"
-          style={styles.searchInput}
-        />
-      </View>
-      <View style={styles.mainContainer}>
-        <View style={styles.checkq}>
-          <FlatList
-            data={conversation}
-            renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => handlePress(item)} style={[styles.shadowProp,styles.card]}>
-              <View>
-                  <View style={styles.listContainer}>
-                    <View>
-                      
-                      {user.userId == item.userId._id? <Text style={styles.name}>{item.clientId.name}</Text>
-                      : 
-                      (<Text style={styles.name}>{item.userId.name}</Text>)}
-
-                      <Text style={styles.message}>{}</Text>
-                      
-                    </View>
-                  </View>
-              </View>
-              </TouchableOpacity>
-            )}
-            keyExtractor={(item) => item._id}
-          />
-        </View>
-      </View>
+    <SafeAreaView style={styles.mainContainer}>
+    <View>
+      <FlatList
+        data={conversation}
+        renderItem={({item})=>(
+          <TouchableOpacity onPress={()=> handlePress(item._id)} style={styles.chatButtonContainer}>
+           <Text>{user === item.userId._id ? item.clientId.name : item.userId.name} {`(${item.subjectId.subjectName})`}</Text>
+          </TouchableOpacity>
+        )}
+      />
     </View>
+    </SafeAreaView>
   );
 };
 
 export default ChatPage;
 
 const styles = StyleSheet.create({
-  container: {
+  mainContainer: {
     flex: 1,
     backgroundColor: "#DBE8D8",
     padding: 10,
     flexDirection: "column",
   },
-  searchContainer: {
-    backgroundColor: "white",
-    borderRadius: 10,
-    height: 45,
-    marginVertical: 10,
-  },
-  searchInput: {
-    paddingLeft: 10,
-    fontSize: 16,
-    flex: 1,
-    fontFamily: "Roboto-Regular",
-  },
-  mainContainer: {
+  chatButtonContainer:{
+    margin: 10,
     backgroundColor: "#45B08C",
     borderRadius: 10,
-    width: "100%",
-    height: "100%",
-  },
-  listContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 10,
-  },
-  checkq: {
-    marginTop: 10,
-    borderRadius: 10,
-  },
-  name: {
-    fontFamily: "Roboto-Regular",
-    fontWeight: "bold",
-    fontSize: 18,
-    color: "white",
-  },
-  message: {
-    fontSize: 15,
-    color: "lightgrey",
-    fontFamily: "Roboto-Regular",
-  },
-  card: {
-    
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 25,
-    width: '100%',
-    marginVertical: 2,
-  },
-  shadowProp: {
-    shadowColor: '#171717',
-    shadowOffset: {width: -2, height: 4},
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-  },
+    padding: 13,
+    alignItems: "center",
+  }
 });
