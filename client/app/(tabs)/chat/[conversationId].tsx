@@ -1,13 +1,15 @@
-import { useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import ChatPage from "../../components/ChatPage";
-import { View,Text, TextInput, ScrollView } from "react-native";
-import { useEffect, useState } from "react";
+import { View,Text, TextInput, ScrollView, SafeAreaView } from "react-native";
+import React, { useEffect, useState } from "react";
 import { socket } from "../../utils/socket";
 import { TouchableOpacity } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { ipURL } from "../../utils/utils";
+import { Ionicons } from "@expo/vector-icons";
 import { v4 as uuidv4 } from 'uuid';
+import {  router } from 'expo-router';
 
 interface Conversation {
   messages?: Message[];
@@ -44,6 +46,7 @@ const ConversationId = () => {
     
     const data = {allMessages,conversationId}
     socket.emit("leave-room",data)
+    router.replace('/(tabs)/chat')
   }
   let count =0;
 
@@ -58,6 +61,8 @@ const ConversationId = () => {
       
     })
     console.log('rendering socket useEffect');
+
+    
     
   }, [socket]);
 
@@ -82,27 +87,24 @@ const ConversationId = () => {
   
 
 return (
+  <SafeAreaView style={{flex:1}}>
+    <Stack.Screen options={{
+                headerStyle: { backgroundColor: "white" },
+                headerShadowVisible: false,
+                headerBackVisible: false,
+                headerLeft: () => (
+                    <Ionicons name="arrow-back" size={24} color="black" onPress={handleLeaveRoom}  style={{ marginLeft: 0 }} />
+                ),
+                headerTitle: 'Testing Chat'
+            }}>
+              </Stack.Screen>
   <View>
     <Text>{conversationId}</Text>
-
-    <TextInput style={{height:100,width:200}}
-      placeholder="Type a message"
-      placeholderTextColor={"black"}
-      onChangeText={(text) => setMessage(text)}
-      value={message}
     
-    />
-    <TouchableOpacity style={{backgroundColor:'blue', padding:50}}
-     onPress={handleSendMessage}
-    >
-      <Text>Send</Text>
-    </TouchableOpacity>
-    <TouchableOpacity style={{backgroundColor:'red', padding:50}} 
-     onPress={handleLeaveRoom}
-    >
-      <Text>Leave Room </Text>
-    </TouchableOpacity>
-  <ScrollView>
+
+    
+    
+  <ScrollView >
     <View>
       {allMessages.messages?.map((message)=>(
         <View key={message.messageId}>
@@ -113,7 +115,18 @@ return (
       ))}
       </View>
       </ScrollView>
+      <View style={{flexDirection:"row", justifyContent:'center',alignItems:'center'}}>
+      <TextInput style={{height:100,width:200,}}
+      placeholder="Type a message"
+      placeholderTextColor={"black"}
+      onChangeText={(text) => setMessage(text)}
+      value={message}
+    
+    />
+    <Ionicons name="send" size={18} color="gray" onPress={handleSendMessage} />
+      </View>
   </View>
+  </SafeAreaView>
 )
 
   // return <ChatPage chatName={conversationId} />;

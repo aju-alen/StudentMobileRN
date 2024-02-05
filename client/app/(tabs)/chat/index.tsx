@@ -26,6 +26,8 @@ const ChatPage = () => {
   useEffect(() => {
 
     const getConversation = async () => {
+      console.log("this is the getConversation function");
+      
     const token = await AsyncStorage.getItem("authToken");
     const userDetails = JSON.parse( await AsyncStorage.getItem("userDetails"));
     console.log(userDetails.userId, "this is user.userId");
@@ -66,6 +68,7 @@ const ChatPage = () => {
         renderItem={({item})=>(
           <TouchableOpacity onPress={()=> handlePress(item._id)} style={styles.chatButtonContainer}>
            <Text>{user === item.userId._id ? item.clientId.name : item.userId.name} {`(${item.subjectId.subjectName})`}</Text>
+           {item.messages.length >0 &&<Text>{item.messages[item.messages.length - 1].text}</Text>}
           </TouchableOpacity>
         )}
       />

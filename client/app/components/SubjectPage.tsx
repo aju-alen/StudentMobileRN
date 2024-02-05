@@ -60,10 +60,11 @@ const SubjectPage = ({ subjectId }) => {
         console.log(data,'this is the chat room details from server');
         
       })
-
+      router.replace(`/(tabs)/chat`);
     }
     catch(err){
-
+      console.log(err,'this is the error when clciking chat now button');
+      
     }
     
     

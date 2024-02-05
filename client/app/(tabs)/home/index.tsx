@@ -20,6 +20,7 @@ import {COLORS, FONT, SIZES} from '../../../constants'
 import {horizontalScale, verticalScale, moderateScale} from '../../utils/metrics'
 import { debounce } from "lodash";
 import { StatusBar } from "expo-status-bar";
+import SubjectCards from "../../components/SubjectCards";
 
 
 //http://localhost:3000/api/subjects - GET
@@ -91,6 +92,8 @@ console.log(params,'this is params in homeeee');
   console.log(subjectData, "outside");
 
   const handleItemPress = (itemId: { _id: any }) => {
+    console.log(itemId, "this is the item id");
+    
     router.push(`/(tabs)/home/${itemId._id}`);
   };
 
@@ -128,45 +131,12 @@ console.log(params,'this is params in homeeee');
        </TouchableOpacity>
       </View>
       </View>
+     
       <View style={styles.flatlistHeaderContainer}>
-        <Text style={styles.flatlistHeaderTextLeft}>Recommended Courses</Text>
+        <Text style={styles.flatlistHeaderTextLeft}>Browse Courses</Text>
         <Text style={styles.flatlistHeaderTextRight}>See All</Text>
       </View>
-      <FlatList 
-      data={subjectData}
-      keyExtractor={(item)=>item._id}
-      renderItem={({item}) =>(
-        <TouchableOpacity onPress={() => handleItemPress(item)}>
-      <View style={styles.flatlistRecommendedContainer}>
-            <View style={styles.flatlistInnerContainer}>
-            <Image style={styles.subjectImage} 
-          source={{ uri: item?.subjectImage }}
-           resizeMode='cover'
-         />
-         <View style={styles.subjectBoardContainer}>
-          <Text style={styles.subjectBoardText}>{item?.subjectBoard}</Text>
-          <Text style={styles.subjectGradeText}>Grade: {item?.subjectGrade}</Text>
-         </View>
-         <Text style={styles.flatlistSubjectNameText}>{item?.subjectName}</Text>
-          </View>
-          <View style={styles.subjectDetailsContainer}>
-            <View style={styles.imageandNameContainer} >
-          <Image style={styles.subjectTeacherImage} 
-          source={{ uri: item?.user?.profileImage }}
-           resizeMode='cover'
-         />
-         <View>
-         <Text style={styles.subjectTeacherNameText}>{item?.user.name}</Text>
-         <Text style={styles.subjectTeacherDesignation}>{item?.user.name}</Text>
-         </View>
-            </View>
-            <View>
-         <Text style={styles.subjectPrice}>AED {item?.subjectPrice}</Text>
-            </View>
-          </View>
-      </View>
-      </TouchableOpacity>
-      )}/> 
+      <SubjectCards subjectData={subjectData} handleItemPress={handleItemPress} isHorizontal={false} />
     </View>
   );
 };
@@ -236,6 +206,12 @@ const styles = StyleSheet.create({
     height:verticalScale(40),
     fontFamily: FONT.medium,
     fontSize: moderateScale(13),
+  },
+  horizontalFlatlistHeaderContainer:{
+    justifyContent:"space-between",
+    alignItems:"flex-start",
+    marginHorizontal:horizontalScale(25),
+    marginTop:verticalScale(24),
   },
   flatlistHeaderContainer:{
     flexDirection:"row",
@@ -565,3 +541,9 @@ const styles = StyleSheet.create({
 //     </View>
 //   </SafeAreaView>
 // );
+
+
+{/* <View style={styles.horizontalFlatlistHeaderContainer}>
+<Text style={styles.flatlistHeaderTextLeft}>Browse Courses</Text>
+<SubjectCards subjectData={subjectData} handleItemPress={handleItemPress} isHorizontal={true} />
+</View> */}

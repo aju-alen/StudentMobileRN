@@ -81,9 +81,12 @@ socketIO.on("connection", (socket) => {
         let conversation = await Conversation.findById(data.conversationId);
         log(conversation,'this is mongoDb conversation object');
         log(conversation.messages,'this is mongoDb conversation message');
-        log(data.allMessages.messages,'this is message from client');
+        log(data,'this is client object data');
 
-        conversation.messages = data.allMessages.messages;
+        log(data.allMessages.messages,'this is message from client');
+        if(data.allMessages.messages !== undefined){
+            conversation.messages = data.allMessages.messages;
+        }
         await conversation.save();
         
 
