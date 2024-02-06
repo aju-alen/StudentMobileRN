@@ -24,7 +24,7 @@ export const getAllConversations = async (req, res, next) => {
 export const getSingleConversation = async (req, res, next) => {
     console.log('req.params for single convo',req.params);
     try {
-        const conversation = await Conversation.findOne({_id:req.params.conversationId}).populate('clientId','name profileImage');
+        const conversation = await Conversation.findOne({_id:req.params.conversationId}).populate('clientId','name profileImage').populate('userId', 'name profileImage');
         if (!conversation) {
             return res.status(400).json({ message: "No conversation found" });
         }

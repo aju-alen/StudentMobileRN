@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams } from "expo-router";
 import ChatPage from "../../components/ChatPage";
-import { View, Text, TextInput, ScrollView, SafeAreaView, Image, StyleSheet } from "react-native";
+import { View, Text, TextInput, ScrollView, SafeAreaView, Image, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
 import React, { useEffect, useState } from "react";
 import { socket } from "../../utils/socket";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -10,10 +10,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { v4 as uuidv4 } from 'uuid';
 import { router } from 'expo-router';
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
+import { FONT } from "../../../constants";
 
 interface Conversation {
   messages?: Message[];
-  userId?: string;
+  userId?: UserId;
   clientId?: ClientId;
 
 }
@@ -21,8 +22,15 @@ interface Message {
   text?: string;
   senderId?: string;
   messageId?: string;
+
 }
 interface ClientId {
+  _id?: string;
+  name?: string;
+  profileImage?: string;
+}
+interface UserId {
+  _id?: string;
   name?: string;
   profileImage?: string;
 }
@@ -89,6 +97,7 @@ const ConversationId = () => {
 
   console.log(allMessages, 'this is all messages1111111111111111111');
 
+  console.log(user, 'this is userId');
 
 
   return (
@@ -100,26 +109,31 @@ const ConversationId = () => {
         headerLeft: () => (
           <Ionicons name="arrow-back" size={24} color="black" onPress={handleLeaveRoom} style={{ marginLeft: 0 }} />
         ),
-        headerTitle: `${allMessages.clientId?.name}`,
+        headerTitle: user === allMessages.userId?._id ? allMessages.clientId?.name : allMessages.userId?.name,
         headerRight: () => (
-          <Image source={{ uri: allMessages.clientId?.profileImage }} style={{ height: 40, width: 40, borderRadius: 20, marginRight: 10 }} />
+          <Image source={{ uri: user === allMessages.userId?._id ? allMessages.clientId?.profileImage : allMessages.userId?.profileImage }} style={styles.stackHeaderImage}
+            resizeMode="contain"
+          />
         ),
       }}>
       </Stack.Screen>
 
       <ScrollView style={styles.chatContainer} >
-        <View style={{flex:1}}>
-          {allMessages.messages?.map((message) => (
-            <View key={message.messageId} style={user === message.senderId ?styles.userMessageContainer:styles.clientMessageContainer}>
-              {user === message.senderId ? <Text>{message?.text}</Text> :
-                <Text >{message?.text}</Text>
-              }
+        {allMessages.messages?.map((message) => (
+          <View style={user === message.senderId ? styles.chatContainerRight : styles.chatContainerLeft} key={message.messageId}>
+            <View style={styles.chatBubbleContainer} >
+              <View style={user === message.senderId ? styles.userchatBubble : styles.clientchatBubble}>
+                 <Text style={styles.textStyle}>{message?.text}</Text> 
+                
+              </View>
             </View>
-          ))}
-        </View>
+          </View>
+        ))}
       </ScrollView>
+      <KeyboardAvoidingView 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}> 
       <View style={styles.typeMessageContainer}>
-        <TextInput  style={styles.typeMessageInputBox}
+        <TextInput style={styles.typeMessageInputBox}
           placeholder="Type a message"
           placeholderTextColor={"black"}
           onChangeText={(text) => setMessage(text)}
@@ -127,9 +141,10 @@ const ConversationId = () => {
 
         />
         <View style={styles.typeMessageSendIcon}>
-        <Ionicons name="send" size={18} color="white" onPress={handleSendMessage}  />
+          <Ionicons name="send" size={18} color="gray" onPress={handleSendMessage} disabled={message.length > 0 ? false : true }  />
         </View>
       </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 
@@ -144,76 +159,81 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     padding: 10,
   },
-
+  stackHeaderImage: {
+    height: 40,
+    width: 40,
+    borderRadius: 20,
+    marginRight: 10
+  },
   chatContainer: {
-    borderWidth: 1,
-    borderColor: "black",
+    backgroundColor: '#F5F5F1',
+    
+  },
+  chatContainerLeft: {
+    flexDirection: "column",
+    justifyContent: "flex-start",
+    alignItems: "flex-start",
+  },
+  chatContainerRight: {
+    flexDirection: "column",
+    justifyContent: "flex-start",
+    alignItems: "flex-end",
   },
 
   typeMessageContainer: {
     borderWidth: 1,
-    borderColor: "black",
+    borderColor: "gray",
     flexDirection: "row",
     justifyContent: 'center',
+
     alignItems: 'center',
-    height:verticalScale(80),
-    borderStartStartRadius:moderateScale(0),
-    borderStartEndRadius:moderateScale(0),
-    backgroundColor: "#1A4C6E"
+    height: verticalScale(80),
+    borderStartStartRadius: moderateScale(0),
+    borderStartEndRadius: moderateScale(0),
+    backgroundColor: "white"
   },
 
-  typeMessageInputBox:{
+  typeMessageInputBox: {
     borderWidth: 1,
+    padding: moderateScale(10),
+    fontSize: moderateScale(15),
+    
     borderColor: "gray",
     height: verticalScale(50),
-    width:verticalScale(300),
-    borderRadius:moderateScale(20),
+    width: verticalScale(300),
+    borderRadius: moderateScale(20),
     backgroundColor: "white",
   },
-  typeMessageSendIcon:{
-    marginLeft:moderateScale(10),
-
-    height:'100%',
-    width:verticalScale(30),
-    justifyContent:'center',
-    alignItems:'center',
-    
-  },
-
-  textContainer:{
-    borderWidth: 1,
-    borderColor: "black",
-    padding:verticalScale(10),
-    margin:verticalScale(10),
-    borderRadius:moderateScale(20),
-    backgroundColor: "white",
-  },
-
-  userMessageContainer:{
-    
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: "black",
-      height: verticalScale(50),
-      width:'40%',
-      marginTop:verticalScale(10) ,
-      marginLeft:horizontalScale(210),
-      borderRadius:moderateScale(20),
-      backgroundColor: "lightgray",
-      justifyContent: 'center',
-   
-  },
-  clientMessageContainer:{
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: "black",
-    height: verticalScale(50),
-    marginLeft:horizontalScale(10),
-    width:'40%',
-    borderRadius:moderateScale(20),
+  typeMessageSendIcon: {
+    marginLeft: moderateScale(10),
+    height: '100%',
+    width: verticalScale(30),
     justifyContent: 'center',
-    backgroundColor: "gray",
+    alignItems: 'center',
   },
-  
-  
+
+  chatBubbleContainer: {
+    maxWidth: '80%', // Set the maximum width of the chat container
+    alignItems: 'flex-start',
+    margin:moderateScale(3),
+
+  },
+
+  userchatBubble: {
+    maxWidth: '80%', // Set the maximum width of the chat bubble
+    borderRadius: 15, // Rounded corners for the bubble
+    padding: 10, // Padding inside the bubble
+    backgroundColor: '#75CAD7', // Background color of the bubble
+    position: 'relative', // Required for positioning the tail
+  },
+  clientchatBubble: {
+    maxWidth: '80%', // Set the maximum width of the chat bubble
+    borderRadius: 15, // Rounded corners for the bubble
+    padding: 10, // Padding inside the bubble
+    backgroundColor: '#DCF8C6', // Background color of the bubble
+    position: 'relative', // Required for positioning the tail
+  },
+  textStyle:{
+textAlign:'justify'
+  }
 });

@@ -40,8 +40,19 @@ export const createSubject = async (req, res,next) => {
         next(err);
     }
 }
-
 export const getAllSubjects = async (req, res, next) => {
+    try{
+        const subjects = await Subject.find({subjectVerification:true}).populate('user', 'name profileImage');
+        res.status(200).json(subjects);
+
+    }
+    catch(err){
+        console.log(err);
+        next(err);
+    }
+}
+
+export const getAllSubjectsBySearch = async (req, res, next) => {
     const { subjectGrade,subjectBoard,subjectTeacher,subjectTags } = req.query;
     const grade = parseInt(subjectGrade);
     console.log('subjectTags',typeof subjectTags);

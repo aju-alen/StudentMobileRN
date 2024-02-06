@@ -75,7 +75,7 @@ const HomePage = () => {
     const getSubjects = async () => {
       const token = await AsyncStorage.getItem("authToken");
 
-      const resp = await axios.get(`http://${ipURL}/api/subjects?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`, {
+      const resp = await axios.get(`http://${ipURL}/api/subjects/search?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -138,7 +138,9 @@ const HomePage = () => {
 
       <View style={styles.flatlistHeaderContainer}>
         <Text style={styles.flatlistHeaderTextLeft}>Browse Courses</Text>
+        <TouchableOpacity onPress={() => router.push('/(tabs)/home/allSubject')}>
         <Text style={styles.flatlistHeaderTextRight}>See All</Text>
+        </TouchableOpacity>
       </View>
       <SubjectCards subjectData={subjectData} handleItemPress={handleItemPress} isHorizontal={false} />
     </View>
@@ -235,7 +237,3 @@ const styles = StyleSheet.create({
     color: "#F1A568"
   },
 })
-
-
-
-

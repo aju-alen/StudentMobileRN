@@ -30,7 +30,7 @@ const SubjectCards = ({subjectData,handleItemPress,isHorizontal}) => {
           source={{ uri: item?.user?.profileImage }}
            resizeMode='cover'
          />
-         <View>
+         <View style={styles.subjectTeacherNameAndDesignationContainer}>
          <Text style={styles.subjectTeacherNameText}>{item?.user.name}</Text>
          <Text style={styles.subjectTeacherDesignation}>{item?.user.name}</Text>
          </View>
@@ -94,8 +94,6 @@ const styles = StyleSheet.create({
     marginTop:verticalScale(14),
     fontFamily: FONT.semiBold,
     fontSize: moderateScale(20),
-
-
   },
   subjectDetailsContainer:{
     flexDirection:"row",
@@ -106,13 +104,16 @@ const styles = StyleSheet.create({
   imageandNameContainer:{
     flexDirection:"row",
     alignItems:"center",
-    justifyContent:"space-around",
+    justifyContent:"space-between",
     width:horizontalScale(120),
   },
   subjectTeacherImage:{
     height:verticalScale(51),
     width:horizontalScale(51),
     borderRadius: moderateScale(60),
+  },
+  subjectTeacherNameAndDesignationContainer:{
+   
   },
   subjectTeacherNameText:{
     fontFamily: FONT.semiBold,

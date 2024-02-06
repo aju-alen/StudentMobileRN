@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Image,
 } from "react-native";
+import {limitTextLength} from "../../utils/helperFunctions";
 import React, { useEffect } from "react";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -19,9 +20,6 @@ import { socket } from "../../utils/socket";
 import { debounce } from "lodash";
 import { FONT } from "../../../constants/theme";
 
-interface User {
-  userId?: string;
-}
 
 const ChatPage = () => {
 
@@ -34,7 +32,11 @@ const ChatPage = () => {
       console.log("this is the getConversation function");
 
       const token = await AsyncStorage.getItem("authToken");
+      console.log(token, "this is token in useEffect");
+      
       const userDetails = JSON.parse(await AsyncStorage.getItem("userDetails"));
+      console.log(userDetails,'this is userDetails in useEffect');
+      
       console.log(userDetails.userId, "this is user.userId");
 
       const resp = await axios.get(`http://${ipURL}/api/conversation/${userDetails.userId}`, {
@@ -95,15 +97,17 @@ const ChatPage = () => {
               <TouchableOpacity onPress={() => handlePress(item._id)} style={styles.chatButtonContainer}>
                 <View style={styles.chatIconContainer}>
                   <Image
-                    source={{ uri: item.clientId.profileImage }} // Render this as teachers img if student and likewise. In each chat also do the same on the profile image.
-                    style={styles.chatIconImage} />
+                    source={{ uri: user === item.userId._id ? item.clientId.profileImage : item.userId.profileImage }} 
+                    style={styles.chatIconImage}
+                    resizeMode="contain"
+                    />
                 </View>
                 <View style={styles.chatDetails}>
                   <View style={styles.chatDetailsMainHeadingContainer}>
                   <Text style={styles.chatDetailsMainHeading}>{user === item.userId._id ? item.clientId.name : item.userId.name}</Text> 
                   <Text style={styles.chatDetailsMainHeadingSubjectName}>{`(${item.subjectId.subjectName})`}</Text>
                   </View>
-                  {item.messages.length > 0 && <Text style={styles.chatDetailsRecentChat}>{item.messages[item.messages.length - 1].text}</Text>}
+                  {item.messages.length > 0 && <Text style={styles.chatDetailsRecentChat}>{ limitTextLength(item.messages[item.messages.length - 1].text,50)}</Text>}
                 </View>
 
               </TouchableOpacity>
