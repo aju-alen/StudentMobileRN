@@ -4,7 +4,7 @@ import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics'
 import { FONT } from '../../constants/theme'
 import { boolean } from 'zod'
 
-const SubjectCards = ({subjectData,handleItemPress,isHorizontal}) => {
+const HorizontalSubjectCard = ({subjectData,handleItemPress,isHorizontal}) => {
   return (
     <View style={{flex:1}}>
         <FlatList 
@@ -30,7 +30,7 @@ const SubjectCards = ({subjectData,handleItemPress,isHorizontal}) => {
           source={{ uri: item?.user?.profileImage }}
            resizeMode='cover'
          />
-         <View>
+         <View style={styles.subjectTeacherNameAndDesignationContainer}>
          <Text style={styles.subjectTeacherNameText}>{item?.user.name}</Text>
          <Text style={styles.subjectTeacherDesignation}>{item?.user.name}</Text>
          </View>
@@ -43,39 +43,38 @@ const SubjectCards = ({subjectData,handleItemPress,isHorizontal}) => {
       </TouchableOpacity>
       )}
       horizontal={isHorizontal}
-      scrollEnabled={false}
+      
       />
     </View>
   )
 }
 
-export default SubjectCards
+export default HorizontalSubjectCard
 
 const styles = StyleSheet.create({
   flatlistInnerContainer:{
     marginHorizontal:horizontalScale(14),
   },
   flatlistRecommendedContainer:{
-    height:verticalScale(309),
-    width:horizontalScale(339),
-    marginHorizontal:horizontalScale(15),
-    marginTop:verticalScale(10),
+    height:verticalScale(250),
+    width:horizontalScale(250),
+    marginHorizontal:horizontalScale(1),
     borderColor:"gray",
-    borderRadius:moderateScale(40),
-    borderWidth:1,
+    borderRadius:moderateScale(20),
+    
   },
   subjectImage:{
     width:"100%",
-    marginTop:verticalScale(16),
-    height:verticalScale(189),
-    borderRadius:moderateScale(40),
+    marginTop:verticalScale(8),
+    height:verticalScale(150),
+    borderRadius:moderateScale(20),
   },
   subjectBoardContainer:{
     flexDirection:"row",
     backgroundColor:"'rgba(255, 255, 255, 0.8)'",
     padding:moderateScale(5),
     height:verticalScale(29),
-    width:horizontalScale(110),
+    width:horizontalScale(90),
     borderRadius:moderateScale(40),
     marginTop:verticalScale(21),
     marginLeft:horizontalScale(20),
@@ -92,34 +91,38 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(12),
   },
   flatlistSubjectNameText:{
-    marginTop:verticalScale(14),
+    // marginTop:verticalScale(14),
     fontFamily: FONT.semiBold,
-    fontSize: moderateScale(20),
+    fontSize: moderateScale(15),
 
-
+    height:verticalScale(40),
   },
   subjectDetailsContainer:{
     flexDirection:"row",
     alignItems:"center",
     justifyContent:"space-between",
     marginHorizontal:horizontalScale(14),
+    
   },
   imageandNameContainer:{
     flexDirection:"row",
     alignItems:"center",
     justifyContent:"space-between",
     width:horizontalScale(120),
+    
   },
   subjectTeacherImage:{
-    height:verticalScale(51),
-    width:horizontalScale(51),
+    height:verticalScale(31),
+    width:horizontalScale(31),
     borderRadius: moderateScale(60),
+  },
+  subjectTeacherNameAndDesignationContainer:{
+   
   },
   subjectTeacherNameText:{
     fontFamily: FONT.semiBold,
-    fontSize: moderateScale(15),
+    fontSize: moderateScale(13),
     marginLeft:horizontalScale(8),
-  
   },
   subjectTeacherDesignation:{
     fontFamily: FONT.regular,

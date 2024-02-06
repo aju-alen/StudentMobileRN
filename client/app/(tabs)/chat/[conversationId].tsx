@@ -106,6 +106,7 @@ const ConversationId = () => {
         headerStyle: { backgroundColor: "white" },
         headerShadowVisible: false,
         headerBackVisible: false,
+        gestureEnabled:false,
         headerLeft: () => (
           <Ionicons name="arrow-back" size={24} color="black" onPress={handleLeaveRoom} style={{ marginLeft: 0 }} />
         ),

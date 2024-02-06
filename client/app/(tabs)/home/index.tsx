@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router, useLocalSearchParams } from "expo-router";
+import { Stack, router, useLocalSearchParams } from "expo-router";
 import axios from "axios";
 import { ipURL } from '../../utils/utils'
 import HomeFlatlist from "../../components/HomeFlatlist";
@@ -21,6 +21,8 @@ import { horizontalScale, verticalScale, moderateScale } from '../../utils/metri
 import { debounce } from "lodash";
 import { StatusBar } from "expo-status-bar";
 import SubjectCards from "../../components/SubjectCards";
+import HorizontalSubjectCard from "../../components/horizontalSubjectCard";
+import ColumnSubjectCards from "../../components/colSubjectCards";
 
 
 //http://localhost:3000/api/subjects - GET
@@ -35,7 +37,6 @@ interface User {
 const HomePage = () => {
   const [subjectData, setSubjectData] = React.useState([]);
   const [search, setSearch] = React.useState("");
-  const [focus, setFocus] = React.useState(false);
   const params = useLocalSearchParams();
   const { subjectGrade, subjectBoard, subjectTeacher, subjectTags } = params;
   console.log(params, 'this is params in homeeee');
@@ -99,50 +100,46 @@ const HomePage = () => {
 
   return (
     <View style={styles.mainContainer}>
-
+     
       <View style={styles.wecomeAndSearchContainer}>
         <View style={styles.welcomeUserContainer}>
           <View style={styles.imageContainer}>
+            <TouchableOpacity onPress={() => router.replace('/(tabs)/profile')}>
             <Image
               source={{ uri: user.profileImage }}
-              resizeMode="contain"
+              resizeMode="cover"
               style={styles.welcomeUserImage}
             />
+            </TouchableOpacity>
           </View>
           <View style={styles.welcomeUserTextContainer}>
             <Text style={styles.welcomeTextHeading}>Hi, {user.name}</Text>
             <Text style={styles.welcomeTextSubHeading}>Find Your Favoirite Course</Text>
           </View>
         </View>
-        <View style={styles.searchContainer}>
-          <Ionicons name={"search"} size={moderateScale(26)} color={"black"} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search Course..."
-            placeholderTextColor="gray"
-            value={search}
-            onChangeText={(text) => {
-              setSearch(text);
-              handleSearch();
-            }}
-          />
-          <TouchableOpacity onPress={() => router.push('/home/filter')}>
-            <Ionicons name={"filter"} size={moderateScale(26)} color={"gray"} />
-          </TouchableOpacity>
-        </View>
+
       </View>
       {/* <View style={[styles.horizontalFlatlistHeaderContainer,{flex:1}]}>
         <Text style={styles.flatlistHeaderTextLeft}>Popular Courses</Text>
         <SubjectCards subjectData={subjectData} handleItemPress={handleItemPress} isHorizontal={true} />
       </View> */}
+      <ScrollView style={{flex:1}}>
+      <View style={styles.flatlistHeaderContainer}>
+        <Text style={styles.flatlistHeaderTextLeft}>Popular Courses</Text>
+      </View>
+      
+      <HorizontalSubjectCard subjectData={subjectData} handleItemPress={handleItemPress} isHorizontal={true} />
 
+      
       <View style={styles.flatlistHeaderContainer}>
         <Text style={styles.flatlistHeaderTextLeft}>Browse Courses</Text>
         <TouchableOpacity onPress={() => router.push('/(tabs)/home/allSubject')}>
-        <Text style={styles.flatlistHeaderTextRight}>See All</Text>
+          <Text style={styles.flatlistHeaderTextRight}>See All</Text>
         </TouchableOpacity>
       </View>
-      <SubjectCards subjectData={subjectData} handleItemPress={handleItemPress} isHorizontal={false} />
+      
+      <ColumnSubjectCards subjectData={subjectData} handleItemPress={handleItemPress} isHorizontal={false} />
+      </ScrollView>
     </View>
   );
 };
@@ -180,6 +177,7 @@ const styles = StyleSheet.create({
   },
   welcomeUserTextContainer: {
     marginLeft: horizontalScale(8),
+    padding: verticalScale(10),
   },
   welcomeTextHeading: {
     fontFamily: FONT.semiBold,

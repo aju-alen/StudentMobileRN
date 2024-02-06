@@ -7,7 +7,8 @@ const HomeLayout = () => {
     <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name='filter' options={{presentation:'modal', headerShown:false, }}/>
-        <Stack.Screen name='[subjectId]' options={{ headerShown:false, headerTitle:'Subject' }}/>
+        <Stack.Screen name='[subjectId]' options={{ headerShown:true, headerTitle:'Subject' }}/>
+        <Stack.Screen name='allSubject' options={{ headerShown:false, headerTitle:'Subject' }}/>
         
     </Stack>
   )

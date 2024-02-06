@@ -9,6 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { ipURL } from '../../utils/utils';
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
 import { FONT } from '../../../constants';
+import { ScrollView } from 'react-native-gesture-handler';
 
 interface User {
     email?: string;
@@ -83,10 +84,10 @@ const allSubject = () => {
     };
 
     return (
-        <View style={styles.mainContainer}>
-    
+        <SafeAreaView style={styles.mainContainer}>
+        <View >
+            <ScrollView>
           <View >
-           
             <View style={styles.searchContainer}>
               <Ionicons name={"search"} size={moderateScale(26)} color={"black"} />
               <TextInput
@@ -114,7 +115,9 @@ const allSubject = () => {
             
           </View>
           <SubjectCards subjectData={subjectData} handleItemPress={handleItemPress} isHorizontal={false} />
+        </ScrollView>
         </View>
+        </SafeAreaView>
       );
 }
 
