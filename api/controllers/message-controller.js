@@ -11,7 +11,7 @@ export const getMessages = async (req, res,next) => {
     if(!messages){
       return res.status(404).json({message:"No messages found"});
     }
-    res.status(200).json(messages);
+    return res.status(200).json(messages);
 
   }
   catch(err){
@@ -34,13 +34,13 @@ export const createMessage = async (req, res,next) => {
         if(!savedMessage){
           return res.status(404).json({message:"No messages found"});
         }
-        res.status(200).json(savedMessage);
+        return res.status(200).json(savedMessage);
       }
       else{const message = await Message.create({conversationId:req.params.conversationId, messages });
       if(!message){
         return res.status(404).json({message:"No messages found"});
       }
-      res.status(200).json(message);
+      return res.status(200).json(message);
     }
 
     }
@@ -60,7 +60,7 @@ export const openConversation = async (req, res,next) => {
       if(!message){
         return res.status(404).json({message:"No messages found"});
       }
-      res.status(200).json(message);
+      return res.status(200).json(message);
 
     }
     catch(err){

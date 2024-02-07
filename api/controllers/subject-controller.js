@@ -27,10 +27,10 @@ export const createSubject = async (req, res,next) => {
     
     
     
-            res.status(202).json({ message: "Subject Created", savedSubject });
+            return  res.status(202).json({ message: "Subject Created", savedSubject });
         }
         else{
-            res.status(400).json({ message: "Only teachers can create subjects" });
+            return  res.status(400).json({ message: "Only teachers can create subjects" });
         }
 
         
@@ -109,7 +109,7 @@ export const updateSubject = async (req, res, next) => {
             return res.status(400).json({ message: "Subject not found" });
         }
         const updatedSubject = await Subject.findByIdAndUpdate(req.params.subjectId, {...req.body,subjectVerification:false}, { new: true });
-        res.status(200).json({ message: "Subject Updated", updatedSubject });
+        return res.status(200).json({ message: "Subject Updated", updatedSubject });
     }
     catch (err) {
         console.log(err);
@@ -132,7 +132,7 @@ export const deleteSubject = async (req, res, next) => {
             return res.status(400).json({ message: "Subject not found" });
         }
         await Subject.findByIdAndDelete(req.params.subjectId);
-        res.status(200).json({ message: "Subject Deleted" });
+        return res.status(200).json({ message: "Subject Deleted" });
     }
     catch (err) {
         console.log(err);
@@ -144,7 +144,7 @@ export const getAllSubjectsToVerify = async (req, res,next) => {
     try {
         
         const subjects = await Subject.find({subjectVerification:false});
-        res.status(200).json(subjects);
+        return res.status(200).json(subjects);
     }
     catch (err) {
         console.log(err);
@@ -171,7 +171,7 @@ export const verifySubject = async (req, res,next) => {
         subject.subjectVerification = true;
         const newUpdatedSubject = await subject.save();
         console.log(newUpdatedSubject,'newUpdatedSubject');
-        res.status(200).json({message:"Subject Verified"});
+        return  res.status(200).json({message:"Subject Verified"});
 
     }
     catch(err){

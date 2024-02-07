@@ -74,9 +74,6 @@ const ConversationId = () => {
 
     })
     console.log('rendering socket useEffect');
-
-
-
   }, [socket]);
 
   useEffect(() => {

@@ -81,7 +81,7 @@ const ChatPage = () => {
           <Ionicons name={"search"} size={moderateScale(26)} color={"black"} style={styles.searchIconContainer} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search Course..."
+            placeholder="Search Chats..."
             placeholderTextColor="gray"
             value={searchInput}
             onChangeText={(text) => {
@@ -157,6 +157,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
     height: verticalScale(70),
     borderBottomWidth: 1,
+    
   },
   chatDetails: {
     flexDirection: 'column',

@@ -13,7 +13,7 @@ export const getAllConversations = async (req, res, next) => {
           if(!conversations){
               return res.status(400).json({message:"No conversations found"});
           }
-        res.status(200).json(conversations);
+          return res.status(200).json(conversations);
     }
     catch(err){
         console.log(err);
@@ -28,7 +28,7 @@ export const getSingleConversation = async (req, res, next) => {
         if (!conversation) {
             return res.status(400).json({ message: "No conversation found" });
         }
-        res.status(200).json(conversation);
+        return res.status(200).json(conversation);
 
     }
     catch (err) {

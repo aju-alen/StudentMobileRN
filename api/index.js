@@ -7,6 +7,7 @@ import subjectRoute from './routes/subject-routes.js';
 import paymentRoute from './routes/payment-route.js';
 import conversationRoute from './routes/conversation-route.js';
 import messageRoute from './routes/message.route.js';
+import communityRoute from './routes/community-route.js'
 import dotenv from 'dotenv';
 import { errorHandler } from './middlewares/errorHandler.js';
 import cors from 'cors';
@@ -14,6 +15,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import Conversation from './models/conversation.js';
 import { log } from 'console';
+import Community from './models/community.js';
 
 dotenv.config();
 
@@ -72,6 +74,12 @@ socketIO.on("connection", (socket) => {
 
         socket.to(data.conversationId).emit('server-message', data);
     }) // message sent from client
+
+    socket.on("send-single-message-to-Community-server",(data) =>{
+        console.log(data, 'this is message seen in server after hitting send');
+        socket.to(data.chatName).emit('server-message', data);        
+    }
+    )
     socket.on('leave-room',async (data)=>{
         console.log('leaving room',data);
         
@@ -88,9 +96,23 @@ socketIO.on("connection", (socket) => {
             conversation.messages = data.allMessages.messages;
         }
         await conversation.save();
+    })
+    socket.on('leave-room-community',async (data)=>{
+        console.log('leaving room',data);
         
 
-        // socket.to("room 237").emit(`user ${socket.id} has left the room`);
+        socket.leave(data.chatName);
+        
+        let community = await Community.findById(data.chatName);
+        log(community,'this is mongoDb Community object');
+        log(community.messages,'this is mongoDb Community message');
+        log(data,'this is client object data');
+
+        log(data.allMessages.messages,'this is message from client');
+        if(data.allMessages.messages !== undefined){
+            community.messages = data.allMessages.messages;
+        }
+        await community.save();
     })
 
 
@@ -118,6 +140,7 @@ app.use('/api/subjects', subjectRoute)
 app.use('/api/payments', paymentRoute)
 app.use('/api/conversation', conversationRoute)
 app.use('/api/message', messageRoute)
+app.use('/api/community', communityRoute)
 
 
 app.use(errorHandler)

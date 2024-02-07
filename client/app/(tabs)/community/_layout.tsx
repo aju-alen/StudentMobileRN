@@ -6,6 +6,7 @@ const CommunityLayout = () => {
   return (
     <Stack>
     <Stack.Screen name="index" options={{ headerShown: false }} />
+    <Stack.Screen name="[communityId]" options={{ headerShown: true }} />
 </Stack>
   )
 }

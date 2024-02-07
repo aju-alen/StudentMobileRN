@@ -7,53 +7,58 @@ import {
   Image,
   TouchableOpacity,
 } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { FONT } from "../../../constants";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { ipURL } from "../../utils/utils";
+import { socket } from "../../utils/socket";
 
 const CommunityPage = () => {
-  const communites = [
-    {
-      id: 1,
-      name: "Math Community",
-      count: 100,
-      imagePic:
-        "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Deus_mathematics.png/900px-Deus_mathematics.png?20210211120521",
-    },
-    {
-      id: 2,
-      name: "Science Community",
-      count: 100,
-      imagePic:
-        "https://img.freepik.com/free-vector/science-lab-objects_23-2148488312.jpg?w=740&t=st=1704101617~exp=1704102217~hmac=ee620e009c76eaeeae4cba6d53464c47a1ed66ce7013e15a693d8abb5a2ad5e8",
-    },
-    {
-      id: 3,
-      name: "History Community",
-      count: 100,
-      imagePic:
-        "https://img.freepik.com/free-vector/illustrated-save-planet-concept_23-2148515283.jpg?w=996&t=st=1704101727~exp=1704102327~hmac=ff4f87cbe01b62989088dba1073659fd10695d4d78103783887187df649672ae",
-    },
-    {
-      id: 4,
-      name: "Social Community",
-      count: 100,
-      imagePic:
-        "https://img.freepik.com/free-vector/vintage-books-with-paper-scroll-feather-ink-pot-colored-sketch-decorative-concept-vector-illustration_1284-2997.jpg?w=740&t=st=1704101753~exp=1704102353~hmac=304754992a20ce29d33dcb98af8a96d612c901323966454fe83393d54f072cbc",
-    },
-  ];
+ 
 
-  const handlePress = (item) => {
-    router.push(`/(tabs)/community/${item.name}`);
+  const [communites, setCommunites] = useState([]);
+  const [token, setToken] = useState("");
+
+  useEffect(()=>{
+    const getAllCommunities = async () => {
+      const token = await AsyncStorage.getItem("authToken");
+      console.log(token, "this is token in useEffect");
+
+
+      const resp = await axios.get(`http://${ipURL}/api/community`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setCommunites(resp.data);
+      setToken(token);
+    }
+    getAllCommunities();
+  },[])
+
+  const handlePress = async(item) => {
+    console.log(item._id);
+    
+    const resp = await axios.post(`http://${ipURL}/api/community/${item._id}`, null, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    socket.emit('chat-room',item._id)
+    router.push(`/(tabs)/community/${item._id}`);
   }
-
+  console.log("this is all community",communites );
+  
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1,backgroundColor:"white" }}>
       <Text style={[styles.text1]}>
-        <Ionicons name="people-outline" size={20} color="#900" /> Discover New
+        <Ionicons name="people-outline" size={20} color="gray" /> Discover New
         Communities
       </Text>
-      <View style={styles.line}></View>
+    
       <FlatList
         data={communites}
         renderItem={({ item }) => (
@@ -61,10 +66,11 @@ const CommunityPage = () => {
             <TouchableOpacity onPress={() => handlePress(item)}>
               <View style={styles.card}>
                 <View style={styles.rowContainer1}>
-                  <Image source={{ uri: item.imagePic }} style={styles.image} />
+                  <Image source={{ uri: item.communityProfileImage }} style={styles.image} />
                   <View style={[styles.textContainer, { marginLeft: 10 }]}>
-                    <Text style={styles.text2}>{item.name}</Text>
-                    <Text style={styles.text2}>{item.count}+ Members</Text>
+                    <Text style={styles.text2}>{item.communityName}</Text>
+                    <Text style={styles.text2}>{item.users.length}Members</Text>
+
                   </View>
                 </View>
               </View>
@@ -81,12 +87,12 @@ export default CommunityPage;
 const styles = StyleSheet.create({
   text1: {
     fontSize: 20,
-    fontFamily: "Roboto-Regular",
+    fontFamily: FONT.regular,
     padding: 10,
   },
   text2: {
     fontSize: 18,
-    fontFamily: "Roboto-Regular",
+    fontFamily: FONT.regular,
   },
   card: {
     backgroundColor: "white",
@@ -109,15 +115,11 @@ const styles = StyleSheet.create({
   },
   rowContainer1: {
     flexDirection: "row",
+    alignItems: "center",
   },
   textContainer: {
     marginLeft: 1,
     flex: 1,
   },
-  line: {
-    borderBottomColor: "black",
-    borderBottomWidth: 1,
-    marginVertical: 1,
-    marginHorizontal: 20,
-  },
+
 });
