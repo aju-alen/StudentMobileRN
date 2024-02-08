@@ -17,6 +17,7 @@ import { ipURL } from "../../utils/utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import HomeFlatlist from "../../components/HomeFlatlist";
+import KebabIcon from "../../components/KebabIcon";
 
 interface User {
   email?: string;
@@ -92,6 +93,7 @@ const ProfilePage = () => {
           <TouchableOpacity onPress={handleLogout} style={[styles.button]}>
             <Text style={[styles.text1]}>Logout</Text>
           </TouchableOpacity>
+          <KebabIcon />
         </View>
         <View style={styles.profileContainer}>
          

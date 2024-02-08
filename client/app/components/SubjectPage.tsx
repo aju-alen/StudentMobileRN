@@ -47,6 +47,7 @@ const SubjectPage = ({ subjectId }) => {
   const name = singleSubjectData.user?.name;
   const profileImage = singleSubjectData.user?.profileImage;
   const [userData, setUserData] = React.useState<User>({});
+  const [teacherId, setTeacherId] = React.useState<string>("");
 
   const handleChatNow = async () => {
     const token = await AsyncStorage.getItem('authToken')
@@ -82,6 +83,7 @@ const SubjectPage = ({ subjectId }) => {
             },
           }
         );
+        setTeacherId(resp.data.user._id);
         setSingleSubjectData(resp.data);
       } catch (error) {
         console.error("Error fetching subject data:", error);
@@ -109,6 +111,7 @@ const SubjectPage = ({ subjectId }) => {
             <Text style={styles.subjectSubHeaderText}>{singleSubjectData.subjectNameSubHeading && singleSubjectData.subjectNameSubHeading}</Text>
           </View>
          
+            <TouchableOpacity onPress={() => router.replace(`/(tabs)/home/singleProfile/${teacherId}`)}>
           <View style={styles.userDetailsContainer}>
             <Image source={{ uri: singleSubjectData?.user?.profileImage }} style={styles.userDetailsImage} />
             <View style={styles.userDetailsTextContainer}>
@@ -116,6 +119,7 @@ const SubjectPage = ({ subjectId }) => {
               <Text style={styles.userDetailsText2}>Sr.French Professor</Text>
             </View>
           </View>
+            </TouchableOpacity>
           <View style={styles.subjectDetailsContainer}>
             <Text style={styles.subjectDetailsText}>{singleSubjectData.subjectDuration && `${singleSubjectData.subjectDuration} h`}</Text>
             <Text style={styles.subjectDetailsText}>•</Text>

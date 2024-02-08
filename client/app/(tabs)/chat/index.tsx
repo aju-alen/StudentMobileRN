@@ -59,7 +59,12 @@ const ChatPage = () => {
   const handlePress = async (id) => {
     socket.emit("chat-room", id)
     router.push(`/(tabs)/chat/${id}`);
+
   };
+  const handleLongPress = (clientId,userId) => {
+    user === userId._id ? router.push(`/(tabs)/chat/singleProfile/${clientId._id}`) : router.push(`/(tabs)/chat/singleProfile/${userId._id}`)
+  }
+
   console.log(conversation, "this is conversation");
   console.log(user, "this is user");
 
@@ -94,7 +99,7 @@ const ChatPage = () => {
           <FlatList
             data={conversation}
             renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => handlePress(item._id)} style={styles.chatButtonContainer}>
+              <TouchableOpacity onPress={() => handlePress(item._id)} onLongPress={()=>handleLongPress(item.clientId,item.userId)} style={styles.chatButtonContainer}>
                 <View style={styles.chatIconContainer}>
                   <Image
                     source={{ uri: user === item.userId._id ? item.clientId.profileImage : item.userId.profileImage }} 

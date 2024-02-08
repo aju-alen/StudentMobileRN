@@ -79,13 +79,14 @@ const styles = StyleSheet.create({
     backgroundColor:"'rgba(255, 255, 255, 0.9)'",
     padding:moderateScale(2),
     height:verticalScale(29),
-    width:horizontalScale(70),
+    maxWidth:"100%",
     borderRadius:moderateScale(40),
     marginTop:verticalScale(11),
     marginLeft:horizontalScale(10),
     justifyContent:"space-around",
     alignItems:"center",
     position:"absolute",
+    
    
   },
   subjectBoardText:{
