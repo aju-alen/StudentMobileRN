@@ -15,6 +15,8 @@ const FONT = {
   semiBold: "NotoSemiBold",
   medium:"NotoMedium",
   bold: "NotoBold",
+  thinItalic:"NotoThinItalic",
+ 
 };
 
 const SIZES = {

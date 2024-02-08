@@ -5,6 +5,8 @@ import { FONT } from '../../constants/theme'
 import { boolean } from 'zod'
 
 const SubjectCards = ({subjectData,handleItemPress,isHorizontal}) => {
+  console.log(subjectData, 'this is subject data in subject cards');
+  
   return (
     <View style={{flex:1}}>
         <FlatList 

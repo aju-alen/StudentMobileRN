@@ -119,6 +119,7 @@ const HomeFlatlist = ({ homeData, handleItemPress }) => {
           </TouchableOpacity>
         )}
         keyExtractor={(item) => item._id}
+        scrollEnabled={false}
       />
       </View>
     </View>

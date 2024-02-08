@@ -14,6 +14,7 @@ export default function Page() {
     NotoRegular : require(`../assets/fonts/NotoSans/NotoSans-Regular.ttf`),
     NotoMedium: require(`../assets/fonts/NotoSans/NotoSans-Medium.ttf`),
     NotoBold: require(`../assets/fonts/NotoSans/NotoSans-Bold.ttf`),
+    NotoThinItalic: require(`../assets/fonts/NotoSans/NotoSans-ThinItalic.ttf`), 
 
     DMMedium : require(`../assets/fonts/DMSans-Medium.ttf`),
     DMRegular : require(`../assets/fonts/DMSans-Regular.ttf`)

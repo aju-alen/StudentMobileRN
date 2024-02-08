@@ -70,7 +70,6 @@ const CommunityPage = () => {
                   <View style={[styles.textContainer, { marginLeft: 10 }]}>
                     <Text style={styles.text2}>{item.communityName}</Text>
                     <Text style={styles.text2}>{item.users.length}Members</Text>
-
                   </View>
                 </View>
               </View>
