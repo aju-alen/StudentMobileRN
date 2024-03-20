@@ -81,7 +81,7 @@ const ConversationId = () => {
       const token = await AsyncStorage.getItem("authToken");
       const userDetails = JSON.parse(await AsyncStorage.getItem("userDetails"));
       setUser(userDetails.userId)
-      const resp = await axios.get(`http://${ipURL}/api/conversation/single/${conversationId}`, {
+      const resp = await axios.get(`${ipURL}/api/conversation/single/${conversationId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

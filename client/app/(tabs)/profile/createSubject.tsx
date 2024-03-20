@@ -59,7 +59,7 @@ const CreateSubject = () => {
     };
     const token = await AsyncStorage.getItem("authToken");
     try {
-      axios.post(`http://${ipURL}/api/subjects/create`, subject, {
+      axios.post(`${ipURL}/api/subjects/create`, subject, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

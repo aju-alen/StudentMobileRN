@@ -44,7 +44,7 @@ const EditSingleSubject = () => {
       try {
         const token = await AsyncStorage.getItem("authToken");
         const resp = await axios.get(
-          `http://${ipURL}/api/subjects/${editSubjectId}`,
+          `${ipURL}/api/subjects/${editSubjectId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -83,7 +83,7 @@ const EditSingleSubject = () => {
     try {
       const token = await AsyncStorage.getItem("authToken");
       const resp = await axios.post(
-        `http://${ipURL}/api/subjects/${editSubjectId}`,
+        `${ipURL}/api/subjects/${editSubjectId}`,
         subject,
         {
           headers: {

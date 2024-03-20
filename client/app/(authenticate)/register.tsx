@@ -25,7 +25,7 @@ const RegisterPage = () => {
             isTeacher,
         }
         try{
-            const resp = await axios.post(`http://${ipURL}/api/auth/register`, user)
+            const resp = await axios.post(`${ipURL}/api/auth/register`, user)
             console.log(resp.data, 'Registered succesfully');
             Alert.alert('Registration Succesful, Verify email to login');
             router.replace('/(authenticate)/login');

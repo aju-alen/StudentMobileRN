@@ -29,7 +29,7 @@ const allSubject = () => {
   
     const handleSearch = debounce(async () => {
       const token = await AsyncStorage.getItem("authToken");
-      const resp = await axios.get(`http://${ipURL}/api/subjects?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`, {
+      const resp = await axios.get(`${ipURL}/api/subjects?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -45,7 +45,7 @@ const allSubject = () => {
     const [user, setUser] = useState<User>({});
     useEffect(() => {
       const getUser = async () => {
-        const apiUser = await axios.get(`http://${ipURL}/api/auth/me`, {
+        const apiUser = await axios.get(`${ipURL}/api/auth/me`, {
           headers: {
             Authorization: `Bearer ${await AsyncStorage.getItem("authToken")}`,
           },
@@ -61,7 +61,7 @@ const allSubject = () => {
       const getSubjects = async () => {
         const token = await AsyncStorage.getItem("authToken");
   
-        const resp = await axios.get(`http://${ipURL}/api/subjects/search?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`, {
+        const resp = await axios.get(`${ipURL}/api/subjects/search?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

@@ -29,7 +29,7 @@ useEffect(() => {
     const token = await AsyncStorage.getItem('authToken')
     const userDetails = await AsyncStorage.getItem('userDetails')
      
-    const resp = await axios.get(`http://${ipURL}/api/message/${chatName}`,{
+    const resp = await axios.get(`${ipURL}/api/message/${chatName}`,{
       headers: {
         Authorization: `Bearer ${token}`,
       },

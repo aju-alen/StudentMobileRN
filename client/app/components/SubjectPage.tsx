@@ -76,7 +76,7 @@ const SubjectPage = ({ subjectId }) => {
       try {
         const token = await AsyncStorage.getItem("authToken");
         const resp = await axios.get(
-          `http://${ipURL}/api/subjects/${subjectId}`,
+          `${ipURL}/api/subjects/${subjectId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

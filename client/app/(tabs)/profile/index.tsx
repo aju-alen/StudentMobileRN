@@ -51,7 +51,7 @@ const ProfilePage = () => {
   const [userDetails, setUserDetails] = useState<UserDetails>({});
   useEffect(() => {
     const getUser = async () => {
-      const apiUser = await axios.get(`http://${ipURL}/api/auth/me`, {
+      const apiUser = await axios.get(`${ipURL}/api/auth/me`, {
         headers: {
           Authorization: `Bearer ${await AsyncStorage.getItem("authToken")}`,
         },

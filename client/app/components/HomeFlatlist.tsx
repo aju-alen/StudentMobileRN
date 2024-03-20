@@ -28,7 +28,7 @@ const HomeFlatlist = ({ homeData, handleItemPress }) => {
     try {
       const token = await AsyncStorage.getItem("authToken");
       const resp = await axios.delete(
-        `http://${ipURL}/api/subjects/${item._id}`,
+        `${ipURL}/api/subjects/${item._id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -58,7 +58,7 @@ const HomeFlatlist = ({ homeData, handleItemPress }) => {
   const [user, setUser] = useState<User>({});
   useEffect(() => {
     const getUser = async () => {
-      const apiUser = await axios.get(`http://${ipURL}/api/auth/me`, {
+      const apiUser = await axios.get(`${ipURL}/api/auth/me`, {
         headers: {
           Authorization: `Bearer ${await AsyncStorage.getItem("authToken")}`,
         },

@@ -21,7 +21,7 @@ const VerificationIndex = () => {
     const getUser = async () => {
       console.log('iniinninini');
       
-      const apiUser = await axios.get(`http://${ipURL}/api/subjects/verify`, {
+      const apiUser = await axios.get(`${ipURL}/api/subjects/verify`, {
         headers: {
           Authorization: `Bearer ${await AsyncStorage.getItem("authToken")}`,
         },

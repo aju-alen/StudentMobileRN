@@ -110,7 +110,7 @@ const ChatPage = () => {
                 <View style={styles.chatDetails}>
                   <View style={styles.chatDetailsMainHeadingContainer}>
                   <Text style={styles.chatDetailsMainHeading}>{user === item.userId._id ? item.clientId.name : item.userId.name}</Text> 
-                  <Text style={styles.chatDetailsMainHeadingSubjectName}>{`(${item.subjectId.subjectName})`}</Text>
+                  <Text style={styles.chatDetailsMainHeadingSubjectName}>{`(${item?.subjectId?.subjectName})`}</Text>
                   </View>
                   {item.messages.length > 0 && <Text style={styles.chatDetailsRecentChat}>{ limitTextLength(item.messages[item.messages.length - 1].text,50)}</Text>}
                 </View>

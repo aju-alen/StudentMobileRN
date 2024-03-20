@@ -28,7 +28,7 @@ const CommunityPage = () => {
       console.log(token, "this is token in useEffect");
 
 
-      const resp = await axios.get(`http://${ipURL}/api/community`, {
+      const resp = await axios.get(`${ipURL}/api/community`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -42,7 +42,7 @@ const CommunityPage = () => {
   const handlePress = async(item) => {
     console.log(item._id);
     
-    const resp = await axios.post(`http://${ipURL}/api/community/${item._id}`, null, {
+    const resp = await axios.post(`${ipURL}/api/community/${item._id}`, null, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

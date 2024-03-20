@@ -35,7 +35,7 @@ const LoginPage = () => {
             password,
         }
         try {
-            const resp = await axios.post(`http://${ipURL}/api/auth/login`, user)
+            const resp = await axios.post(`${ipURL}/api/auth/login`, user)
             console.log(resp.data, 'Logged in succesfully');
             
             AsyncStorage.setItem('authToken', resp.data.token);

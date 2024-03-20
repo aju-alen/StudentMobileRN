@@ -49,7 +49,7 @@ const VerifySingleSubject = () => {
       try {
         const token = await AsyncStorage.getItem("authToken");
         const resp = await axios.get(
-          `http://${ipURL}/api/subjects/${verifySingleSubject}`,
+          `${ipURL}/api/subjects/${verifySingleSubject}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -81,7 +81,7 @@ const VerifySingleSubject = () => {
     try {
       const token = await AsyncStorage.getItem("authToken");
       const resp = await axios.put(
-        `http://${ipURL}/api/subjects/verify/${verifySingleSubject}`,
+        `${ipURL}/api/subjects/verify/${verifySingleSubject}`,
         {},
         {
           headers: {
