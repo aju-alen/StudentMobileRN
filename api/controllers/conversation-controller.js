@@ -5,6 +5,7 @@ dotenv.config();
 
 export const getAllConversations = async (req, res, next) => {
     console.log('req.params',req.params);
+    console.log('inside conversation controller apiiiiiiiiiiiii');
     try{
         const conversations = await Conversation.find({$or: [
             {userId: req.params.userId},

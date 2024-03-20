@@ -24,7 +24,12 @@ const server = createServer(app);
 
 const socketIO = new Server(server, {
     cors: {
-        origin: "http://localhost:8081",
+        origin: [
+            "exp://10.65.1.122:8081",
+            "http://localhost:8081",
+            "http://localhost:19000",
+            "http://10.65.1.122:19006",
+        ],
     }
 });
 
@@ -134,7 +139,7 @@ socketIO.on("connection", (socket) => {
 
 const connect = async () => {
     try {
-        await mongoose.connect(process.env.MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true });
+        await mongoose.connect(process.env.MONGO_URL);
         console.log("Connected to database");
     }
     catch (err) {
