@@ -24,11 +24,24 @@ const server = createServer(app);
 
 const socketIO = new Server(server, {
     cors: {
-        origin: "exp://10.65.1.122:8081",
+        origin: [
+            "exp://10.65.1.122:8081",
+            "http://localhost:8081",
+            "http://localhost:19000",
+            "http://10.65.1.122:19006",
+
+        ]
     }
 });
 
-app.use(cors());
+app.use(cors({
+    origin: [
+        "exp://10.65.1.122:8081",
+        "http://localhost:8081",
+        "http://localhost:19000",
+        "http://10.65.1.122:19006",
+    ],
+})); //frontend url
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
