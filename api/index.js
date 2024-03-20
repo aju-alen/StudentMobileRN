@@ -24,7 +24,7 @@ const server = createServer(app);
 
 const socketIO = new Server(server, {
     cors: {
-        origin: "http://localhost:8081",
+        origin: "exp://10.65.1.122:8081",
     }
 });
 
