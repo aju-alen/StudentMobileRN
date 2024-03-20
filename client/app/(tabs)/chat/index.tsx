@@ -39,12 +39,13 @@ const ChatPage = () => {
       
       console.log(userDetails.userId, "this is user.userId");
 
-      const resp = await axios.get(`http://${ipURL}/api/conversation/${userDetails.userId}`, {
+      const resp = await axios.get(`${ipURL}/api/conversation/${userDetails.userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
+      console.log(resp.data, "this is the response from the socket io server ppppppppppppppppp");
+      
       setConversation(resp.data);
       setUser(userDetails.userId);
 

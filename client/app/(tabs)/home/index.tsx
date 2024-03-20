@@ -74,8 +74,8 @@ const HomePage = () => {
 
   useEffect(() => {
     const getSubjects = async () => {
-      const token = await AsyncStorage.getItem("authToken");
-
+      try{
+        const token = await AsyncStorage.getItem("authToken");
       const resp = await axios.get(`${ipURL}/api/subjects/search?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -85,6 +85,10 @@ const HomePage = () => {
       setSubjectData(resp.data);
 
       console.log("THIS IS RERENDERING AGAIN AFTER MODAL");
+      }
+      catch(error){
+        console.log(error,'this is error');
+      }
 
     };
     getSubjects();
