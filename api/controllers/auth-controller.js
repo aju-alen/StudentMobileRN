@@ -60,7 +60,7 @@ const sendVerificationEmail = async (email, verificationToken, name) => {
         text: `
         Hi ${name},
 
-        Please click the link below to verify your account: http://localhost:3000/api/auth/verify/${verificationToken}`
+        Please click the link below to verify your account: https://studentmobilern.onrender.com/api/auth/verify/${verificationToken}`
     }
 
     //send the mail
