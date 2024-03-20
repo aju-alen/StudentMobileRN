@@ -15,5 +15,6 @@ Since this is in development, if youre using your mobile devices to run the app 
 If you are emulating the device on the same computer as the metro bundler, change the value of 'ipURL' to ```localhost ```
 
 
+Local APK build for android link (https://expo.dev/artifacts/eas/wMhdXicVQuC67h6BJ4H1uF.apk)
 
 
