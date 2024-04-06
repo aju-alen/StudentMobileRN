@@ -1,6 +1,7 @@
 import { Stack, useLocalSearchParams } from "expo-router";
 import ChatPage from "../../components/ChatPage";
-import { View, Text, TextInput, ScrollView, SafeAreaView, Image, StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, TextInput, ScrollView, SafeAreaView,StyleSheet, KeyboardAvoidingView, Platform } from "react-native";
+import { Image } from 'expo-image';
 import React, { useEffect, useState } from "react";
 import { socket } from "../../utils/socket";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -34,6 +35,9 @@ interface UserId {
   name?: string;
   profileImage?: string;
 }
+
+const blurhash =
+  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
 const ConversationId = () => {
   const [allMessages, setAllMessages] = useState<Conversation>({});
@@ -109,8 +113,11 @@ const ConversationId = () => {
         ),
         headerTitle: user === allMessages.userId?._id ? allMessages.clientId?.name : allMessages.userId?.name,
         headerRight: () => (
-          <Image source={{ uri: user === allMessages.userId?._id ? allMessages.clientId?.profileImage : allMessages.userId?.profileImage }} style={styles.stackHeaderImage}
-            resizeMode="contain"
+          <Image source={{ uri: user === allMessages.userId?._id ? allMessages.clientId?.profileImage : allMessages.userId?.profileImage }} 
+          style={styles.stackHeaderImage}
+          placeholder={blurhash}
+          contentFit="cover"
+          transition={100}
           />
         ),
       }}>

@@ -1,8 +1,11 @@
-import { FlatList, StyleSheet, Text, TouchableOpacity, View, Image } from 'react-native'
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React from 'react'
 import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics'
 import { FONT } from '../../constants/theme'
-import { boolean } from 'zod'
+import { Image } from 'expo-image';
+
+const blurhash =
+  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
 const HorizontalSubjectCard = ({subjectData,handleItemPress,isHorizontal}) => {
   return (
@@ -14,9 +17,12 @@ const HorizontalSubjectCard = ({subjectData,handleItemPress,isHorizontal}) => {
         <TouchableOpacity onPress={() => handleItemPress(item)}>
       <View style={styles.flatlistRecommendedContainer}>
             <View style={styles.flatlistInnerContainer}>
-            <Image style={styles.subjectImage} 
-          source={{ uri: item?.subjectImage }}
-           resizeMode='cover'
+            <Image 
+              style={styles.subjectImage} 
+              source={{ uri: item?.subjectImage }}
+              placeholder={blurhash}
+              contentFit="cover"
+              transition={100}
          />
          <View style={styles.subjectBoardContainer}>
           <Text style={styles.subjectBoardText}>{item?.subjectBoard}</Text>
@@ -26,9 +32,12 @@ const HorizontalSubjectCard = ({subjectData,handleItemPress,isHorizontal}) => {
           </View>
           <View style={styles.subjectDetailsContainer}>
             <View style={styles.imageandNameContainer} >
-          <Image style={styles.subjectTeacherImage} 
-          source={{ uri: item?.user?.profileImage }}
-           resizeMode='cover'
+          <Image 
+            style={styles.subjectTeacherImage} 
+            source={{ uri: item?.user?.profileImage }}
+            placeholder={blurhash}
+            contentFit="cover"
+            transition={100}
          />
          <View style={styles.subjectTeacherNameAndDesignationContainer}>
          <Text style={styles.subjectTeacherNameText}>{item?.user.name}</Text>

@@ -51,4 +51,14 @@ const SHADOWS = {
   },
 };
 
-export { COLORS, FONT, SIZES, SHADOWS };
+const welcomeCOLOR = {
+  white: "#FFFFFF",
+  black: "#222222",
+  primary: "#040720",
+  secondary: "#1A4C6E",
+  grey: "#CCCCCC",
+  registerPrimary: "#081984",
+  registerSecondary: "#ffffff",
+}
+
+export { COLORS, FONT, SIZES, SHADOWS,welcomeCOLOR };

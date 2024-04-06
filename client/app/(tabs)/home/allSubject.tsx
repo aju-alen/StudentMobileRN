@@ -138,12 +138,11 @@ const styles = StyleSheet.create({
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-around",
-    //   marginTop: verticalScale(24),
+      marginTop: verticalScale(24),
       height: verticalScale(50),
       borderRadius: moderateScale(10),
       borderWidth: 1,
       borderColor: "black",
-      marginBottom: verticalScale(24),
     },
     searchInput: {
       width: horizontalScale(250),

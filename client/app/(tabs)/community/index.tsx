@@ -4,9 +4,9 @@ import {
   View,
   SafeAreaView,
   FlatList,
-  Image,
   TouchableOpacity,
 } from "react-native";
+import { Image } from 'expo-image';
 import React, { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -15,6 +15,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { ipURL } from "../../utils/utils";
 import { socket } from "../../utils/socket";
+import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
+
+const blurhash =
+  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
+
 
 const CommunityPage = () => {
  
@@ -66,7 +71,12 @@ const CommunityPage = () => {
             <TouchableOpacity onPress={() => handlePress(item)}>
               <View style={styles.card}>
                 <View style={styles.rowContainer1}>
-                  <Image source={{ uri: item.communityProfileImage }} style={styles.image} />
+                  <Image source={{ uri: item.communityProfileImage }} 
+                  style={styles.image}
+                  placeholder={blurhash}
+                  contentFit="cover"
+                  transition={100}
+                   />
                   <View style={[styles.textContainer, { marginLeft: 10 }]}>
                     <Text style={styles.text2}>{item.communityName}</Text>
                     <Text style={styles.text2}>{item.users.length}Members</Text>
@@ -85,9 +95,13 @@ export default CommunityPage;
 
 const styles = StyleSheet.create({
   text1: {
-    fontSize: 20,
-    fontFamily: FONT.regular,
-    padding: 10,
+    fontSize: moderateScale(20),
+    // fontFamily: FONT.semiBold,
+    padding: horizontalScale(10),
+    marginTop: verticalScale(15),
+
+    fontWeight: "800",
+    
   },
   text2: {
     fontSize: 18,
@@ -105,6 +119,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
+    
   },
   image: {
     width: 100,

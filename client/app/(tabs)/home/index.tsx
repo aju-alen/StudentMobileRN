@@ -2,13 +2,10 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
-  SafeAreaView,
-  Image,
   TouchableOpacity,
-  FlatList,
   ScrollView,
 } from "react-native";
+import { Image } from 'expo-image';
 import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack, router, useLocalSearchParams } from "expo-router";
@@ -23,6 +20,7 @@ import { StatusBar } from "expo-status-bar";
 import SubjectCards from "../../components/SubjectCards";
 import HorizontalSubjectCard from "../../components/horizontalSubjectCard";
 import ColumnSubjectCards from "../../components/colSubjectCards";
+import Video from "../../components/Video";
 
 
 //http://localhost:3000/api/subjects - GET
@@ -33,6 +31,9 @@ interface User {
   profileImage?: string;
   userDescription?: string;
 }
+
+const blurhash =
+  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
 const HomePage = () => {
   const [subjectData, setSubjectData] = React.useState([]);
@@ -111,8 +112,10 @@ const HomePage = () => {
             <TouchableOpacity onPress={() => router.replace('/(tabs)/profile')}>
             <Image
               source={{ uri: user.profileImage }}
-              resizeMode="cover"
               style={styles.welcomeUserImage}
+              placeholder={blurhash}
+              contentFit="cover"
+              transition={100}
             />
             </TouchableOpacity>
           </View>
@@ -143,6 +146,14 @@ const HomePage = () => {
       </View>
       
       <ColumnSubjectCards subjectData={subjectData} handleItemPress={handleItemPress} isHorizontal={false} />
+      <View style={styles.flatlistHeaderContainer}>
+        <Text style={styles.flatlistHeaderTextLeft}>{`Recommended Video(s)`}</Text>
+        {/* <TouchableOpacity onPress={() => router.push('/(tabs)/home/allSubject')}> */}
+          {/* <Text style={styles.flatlistHeaderTextRight}>See All</Text> */}
+        {/* </TouchableOpacity> */}
+      </View>
+      <Video/>
+
       </ScrollView>
     </View>
   );

@@ -3,10 +3,10 @@ import {
   StyleSheet,
   Text,
   View,
-  Image,
   TouchableOpacity,
   ScrollView,
 } from "react-native";
+import { Image } from 'expo-image';
 import React, { useEffect } from "react";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -37,6 +37,10 @@ interface User {
   profileImage?: string;
   _id?: string;
 }
+
+const blurhash =
+  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
+
 
 //This gets a single Subject data, there is handleChat
 const SubjectPage = ({ subjectId }) => {
@@ -100,7 +104,13 @@ const SubjectPage = ({ subjectId }) => {
 
     <View style={styles.mainContainer} >
       <ScrollView  >
-        <Image source={{ uri: singleSubjectData?.subjectImage }} style={styles.mainImageContainer} resizeMode="cover" />
+        <Image 
+        source={{ uri: singleSubjectData?.subjectImage }} 
+        style={styles.mainImageContainer} 
+        placeholder={blurhash}
+        contentFit="cover"
+        transition={100}
+        />
         <SafeAreaView >
           <View style={styles.imageDetailsContainer}>
             <Text style={styles.teachingGradeText}>Grade: {singleSubjectData.subjectGrade}</Text>
@@ -113,7 +123,13 @@ const SubjectPage = ({ subjectId }) => {
          
             <TouchableOpacity onPress={() => router.replace(`/(tabs)/home/singleProfile/${teacherId}`)}>
           <View style={styles.userDetailsContainer}>
-            <Image source={{ uri: singleSubjectData?.user?.profileImage }} style={styles.userDetailsImage} />
+            <Image 
+              source={{ uri: singleSubjectData?.user?.profileImage }} 
+              style={styles.userDetailsImage}
+              placeholder={blurhash}
+              contentFit="cover"
+              transition={100}
+              />
             <View style={styles.userDetailsTextContainer}>
               <Text style={styles.userDetailsText1}>{singleSubjectData.user?.name}</Text>
               <Text style={styles.userDetailsText2}>Sr.French Professor</Text>

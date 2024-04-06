@@ -4,14 +4,19 @@ import {
   View,
   TouchableOpacity,
   FlatList,
-  Image,
 } from "react-native";
+import { Image } from 'expo-image';
+
 import React, { useEffect, useState } from "react";
 import { router, usePathname } from "expo-router";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ipURL } from "../utils/utils";
 import { SIZES } from "../../constants";
+
+const blurhash =
+  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
+
 
 const HomeFlatlist = ({ homeData, handleItemPress }) => {
   const [showAllText, setShowAllText] = useState(false);
@@ -104,6 +109,9 @@ const HomeFlatlist = ({ homeData, handleItemPress }) => {
                 <Image
                   source={{ uri: item.subjectImage }}
                   style={styles.image}
+                  placeholder={blurhash}
+                  contentFit="cover"
+                  transition={100}
                 />
                 <View style={styles.textContainer}>
                   <Text numberOfLines={showAllText ? undefined : maxLines}>

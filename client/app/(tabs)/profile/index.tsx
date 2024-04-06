@@ -4,16 +4,11 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
-  TouchableOpacity,
-  KeyboardAvoidingView,
   SafeAreaView,
-  Pressable,
-  StatusBar,
   ScrollView,
-  FlatList,
   TouchableWithoutFeedback,
 } from "react-native";
+import { Image } from 'expo-image';
 import { ipURL } from "../../utils/utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
@@ -45,6 +40,9 @@ interface UserDetails {
   isTeacher?: boolean;
   isAdmin?: boolean;
 }
+
+const blurhash =
+  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
 const ProfilePage = () => {
   const [user, setUser] = useState<User>({});
@@ -95,13 +93,15 @@ const ProfilePage = () => {
      </View>
      <View style={styles.userImageAndDetailsContainer}>
      <Image
-  source={{ uri: user.profileImage }}
+           source={{ uri: user.profileImage }}
            style={styles.profileImage}
-           resizeMode="cover"
+           placeholder={blurhash}
+           contentFit="cover"
+           transition={100}
          />     
          <View style={styles.userDetailsContainer} >
           <Text style={styles.userNameText}>{user.name}</Text>
-          <Text style={styles.userDesignationText}>Sr. Professor</Text>
+          <Text style={styles.userDesignationText}></Text>
          </View>
          
          </View>
@@ -112,11 +112,11 @@ const ProfilePage = () => {
           <View style={styles.box1Container}>
           <Text style={styles.boxHeadingText}>Sessions Completed</Text>
           <Text style={styles.boxResultsText}>12</Text>
-          <Text style={styles.boxHeadingText}>Average Rating</Text>
-          <Text style={styles.boxResultsText}>4.2</Text>
+          
           </View>
           <View style={styles.box2Container}>
-          <Text style={styles.boxHeadingText}>Another Stat</Text>
+          <Text style={styles.boxHeadingText}>Average Rating</Text>
+          <Text style={styles.boxResultsText}>4.2</Text>
           </View>
           </View>        
           <View>
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     width: horizontalScale(140),
     height: verticalScale(150),
     borderRadius: moderateScale(20),
-    backgroundColor: "#FFD7E0",
+    backgroundColor: "#FFF5CC",
   },
   boxHeadingText:{
     justifyContent:"center",
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     width: horizontalScale(140),
     height: verticalScale(150),
     borderRadius: moderateScale(20),
-    backgroundColor: "#F08EA6",
+    backgroundColor: "#CCE6CC",
   }, 
   boxResultsText2:{
     justifyContent:"center",
