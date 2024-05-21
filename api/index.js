@@ -189,7 +189,7 @@ app.use('/api/auth', authRoute)
 app.use('/api/subjects', subjectRoute)
 app.use('/api/payments', paymentRoute)
 app.use('/api/conversation', conversationRoute)
-app.use('/api/s3', s3route)
+// app.use('/api/s3', s3route)
 app.use('/api/message', messageRoute)
 app.use('/api/community', communityRoute)
 
