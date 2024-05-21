@@ -16,20 +16,11 @@ import { Server } from 'socket.io';
 import Conversation from './models/conversation.js';
 import { log } from 'console';
 import Community from './models/community.js';
-import s3route from './routes/s3route.js';
-
-import multer from 'multer';
-import AWS from 'aws-sdk';
-import path from 'path';
+// import s3route from './routes/s3route.js';
 
 dotenv.config();
 
 const app = express();
-
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
-
-
 const server = createServer(app);
 
 const socketIO = new Server(server, {
@@ -53,34 +44,6 @@ app.use(cors({
 })); //frontend url
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-
-const s3 = new AWS.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION,
-  });
-
-  
-
-app.post('/upload', (req, res) => {
-    console.log('uploading file');
-    const file = req.file;
-  
-    const params = {
-      Bucket: process.env.AWS_BUCKET_NAME,
-      Key: Date.now().toString() + path.extname(file.originalname),
-      Body: file.buffer,
-      ContentType: file.mimetype,
-      ACL: 'public-read',
-    };
-  
-    s3.upload(params, (error, data) => {
-      if (error) {
-        return res.status(500).send(error);
-      }
-      res.status(200).send({ message: 'File uploaded successfully', data });
-    });
-  });
 
 let count = 0;
 socketIO.on("connection", (socket) => {
@@ -189,7 +152,7 @@ app.use('/api/auth', authRoute)
 app.use('/api/subjects', subjectRoute)
 app.use('/api/payments', paymentRoute)
 app.use('/api/conversation', conversationRoute)
-// app.use('/api/s3', s3route)
+app.use('/api/s3', s3route)
 app.use('/api/message', messageRoute)
 app.use('/api/community', communityRoute)
 
