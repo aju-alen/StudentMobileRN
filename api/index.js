@@ -16,7 +16,7 @@ import { Server } from 'socket.io';
 import Conversation from './models/conversation.js';
 import { log } from 'console';
 import Community from './models/community.js';
-// import s3route from './routes/s3route.js';
+import s3route from './routes/s3route.js';
 
 dotenv.config();
 
@@ -88,41 +88,41 @@ socketIO.on("connection", (socket) => {
         socket.to(data.conversationId).emit('server-message', data);
     }) // message sent from client
 
-    socket.on("send-single-message-to-Community-server",(data) =>{
+    socket.on("send-single-message-to-Community-server", (data) => {
         console.log(data, 'this is message seen in server after hitting send');
-        socket.to(data.chatName).emit('server-message', data);        
+        socket.to(data.chatName).emit('server-message', data);
     }
     )
-    socket.on('leave-room',async (data)=>{
-        console.log('leaving room',data);
-        
+    socket.on('leave-room', async (data) => {
+        console.log('leaving room', data);
+
 
         socket.leave(data.conversationId);
-        
-        let conversation = await Conversation.findById(data.conversationId);
-        log(conversation,'this is mongoDb conversation object');
-        log(conversation.messages,'this is mongoDb conversation message');
-        log(data,'this is client object data');
 
-        log(data.allMessages.messages,'this is message from client');
-        if(data.allMessages.messages !== undefined){
+        let conversation = await Conversation.findById(data.conversationId);
+        log(conversation, 'this is mongoDb conversation object');
+        log(conversation.messages, 'this is mongoDb conversation message');
+        log(data, 'this is client object data');
+
+        log(data.allMessages.messages, 'this is message from client');
+        if (data.allMessages.messages !== undefined) {
             conversation.messages = data.allMessages.messages;
         }
         await conversation.save();
     })
-    socket.on('leave-room-community',async (data)=>{
-        console.log('leaving room',data);
-        
+    socket.on('leave-room-community', async (data) => {
+        console.log('leaving room', data);
+
 
         socket.leave(data.chatName);
-        
-        let community = await Community.findById(data.chatName);
-        log(community,'this is mongoDb Community object');
-        log(community.messages,'this is mongoDb Community message');
-        log(data,'this is client object data');
 
-        log(data.allMessages.messages,'this is message from client');
-        if(data.allMessages.messages !== undefined){
+        let community = await Community.findById(data.chatName);
+        log(community, 'this is mongoDb Community object');
+        log(community.messages, 'this is mongoDb Community message');
+        log(data, 'this is client object data');
+
+        log(data.allMessages.messages, 'this is message from client');
+        if (data.allMessages.messages !== undefined) {
             community.messages = data.allMessages.messages;
         }
         await community.save();
@@ -152,7 +152,7 @@ app.use('/api/auth', authRoute)
 app.use('/api/subjects', subjectRoute)
 app.use('/api/payments', paymentRoute)
 app.use('/api/conversation', conversationRoute)
-// app.use('/api/s3', s3route)
+app.use('/api/s3', s3route)
 app.use('/api/message', messageRoute)
 app.use('/api/community', communityRoute)
 
