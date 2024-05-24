@@ -11,7 +11,7 @@ const s3 = new AWS.S3({
     region: process.env.AWS_REGION,
 });
 export const postProfileImageS3 = async (req, res,next) => {
-   
+   const userId = req.params.userId;
     const file = req.file;
     // const filePath = path.join(__dirname, file.path);
   
@@ -20,7 +20,7 @@ export const postProfileImageS3 = async (req, res,next) => {
       // Set up S3 upload parameters
       const params = {
         Bucket: process.env.S3_BUCKET_NAME,
-        Key: `profile/${file.originalname}`, // File name you want to save as in S3
+        Key: `profile/${userId}/${file.originalname}`, // File name you want to save as in S3
         Body: fileContent,
         ContentType: file.mimetype,
       };

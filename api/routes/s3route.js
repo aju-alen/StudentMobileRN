@@ -7,6 +7,6 @@ import multer from 'multer';
   const upload = multer();
 
 
-router.post('/upload-to-aws', upload.single('image'), postProfileImageS3);
+router.post('/upload-to-aws/:userId', upload.single('image'), postProfileImageS3);
 
 export default router;

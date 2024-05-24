@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 export const register = async (req, res,next) => {
+    console.log('inside register route');
     try {
        
         const { name, email, password, profileImage, userDescription, isTeacher } = req.body;
@@ -36,7 +37,7 @@ export const register = async (req, res,next) => {
         //send the verification email
         sendVerificationEmail(newUser.email, newUser.verificationToken, name);
 
-        res.status(202).json({ message: "User Registered", verification_message: "Email has been sent, please verify", savedUser });
+        res.status(202).json({ message: "User Registered", verification_message: "Email has been sent, please verify", savedUser,userId: savedUser._id });
     }
     catch (err) {
        next(err);
@@ -60,7 +61,7 @@ const sendVerificationEmail = async (email, verificationToken, name) => {
         text: `
         Hi ${name},
 
-        Please click the link below to verify your account: https://studentmobilern.onrender.com/api/auth/verify/${verificationToken}`
+        Please click the link below to verify your account: https://studentmobilern-31oo.onrender.com/api/auth/verify/${verificationToken}`
     }
 
     //send the mail
@@ -124,6 +125,23 @@ export const singleUser = async (req, res,next) => {
         }
         
         res.status(200).json(user);
+    }
+    catch (err) {
+        next(err);
+    }
+}
+
+export const updateProfileImage = async (req, res,next) => {
+    console.log(req.params, 'this is the upload image req in backend');
+    console.log(req.body, 'this is the upload image req in backend');
+    try {
+        const user = await User.findById(req.params.uploadImage);
+        if (!user) {
+            return res.status(400).json({ message: "User not found" });
+        }
+        user.profileImage = req.body.profileImage;
+        const savedUser = await user.save();
+        res.status(200).json({ message: "Profile image updated", savedUser });
     }
     catch (err) {
         next(err);
