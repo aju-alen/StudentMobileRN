@@ -11,8 +11,9 @@ const AuthenticateLayout = () => {
         <Stack >
             <Stack.Screen name='login' options={{ headerShown: false }} />
             <Stack.Screen name="register" options={{ headerShown: false }} />
-            <Stack.Screen name="video" options={{ headerShown: false }} />
             <Stack.Screen name="welcome" options={{ headerShown: false }} />
+            <Stack.Screen name="aws" options={{ headerShown: false }} />
+            <Stack.Screen name="[uploadImage]" options={{ headerShown: false }} />
         </Stack>
         
     );

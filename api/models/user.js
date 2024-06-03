@@ -36,6 +36,7 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    reccomendedSubjects:[],
     subjects:[{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Subject'

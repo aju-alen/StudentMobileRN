@@ -13,8 +13,12 @@ const RegisterPage = () => {
     const [isPasswordShown, setIsPasswordShown] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [profileImage, setProfileImage] = useState('');
     const [userDescription, setUserDescription] = useState('');
+    const [reccomendedSubjects, setReccomendedSubjects] = useState([]);
+    const [subjectInput, setSubjectInput] = useState('');
+  
     const [isTeacher, setIsTeacher] = useState(false);
 
     const handleRegister = async () => {
@@ -25,12 +29,18 @@ const RegisterPage = () => {
             profileImage,
             userDescription,
             isTeacher,
+            confirmPassword,
+            reccomendedSubjects
         }
         try {
+            if (password !== confirmPassword) {
+                Alert.alert('Passwords do not match');
+                return;
+            }
             const resp = await axios.post(`${ipURL}/api/auth/register`, user)
             console.log(resp.data, 'Registered succesfully');
             Alert.alert('Registration Succesful, Verify email to login');
-            router.replace('/(authenticate)/login');
+            router.replace(`/(authenticate)/${resp.data.userId}`);
         }
         catch (err) {
             console.log(err);
@@ -39,6 +49,19 @@ const RegisterPage = () => {
         }
     }
 
+    const handleReccomendedSubject = () => {
+        if (reccomendedSubjects.length < 3 && subjectInput.trim()) {
+          setReccomendedSubjects([...reccomendedSubjects, subjectInput.trim()]);
+          setSubjectInput('');
+        } else if (reccomendedSubjects.length >= 3) {
+          alert('You can only add up to 3 subjects');
+        } else {
+          alert('Please enter a valid subject');
+        }
+      };
+    
+      console.log(reccomendedSubjects,'reccomendedSubjects');
+      
     return (
        
         <SafeAreaView style={{ flex: 1,  }}>
@@ -168,24 +191,12 @@ const RegisterPage = () => {
                                 </TouchableOpacity>
                             </View>
                         </View>
-                    </KeyboardAvoidingView>
-                    <KeyboardAvoidingView>
                         <View style={{ marginBottom: verticalScale(12) }}>
-                            <View style={{
-                                flexDirection: "row",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                            }}>
-                                <Text style={{
-                                    fontSize: moderateScale(16),
-                                    fontWeight: "400",
-                                    marginVertical: verticalScale(8)
-                                }}>{`Profile Image `}</Text>
-                                <Text style={{
-                                    fontSize: moderateScale(8),
-                                    fontWeight: "800",
-                                }}>Select image feature in still in development </Text>
-                            </View>
+                            <Text style={{
+                                fontSize: moderateScale(16),
+                                fontWeight: "400",
+                                marginVertical: verticalScale(8)
+                            }}>Re-enter Password</Text>
 
                             <View style={{
                                 width: "100%",
@@ -198,17 +209,37 @@ const RegisterPage = () => {
                                 paddingLeft: horizontalScale(22)
                             }}>
                                 <TextInput
-                                    placeholder="Enter Your Profile Image URL"
+                                    placeholder='Re-enter your password'
+                                    value={confirmPassword}
+                                    onChangeText={setConfirmPassword}
                                     placeholderTextColor="gray"
-                                    value={profileImage}
-                                    onChangeText={setProfileImage}
-                                    keyboardType='default'
+                                    secureTextEntry={isPasswordShown}
                                     style={{
                                         width: "100%"
                                     }}
                                 />
+
+                                <TouchableOpacity
+                                    onPress={() => setIsPasswordShown(!isPasswordShown)}
+                                    style={{
+                                        position: "absolute",
+                                        right: 12
+                                    }}
+                                >
+                                    {
+                                        isPasswordShown == true ? (
+                                            <Ionicons name="eye-off" size={24} color={welcomeCOLOR.black} />
+                                        ) : (
+                                            <Ionicons name="eye" size={24} color={welcomeCOLOR.black} />
+                                        )
+                                    }
+
+                                </TouchableOpacity>
                             </View>
                         </View>
+                    </KeyboardAvoidingView>
+                    <KeyboardAvoidingView>
+                      
 
                         <View style={{ marginBottom: verticalScale(12) }}>
 
@@ -242,6 +273,63 @@ const RegisterPage = () => {
                                 />
                             </View>
                         </View>
+                        {/* <View style={{ marginBottom: verticalScale(12) }}>
+      <Text style={{
+        fontSize: 16,
+        fontWeight: "400",
+        marginVertical: 8
+      }}>Subject Reccomendation</Text>
+
+      <View style={{
+        display: "flex",
+        flexDirection: "row",
+      }}>
+        <View style={{
+          width: "85%",
+          height: verticalScale(48),
+          borderColor: welcomeCOLOR.black,
+          borderWidth: moderateScale(1),
+          borderRadius: moderateScale(8),
+          alignItems: "center",
+          justifyContent: "center",
+          paddingLeft: horizontalScale(22)
+        }}>
+          <TextInput
+            placeholder="Give us your three reccomended subjects"
+            placeholderTextColor="gray"
+            value={subjectInput}
+            onChangeText={setSubjectInput}
+            keyboardType='default'
+            style={{
+              width: "100%",
+            }}
+          />
+        </View>
+        <Button
+          title="+"
+          filled
+          color={COLORS.primary}
+          style={{
+            width: "15%",
+            height: verticalScale(48),
+            borderColor: welcomeCOLOR.black,
+            borderWidth: moderateScale(1),
+            borderRadius: moderateScale(8),
+          }}
+          onPress={handleReccomendedSubject}
+        />
+      </View>
+
+      <View style={{ marginTop: verticalScale(12), flexDirection: 'row', flexWrap: 'wrap' }}>
+        {reccomendedSubjects.map((subject, index) => (
+          <View key={index} style={styles.chip}>
+            <Text style={styles.chipText}>
+              {subject}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </View> */}
 
                         <View style={{
                             flexDirection: 'row',
@@ -348,6 +436,18 @@ const styles = StyleSheet.create({
     checkbox: {
         margin: 8,
     },
+    chip: {
+        backgroundColor: COLORS.primary,
+        borderRadius: moderateScale(20),
+        paddingVertical: verticalScale(6),
+        paddingHorizontal: horizontalScale(12),
+        marginRight: horizontalScale(8),
+        marginBottom: verticalScale(8),
+      },
+      chipText: {
+        color: 'white',
+        fontSize: moderateScale(14),
+      },
 });
 
 

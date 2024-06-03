@@ -3,6 +3,7 @@ import ChatPage from "../../components/ChatPage";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import axios from "axios";
 import { ipURL } from "../../utils/utils";
@@ -94,6 +95,7 @@ const handleLeaveRoom = async() => {
 const mainPath = useSegments()[1];
 console.log(mainPath, 'this is NAV location');
 
+console.log(allMessages, 'this is all messages1111111111111111111');
 
 return (
   <SafeAreaView style={styles.mainContainer} >

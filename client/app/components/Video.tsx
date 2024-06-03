@@ -1,10 +1,20 @@
 import * as React from 'react';
-import { View, StyleSheet, Button } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
 
-export default function video() {
+export default function VideoPlayer() {
   const video = React.useRef(null);
   const [status, setStatus] = React.useState({});
+
+  React.useEffect(() => {
+    return () => {
+      // Stop video playback when the component unmounts
+      if (video.current) {
+        video.current.stopAsync();
+      }
+    };
+  }, []);
+
   return (
     <View style={styles.container}>
       <Video
@@ -19,7 +29,7 @@ export default function video() {
         onPlaybackStatusUpdate={status => setStatus(() => status)}
       />
       <View style={styles.buttons}>
-       
+        {/* Additional buttons or controls can be added here */}
       </View>
     </View>
   );

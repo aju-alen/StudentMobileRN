@@ -9,7 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { ipURL } from '../../utils/utils';
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
 import { FONT } from '../../../constants';
-import { ScrollView } from 'react-native-gesture-handler';
+import { ScrollView,GestureHandlerRootView } from 'react-native-gesture-handler';
 
 interface User {
     email?: string;
@@ -84,7 +84,8 @@ const allSubject = () => {
     };
 
     return (
-        <SafeAreaView style={styles.mainContainer}>
+      <GestureHandlerRootView style={{ flex: 1 }}> {/* Wrap your component tree */}
+      <SafeAreaView style={styles.mainContainer}>
         <View >
             <ScrollView>
           <View >
@@ -105,10 +106,6 @@ const allSubject = () => {
               </TouchableOpacity>
             </View>
           </View>
-          {/* <View style={[styles.horizontalFlatlistHeaderContainer,{flex:1}]}>
-            <Text style={styles.flatlistHeaderTextLeft}>Popular Courses</Text>
-            <SubjectCards subjectData={subjectData} handleItemPress={handleItemPress} isHorizontal={true} />
-          </View> */}
     
           <View style={styles.flatlistHeaderContainer}>
             <Text style={styles.flatlistHeaderTextLeft}>All Courses</Text>
@@ -117,8 +114,10 @@ const allSubject = () => {
           <SubjectCards subjectData={subjectData} handleItemPress={handleItemPress} isHorizontal={false} />
         </ScrollView>
         </View>
-        </SafeAreaView>
-      );
+      </SafeAreaView>
+    </GestureHandlerRootView>
+  );
+      
 }
 
 export default allSubject

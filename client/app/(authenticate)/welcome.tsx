@@ -14,6 +14,7 @@ const Welcome = () => {
                 flex: 1
             }}
             colors={[welcomeCOLOR.secondary, welcomeCOLOR.primary]}
+            
         >
             <View style={{ flex: 1, marginTop: verticalScale(20) }}>
                 <View>

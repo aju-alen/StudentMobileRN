@@ -8,6 +8,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { ipURL } from "../../utils/utils";
 import { Ionicons } from "@expo/vector-icons";
+import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import { router } from 'expo-router';
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
