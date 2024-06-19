@@ -1,3 +1,6 @@
+# APK Download 
+Since I have not yet published to any of the stores, there is an APK download available [APK Download](https://drive.google.com/file/d/1gZYXDEj80Ou_YGmjuYlOChPjHJSQMMgf/view?usp=drive_link) 
+
 # How to locally install in your PC.
 
 * (Clone the project) - Open Terminal/ Git Bash on your specific directory and type in the command ``` git clone https://github.com/aju-alen/StudentMobileRN.git ```
