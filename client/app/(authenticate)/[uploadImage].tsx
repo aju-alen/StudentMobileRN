@@ -47,6 +47,8 @@ const ProfilePictureUpload = () => {
       name: `photo.${fileType}`,
       type: `image/${fileType}`,
     });
+    formData.append('uploadKey','userProfileImageId' );
+    formData.append('awsId',''); // assuming userId is a variable
 
     try {
       console.log(formData, 'form data');

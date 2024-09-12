@@ -13,7 +13,10 @@ const subjectSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-
+    subjectSearchHeading: {
+        type: String,
+        required: true
+    },
     subjectDescription: {
         type: String,
         required: true

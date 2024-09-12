@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.23.1",
+    "@react-native-picker/picker": "2.7.5",
     "@stripe/stripe-react-native": "0.37.2",
     "aws-amplify": "^6.0.27",
     "aws-sdk": "^2.1591.0",
@@ -31,6 +32,7 @@
     "expo-router": "~3.5.14",
     "expo-status-bar": "~1.12.1",
     "expo-video-thumbnails": "~8.0.0",
+    "nanoid": "^5.0.7",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-native": "0.74.1",
@@ -40,7 +42,9 @@
     "react-native-screens": "3.31.1",
     "react-native-web": "~0.19.10",
     "socket.io-client": "4.1.2",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "expo-document-picker": "~12.0.2",
+    "react-native-svg": "15.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",

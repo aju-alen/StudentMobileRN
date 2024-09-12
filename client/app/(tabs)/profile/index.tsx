@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableWithoutFeedback,
+  TouchableOpacity,
 } from "react-native";
 import { Image } from 'expo-image';
 import { ipURL } from "../../utils/utils";
@@ -19,6 +20,7 @@ import { horizontalScale, moderateScale, verticalScale } from "../../utils/metri
 import SubjectCards from "../../components/SubjectCards";
 
 interface User {
+  _id?: string;
   email?: string;
   name?: string;
   profileImage?: string;
@@ -62,7 +64,7 @@ const ProfilePage = () => {
     getUser();
   }, []);
 
-  console.log("user", user);
+  console.log("user", user._id);
   const subjectArray = user.subjects;
   console.log("subjects", subjectArray);
 
@@ -76,7 +78,7 @@ const ProfilePage = () => {
     router.push(`/(tabs)/profile/${itemId._id}`);
   };
   const handleCreateNewSubject = () => {
-    router.push(`/(tabs)/profile/createSubject`);
+    router.push(`/(tabs)/profile/createSubject/${user._id}`);
   }
   const [showDropdown, setShowDropdown] = useState(false);
   const closeDropdown = () => {
@@ -85,13 +87,32 @@ const ProfilePage = () => {
 
   return (
     <TouchableWithoutFeedback onPress={closeDropdown}>
-    <SafeAreaView style={styles.MainContainer}>
+    {/* <SafeAreaView style={styles.MainContainer}> */}
       <ScrollView>
-     <View style={styles.topBarContainer}>
+      <View style={styles.wecomeAndSearchContainer}>
+      <View style={styles.topBarContainer}>
       <Text style={styles.topBarText}>Profile</Text>
       <KebabIcon handleLogout={handleLogout} handleCreateNewSubject={handleCreateNewSubject} isTeacher={userDetails?.isTeacher} setShowDropdown={setShowDropdown} showDropdown={showDropdown} />
      </View>
-     <View style={styles.userImageAndDetailsContainer}>
+        <View style={styles.welcomeUserContainer}>
+          
+          <View style={styles.imageContainer}>
+            <Image
+              source={{ uri: user.profileImage }}
+              style={styles.welcomeUserImage}
+              placeholder={blurhash}
+              contentFit="cover"
+              transition={100}
+            />
+          </View>
+          <View style={styles.welcomeUserTextContainer}>
+            <Text style={styles.welcomeTextHeading}>{user.name}</Text>
+          </View>
+        </View>
+
+      </View>
+     
+     {/* <View style={styles.userImageAndDetailsContainer}>
      <Image
            source={{ uri: user.profileImage }}
            style={styles.profileImage}
@@ -103,8 +124,7 @@ const ProfilePage = () => {
           <Text style={styles.userNameText}>{user.name}</Text>
           <Text style={styles.userDesignationText}></Text>
          </View>
-         
-         </View>
+         </View> */}
          <View>
          <Text style={styles.userDescriptionText}>{user.userDescription}</Text>
          </View>
@@ -126,7 +146,7 @@ const ProfilePage = () => {
         <SubjectCards subjectData={subjectArray} handleItemPress={handleItemPress} isHorizontal={false} />
     </View>
     </ScrollView>
-    </SafeAreaView>
+    {/* </SafeAreaView> */}
     </TouchableWithoutFeedback>
   );
 };
@@ -146,9 +166,10 @@ const styles = StyleSheet.create({
   topBarText:{
     fontFamily:FONT.semiBold,
     fontSize:moderateScale(14),
+    color:'white'
   },
   userImageAndDetailsContainer: {
-    flexDirection: "row",
+    flexDirection: "column",
     justifyContent: 'center',
     alignItems: 'center',
     maxHeight: verticalScale(100),
@@ -164,7 +185,7 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(20),
   },
   userDetailsContainer:{
-    marginLeft:horizontalScale(30),
+    // marginLeft:horizontalScale(30),
 
   },
   userNameText:{
@@ -232,6 +253,7 @@ const styles = StyleSheet.create({
     fontFamily:FONT.bold,
     fontSize:moderateScale(28),
     color:"#3b3561",
+    
   },
   yourCourseHeading:{
     fontFamily:FONT.semiBold,
@@ -239,7 +261,51 @@ const styles = StyleSheet.create({
     marginTop:verticalScale(20),
     marginLeft:horizontalScale(20),
   
-  }
+  },
+  wecomeAndSearchContainer: {
+
+    borderWidth: 1,
+    borderColor: "black",
+    height: verticalScale(375),
+    paddingTop: verticalScale(50),
+    borderEndEndRadius: moderateScale(50),
+    borderEndStartRadius: moderateScale(50),
+    backgroundColor: "#1A4C6E",
+    
+  },
+
+  welcomeUserContainer: {
+    // marginLeft: horizontalScale(25),
+    marginTop: verticalScale(40),
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  imageContainer: {
+  },
+  welcomeUserImage: {
+    height: verticalScale(132),
+    width: horizontalScale(152),
+    borderRadius: moderateScale(90),
+  },
+  welcomeUserTextContainer: {
+    // marginLeft: horizontalScale(8),
+    padding: verticalScale(10),
+    color: "white",
+  },
+  welcomeTextHeading: {
+    fontFamily: FONT.semiBold,
+    fontSize: moderateScale(24),
+    marginBottom: verticalScale(5),
+    color: "white",
+  },
+  welcomeTextSubHeading: {
+    color: "white",
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(12),
+
+  },
 });
 
 export default ProfilePage;

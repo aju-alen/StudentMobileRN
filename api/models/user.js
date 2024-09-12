@@ -36,6 +36,12 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    recommendedBoard: {
+        type: String,
+    },
+    recommendedGrade: {
+        type: Number,
+    },
     reccomendedSubjects:[],
     subjects:[{
         type: mongoose.Schema.Types.ObjectId,

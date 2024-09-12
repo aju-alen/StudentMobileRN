@@ -6,6 +6,7 @@ import Checkbox from 'expo-checkbox';
 import axios from 'axios';
 import { ipURL } from '../utils/utils';
 import { COLORS, welcomeCOLOR } from '../../constants/theme';
+import {Picker} from '@react-native-picker/picker';
 import Button from '../components/Button';
 import { verticalScale,horizontalScale,moderateScale } from '../utils/metrics';
 const RegisterPage = () => {
@@ -20,6 +21,8 @@ const RegisterPage = () => {
     const [subjectInput, setSubjectInput] = useState('');
   
     const [isTeacher, setIsTeacher] = useState(false);
+    const [recommendedBoard, setRecommendedBoard] = useState('');
+    const [recommendedGrade, setRecommendedGrade] = useState(0);
 
     const handleRegister = async () => {
         const user = {
@@ -30,7 +33,9 @@ const RegisterPage = () => {
             userDescription,
             isTeacher,
             confirmPassword,
-            reccomendedSubjects
+            reccomendedSubjects,
+            recommendedBoard,
+            recommendedGrade,
         }
         try {
             if (password !== confirmPassword) {
@@ -51,7 +56,7 @@ const RegisterPage = () => {
 
     const handleReccomendedSubject = () => {
         if (reccomendedSubjects.length < 3 && subjectInput.trim()) {
-          setReccomendedSubjects([...reccomendedSubjects, subjectInput.trim()]);
+          setReccomendedSubjects([...reccomendedSubjects, subjectInput.trim().toLowerCase()]);
           setSubjectInput('');
         } else if (reccomendedSubjects.length >= 3) {
           alert('You can only add up to 3 subjects');
@@ -273,12 +278,12 @@ const RegisterPage = () => {
                                 />
                             </View>
                         </View>
-                        {/* <View style={{ marginBottom: verticalScale(12) }}>
+                        <View style={{ marginBottom: verticalScale(12) }}>
       <Text style={{
         fontSize: 16,
         fontWeight: "400",
         marginVertical: 8
-      }}>Subject Reccomendation</Text>
+      }}>Choose three subjects</Text>
 
       <View style={{
         display: "flex",
@@ -329,7 +334,84 @@ const RegisterPage = () => {
           </View>
         ))}
       </View>
-    </View> */}
+    </View>
+
+    <View style={{ marginBottom: verticalScale(12) }}>
+                            <Text style={{
+                                fontSize: moderateScale(16),
+                                fontWeight: "400",
+                                marginVertical: verticalScale(8),
+                                color: welcomeCOLOR.black,
+
+                            }}>Select Your Board</Text>
+
+                            <View style={[{
+
+                                borderColor: welcomeCOLOR.black,
+                                borderWidth: moderateScale(1),
+                                borderRadius: moderateScale(8),
+                            },]}>
+                                <Picker
+                                    mode='dropdown'
+                                    dropdownIconColor={COLORS.white}
+                                    style={{ backgroundColor: COLORS.background }}
+                                    selectedValue={recommendedBoard}
+                                    onValueChange={(itemValue, itemIndex) =>
+                                        setRecommendedBoard(itemValue)
+                                    }>
+                                    
+                                    <Picker.Item label="CBSE" value="CBSE" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
+                                    <Picker.Item label="ICSE" value="ICSE" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
+                                    <Picker.Item label="AP" value="AP" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
+                                    <Picker.Item label="IGCSE-A Levels" value="IGCSE-A Levels" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
+                                    <Picker.Item label="IB" value="IB" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
+                                </Picker>
+                            </View>
+
+
+                        </View>
+    <View style={{ marginBottom: verticalScale(12) }}>
+                            <Text style={{
+                                fontSize: moderateScale(16),
+                                fontWeight: "400",
+                                marginVertical: verticalScale(8),
+                                color: welcomeCOLOR.black,
+
+                            }}>Select Your Grade</Text>
+
+                            <View style={[{
+
+                                borderColor: welcomeCOLOR.black,
+                                borderWidth: moderateScale(1),
+                                borderRadius: moderateScale(8),
+                            },]}>
+                                <Picker
+                                    mode='dropdown'
+                                    dropdownIconColor={COLORS.white}
+                                    style={{ backgroundColor: COLORS.background }}
+                                    selectedValue={recommendedGrade}
+                                    onValueChange={(itemValue, itemIndex) =>
+                                        setRecommendedGrade(Number(itemValue))
+                                    }>
+                                    
+                                    <Picker.Item label="1" value='1' style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
+                                    <Picker.Item label="2" value='2' style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
+                                    <Picker.Item label="2" value="3" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
+                                    <Picker.Item label="4" value="4" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
+                                    <Picker.Item label="5" value="5" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
+                                    <Picker.Item label="6" value="6" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
+                                    <Picker.Item label="7" value="7" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
+                                    <Picker.Item label="8" value="8" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
+                                    <Picker.Item label="9" value="9" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
+                                    <Picker.Item label="10" value="10" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
+                                    <Picker.Item label="11" value="11" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
+                                    <Picker.Item label="12" value="12" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
+                                    <Picker.Item label="13" value="13" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
+                                </Picker>
+                            </View>
+
+
+                        </View>
 
                         <View style={{
                             flexDirection: 'row',

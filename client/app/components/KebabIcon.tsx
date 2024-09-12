@@ -16,7 +16,7 @@ const KebabIcon = ({handleLogout,handleCreateNewSubject,isTeacher,setShowDropdow
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={toggleDropdown} style={styles.menuButton}>
-        <AntDesign name="ellipsis1" size={24} color="black" />
+        <AntDesign name="ellipsis1" size={24} color="white" />
       </TouchableOpacity>
       {showDropdown && (
         <View style={styles.dropdown}>

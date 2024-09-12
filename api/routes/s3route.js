@@ -1,6 +1,6 @@
 import express from "express";
 const router = express.Router()
-import { postProfileImageS3 } from '../controllers/s3-controller.js';
+import { postProfileImageS3,subjectPDFVerifyeS3 } from '../controllers/s3-controller.js';
 import AWS from 'aws-sdk';
 import multer from 'multer';
   // Configure multer for file upload
@@ -8,5 +8,8 @@ import multer from 'multer';
 
 
 router.post('/upload-to-aws/:userId', upload.single('image'), postProfileImageS3);
+
+router.post('/upload-to-aws/pdf-verify/:userId', upload.fields([{ name: 'pdf1' }, { name: 'pdf2' }]), subjectPDFVerifyeS3);
+
 
 export default router;

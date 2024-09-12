@@ -8,6 +8,9 @@ const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
 const HorizontalSubjectCard = ({subjectData,handleItemPress,isHorizontal}) => {
+
+  console.log(subjectData, 'this is subject data in horizontal card');
+  
   return (
     <View style={{flex:1}}>
         <FlatList 
@@ -45,7 +48,7 @@ const HorizontalSubjectCard = ({subjectData,handleItemPress,isHorizontal}) => {
          </View>
             </View>
             <View>
-         <Text style={styles.subjectPrice}>AED {item?.subjectPrice}</Text>
+         {/* <Text style={styles.subjectPrice}>AED {item?.subjectPrice}</Text> */}
             </View>
           </View>
       </View>

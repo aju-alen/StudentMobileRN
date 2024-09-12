@@ -179,3 +179,22 @@ export const verifySubject = async (req, res,next) => {
         next(err);
     }
 }
+
+export const getRecommendedSubjects = async (req, res, next) => {
+    console.log(req.body,'req.body');
+    const {recommendedSubjects,recommendedBoard, recommendedGrade} = req.body;
+    
+    
+    try {
+        const filteredSubjects = await Subject.find({
+            subjectSearchHeading: { $in: recommendedSubjects },
+            subjectBoard: recommendedBoard ,
+            subjectGrade:  recommendedGrade 
+        }).populate('user', 'name profileImage');
+        console.log(filteredSubjects,'filteredSubjects');
+        
+        res.status(200).json(filteredSubjects);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}

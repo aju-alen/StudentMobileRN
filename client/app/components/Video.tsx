@@ -2,13 +2,18 @@ import * as React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
 
+
 export default function VideoPlayer() {
   const video = React.useRef(null);
   const [status, setStatus] = React.useState({});
 
   React.useEffect(() => {
+    console.log('mounting');
+    
     return () => {
-      // Stop video playback when the component unmounts
+      // Stop video playback when the component unmounts]
+      console.log('unmounting');
+      
       if (video.current) {
         video.current.stopAsync();
       }

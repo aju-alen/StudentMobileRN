@@ -30,6 +30,7 @@ interface User {
   name?: string;
   profileImage?: string;
   userDescription?: string;
+  reccomendedSubjects?: [string];
 }
 
 const blurhash =
@@ -37,6 +38,7 @@ const blurhash =
 
 const HomePage = () => {
   const [subjectData, setSubjectData] = React.useState([]);
+  const [recommendedSubjects, setRecommendedSubjects] = React.useState([]);
   const [search, setSearch] = React.useState("");
   const params = useLocalSearchParams();
   const { subjectGrade, subjectBoard, subjectTeacher, subjectTags } = params;
@@ -67,6 +69,19 @@ const HomePage = () => {
         },
       });
       setUser(apiUser.data);
+      console.log(apiUser?.data?.reccomendedSubjects, "api user data");
+
+      const recommendedSubjects = apiUser?.data?.reccomendedSubjects;
+      const recommendedGrade = apiUser?.data?.recommendedGrade;
+      const recommendedBoard = apiUser?.data?.recommendedBoard;
+      console.log(recommendedSubjects, "this is recommended subjects");
+      
+      const getUserRecommendedSubjects = await axios.post(`${ipURL}/api/subjects/get-recommended-subjects`, { recommendedSubjects, recommendedBoard, recommendedGrade},  {
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem("authToken")}`,
+        },
+      })
+      setRecommendedSubjects(getUserRecommendedSubjects.data);
     };
     getUser();
   }, []);
@@ -82,9 +97,10 @@ const HomePage = () => {
           Authorization: `Bearer ${token}`,
         },
       });
+
       console.log(resp.data, "resp data in useEffect");
       setSubjectData(resp.data);
-
+     
       console.log("THIS IS RERENDERING AGAIN AFTER MODAL");
       }
       catch(error){
@@ -94,6 +110,7 @@ const HomePage = () => {
     };
     getSubjects();
   }, []);
+
 
   console.log(subjectData, "outside");
 
@@ -131,6 +148,12 @@ const HomePage = () => {
         <SubjectCards subjectData={subjectData} handleItemPress={handleItemPress} isHorizontal={true} />
       </View> */}
       <ScrollView style={{flex:1}}>
+      <View style={styles.flatlistHeaderContainer}>
+        <Text style={styles.flatlistHeaderTextLeft}>Recommended Courses</Text>
+      </View>
+      
+      <HorizontalSubjectCard subjectData={recommendedSubjects} handleItemPress={handleItemPress} isHorizontal={true} />
+
       <View style={styles.flatlistHeaderContainer}>
         <Text style={styles.flatlistHeaderTextLeft}>Popular Courses</Text>
       </View>

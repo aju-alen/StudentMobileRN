@@ -43,7 +43,7 @@ const ColumnSubjectCards = ({subjectData,handleItemPress,isHorizontal}) => {
          </View>
             </View>
             <View>
-         <Text style={styles.subjectPrice}>AED {item?.subjectPrice}</Text>
+         {/* <Text style={styles.subjectPrice}>AED {item?.subjectPrice}</Text> */}
             </View>
           </View>
       </View>
