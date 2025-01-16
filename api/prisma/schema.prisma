@@ -1,0 +1,171 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+   url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model User {
+  id                String         @id @default(uuid())
+  name              String
+  email             String         @unique
+  password          String
+  verified          Boolean        @default(false)
+  verificationToken String?
+  profileImage      String?
+  userDescription   String         @default("No description provided")
+  isTeacher         Boolean        @default(false)
+  isAdmin           Boolean        @default(false)
+  recommendedBoard  String?
+  recommendedGrade  Int?
+  createdAt         DateTime       @default(now())
+  
+  // Relations
+  subjects          Subject[]      // Subjects created by the teacher
+  enrolledSubjects  UserSubject[]  // Subjects user is enrolled in
+  reviews           Review[]
+  sentMessages      Message[]      @relation("SentMessages")
+  conversations     Conversation[] @relation("UserConversations")
+  clientConversations Conversation[] @relation("ClientConversations")
+  communityMemberships CommunityUser[]
+  communityMessages CommunityMessage[]
+}
+
+model Subject {
+  id                   String       @id @default(uuid())
+  subjectName          String
+  subjectNameSubHeading String
+  subjectDuration      Int
+  subjectSearchHeading String
+  subjectDescription   String       @db.Text
+  subjectPoints        String       @db.Text  // Stored as JSON string
+  subjectImage         String
+  subjectPrice         Float
+  subjectBoard         String
+  subjectLanguage      String
+  subjectTags          String       @db.Text  // Stored as JSON string
+  subjectGrade         Int          @default(10)
+  subjectVerification  Boolean      @default(false)
+  teacherVerification  String       @db.Text  // Stored as JSON string
+  createdAt            DateTime     @default(now())
+  
+  // Relations
+  userId              String
+  user                User         @relation(fields: [userId], references: [id])
+  reviews             Review[]
+  enrolledUsers       UserSubject[]
+  conversations       Conversation[]
+  
+  @@index([userId])
+}
+
+model UserSubject {
+  id        String   @id @default(uuid())
+  userId    String
+  subjectId String
+  user      User     @relation(fields: [userId], references: [id])
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+  
+  @@unique([userId, subjectId])
+  @@index([userId])
+  @@index([subjectId])
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @db.Text
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  subjectId   String
+  subject     Subject  @relation(fields: [subjectId], references: [id])
+  
+  @@index([userId])
+  @@index([subjectId])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  text           String?      @db.Text
+  createdAt      DateTime     @default(now())
+  
+  // Relations
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id])
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  
+  @@index([senderId])
+  @@index([conversationId])
+}
+
+model Conversation {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  // Relations
+  userId    String
+  user      User      @relation("UserConversations", fields: [userId], references: [id])
+  clientId  String
+  client    User      @relation("ClientConversations", fields: [clientId], references: [id])
+  subjectId String
+  subject   Subject   @relation(fields: [subjectId], references: [id])
+  messages  Message[]
+  
+  @@index([userId])
+  @@index([clientId])
+  @@index([subjectId])
+}
+
+model Community {
+  id                  String            @id @default(uuid())
+  communityName       String
+  communityProfileImage String
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  
+  // Relations
+  members            CommunityUser[]
+  messages           CommunityMessage[]
+}
+
+model CommunityUser {
+  id          String    @id @default(uuid())
+  communityId String
+  userId      String
+  community   Community @relation(fields: [communityId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+  
+  @@unique([communityId, userId])
+  @@index([communityId])
+  @@index([userId])
+}
+
+model CommunityMessage {
+  id          String    @id @default(uuid())
+  text        String    @db.Text
+  messageId   String    @unique
+  createdAt   DateTime  @default(now())
+  
+  // Relations
+  senderId    String
+  sender      User      @relation(fields: [senderId], references: [id])
+  communityId String
+  community   Community @relation(fields: [communityId], references: [id])
+  
+  @@index([senderId])
+  @@index([communityId])
+}
