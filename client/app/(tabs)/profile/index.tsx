@@ -4,16 +4,14 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableWithoutFeedback,
-  TouchableOpacity,
+  Dimensions,
 } from "react-native";
 import { Image } from 'expo-image';
 import { ipURL } from "../../utils/utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import HomeFlatlist from "../../components/HomeFlatlist";
 import KebabIcon from "../../components/KebabIcon";
 import { FONT } from "../../../constants";
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
@@ -46,9 +44,13 @@ interface UserDetails {
 const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
+const { width } = Dimensions.get('window');
+
 const ProfilePage = () => {
   const [user, setUser] = useState<User>({});
   const [userDetails, setUserDetails] = useState<UserDetails>({});
+  const [showDropdown, setShowDropdown] = useState(false);
+
   useEffect(() => {
     const getUser = async () => {
       const apiUser = await axios.get(`${ipURL}/api/auth/me`, {
@@ -57,16 +59,11 @@ const ProfilePage = () => {
         },
       });
       setUser(apiUser.data);
-      console.log("User", apiUser.data);
       const user = JSON.parse(await AsyncStorage.getItem("userDetails"));
       setUserDetails(user);
     };
     getUser();
   }, []);
-
-  console.log("user", user._id);
-  const subjectArray = user.subjects;
-  console.log("subjects", subjectArray);
 
   const handleLogout = async () => {
     await AsyncStorage.removeItem("authToken");
@@ -77,239 +74,242 @@ const ProfilePage = () => {
   const handleItemPress = (itemId: { _id: any }) => {
     router.push(`/(tabs)/profile/${itemId._id}`);
   };
+
   const handleCreateNewSubject = () => {
     router.push(`/(tabs)/profile/createSubject/${user._id}`);
   }
-  const [showDropdown, setShowDropdown] = useState(false);
+
   const closeDropdown = () => {
     setShowDropdown(false);
   };
 
   return (
     <TouchableWithoutFeedback onPress={closeDropdown}>
-    {/* <SafeAreaView style={styles.MainContainer}> */}
-      <ScrollView>
-      <View style={styles.wecomeAndSearchContainer}>
-      <View style={styles.topBarContainer}>
-      <Text style={styles.topBarText}>Profile</Text>
-      <KebabIcon handleLogout={handleLogout} handleCreateNewSubject={handleCreateNewSubject} isTeacher={userDetails?.isTeacher} setShowDropdown={setShowDropdown} showDropdown={showDropdown} />
-     </View>
-        <View style={styles.welcomeUserContainer}>
-          
-          <View style={styles.imageContainer}>
-            <Image
-              source={{ uri: user.profileImage }}
-              style={styles.welcomeUserImage}
-              placeholder={blurhash}
-              contentFit="cover"
-              transition={100}
+      <ScrollView style={styles.mainContainer}>
+        {/* Curved Header with Gradient Overlay */}
+        <View style={styles.headerContainer}>
+          <View style={styles.headerOverlay} />
+          <View style={styles.topBarContainer}>
+            <Text style={styles.topBarText}>Profile</Text>
+            <KebabIcon 
+              handleLogout={handleLogout} 
+              handleCreateNewSubject={handleCreateNewSubject} 
+              isTeacher={userDetails?.isTeacher} 
+              setShowDropdown={setShowDropdown} 
+              showDropdown={showDropdown} 
             />
           </View>
-          <View style={styles.welcomeUserTextContainer}>
-            <Text style={styles.welcomeTextHeading}>{user.name}</Text>
+          
+          <View style={styles.profileSection}>
+            <View style={styles.imageWrapper}>
+              <Image
+                source={{ uri: user.profileImage }}
+                style={styles.profileImage}
+                placeholder={blurhash}
+                contentFit="cover"
+                transition={300}
+              />
+            </View>
+            <Text style={styles.userName}>{user.name}</Text>
+            <View style={styles.roleBadge}>
+              <Text style={styles.roleText}>
+                {userDetails?.isTeacher ? 'Teacher' : 'Student'}
+              </Text>
+            </View>
           </View>
         </View>
 
-      </View>
-     
-     {/* <View style={styles.userImageAndDetailsContainer}>
-     <Image
-           source={{ uri: user.profileImage }}
-           style={styles.profileImage}
-           placeholder={blurhash}
-           contentFit="cover"
-           transition={100}
-         />     
-         <View style={styles.userDetailsContainer} >
-          <Text style={styles.userNameText}>{user.name}</Text>
-          <Text style={styles.userDesignationText}></Text>
-         </View>
-         </View> */}
-         <View>
-         <Text style={styles.userDescriptionText}>{user.userDescription}</Text>
-         </View>
-         <View style={styles.userStatsContainer}>
-          <View style={styles.box1Container}>
-          <Text style={styles.boxHeadingText}>Sessions Completed</Text>
-          <Text style={styles.boxResultsText}>12</Text>
-          
+        {/* Stats Cards */}
+        <View style={styles.statsContainer}>
+          <View style={[styles.statBox, styles.sessionsBox]}>
+            <View style={styles.statIconContainer}>
+              <View style={[styles.statIcon, styles.sessionsIcon]} />
+            </View>
+            <Text style={styles.statValue}>12</Text>
+            <Text style={styles.statLabel}>Sessions Completed</Text>
           </View>
-          <View style={styles.box2Container}>
-          <Text style={styles.boxHeadingText}>Average Rating</Text>
-          <Text style={styles.boxResultsText}>4.2</Text>
+          <View style={[styles.statBox, styles.ratingBox]}>
+            <View style={styles.statIconContainer}>
+              <View style={[styles.statIcon, styles.ratingIcon]} />
+            </View>
+            <Text style={styles.statValue}>4.2</Text>
+            <Text style={styles.statLabel}>Average Rating</Text>
           </View>
-          </View>        
-          <View>
-            <Text style={styles.yourCourseHeading}>Your Courses</Text>
+        </View>
+
+        {/* About Section */}
+        <View style={styles.aboutContainer}>
+          <Text style={styles.sectionTitle}>About</Text>
+          <View style={styles.descriptionCard}>
+            <Text style={styles.descriptionText}>
+              {user.userDescription || "No description available"}
+            </Text>
           </View>
-          <View style={{ flex: 1 }}>
-        <SubjectCards subjectData={subjectArray} handleItemPress={handleItemPress} isHorizontal={false} />
-    </View>
-    </ScrollView>
-    {/* </SafeAreaView> */}
+        </View>
+
+        {/* Courses Section */}
+        <View style={styles.coursesContainer}>
+          <Text style={styles.sectionTitle}>Your Courses</Text>
+          <SubjectCards 
+            subjectData={user.subjects} 
+            handleItemPress={handleItemPress} 
+            isHorizontal={false} 
+          />
+        </View>
+      </ScrollView>
     </TouchableWithoutFeedback>
   );
 };
 
-
 const styles = StyleSheet.create({
-  MainContainer: {
+  mainContainer: {
     flex: 1,
-    backgroundColor:"white" 
+    backgroundColor: '#F8FAFC',
+  },
+  headerContainer: {
+    height: verticalScale(300),
+    backgroundColor: '#1A4C6E',
+    borderBottomLeftRadius: moderateScale(40),
+    borderBottomRightRadius: moderateScale(40),
+    overflow: 'hidden',
+  },
+  headerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.2)',
   },
   topBarContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: moderateScale(10),
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: horizontalScale(20),
+    paddingTop: verticalScale(60),
+    paddingBottom: verticalScale(20),
+    zIndex: 1,
   },
-  topBarText:{
-    fontFamily:FONT.semiBold,
-    fontSize:moderateScale(14),
-    color:'white'
+  topBarText: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(24),
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
-  userImageAndDetailsContainer: {
-    flexDirection: "column",
+  profileSection: {
+    alignItems: 'center',
+    paddingTop: verticalScale(20),
+    zIndex: 1,
+  },
+  imageWrapper: {
+    padding: moderateScale(3),
+    borderRadius: moderateScale(75),
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  profileImage: {
+    width: horizontalScale(140),
+    height: verticalScale(140),
+    borderRadius: moderateScale(70),
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+  },
+  userName: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(28),
+    color: '#FFFFFF',
+    marginTop: verticalScale(16),
+    letterSpacing: 0.5,
+  },
+  roleBadge: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: horizontalScale(16),
+    paddingVertical: verticalScale(6),
+    borderRadius: moderateScale(20),
+    marginTop: verticalScale(8),
+  },
+  roleText: {
+    color: '#FFFFFF',
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: horizontalScale(20),
+    marginTop: verticalScale(-30),
+    marginBottom: verticalScale(20),
+  },
+  statBox: {
+    width: '47%',
+    padding: moderateScale(20),
+    borderRadius: moderateScale(20),
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  statIconContainer: {
+    width: horizontalScale(50),
+    height: verticalScale(50),
+    borderRadius: moderateScale(25),
     justifyContent: 'center',
     alignItems: 'center',
-    maxHeight: verticalScale(100),
-    zIndex: -1,
-    // marginHorizontal: horizontalScale(50),
+    marginBottom: verticalScale(10),
   },
-  profileImage:{
-    width: horizontalScale(60),
-    height: verticalScale(60),
-    borderRadius: moderateScale(70),
+  statIcon: {
+    width: horizontalScale(30),
+    height: verticalScale(30),
+    borderRadius: moderateScale(15),
+  },
+  sessionsIcon: {
+    backgroundColor: '#FFD700',
+  },
+  ratingIcon: {
+    backgroundColor: '#90EE90',
+  },
+  statValue: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(36),
+    color: '#2D3748',
+    marginBottom: verticalScale(4),
+  },
+  statLabel: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
+    color: '#718096',
+    textAlign: 'center',
+  },
+  aboutContainer: {
+    padding: moderateScale(20),
+    marginBottom: verticalScale(20),
+  },
+  sectionTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(22),
+    color: '#2D3748',
     marginBottom: verticalScale(16),
-    resizeMode: "contain",
-    marginTop: verticalScale(20),
   },
-  userDetailsContainer:{
-    // marginLeft:horizontalScale(30),
-
-  },
-  userNameText:{
-    fontFamily:FONT.medium,
-    fontSize:moderateScale(18),
-  },
-  userDesignationText:{
-    fontFamily:FONT.regular,
-    fontSize:14,
-    color:"#1A4C6E",
-  },
-  aboutMeText:{
-    fontFamily:FONT.semiBold,
-    fontSize:moderateScale(16),
-    marginTop:verticalScale(20),
-    marginLeft:horizontalScale(20),
-  },
-  userDescriptionText:{
-    fontFamily:FONT.regular,
-    textAlign:'justify',
-    fontSize:moderateScale(12),
-    marginHorizontal:horizontalScale(20),
-  },
-  userStatsContainer: {
-    flexDirection: "row",
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    height: verticalScale(200),
-    zIndex: -1,
-    // marginHorizontal: horizontalScale(50),
-  },
-  box1Container:{
-    
-    justifyContent: "center",
-    alignItems: "center",
-    width: horizontalScale(140),
-    height: verticalScale(150),
+  descriptionCard: {
+    backgroundColor: '#FFFFFF',
     borderRadius: moderateScale(20),
-    backgroundColor: "#FFF5CC",
+    padding: moderateScale(20),
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  boxHeadingText:{
-    justifyContent:"center",
-    fontFamily:FONT.thinItalic,
-    fontSize:moderateScale(14),
-    marginBottom:verticalScale(10),
-    color:"black"
-  },
-  boxResultsText:{
-    justifyContent:"center",
-    fontFamily:FONT.bold,
-    fontSize:moderateScale(28),
-    color:"#3b3561",
-  },
- 
-  box2Container:{
-    justifyContent: "center",
-    alignItems: "center",
-    width: horizontalScale(140),
-    height: verticalScale(150),
-    borderRadius: moderateScale(20),
-    backgroundColor: "#CCE6CC",
-  }, 
-  boxResultsText2:{
-    justifyContent:"center",
-    fontFamily:FONT.bold,
-    fontSize:moderateScale(28),
-    color:"#3b3561",
-    
-  },
-  yourCourseHeading:{
-    fontFamily:FONT.semiBold,
-    fontSize:moderateScale(18),
-    marginTop:verticalScale(20),
-    marginLeft:horizontalScale(20),
-  
-  },
-  wecomeAndSearchContainer: {
-
-    borderWidth: 1,
-    borderColor: "black",
-    height: verticalScale(375),
-    paddingTop: verticalScale(50),
-    borderEndEndRadius: moderateScale(50),
-    borderEndStartRadius: moderateScale(50),
-    backgroundColor: "#1A4C6E",
-    
-  },
-
-  welcomeUserContainer: {
-    // marginLeft: horizontalScale(25),
-    marginTop: verticalScale(40),
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  imageContainer: {
-  },
-  welcomeUserImage: {
-    height: verticalScale(132),
-    width: horizontalScale(152),
-    borderRadius: moderateScale(90),
-  },
-  welcomeUserTextContainer: {
-    // marginLeft: horizontalScale(8),
-    padding: verticalScale(10),
-    color: "white",
-  },
-  welcomeTextHeading: {
-    fontFamily: FONT.semiBold,
-    fontSize: moderateScale(24),
-    marginBottom: verticalScale(5),
-    color: "white",
-  },
-  welcomeTextSubHeading: {
-    color: "white",
+  descriptionText: {
     fontFamily: FONT.regular,
-    fontSize: moderateScale(12),
-
+    fontSize: moderateScale(16),
+    color: '#4A5568',
+    lineHeight: moderateScale(24),
+  },
+  coursesContainer: {
+    padding: moderateScale(20),
   },
 });
 
 export default ProfilePage;
-
 
 
 

@@ -24,11 +24,14 @@ const RegisterPage = () => {
     const [recommendedBoard, setRecommendedBoard] = useState('');
     const [recommendedGrade, setRecommendedGrade] = useState(0);
 
+    console.log(password, 'password');
+    
+
     const handleRegister = async () => {
         const user = {
             name,
             email,
-            password,
+            password:password.trim(),
             profileImage,
             userDescription,
             isTeacher,
@@ -37,6 +40,8 @@ const RegisterPage = () => {
             recommendedBoard,
             recommendedGrade,
         }
+        console.log(user, 'user');
+        
         try {
             if (password !== confirmPassword) {
                 Alert.alert('Passwords do not match');

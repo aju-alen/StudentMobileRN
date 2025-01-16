@@ -1,15 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { View, TextInput, SafeAreaView, StyleSheet, KeyboardAvoidingView, TouchableOpacity, Text,Pressable, Alert, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Link, router } from 'expo-router';
-import { Router } from 'expo-router';
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ipURL } from '../utils/utils';
+import axios from 'axios';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, Pressable, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../../constants';
 import { welcomeCOLOR } from '../../constants/theme';
 import Button from '../components/Button';
 import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
+import { ipURL } from '../utils/utils';
 
 
 const LoginPage = () => {
@@ -37,7 +36,7 @@ const LoginPage = () => {
     const handleLogin = async () => {
         const user = {
             email,
-            password,
+            password:password.trim(),
         }
         try {
             const resp = await axios.post(`${ipURL}/api/auth/login`, user)

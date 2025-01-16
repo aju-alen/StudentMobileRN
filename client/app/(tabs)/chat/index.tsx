@@ -6,11 +6,12 @@ import {
   TextInput,
   FlatList,
   SafeAreaView,
-  ScrollView,
+  RefreshControl,
+  StatusBar,
 } from "react-native";
 import { Image } from 'expo-image';
-import {limitTextLength} from "../../utils/helperFunctions";
-import React, { useEffect } from "react";
+import { limitTextLength } from "../../utils/helperFunctions";
+import React, { useEffect, useState } from "react";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
@@ -25,237 +26,199 @@ const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
 const ChatPage = () => {
+  const [conversation, setConversation] = useState([]);
+  const [user, setUser] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [originalConversation, setOriginalConversation] = useState([]);
 
-  const [conversation, setConversation] = React.useState([]);
-  const [user, setUser] = React.useState("");
-  const [searchInput, setSearchInput] = React.useState("");
-  useEffect(() => {
-
-    const getConversation = async () => {
-      console.log("this is the getConversation function");
-
+  const getConversation = async () => {
+    try {
       const token = await AsyncStorage.getItem("authToken");
-      console.log(token, "this is token in useEffect");
-      
       const userDetails = JSON.parse(await AsyncStorage.getItem("userDetails"));
-      console.log(userDetails,'this is userDetails in useEffect');
       
-      console.log(userDetails.userId, "this is user.userId");
-
       const resp = await axios.get(`${ipURL}/api/conversation/${userDetails.userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log(resp.data, "this is the response from the socket io server ppppppppppppppppp");
       
       setConversation(resp.data);
+      setOriginalConversation(resp.data);
       setUser(userDetails.userId);
-
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
     }
+  };
+
+  useEffect(() => {
     getConversation();
   }, []);
 
-
-  console.log(conversation, "this is the conversation for the user");
-
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    getConversation().finally(() => setRefreshing(false));
+  }, []);
 
   const handlePress = async (id) => {
-    socket.emit("chat-room", id)
+    socket.emit("chat-room", id);
     router.push(`/(tabs)/chat/${id}`);
-
   };
-  const handleLongPress = (clientId,userId) => {
-    user === userId._id ? router.push(`/(tabs)/chat/singleProfile/${clientId._id}`) : router.push(`/(tabs)/chat/singleProfile/${userId._id}`)
-  }
 
-  console.log(conversation, "this is conversation");
-  console.log(user, "this is user");
+  const handleLongPress = (clientId, userId) => {
+    const profileId = user === userId._id ? clientId._id : userId._id;
+    router.push(`/(tabs)/chat/singleProfile/${profileId}`);
+  };
 
-  const handleSearch = debounce(async () => {
-    const token = await AsyncStorage.getItem("authToken");
+  const handleSearch = debounce((text) => {
+    if (!text.trim()) {
+      setConversation(originalConversation);
+      return;
+    }
 
-
-    const filtered = conversation.filter((conversations) => {
-      return conversations.clientId.name.toLowerCase().includes(searchInput.toLowerCase());
-    });
+    const filtered = originalConversation.filter((conv) => 
+      conv.clientId.name.toLowerCase().includes(text.toLowerCase())
+    );
     setConversation(filtered);
-  }, 1000);
+  }, 300);
 
+  const ChatItem = ({ item }) => {
+    const isCurrentUser = user === item.userId._id;
+    const displayName = isCurrentUser ? item.clientId.name : item.userId.name;
+    const profileImage = isCurrentUser ? item.clientId.profileImage : item.userId.profileImage;
+    const lastMessage = item.messages[item.messages.length - 1]?.text;
+
+    return (
+      <TouchableOpacity 
+        onPress={() => handlePress(item._id)} 
+        onLongPress={() => handleLongPress(item.clientId, item.userId)}
+        style={styles.chatCard}
+        activeOpacity={0.7}
+      >
+        <Image
+          source={{ uri: profileImage }}
+          style={styles.avatar}
+          placeholder={blurhash}
+          contentFit="cover"
+          transition={200}
+        />
+        <View style={styles.chatInfo}>
+          <View style={styles.headerContainer}>
+            <Text style={styles.nameText}>{displayName}</Text>
+            <Text style={styles.subjectText}>{item?.subjectId?.subjectName}</Text>
+          </View>
+          {lastMessage && (
+            <Text style={styles.messageText}>
+              {limitTextLength(lastMessage, 50)}
+            </Text>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
-    <SafeAreaView style={styles.mainContainer}>
-      <ScrollView>
-      
-      <View>
-        <View style={styles.searchContainer}>
-          <Ionicons name={"search"} size={moderateScale(26)} color={"black"} style={styles.searchIconContainer} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search Chats..."
-            placeholderTextColor="gray"
-            value={searchInput}
-            onChangeText={(text) => {
-              setSearchInput(text);
-              // handleSearch(); Implement Search feature later
-            }}
-          />
-        </View>
-        <View>
-          {/* <FlatList
-            data={conversation}
-            renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => handlePress(item._id)} onLongPress={()=>handleLongPress(item.clientId,item.userId)} style={styles.chatButtonContainer}>
-                <View style={styles.chatIconContainer}>
-                  <Image
-                    source={{ uri: user === item.userId._id ? item.clientId.profileImage : item.userId.profileImage }} 
-                    style={styles.chatIconImage}
-                    placeholder={blurhash}
-                    contentFit="cover"
-                    transition={100}
-                    />
-                </View>
-                <View style={styles.chatDetails}>
-                  <View style={styles.chatDetailsMainHeadingContainer}>
-                  <Text style={styles.chatDetailsMainHeading}>{user === item.userId._id ? item.clientId.name : item.userId.name}</Text> 
-                  <Text style={styles.chatDetailsMainHeadingSubjectName}>{`(${item?.subjectId?.subjectName})`}</Text>
-                  </View>
-                  {item.messages.length > 0 && <Text style={styles.chatDetailsRecentChat}>{ limitTextLength(item.messages[item.messages.length - 1].text,50)}</Text>}
-                </View>
-
-              </TouchableOpacity>
-            )}
-          /> */}
-          <FlatList
-        data={conversation}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handlePress(item._id)} onLongPress={()=>handleLongPress(item.clientId,item.userId)} style={styles.card}>
-          <View style={styles.chatIconContainer}>
-            <View style={styles.imageTextContainer}>
-            <Image
-              source={{ uri: user === item.userId._id ? item.clientId.profileImage : item.userId.profileImage }} 
-              style={styles.chatIconImage}
-              placeholder={blurhash}
-              contentFit="cover"
-              transition={100}
-              />
-               <View style={styles.chatDetailsMainHeadingContainer}>
-            <Text style={styles.chatDetailsMainHeading}>{user === item.userId._id ? item.clientId.name : item.userId.name}</Text> 
-            <Text style={styles.chatDetailsMainHeadingSubjectName}>{`(${item?.subjectId?.subjectName})`}</Text>
-            </View>
-            </View>
-          </View>
-          <View style={styles.chatDetails}>
-           
-            {item.messages.length > 0 && <Text style={styles.chatDetailsRecentChat}>{ limitTextLength(item.messages[item.messages.length - 1].text,50)}</Text>}
-          </View>
-
-        </TouchableOpacity>
-        )}
-        scrollEnabled={false}
-      />
-        </View>
-
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.searchContainer}>
+        <Ionicons name="search" size={moderateScale(20)} color="#666" />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search conversations..."
+          placeholderTextColor="#666"
+          value={searchInput}
+          onChangeText={(text) => {
+            setSearchInput(text);
+            handleSearch(text);
+          }}
+        />
       </View>
-      </ScrollView>
+      
+      <FlatList
+        data={conversation}
+        renderItem={({ item }) => <ChatItem item={item} />}
+        keyExtractor={item => item._id}
+        contentContainerStyle={styles.listContainer}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        showsVerticalScrollIndicator={false}
+      />
     </SafeAreaView>
   );
 };
 
-export default ChatPage;
-
 const styles = StyleSheet.create({
-  mainContainer: {
+  container: {
     flex: 1,
-    backgroundColor: "white",
-    padding: 10,
+    backgroundColor: '#f8f9fa',
   },
   searchContainer: {
-    backgroundColor: "white",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: 'flex-start',
-    marginHorizontal: horizontalScale(10),
-    marginTop: verticalScale(24),
-    height: verticalScale(52),
-    borderRadius: moderateScale(20),
-    borderWidth: 1,
-    borderColor: "black",
-    marginBottom: verticalScale(24),
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    margin: moderateScale(16),
+    paddingHorizontal: moderateScale(16),
+    borderRadius: moderateScale(12),
+    height: verticalScale(48),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   searchInput: {
-    width: horizontalScale(200),
-    height: verticalScale(40),
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(13),
+    flex: 1,
+    marginLeft: horizontalScale(8),
+    fontSize: moderateScale(16),
+    fontFamily: FONT.regular,
+    color: '#000',
   },
-  searchIconContainer: {
-    flex: 0.3,
-    marginLeft: horizontalScale(10)
+  listContainer: {
+    padding: moderateScale(16),
   },
-  chatButtonContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-start",
-    height: verticalScale(70),
-    borderBottomWidth: 1,
-    
+  chatCard: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    borderRadius: moderateScale(16),
+    padding: moderateScale(12),
+    marginBottom: verticalScale(12),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  chatDetails: {
-    flexDirection: 'column',
-    justifyContent:'space-around',
-    width:'80%',
-    
+  avatar: {
+    width: horizontalScale(56),
+    height: verticalScale(56),
+    borderRadius: moderateScale(28),
   },
-  chatIconContainer: {
-    padding: moderateScale(5),
-   
+  chatInfo: {
+    flex: 1,
+    marginLeft: horizontalScale(12),
+    justifyContent: 'center',
   },
-  chatIconImage: {
-     width: horizontalScale(50), height: verticalScale(50), borderRadius: 25 
-    },
-    chatDetailsMainHeadingContainer:{
-      flexDirection: "column",
-      justifyContent: 'flex-start',
-    },
-    chatDetailsMainHeading:{
-   
-      alignItems: "center",
-      fontFamily: FONT.semiBold,
-      fontSize: moderateScale(14),
-      marginBottom: verticalScale(2),
-      color: "black",
-
-    },
-    chatDetailsMainHeadingSubjectName:{
-      fontFamily: FONT.regular,
-      fontSize: moderateScale(12),
-      marginBottom: verticalScale(5),
-      color: "black",
-    },
-    chatDetailsRecentChat:{
-      color: "black",
-      fontFamily: FONT.regular,
-      fontSize: moderateScale(12),
-    },
-    card: {
-      backgroundColor: "white",
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: "#ddd",
-      padding: 10,
-      margin: 10,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.3,
-      shadowRadius: 4,
-      elevation: 5,
-    },
-    imageTextContainer:{
-      marginRight: horizontalScale(10),
-      display: 'flex',
-      flexDirection: 'row',
-    }
-    
-
+  headerContainer: {
+    marginBottom: verticalScale(4),
+  },
+  nameText: {
+    fontSize: moderateScale(16),
+    fontFamily: FONT.semiBold,
+    color: '#000',
+    marginBottom: verticalScale(2),
+  },
+  subjectText: {
+    fontSize: moderateScale(14),
+    fontFamily: FONT.regular,
+    color: '#666',
+  },
+  messageText: {
+    fontSize: moderateScale(14),
+    fontFamily: FONT.regular,
+    color: '#444',
+    marginTop: verticalScale(4),
+  },
 });
+
+export default ChatPage;

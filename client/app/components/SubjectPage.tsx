@@ -5,6 +5,7 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
+  StatusBar,
 } from "react-native";
 import { Image } from 'expo-image';
 import React, { useEffect } from "react";
@@ -13,9 +14,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ipURL } from "../utils/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { horizontalScale, verticalScale, moderateScale } from '../utils/metrics'
+import { horizontalScale, verticalScale, moderateScale } from '../utils/metrics';
 import { FONT } from "../../constants";
-import {socket} from '../utils/socket'
+import { socket } from '../utils/socket';
+
 interface SubjectData {
   subjectImage?: string;
   subjectName?: string;
@@ -41,52 +43,34 @@ interface User {
 const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
-
-//This gets a single Subject data, there is handleChat
 const SubjectPage = ({ subjectId }) => {
-  const [singleSubjectData, setSingleSubjectData] = React.useState<SubjectData>(
-    {}
-  );
-  console.log("this is subjectId", subjectId);
-  const name = singleSubjectData.user?.name;
-  const profileImage = singleSubjectData.user?.profileImage;
+  const [singleSubjectData, setSingleSubjectData] = React.useState<SubjectData>({});
   const [userData, setUserData] = React.useState<User>({});
   const [teacherId, setTeacherId] = React.useState<string>("");
 
   const handleChatNow = async () => {
-    const token = await AsyncStorage.getItem('authToken')
-    const userDetails = await AsyncStorage.getItem('userDetails')
+    const token = await AsyncStorage.getItem('authToken');
+    const userDetails = await AsyncStorage.getItem('userDetails');
     const userId = JSON.parse(userDetails).userId;
     const clientId = singleSubjectData.user?._id;
-    try{
-      socket.emit('send-chat-details', {userId, clientId, subjectId})
-     
-      socket.on("chat-details",(data)=>{
-        console.log(data,'this is the chat room details from server');
-        
-      })
+    try {
+      socket.emit('send-chat-details', { userId, clientId, subjectId });
+      socket.on("chat-details", (data) => {
+        console.log(data, 'this is the chat room details from server');
+      });
       router.replace(`/(tabs)/chat`);
+    } catch (err) {
+      console.log(err, 'this is the error when clicking chat now button');
     }
-    catch(err){
-      console.log(err,'this is the error when clciking chat now button');
-      
-    }
-    
-    
   };
 
   useEffect(() => {
     const getSubjects = async () => {
       try {
         const token = await AsyncStorage.getItem("authToken");
-        const resp = await axios.get(
-          `${ipURL}/api/subjects/${subjectId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const resp = await axios.get(`${ipURL}/api/subjects/${subjectId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setTeacherId(resp.data.user._id);
         setSingleSubjectData(resp.data);
       } catch (error) {
@@ -95,491 +79,277 @@ const SubjectPage = ({ subjectId }) => {
     };
 
     getSubjects();
-  }, []);
+  }, [subjectId]);
 
-  console.log(singleSubjectData, "this is singleSubjectData");
-  
+  const FeatureItem = ({ icon, text }) => (
+    <View style={styles.featureItem}>
+      <Ionicons name={icon} size={24} color="#1A4C6E" />
+      <Text style={styles.featureText}>{text}</Text>
+    </View>
+  );
 
   return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
+        <View style={styles.imageWrapper}>
+          <Image
+            source={{ uri: singleSubjectData?.subjectImage }}
+            style={styles.mainImage}
+            placeholder={blurhash}
+            contentFit="cover"
+            transition={300}
+          />
+          <View style={styles.imageOverlay} />
+        </View>
 
-    <View style={styles.mainContainer} >
-      <ScrollView  >
-        <Image 
-        source={{ uri: singleSubjectData?.subjectImage }} 
-        style={styles.mainImageContainer} 
-        placeholder={blurhash}
-        contentFit="cover"
-        transition={100}
-        />
-        <SafeAreaView >
-          <View style={styles.imageDetailsContainer}>
-            <Text style={styles.teachingGradeText}>Grade: {singleSubjectData.subjectGrade}</Text>
-            <Text style={styles.teachingLanguageText}>Mode of Instruction: {singleSubjectData.subjectLanguage}</Text>
+        <View style={styles.contentContainer}>
+          <View style={styles.gradeContainer}>
+            <Text style={styles.gradeText}>Grade {singleSubjectData.subjectGrade}</Text>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{singleSubjectData.subjectLanguage}</Text>
+            </View>
           </View>
-          <View style={styles.subjectHeaderContainer}>
-            <Text style={styles.subjectHeaderText}>{singleSubjectData.subjectName}</Text>
-            <Text style={styles.subjectSubHeaderText}>{singleSubjectData.subjectNameSubHeading && singleSubjectData.subjectNameSubHeading}</Text>
-          </View>
-         
-            <TouchableOpacity onPress={() => router.replace(`/(tabs)/home/singleProfile/${teacherId}`)}>
-          <View style={styles.userDetailsContainer}>
-            <Image 
-              source={{ uri: singleSubjectData?.user?.profileImage }} 
-              style={styles.userDetailsImage}
+
+          <Text style={styles.titleText}>{singleSubjectData.subjectName}</Text>
+          <Text style={styles.subtitleText}>{singleSubjectData.subjectNameSubHeading}</Text>
+
+          <TouchableOpacity 
+            style={styles.teacherCard}
+            onPress={() => router.replace(`/(tabs)/home/singleProfile/${teacherId}`)}
+          >
+            <Image
+              source={{ uri: singleSubjectData?.user?.profileImage }}
+              style={styles.teacherImage}
               placeholder={blurhash}
               contentFit="cover"
               transition={100}
-              />
-            <View style={styles.userDetailsTextContainer}>
-              <Text style={styles.userDetailsText1}>{singleSubjectData.user?.name}</Text>
-              <Text style={styles.userDetailsText2}>Sr.French Professor</Text>
+            />
+            <View style={styles.teacherInfo}>
+              <Text style={styles.teacherName}>{singleSubjectData.user?.name}</Text>
+              <Text style={styles.teacherRole}>Sr. French Professor</Text>
             </View>
-          </View>
-            </TouchableOpacity>
-          <View style={styles.subjectDetailsContainer}>
-            <Text style={styles.subjectDetailsText}>{singleSubjectData.subjectDuration && `${singleSubjectData.subjectDuration} h`}</Text>
-            <Text style={styles.subjectDetailsText}>•</Text>
-            <Text style={styles.subjectDetailsText}>{singleSubjectData.subjectLanguage}</Text>
-            <Text style={styles.subjectDetailsText}>•</Text>
-            <Text style={styles.subjectDetailsText}>100% Online & Flexible Deadlines</Text>
-          </View>
-          {singleSubjectData.subjectDescription && <View style={styles.moreDetailsContainer}>
-            <Text style={styles.moreDetailsHeadingText} >Description</Text>
+            <Ionicons name="chevron-forward" size={24} color="#1A4C6E" />
+          </TouchableOpacity>
 
-            <Text style={styles.moreDetailsDescriptionText} >{singleSubjectData.subjectDescription}</Text>
-          </View>}
-
-          {singleSubjectData.subjectPoints && 
-          <View style={styles.moreDetailsContainer}>
-            <Text style={styles.moreDetailsHeadingText} >More Details</Text>
-            {singleSubjectData?.subjectPoints?.map((point, i) => ( 
-              <Text key={i} style={styles.moreDetailsPointText} >● {point}</Text>
-             ))}
-          </View>
-          }
-          
-
-
-          <View style={styles.buttonsContainer2}>
-            <TouchableOpacity style={styles.buyNowButton2}>
-              <View style={{ flexDirection: 'row' }}>
-                <Text style={styles.buttonText2}>ENROLL NOW FOR </Text>
-                <Text style={styles.buttonBoldText2}>ONLY AED {singleSubjectData.subjectPrice}</Text>
-              </View>
-              <Text style={styles.buttonBoldText2Static}>(Premium Service) </Text>
-            </TouchableOpacity>
-            <Text style={styles.orText}>OR</Text>
-            <TouchableOpacity onPress={handleChatNow} style={styles.ChatNowButton2}>
-              <Text style={styles.buttonText2}>CHAT NOW</Text>
-              <Text style={styles.buttonText2}>(Subscription Service)</Text>
-            </TouchableOpacity>
+          <View style={styles.featuresContainer}>
+            <FeatureItem icon="time-outline" text={`${singleSubjectData.subjectDuration} Hours`} />
+            <FeatureItem icon="globe-outline" text="100% Online" />
+            <FeatureItem icon="calendar-outline" text="Flexible Schedule" />
           </View>
 
-        </SafeAreaView>
+          {singleSubjectData.subjectDescription && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Course Description</Text>
+              <Text style={styles.descriptionText}>{singleSubjectData.subjectDescription}</Text>
+            </View>
+          )}
+
+          {singleSubjectData.subjectPoints && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>What You'll Learn</Text>
+              {singleSubjectData.subjectPoints.map((point, i) => (
+                <View key={i} style={styles.bulletPoint}>
+                  <View style={styles.bullet} />
+                  <Text style={styles.bulletText}>{point}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
       </ScrollView>
-      {/* Another View for Purchase and chat UI */}
-      {/* <View style={styles.buttonsContainer}>
-        <TouchableOpacity style={styles.buyNowButton}>
-          <Text style={styles.buttonText}>ENROLL NOW FOR </Text>
-           <Text style={styles.buttonBoldText}> ONLY AED {singleSubjectData.subjectPrice}</Text>
-           
+
+      <View style={styles.footer}>
+        <TouchableOpacity style={styles.primaryButton} onPress={() => console.log("Enroll pressed")}>
+          <Text style={styles.primaryButtonText}>Enroll Now</Text>
+          <Text style={styles.priceText}>AED {singleSubjectData.subjectPrice}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.ChatNowButton}>
-          <Text style={styles.buttonText}>CHAT NOW</Text>
+        <TouchableOpacity style={styles.secondaryButton} onPress={handleChatNow}>
+          <Ionicons name="chatbubbles-outline" size={24} color="#FFFFFF" />
+          <Text style={styles.secondaryButtonText}>Chat</Text>
         </TouchableOpacity>
-      </View> */}
-    </View>
+      </View>
+    </SafeAreaView>
   );
 };
 
 export default SubjectPage;
 
 const styles = StyleSheet.create({
-  mainContainer: {
+  container: {
     flex: 1,
-    backgroundColor: 'white'
+    backgroundColor: '#FFFFFF',
   },
-  mainImageContainer: {
-    width: "100%",
-    height: verticalScale(290),
+  imageWrapper: {
+    height: verticalScale(250),
+    position: 'relative',
   },
-  imageDetailsContainer: {
+  mainImage: {
+    width: '100%',
+    height: '100%',
+  },
+  imageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: horizontalScale(20),
+    paddingTop: verticalScale(20),
+    paddingBottom: verticalScale(100),
+  },
+  gradeContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-
-    marginTop: verticalScale(18),
-    marginHorizontal: horizontalScale(30),
+    marginBottom: verticalScale(15),
   },
-
-
-  teachingGradeText: {
-    fontFamily: FONT.medium,
+  gradeText: {
+    fontFamily: FONT.semiBold,
     fontSize: moderateScale(16),
     color: '#2DCB63',
   },
-  teachingLanguageText: {
+  badge: {
+    backgroundColor: '#E8F5FF',
+    paddingHorizontal: horizontalScale(12),
+    paddingVertical: verticalScale(6),
+    borderRadius: 20,
+  },
+  badgeText: {
     fontFamily: FONT.medium,
     fontSize: moderateScale(12),
+    color: '#1A4C6E',
   },
-  subjectHeaderContainer: {
-
-    marginHorizontal: horizontalScale(33),
-    marginTop: verticalScale(10),
-  },
-  subjectHeaderText: {
+  titleText: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(22),
-    textAlign: 'center',
+    fontSize: moderateScale(24),
+    color: '#1A4C6E',
+    marginBottom: verticalScale(8),
   },
-  subjectSubHeaderText: {
+  subtitleText: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(20),
-    textAlign: 'center',
+    fontSize: moderateScale(16),
+    color: '#5D6D7E',
+    marginBottom: verticalScale(20),
   },
-  subjectDetailsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    marginTop: verticalScale(12),
-    marginHorizontal: horizontalScale(30),
-  },
-  subjectDetailsText: {
-    fontFamily: FONT.semiBold,
-    fontSize: moderateScale(12),
-  },
-  userDetailsContainer: {
+  teacherCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: horizontalScale(30),
-    marginTop: verticalScale(22),
-
+    backgroundColor: '#F8F9FA',
+    padding: moderateScale(15),
+    borderRadius: 12,
+    marginBottom: verticalScale(20),
   },
-  userDetailsImage: {
-    width: moderateScale(50),
-    height: moderateScale(50),
-    borderRadius: moderateScale(25),
-    marginRight: horizontalScale(11),
-
+  teacherImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
-  userDetailsTextContainer: {
-
+  teacherInfo: {
+    flex: 1,
+    marginLeft: horizontalScale(15),
   },
-  userDetailsText1: {
+  teacherName: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(19),
+    fontSize: moderateScale(16),
+    color: '#1A4C6E',
   },
-  userDetailsText2: {
+  teacherRole: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(12),
+    fontSize: moderateScale(14),
+    color: '#5D6D7E',
   },
-  moreDetailsContainer: {
-    marginHorizontal: horizontalScale(29),
-    marginTop: verticalScale(26),
-
-  },
-  moreDetailsHeadingText: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(20),
-  },
-  moreDetailsDescriptionText: {
-    fontFamily: FONT.regular,
-    textAlign: 'justify',
-  },
-  moreDetailsPointText: {
-    fontFamily: FONT.regular,
-    textAlign: 'justify',
-    marginBottom: verticalScale(6),
-  },
-  subjectPointsContainer: {
-
-  },
-  buttonsContainer: {
+  featuresContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: verticalScale(25),
+  },
+  featureItem: {
     alignItems: 'center',
-    marginHorizontal: horizontalScale(3),
-    height: verticalScale(70),
-    borderRadius: 30,
-    borderColor: 'black',
+    flex: 1,
   },
-  buyNowButton: {
-    flex: 0.6,
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: "100%",
-    borderRadius: 30,
-    backgroundColor: '#2DCB63',
-  },
-  ChatNowButton: {
-    flex: 0.4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: "100%",
-    borderRadius: 30,
-    backgroundColor: '#2DCB63',
-  },
-
-  buttonText: {
-    fontFamily: FONT.regular,
-    fontSize: moderateScale(14),
-    color: 'white',
-  },
-  buttonBoldText: {
-    fontFamily: FONT.semiBold,
-    fontSize: moderateScale(16),
-    color: 'white',
-  },
-  buttonsContainer2: {
-    marginTop: verticalScale(40),
-    justifyContent: 'space-between',
-    // marginHorizontal:horizontalScale(10),
-    height: verticalScale(150),
-    borderStartStartRadius: 20,
-    borderStartEndRadius: 20,
-    backgroundColor: '#1A4C6E',
-    padding: 10,
-
-  },
-  buyNowButton2: {
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-
-    borderRadius: 10,
-    height: verticalScale(50),
-    backgroundColor: '#2DCB63',
-
-  },
-  ChatNowButton2: {
-    justifyContent: 'center',
-    borderRadius: 10,
-    height: verticalScale(50),
-    backgroundColor: '#147eb2',
-  },
-  buttonText2: {
-    justifyContent: 'center',
-
-    alignItems: 'center',
-    fontFamily: FONT.regular,
-    fontSize: moderateScale(14),
-    color: 'white',
-    textAlign: 'center',
-  },
-  buttonBoldText2: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    fontFamily: FONT.semiBold,
-    fontSize: moderateScale(16),
-    color: 'black',
-    textAlign: 'center',
-  },
-  orText: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    fontFamily: FONT.semiBold,
-    fontSize: moderateScale(16),
-    color: 'white',
-    textAlign: 'center',
-
-  },
-  buttonBoldText2Static: {
+  featureText: {
     fontFamily: FONT.medium,
     fontSize: moderateScale(12),
-    color: 'white',
-  }
-
+    color: '#5D6D7E',
+    marginTop: verticalScale(8),
+    textAlign: 'center',
+  },
+  section: {
+    marginBottom: verticalScale(25),
+  },
+  sectionTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(18),
+    color: '#1A4C6E',
+    marginBottom: verticalScale(15),
+  },
+  descriptionText: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(15),
+    color: '#5D6D7E',
+    lineHeight: 24,
+  },
+  bulletPoint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: verticalScale(12),
+  },
+  bullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#2DCB63',
+    marginRight: horizontalScale(12),
+  },
+  bulletText: {
+    flex: 1,
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(15),
+    color: '#5D6D7E',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    padding: moderateScale(15),
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E8E8E8',
+  },
+  primaryButton: {
+    flex: 1,
+    backgroundColor: '#2DCB63',
+    borderRadius: 12,
+    padding: moderateScale(15),
+    marginRight: horizontalScale(10),
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(16),
+    color: '#FFFFFF',
+  },
+  priceText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
+    color: '#FFFFFF',
+    marginTop: verticalScale(4),
+  },
+  secondaryButton: {
+    backgroundColor: '#3498DB',
+    borderRadius: 12,
+    padding: moderateScale(15),
+    width: horizontalScale(70),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryButtonText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(12),
+    color: '#FFFFFF',
+    marginTop: verticalScale(4),
+  },
 });
-
-
-
-// const styles = StyleSheet.create({
-//   image: {
-//     width: "100%",
-//     height: 200,
-//     alignSelf: "center",
-//     resizeMode: "cover",
-//   },
-//   container: {
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
-//   text: {
-//     fontSize: 25,
-//     paddingTop: 5,
-//     fontFamily: "SpaceMono-Regular",
-//     fontWeight: "bold",
-//   },
-//   text1: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     paddingHorizontal: 20,
-//     fontSize: 16,
-//     fontFamily: "SpaceMono-Regular",
-//     fontWeight: "bold",
-//   },
-//   buttonContainer: {
-//     flexDirection: "row",
-//     paddingLeft: 10,
-//     backgroundColor: "#f3f3f3",
-//   },
-//   line: {
-//     borderBottomColor: "black",
-//     borderBottomWidth: 1,
-//     marginVertical: 1,
-//     marginHorizontal: 20,
-//     padding: 2,
-//   },
-//   descriptionText: {
-//     fontSize: 16,
-//     color: "#555",
-//     lineHeight: 22,
-//     marginTop: 8,
-//     paddingLeft: 15,
-//     paddingRight: 15,
-//     paddingBottom: 15,
-//     textAlign: "justify",
-//   },
-//   buttonText: {
-//     color: "white",
-//     justifyContent: "center",
-//     alignItems: "center",
-//     fontSize: 18,
-//   },
-//   fixedButton: {
-//     bottom: 1,
-//     backgroundColor: "#b54034",
-//     borderRadius: 10,
-//     marginVertical: 5,
-//     width: "65%",
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
-//   chatbutton: {
-//     bottom: 1,
-//     backgroundColor: "#b54034",
-//     padding: 15,
-//     borderRadius: 10,
-//     marginVertical: 5,
-//     width: "30%",
-//     justifyContent: "center",
-//     alignItems: "center",
-//     height: 70,
-//     marginRight: 10,
-//     marginLeft: 10,
-//   },
-//   detail: {
-//     fontSize: 17,
-//     color: "black",
-//     paddingLeft: 20,
-//   },
-//   course: {
-//     textAlign: "justify",
-//     fontSize: 16,
-//     alignItems: "center",
-//     flex: 1,
-//     paddingRight: 8,
-//   },
-//   skill: {
-//     fontSize: 18,
-//   },
-//   coursegain: {
-//     color: "red",
-//   },
-// });
-
-
-
-// return (
-//   <SafeAreaView style={{ flex: 1 }}>
-//     <ScrollView>
-//       <View style={{ width: "100%", height: 200 }}>
-//         <Image
-//           source={{ uri: singleSubjectData?.subjectImage }}
-//           style={styles.image}
-//         />
-//       </View>
-//       <View style={{ marginLeft: 15, marginRight: 10 }}>
-//         <Text style={styles.text}>{singleSubjectData?.subjectName}</Text>
-//         <View style={{ flexDirection: "row", paddingTop: 5 }}>
-//           <Text style={{ fontSize: 18 }}>Course Tutor: {name} </Text>
-//           <Text style={styles.text1}>
-//             {singleSubjectData?.subjectBoard} -{" "}
-//             {singleSubjectData?.subjectGrade}
-//           </Text>
-//         </View>
-//         <Text style={{ fontWeight: "bold", fontSize: 18, paddingTop: 10 }}>
-//           About this course
-//         </Text>
-//         <Text style={styles.course}>
-//           {singleSubjectData?.subjectDescription}
-//         </Text>
-
-//         <View style={{ paddingBottom: 25, paddingLeft: 25 }}>
-//           <View style={{ flexDirection: "row", paddingTop: 25 }}>
-//             <Ionicons name="globe" size={30} color={"black"} />
-//             <Text style={styles.detail}>100% Online</Text>
-//           </View>
-//           <View style={{ flexDirection: "row" }}>
-//             <Ionicons name="calendar" size={30} color={"black"} />
-//             <Text style={styles.detail}>Flexible Deadlines</Text>
-//           </View>
-//           <View style={{ flexDirection: "row" }}>
-//             <Ionicons name="chatbox-ellipses" size={30} color={"black"} />
-//             <Text style={styles.detail}>
-//               Medium of Instruction: {singleSubjectData.subjectLanguage}
-//             </Text>
-//           </View>
-//         </View>
-//         <Text style={{ fontSize: 16 }}>Skills you will gain</Text>
-//         {/* <View style={{paddingTop:10,flexDirection:'row'}}>
-//         <FlatList data={singleSubjectData?.subjectTags} renderItem={({ item }) =>
-//         <View style={{borderRadius:10,backgroundColor:'#b54034',marginTop:8,justifyContent:'center',marginRight:5}}>
-//         <Text style={{padding:10,fontSize:16,color:'white'}}>{item} </Text>
-//         </View>
-//         } keyExtractor={(item) => item} />
-//       </View> */}
-//         <Text style={{ fontWeight: "bold", fontSize: 20, paddingTop: 20 }}>
-//           Course Instructor
-//         </Text>
-//         <View
-//           style={{
-//             flexDirection: "row",
-//             alignItems: "center",
-//             paddingBottom: 25,
-//             paddingTop: 20,
-//           }}
-//         >
-//           <Image
-//             source={{ uri: singleSubjectData?.user?.profileImage }}
-//             style={{ width: 150, height: 150, borderRadius: 100 }}
-//           />
-//           <View style={{ flexDirection: "column" }}>
-//             <Text style={{ fontSize: 18, paddingLeft: 20 }}>{name}</Text>
-//             <Text style={{ paddingLeft: 20 }}>UI/UX Expert</Text>
-//           </View>
-//         </View>
-//         <View></View>
-//       </View>
-//       <View>
-//         <View style={[styles.buttonContainer]}>
-//           <TouchableOpacity
-//             style={styles.fixedButton}
-//             onPress={() => console.log("Button 1 pressed")}
-//           >
-//             <Text style={styles.buttonText}>
-//               Enrol Now - AED {singleSubjectData?.subjectPrice}
-//             </Text>
-//           </TouchableOpacity>
-//           <TouchableOpacity
-//             style={styles.chatbutton}
-//             onPress={handleChatNow}
-//           >
-//             <Ionicons name="chatbox-ellipses" size={30} color={"white"} />
-//             <Text style={styles.buttonText}>Chat Now</Text>
-//           </TouchableOpacity>
-//         </View>
-//       </View>
-//     </ScrollView>
-//   </SafeAreaView>
-// );
