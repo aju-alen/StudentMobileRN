@@ -10,9 +10,9 @@ const s3 = new S3({
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION,
   },
 
-  region: process.env.AWS_REGION,
 });
 export const postProfileImageS3 = async (req, res,next) => {
   console.log(req.body.uploadKey,'this is body req');

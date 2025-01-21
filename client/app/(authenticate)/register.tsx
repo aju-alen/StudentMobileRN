@@ -6,9 +6,10 @@ import Checkbox from 'expo-checkbox';
 import axios from 'axios';
 import { ipURL } from '../utils/utils';
 import { COLORS, welcomeCOLOR } from '../../constants/theme';
-import {Picker} from '@react-native-picker/picker';
+import { Picker } from '@react-native-picker/picker';
 import Button from '../components/Button';
-import { verticalScale,horizontalScale,moderateScale } from '../utils/metrics';
+import { verticalScale, horizontalScale, moderateScale } from '../utils/metrics';
+
 const RegisterPage = () => {
     const [name, setName] = useState('');
     const [isPasswordShown, setIsPasswordShown] = useState(false);
@@ -19,19 +20,15 @@ const RegisterPage = () => {
     const [userDescription, setUserDescription] = useState('');
     const [reccomendedSubjects, setReccomendedSubjects] = useState([]);
     const [subjectInput, setSubjectInput] = useState('');
-  
     const [isTeacher, setIsTeacher] = useState(false);
     const [recommendedBoard, setRecommendedBoard] = useState('');
     const [recommendedGrade, setRecommendedGrade] = useState(0);
-
-    console.log(password, 'password');
-    
 
     const handleRegister = async () => {
         const user = {
             name,
             email,
-            password:password.trim(),
+            password: password.trim(),
             profileImage,
             userDescription,
             isTeacher,
@@ -40,507 +37,350 @@ const RegisterPage = () => {
             recommendedBoard,
             recommendedGrade,
         }
-        console.log(user, 'user');
         
         try {
             if (password !== confirmPassword) {
-                Alert.alert('Passwords do not match');
+                Alert.alert('Error', 'Passwords do not match');
                 return;
             }
             const resp = await axios.post(`${ipURL}/api/auth/register`, user)
-            console.log(resp.data, 'Registered succesfully');
-            Alert.alert('Registration Succesful, Verify email to login');
+            Alert.alert('Success', 'Registration successful! Please verify email to login');
             router.replace(`/(authenticate)/${resp.data.userId}`);
         }
         catch (err) {
-            console.log(err);
-            Alert.alert('Something wrong has happened');
-            return;
+            Alert.alert('Error', err.response.data.message);
         }
     }
 
     const handleReccomendedSubject = () => {
         if (reccomendedSubjects.length < 3 && subjectInput.trim()) {
-          setReccomendedSubjects([...reccomendedSubjects, subjectInput.trim().toLowerCase()]);
-          setSubjectInput('');
+            setReccomendedSubjects([...reccomendedSubjects, subjectInput.trim().toLowerCase()]);
+            setSubjectInput('');
         } else if (reccomendedSubjects.length >= 3) {
-          alert('You can only add up to 3 subjects');
+            Alert.alert('Limit Reached', 'You can only add up to 3 subjects');
         } else {
-          alert('Please enter a valid subject');
+            Alert.alert('Invalid Input', 'Please enter a valid subject');
         }
-      };
-    
-      console.log(reccomendedSubjects,'reccomendedSubjects');
-      
+    };
+
     return (
-       
-        <SafeAreaView style={{ flex: 1,  }}>
-            <ScrollView  >
+        <SafeAreaView style={styles.container}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={styles.content}>
+                    <View style={styles.headerSection}>
+                        <Text style={styles.title}>Create Account</Text>
+                        <Text style={styles.subtitle}>Join our learning community</Text>
+                    </View>
 
-                <View style={{ flex: 1, marginHorizontal: horizontalScale(22) }}>
-                    <KeyboardAvoidingView style={styles.container} behavior='height' >
-                        <View style={{ marginVertical: verticalScale(22) }}>
-                            <Text style={{
-                                fontSize: moderateScale(22),
-                                fontWeight: 'bold',
-                                marginVertical: verticalScale(12),
-                                color: welcomeCOLOR.black
-                            }}>
-                                Create Account
-                            </Text>
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Name</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter your name"
+                            placeholderTextColor="#666"
+                            value={name}
+                            onChangeText={setName}
+                        />
+                    </View>
 
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Email</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter your email"
+                            placeholderTextColor="#666"
+                            autoCapitalize="none"
+                            value={email}
+                            onChangeText={setEmail}
+                            keyboardType="email-address"
+                        />
+                    </View>
 
-                        </View>
-
-                        <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8)
-                            }}>Name</Text>
-
-                            <View style={{
-                                width: "100%",
-                                height: verticalScale(48),
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                                alignItems: "center",
-                                justifyContent: "center",
-                                paddingLeft: horizontalScale(22)
-                            }}>
-                                <TextInput
-                                    placeholder="Enter Your Name"
-                                    placeholderTextColor="gray"
-                                    value={name}
-                                    onChangeText={setName}
-                                    keyboardType='default'
-                                    style={{
-                                        width: "100%"
-                                    }}
-                                />
-                            </View>
-                        </View>
-
-                        <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8)
-                            }}>Email address</Text>
-
-                            <View style={{
-                                width: "100%",
-                                height: verticalScale(48),
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                                alignItems: "center",
-                                justifyContent: "center",
-                                paddingLeft: horizontalScale(22)
-                            }}>
-                                <TextInput
-                                    placeholder="Enter Your Email"
-                                    placeholderTextColor="gray"
-                                    autoCapitalize="none"
-                                    value={email}
-                                    onChangeText={setEmail}
-                                    keyboardType='email-address'
-                                    style={{
-                                        width: "100%"
-                                    }}
-                                />
-                            </View>
-                        </View>
-
-
-
-                        <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8)
-                            }}>Password</Text>
-
-                            <View style={{
-                                width: "100%",
-                                height: verticalScale(48),
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                                alignItems: "center",
-                                justifyContent: "center",
-                                paddingLeft: horizontalScale(22)
-                            }}>
-                                <TextInput
-                                    placeholder='Enter your password'
-                                    value={password}
-                                    onChangeText={setPassword}
-                                    placeholderTextColor="gray"
-                                    secureTextEntry={isPasswordShown}
-                                    style={{
-                                        width: "100%"
-                                    }}
-                                />
-
-                                <TouchableOpacity
-                                    onPress={() => setIsPasswordShown(!isPasswordShown)}
-                                    style={{
-                                        position: "absolute",
-                                        right: 12
-                                    }}
-                                >
-                                    {
-                                        isPasswordShown == true ? (
-                                            <Ionicons name="eye-off" size={24} color={welcomeCOLOR.black} />
-                                        ) : (
-                                            <Ionicons name="eye" size={24} color={welcomeCOLOR.black} />
-                                        )
-                                    }
-
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                        <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8)
-                            }}>Re-enter Password</Text>
-
-                            <View style={{
-                                width: "100%",
-                                height: verticalScale(48),
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                                alignItems: "center",
-                                justifyContent: "center",
-                                paddingLeft: horizontalScale(22)
-                            }}>
-                                <TextInput
-                                    placeholder='Re-enter your password'
-                                    value={confirmPassword}
-                                    onChangeText={setConfirmPassword}
-                                    placeholderTextColor="gray"
-                                    secureTextEntry={isPasswordShown}
-                                    style={{
-                                        width: "100%"
-                                    }}
-                                />
-
-                                <TouchableOpacity
-                                    onPress={() => setIsPasswordShown(!isPasswordShown)}
-                                    style={{
-                                        position: "absolute",
-                                        right: 12
-                                    }}
-                                >
-                                    {
-                                        isPasswordShown == true ? (
-                                            <Ionicons name="eye-off" size={24} color={welcomeCOLOR.black} />
-                                        ) : (
-                                            <Ionicons name="eye" size={24} color={welcomeCOLOR.black} />
-                                        )
-                                    }
-
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </KeyboardAvoidingView>
-                    <KeyboardAvoidingView>
-                      
-
-                        <View style={{ marginBottom: verticalScale(12) }}>
-
-                            <Text style={{
-                                fontSize: 16,
-                                fontWeight: "400",
-                                marginVertical: 8
-                            }}>User Description</Text>
-
-
-
-                            <View style={{
-                                width: "100%",
-                                height: verticalScale(48),
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                                alignItems: "center",
-                                justifyContent: "center",
-                                paddingLeft: horizontalScale(22)
-                            }}>
-                                <TextInput
-                                    placeholder="Write a short description about yourself"
-                                    placeholderTextColor="gray"
-                                    value={userDescription}
-                                    onChangeText={setUserDescription}
-                                    keyboardType='default'
-                                    style={{
-                                        width: "100%"
-                                    }}
-                                />
-                            </View>
-                        </View>
-                        <View style={{ marginBottom: verticalScale(12) }}>
-      <Text style={{
-        fontSize: 16,
-        fontWeight: "400",
-        marginVertical: 8
-      }}>Choose three subjects</Text>
-
-      <View style={{
-        display: "flex",
-        flexDirection: "row",
-      }}>
-        <View style={{
-          width: "85%",
-          height: verticalScale(48),
-          borderColor: welcomeCOLOR.black,
-          borderWidth: moderateScale(1),
-          borderRadius: moderateScale(8),
-          alignItems: "center",
-          justifyContent: "center",
-          paddingLeft: horizontalScale(22)
-        }}>
-          <TextInput
-            placeholder="Give us your three reccomended subjects"
-            placeholderTextColor="gray"
-            value={subjectInput}
-            onChangeText={setSubjectInput}
-            keyboardType='default'
-            style={{
-              width: "100%",
-            }}
-          />
-        </View>
-        <Button
-          title="+"
-          filled
-          color={COLORS.primary}
-          style={{
-            width: "15%",
-            height: verticalScale(48),
-            borderColor: welcomeCOLOR.black,
-            borderWidth: moderateScale(1),
-            borderRadius: moderateScale(8),
-          }}
-          onPress={handleReccomendedSubject}
-        />
-      </View>
-
-      <View style={{ marginTop: verticalScale(12), flexDirection: 'row', flexWrap: 'wrap' }}>
-        {reccomendedSubjects.map((subject, index) => (
-          <View key={index} style={styles.chip}>
-            <Text style={styles.chipText}>
-              {subject}
-            </Text>
-          </View>
-        ))}
-      </View>
-    </View>
-
-    <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8),
-                                color: welcomeCOLOR.black,
-
-                            }}>Select Your Board</Text>
-
-                            <View style={[{
-
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                            },]}>
-                                <Picker
-                                    mode='dropdown'
-                                    dropdownIconColor={COLORS.white}
-                                    style={{ backgroundColor: COLORS.background }}
-                                    selectedValue={recommendedBoard}
-                                    onValueChange={(itemValue, itemIndex) =>
-                                        setRecommendedBoard(itemValue)
-                                    }>
-                                    
-                                    <Picker.Item label="CBSE" value="CBSE" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
-                                    <Picker.Item label="ICSE" value="ICSE" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
-                                    <Picker.Item label="AP" value="AP" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
-                                    <Picker.Item label="IGCSE-A Levels" value="IGCSE-A Levels" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
-                                    <Picker.Item label="IB" value="IB" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
-                                </Picker>
-                            </View>
-
-
-                        </View>
-    <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8),
-                                color: welcomeCOLOR.black,
-
-                            }}>Select Your Grade</Text>
-
-                            <View style={[{
-
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                            },]}>
-                                <Picker
-                                    mode='dropdown'
-                                    dropdownIconColor={COLORS.white}
-                                    style={{ backgroundColor: COLORS.background }}
-                                    selectedValue={recommendedGrade}
-                                    onValueChange={(itemValue, itemIndex) =>
-                                        setRecommendedGrade(Number(itemValue))
-                                    }>
-                                    
-                                    <Picker.Item label="1" value='1' style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
-                                    <Picker.Item label="2" value='2' style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
-                                    <Picker.Item label="2" value="3" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
-                                    <Picker.Item label="4" value="4" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
-                                    <Picker.Item label="5" value="5" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
-                                    <Picker.Item label="6" value="6" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
-                                    <Picker.Item label="7" value="7" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
-                                    <Picker.Item label="8" value="8" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
-                                    <Picker.Item label="9" value="9" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
-                                    <Picker.Item label="10" value="10" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
-                                    <Picker.Item label="11" value="11" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
-                                    <Picker.Item label="12" value="12" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
-                                    <Picker.Item label="13" value="13" style={{ color: COLORS.white, backgroundColor: COLORS.background }} />
-                                </Picker>
-                            </View>
-
-
-                        </View>
-
-                        <View style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginVertical: verticalScale(6)
-                        }}>
-                            <Checkbox
-                                style={{ marginRight: 8 }}
-                                value={isTeacher}
-                                onValueChange={setIsTeacher}
-                                color={isTeacher ? welcomeCOLOR.primary : undefined}
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Password</Text>
+                        <View style={styles.passwordContainer}>
+                            <TextInput
+                                style={styles.passwordInput}
+                                placeholder="Create password"
+                                placeholderTextColor="#666"
+                                value={password}
+                                onChangeText={setPassword}
+                                secureTextEntry={!isPasswordShown}
                             />
-
-                            <Text>Are you a teacher?</Text>
+                            <TouchableOpacity 
+                                style={styles.eyeIcon}
+                                onPress={() => setIsPasswordShown(!isPasswordShown)}
+                            >
+                                <Ionicons name={isPasswordShown ? "eye-off" : "eye"} size={24} color="#666" />
+                            </TouchableOpacity>
                         </View>
-                    </KeyboardAvoidingView>
-                    <Button
-                        title="Sign Up"
-                        filled
-                        color={COLORS.primary
-                        }
-                        style={{
-                            marginTop: verticalScale(18),
-                            marginBottom: verticalScale(4),
-                        }}
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Confirm Password</Text>
+                        <View style={styles.passwordContainer}>
+                            <TextInput
+                                style={styles.passwordInput}
+                                placeholder="Re-enter password"
+                                placeholderTextColor="#666"
+                                value={confirmPassword}
+                                onChangeText={setConfirmPassword}
+                                secureTextEntry={!isPasswordShown}
+                            />
+                        </View>
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>About You</Text>
+                        <TextInput
+                            style={[styles.input, styles.textArea]}
+                            placeholder="Write a short description about yourself"
+                            placeholderTextColor="#666"
+                            value={userDescription}
+                            onChangeText={setUserDescription}
+                            multiline
+                            numberOfLines={3}
+                        />
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Add Subjects (Max 3)</Text>
+                        <View style={styles.subjectContainer}>
+                            <TextInput
+                                style={styles.subjectInput}
+                                placeholder="Enter a subject"
+                                placeholderTextColor="#666"
+                                value={subjectInput}
+                                onChangeText={setSubjectInput}
+                            />
+                            <TouchableOpacity 
+                                style={styles.addButton}
+                                onPress={handleReccomendedSubject}
+                            >
+                                <Text style={styles.addButtonText}>+</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.chipContainer}>
+                            {reccomendedSubjects.map((subject, index) => (
+                                <View key={index} style={styles.chip}>
+                                    <Text style={styles.chipText}>{subject}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Board</Text>
+                        <View style={styles.pickerContainer}>
+                            <Picker
+                                selectedValue={recommendedBoard}
+                                style={styles.picker}
+                                onValueChange={setRecommendedBoard}
+                            >
+                                <Picker.Item label="Select your board" value="" />
+                                <Picker.Item label="CBSE" value="CBSE" />
+                                <Picker.Item label="ICSE" value="ICSE" />
+                                <Picker.Item label="AP" value="AP" />
+                                <Picker.Item label="IGCSE-A Levels" value="IGCSE-A Levels" />
+                                <Picker.Item label="IB" value="IB" />
+                            </Picker>
+                        </View>
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Grade</Text>
+                        <View style={styles.pickerContainer}>
+                            <Picker
+                                selectedValue={recommendedGrade}
+                                style={styles.picker}
+                                onValueChange={(value) => setRecommendedGrade(Number(value))}
+                            >
+                                <Picker.Item label="Select your grade" value="0" />
+                                {[...Array(13)].map((_, i) => (
+                                    <Picker.Item key={i + 1} label={`Grade ${i + 1}`} value={i + 1} />
+                                ))}
+                            </Picker>
+                        </View>
+                    </View>
+
+                    <View style={styles.checkboxContainer}>
+                        <Checkbox
+                            style={styles.checkbox}
+                            value={isTeacher}
+                            onValueChange={setIsTeacher}
+                            color={isTeacher ? COLORS.primary : undefined}
+                        />
+                        <Text style={styles.checkboxLabel}>I am a teacher</Text>
+                    </View>
+
+                    <TouchableOpacity
+                        style={styles.registerButton}
                         onPress={handleRegister}
-                    />
+                    >
+                        <Text style={styles.registerButtonText}>Create Account</Text>
+                    </TouchableOpacity>
 
-
-
-                    <View style={{
-                        flexDirection: "row",
-                        justifyContent: "center",
-                        marginVertical: verticalScale(22)
-                    }}>
-                        <Text style={{ fontSize: moderateScale(16), color: welcomeCOLOR.black }}>Already have an account?</Text>
-                        <Pressable
-                            onPress={() => router.replace('/(authenticate)/login')}
-                        >
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                color: COLORS.primary,
-                                fontWeight: "bold",
-                                marginLeft: horizontalScale(6)
-                            }}>Login</Text>
+                    <View style={styles.loginContainer}>
+                        <Text style={styles.loginText}>Already have an account? </Text>
+                        <Pressable onPress={() => router.replace('/(authenticate)/login')}>
+                            <Text style={styles.loginLink}>Login</Text>
                         </Pressable>
                     </View>
                 </View>
-
             </ScrollView>
         </SafeAreaView>
-    )
+    );
 };
-
-export default RegisterPage;
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        // justifyContent: 'center',
-        // alignItems: 'center',
+        backgroundColor: '#fff',
     },
-    header: {
-        fontSize: 24,
+    content: {
+        padding: moderateScale(20),
+    },
+    headerSection: {
+        marginBottom: verticalScale(30),
+    },
+    title: {
+        fontSize: moderateScale(28),
         fontWeight: 'bold',
-        marginBottom: 50,
-        alignItems: 'center',
+        color: COLORS.primary,
+        marginBottom: verticalScale(8),
     },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 10,
+    subtitle: {
+        fontSize: moderateScale(16),
+        color: '#666',
     },
-    icon: {
-        marginRight: 10,
+    inputGroup: {
+        marginBottom: verticalScale(20),
+    },
+    label: {
+        fontSize: moderateScale(14),
+        color: '#333',
+        marginBottom: verticalScale(8),
+        fontWeight: '500',
     },
     input: {
-        width: 300,
-        height: 40,
         borderWidth: 1,
-        borderRadius: 5,
-        paddingLeft: 10,
+        borderColor: '#ddd',
+        borderRadius: moderateScale(8),
+        padding: moderateScale(12),
+        fontSize: moderateScale(16),
+        backgroundColor: '#fff',
+        color: '#333',
     },
-    button: {
-        backgroundColor: '#1E90FF',
-        padding: 10,
-        borderRadius: 5,
-        marginTop: 25,
-        width: 150,
+    textArea: {
+        height: verticalScale(80),
+        textAlignVertical: 'top',
     },
-    buttonText: {
-        color: 'white',
+    passwordContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: moderateScale(8),
+        backgroundColor: '#fff',
+    },
+    passwordInput: {
+        flex: 1,
+        padding: moderateScale(12),
+        fontSize: moderateScale(16),
+        color: '#333',
+    },
+    eyeIcon: {
+        padding: moderateScale(10),
+    },
+    subjectContainer: {
+        flexDirection: 'row',
+        gap: horizontalScale(10),
+    },
+    subjectInput: {
+        flex: 1,
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: moderateScale(8),
+        padding: moderateScale(12),
+        fontSize: moderateScale(16),
+    },
+    addButton: {
+        backgroundColor: COLORS.primary,
+        width: verticalScale(45),
+        borderRadius: moderateScale(8),
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    addButtonText: {
+        color: '#fff',
+        fontSize: moderateScale(24),
         fontWeight: 'bold',
-        textAlign: 'center',
-        fontSize: 22,
     },
-    link: {
-        marginTop: 10,
-        color: 'gray',
-        textAlign: 'center',
-        fontSize: 14,
-    },
-    checkbox: {
-        margin: 8,
+    chipContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginTop: verticalScale(10),
+        gap: moderateScale(8),
     },
     chip: {
-        backgroundColor: COLORS.primary,
-        borderRadius: moderateScale(20),
-        paddingVertical: verticalScale(6),
+        backgroundColor: COLORS.primary + '20',
         paddingHorizontal: horizontalScale(12),
-        marginRight: horizontalScale(8),
-        marginBottom: verticalScale(8),
-      },
-      chipText: {
-        color: 'white',
+        paddingVertical: verticalScale(6),
+        borderRadius: moderateScale(16),
+    },
+    chipText: {
+        color: COLORS.primary,
         fontSize: moderateScale(14),
-      },
+    },
+    pickerContainer: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: moderateScale(8),
+        backgroundColor: '#fff',
+        overflow: 'hidden',
+    },
+    picker: {
+        height: verticalScale(50),
+    },
+    checkboxContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: verticalScale(20),
+    },
+    checkbox: {
+        marginRight: horizontalScale(10),
+    },
+    checkboxLabel: {
+        fontSize: moderateScale(16),
+        color: '#333',
+    },
+    registerButton: {
+        backgroundColor: COLORS.primary,
+        padding: moderateScale(16),
+        borderRadius: moderateScale(8),
+        alignItems: 'center',
+        marginTop: verticalScale(10),
+    },
+    registerButtonText: {
+        color: '#fff',
+        fontSize: moderateScale(18),
+        fontWeight: '600',
+    },
+    loginContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: verticalScale(20),
+    },
+    loginText: {
+        fontSize: moderateScale(16),
+        color: '#666',
+    },
+    loginLink: {
+        fontSize: moderateScale(16),
+        color: COLORS.primary,
+        fontWeight: '600',
+    },
 });
 
-
-
-
-
-
-
-
+export default RegisterPage;

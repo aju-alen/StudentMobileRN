@@ -12,6 +12,7 @@ CREATE TABLE `User` (
     `isAdmin` BOOLEAN NOT NULL DEFAULT false,
     `recommendedBoard` VARCHAR(191) NULL,
     `recommendedGrade` INTEGER NULL,
+    `reccomendedSubjects` JSON NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `User_email_key`(`email`),
@@ -25,32 +26,19 @@ CREATE TABLE `Subject` (
     `subjectNameSubHeading` VARCHAR(191) NOT NULL,
     `subjectDuration` INTEGER NOT NULL,
     `subjectSearchHeading` VARCHAR(191) NOT NULL,
-    `subjectDescription` TEXT NOT NULL,
-    `subjectPoints` TEXT NOT NULL,
+    `subjectDescription` VARCHAR(191) NOT NULL,
+    `subjectPoints` JSON NOT NULL,
     `subjectImage` VARCHAR(191) NOT NULL,
     `subjectPrice` DOUBLE NOT NULL,
     `subjectBoard` VARCHAR(191) NOT NULL,
     `subjectLanguage` VARCHAR(191) NOT NULL,
-    `subjectTags` TEXT NOT NULL,
+    `subjectTags` JSON NOT NULL,
     `subjectGrade` INTEGER NOT NULL DEFAULT 10,
     `subjectVerification` BOOLEAN NOT NULL DEFAULT false,
-    `teacherVerification` TEXT NOT NULL,
+    `teacherVerification` JSON NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `userId` VARCHAR(191) NOT NULL,
 
-    INDEX `Subject_userId_idx`(`userId`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `UserSubject` (
-    `id` VARCHAR(191) NOT NULL,
-    `userId` VARCHAR(191) NOT NULL,
-    `subjectId` VARCHAR(191) NOT NULL,
-
-    INDEX `UserSubject_userId_idx`(`userId`),
-    INDEX `UserSubject_subjectId_idx`(`subjectId`),
-    UNIQUE INDEX `UserSubject_userId_subjectId_key`(`userId`, `subjectId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -58,26 +46,23 @@ CREATE TABLE `UserSubject` (
 CREATE TABLE `Review` (
     `id` VARCHAR(191) NOT NULL,
     `title` VARCHAR(191) NOT NULL,
-    `description` TEXT NOT NULL,
+    `description` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `userId` VARCHAR(191) NOT NULL,
     `subjectId` VARCHAR(191) NOT NULL,
 
-    INDEX `Review_userId_idx`(`userId`),
-    INDEX `Review_subjectId_idx`(`subjectId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `Message` (
     `id` VARCHAR(191) NOT NULL,
-    `text` TEXT NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `senderId` VARCHAR(191) NOT NULL,
     `conversationId` VARCHAR(191) NOT NULL,
+    `senderId` VARCHAR(191) NOT NULL,
+    `text` VARCHAR(191) NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
 
-    INDEX `Message_senderId_idx`(`senderId`),
-    INDEX `Message_conversationId_idx`(`conversationId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -90,17 +75,27 @@ CREATE TABLE `Conversation` (
     `clientId` VARCHAR(191) NOT NULL,
     `subjectId` VARCHAR(191) NOT NULL,
 
-    INDEX `Conversation_userId_idx`(`userId`),
-    INDEX `Conversation_clientId_idx`(`clientId`),
-    INDEX `Conversation_subjectId_idx`(`subjectId`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `ConversationMessage` (
+    `id` VARCHAR(191) NOT NULL,
+    `senderId` VARCHAR(191) NOT NULL,
+    `text` VARCHAR(191) NOT NULL,
+    `messageId` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `conversationId` VARCHAR(191) NOT NULL,
+
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `Community` (
     `id` VARCHAR(191) NOT NULL,
-    `communityName` VARCHAR(191) NOT NULL,
     `communityProfileImage` VARCHAR(191) NOT NULL,
+    `communityName` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
@@ -110,27 +105,23 @@ CREATE TABLE `Community` (
 -- CreateTable
 CREATE TABLE `CommunityUser` (
     `id` VARCHAR(191) NOT NULL,
-    `communityId` VARCHAR(191) NOT NULL,
     `userId` VARCHAR(191) NOT NULL,
+    `communityId` VARCHAR(191) NOT NULL,
 
-    INDEX `CommunityUser_communityId_idx`(`communityId`),
-    INDEX `CommunityUser_userId_idx`(`userId`),
-    UNIQUE INDEX `CommunityUser_communityId_userId_key`(`communityId`, `userId`),
+    UNIQUE INDEX `CommunityUser_userId_communityId_key`(`userId`, `communityId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
 CREATE TABLE `CommunityMessage` (
     `id` VARCHAR(191) NOT NULL,
-    `text` TEXT NOT NULL,
+    `text` VARCHAR(191) NOT NULL,
     `messageId` VARCHAR(191) NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `senderId` VARCHAR(191) NOT NULL,
+    `updatedAt` DATETIME(3) NOT NULL,
     `communityId` VARCHAR(191) NOT NULL,
+    `senderId` VARCHAR(191) NOT NULL,
 
-    UNIQUE INDEX `CommunityMessage_messageId_key`(`messageId`),
-    INDEX `CommunityMessage_senderId_idx`(`senderId`),
-    INDEX `CommunityMessage_communityId_idx`(`communityId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -138,22 +129,10 @@ CREATE TABLE `CommunityMessage` (
 ALTER TABLE `Subject` ADD CONSTRAINT `Subject_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `UserSubject` ADD CONSTRAINT `UserSubject_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `UserSubject` ADD CONSTRAINT `UserSubject_subjectId_fkey` FOREIGN KEY (`subjectId`) REFERENCES `Subject`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE `Review` ADD CONSTRAINT `Review_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Review` ADD CONSTRAINT `Review_subjectId_fkey` FOREIGN KEY (`subjectId`) REFERENCES `Subject`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `Message` ADD CONSTRAINT `Message_senderId_fkey` FOREIGN KEY (`senderId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `Message` ADD CONSTRAINT `Message_conversationId_fkey` FOREIGN KEY (`conversationId`) REFERENCES `Conversation`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Conversation` ADD CONSTRAINT `Conversation_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -165,13 +144,16 @@ ALTER TABLE `Conversation` ADD CONSTRAINT `Conversation_clientId_fkey` FOREIGN K
 ALTER TABLE `Conversation` ADD CONSTRAINT `Conversation_subjectId_fkey` FOREIGN KEY (`subjectId`) REFERENCES `Subject`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `CommunityUser` ADD CONSTRAINT `CommunityUser_communityId_fkey` FOREIGN KEY (`communityId`) REFERENCES `Community`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `ConversationMessage` ADD CONSTRAINT `ConversationMessage_conversationId_fkey` FOREIGN KEY (`conversationId`) REFERENCES `Conversation`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `CommunityUser` ADD CONSTRAINT `CommunityUser_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `CommunityMessage` ADD CONSTRAINT `CommunityMessage_senderId_fkey` FOREIGN KEY (`senderId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `CommunityUser` ADD CONSTRAINT `CommunityUser_communityId_fkey` FOREIGN KEY (`communityId`) REFERENCES `Community`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `CommunityMessage` ADD CONSTRAINT `CommunityMessage_communityId_fkey` FOREIGN KEY (`communityId`) REFERENCES `Community`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `CommunityMessage` ADD CONSTRAINT `CommunityMessage_senderId_fkey` FOREIGN KEY (`senderId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -3,41 +3,62 @@ import crypto from "crypto";
 import bcrypt from 'bcrypt';
 import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
+import { PrismaClient } from '@prisma/client';
 import dotenv from "dotenv";
 dotenv.config();
+
+const prisma = new PrismaClient();
 
 export const register = async (req, res,next) => {
     console.log('inside register route');
     try {
-       
-        const { name, email, password, profileImage, userDescription, isTeacher } = req.body;
+      
+        const { name, email, password, profileImage, userDescription, isTeacher,reccomendedSubjects,recommendedBoard,recommendedGrade } = req.body;
+        console.log(req.body, 'this is the req body');
+        
 
         if (!name || !email || !password) {
             return res.status(400).json({ message: "Please enter all fields" });
         }
 
-        const hash = await bcrypt.hashSync(req.body.password, 5)
+        const hash = bcrypt.hashSync(password, 5);
 
-       
-        const existingUser = await User.findOne({ email: email });
+        // Check if the user already exists
+        const existingUser = await prisma.user.findUnique({
+            where: { email },
+        });
         if (existingUser) {
             return res.status(400).json({ message: "User already exists" });
-
         }
-        const newUser = new User({
-          ...req.body,
-            password:hash
+
+        // Generate the verification token
+        const verificationToken = crypto.randomBytes(20).toString('hex');
+
+        // Create the new user
+        const newUser = await prisma.user.create({
+            data: {
+                name,
+                email,
+                password: hash,
+                profileImage,
+                userDescription,
+                isTeacher,
+                verificationToken,
+                reccomendedSubjects: reccomendedSubjects,
+                recommendedBoard,
+                recommendedGrade
+            },
         });
-        //generate the verification token
-        newUser.verificationToken = crypto.randomBytes(20).toString('hex');
 
+        // Send the verification email
+        sendVerificationEmail(newUser.email, verificationToken, name);
 
-        const savedUser = await newUser.save();
-
-        //send the verification email
-        sendVerificationEmail(newUser.email, newUser.verificationToken, name);
-
-        res.status(202).json({ message: "User Registered", verification_message: "Email has been sent, please verify", savedUser,userId: savedUser._id });
+        res.status(202).json({
+            message: "User Registered",
+            verification_message: "Email has been sent, please verify",
+            savedUser: newUser,
+            userId: newUser.id,
+        });
     }
     catch (err) {
        next(err);
@@ -61,7 +82,7 @@ const sendVerificationEmail = async (email, verificationToken, name) => {
         text: `
         Hi ${name},
 
-        Please click the link below to verify your account: https://studentmobilern-31oo.onrender.com/api/auth/verify/${verificationToken}`
+        Please click the link below to verify your account: http://192.168.0.174:3000/api/auth/verify/${verificationToken}`
     }
 
     //send the mail
@@ -74,76 +95,145 @@ const sendVerificationEmail = async (email, verificationToken, name) => {
     }
 }
 
-export const verifyEmail = async (req, res,next) => {
+export const verifyEmail = async (req, res, next) => {
     try {
-        const token = req.params.token;
-        const userToken = await User.findOne({ verificationToken: token });
-        if (!userToken) {
-            return res.status(400).json({ message: "Invalid token" });
-        }
-        userToken.verified = true;
-        userToken.verificationToken = undefined;
-        const savedUser = await userToken.save();
-        res.status(202).json({ message: "Account verified", savedUser });
-
+      const token = req.params.token;
+  
+      // Find the user with the verification token
+      const user = await prisma.user.findFirst({
+        where: {
+          verificationToken: token,
+        },
+      });
+  
+      if (!user) {
+        return res.status(400).json({ message: "Invalid token" });
+      }
+  
+      // Update the user to mark as verified and remove the verification token
+      const updatedUser = await prisma.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          verified: true,
+          verificationToken: null,
+        },
+      });
+  
+      res.status(202).json({ message: "Account verified", updatedUser });
+    } catch (err) {
+      next(err);
+    } finally {
+      await prisma.$disconnect();
     }
-    catch (err) {
-       next(err);
-    }
-}
+  };
 
-export const login = async (req, res, next) => {
+  export const login = async (req, res, next) => {
     try {
-        const { email,password } = req.body;
-        
-        const user =await User.findOne({ email});
-       
-        if (!user) {
-            return res.status(400).json({ message: "Invalid email or password" });
-        }
-        if (!user.verified) {
-            return res.status(400).json({ message: "Please verify your email" });
-        }
-        let isCorrect = bcrypt.compareSync(password, user.password)
-        if (!isCorrect) {
-            return res.status(400).json({ message: "Invalid email or password" });
-        }
-        const token = jwt.sign({ userId: user._id, isTeacher:user.isTeacher,isAdmin:user.isAdmin }, process.env.SECRET_KEY);
-        res.status(200).json({ message: "Login successful", token, isTeacher:user.isTeacher, isAdmin:user.isAdmin, userId:user._id,reccomendedSubjects:user.reccomendedSubjects,text:'llllllllllllllllllllllllllllllllllllllllllllllll'});
+      const { email, password } = req.body;
+  
+      // Find the user by email
+      const user = await prisma.user.findUnique({
+        where: { email },
+      });
+  
+      if (!user) {
+        return res.status(400).json({ message: "Invalid email or password" });
+      }
+  
+      if (!user.verified) {
+        return res.status(400).json({ message: "Please verify your email" });
+      }
+  
+      // Compare the provided password with the hashed password in the database
+      const isCorrect = bcrypt.compareSync(password, user.password);
+  
+      if (!isCorrect) {
+        return res.status(400).json({ message: "Invalid email or password" });
+      }
+  
+      // Generate a JWT token
+      const token = jwt.sign(
+        { userId: user.id, isTeacher: user.isTeacher, isAdmin: user.isAdmin },
+        process.env.SECRET_KEY
+      );
+  
+      res.status(200).json({
+        message: "Login successful",
+        token,
+        isTeacher: user.isTeacher,
+        isAdmin: user.isAdmin,
+        userId: user.id,
+        recommendedSubjects: user.recommendedSubjects,
+        text: "llllllllllllllllllllllllllllllllllllllllllllllll",
+      });
+    } catch (err) {
+      console.error(err);
+      next(err);
+    } finally {
+      await prisma.$disconnect();
     }
-    catch (err) {
-        console.log(err);
-       next(err);
-    }
-}
+  };
 
-export const singleUser = async (req, res,next) => {
+  export const singleUser = async (req, res, next) => {
     try {
-        const user = await User.findById(req.userId).select('-password').populate('subjects');
-        if (!user) {
-            return res.status(400).json({ message: "User not found" });
-        }
-        
-        res.status(200).json(user);
+      const { userId } = req;
+  
+      // Find the user by ID and include related subjects
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          verified: true,
+          isTeacher: true,
+          isAdmin: true,
+          reccomendedSubjects: true,
+          profileImage: true,
+          // Populate related subjects (assumes subjects is a relation)
+          subjects: true,
+        },
+      });
+  
+      if (!user) {
+        return res.status(400).json({ message: "User not found" });
+      }
+  
+      res.status(200).json(user);
+    } catch (err) {
+      next(err);
+    } finally {
+      await prisma.$disconnect();
     }
-    catch (err) {
-        next(err);
-    }
-}
+  };
 
-export const updateProfileImage = async (req, res,next) => {
+export const updateProfileImage = async (req, res, next) => {
     console.log(req.params, 'this is the upload image req in backend');
     console.log(req.body, 'this is the upload image req in backend');
+
     try {
-        const user = await User.findById(req.params.uploadImage);
+        const { uploadImage: userId } = req.params;
+        const { profileImage } = req.body;
+
+        // Check if the user exists
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+        });
+
         if (!user) {
             return res.status(400).json({ message: "User not found" });
         }
-        user.profileImage = req.body.profileImage;
-        const savedUser = await user.save();
-        res.status(200).json({ message: "Profile image updated", savedUser });
-    }
-    catch (err) {
+
+        // Update the user's profile image
+        const updatedUser = await prisma.user.update({
+            where: { id: userId },
+            data: { profileImage },
+        });
+
+        res.status(200).json({ message: "Profile image updated", savedUser: updatedUser });
+    } catch (err) {
         next(err);
     }
-}
+};
