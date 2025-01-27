@@ -17,6 +17,8 @@ import Conversation from './models/conversation.js';
 import { log } from 'console';
 import Community from './models/community.js';
 import s3route from './routes/s3route.js';
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 
 dotenv.config();
 
@@ -26,20 +28,20 @@ const server = createServer(app);
 const socketIO = new Server(server, {
     cors: {
         origin: [
-            "exp://10.65.1.122:8081",
+            "exp://192.168.0.174:8081",
             "http://localhost:8081",
             "http://localhost:19000",
-            "http://10.65.1.122:19006",
+            "http://192.168.0.174:19006",
         ],
     }
 });
 
 app.use(cors({
     origin: [
-        "exp://10.65.1.122:8081",
+        "exp://192.168.0.174:8081",
         "http://localhost:8081",
         "http://localhost:19000",
-        "http://10.65.1.122:19006",
+        "http://192.168.0.174:19006",
     ],
 })); //frontend url
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -51,29 +53,49 @@ socketIO.on("connection", (socket) => {
     console.log(" id is ", socket.id);
     console.log("Number of users online", count);
 
-    socket.on("send-chat-details", async (data) => { // user client and subject data sent from client 
-        console.log('recieved the chat details on the client side', data);
-        const existingChatRoom = await Conversation.findOne({
-            $or: [
-                { userId: data.userId, clientId: data.clientId, subjectId: data.subjectId },
-                { userId: data.clientId, clientId: data.userId, subjectId: data.subjectId }
-            ]
-        });
-        if (existingChatRoom) {
-            console.log('existing chat room', existingChatRoom);
-            socket.emit("chat-details", existingChatRoom); // send the conversation object from db  to the client
-        }
-        else {
-            const newChatRoom = new Conversation({
-                userId: data.userId,
-                clientId: data.clientId,
-                subjectId: data.subjectId
+    socket.on("send-chat-details", async (data) => {
+        try {
+            console.log('Received the chat details on the client side', data);
+    
+            // Check for an existing chat room
+            const existingChatRoom = await prisma.conversation.findFirst({
+                where: {
+                    OR: [
+                        {
+                            userId: data.userId,
+                            clientId: data.clientId,
+                            subjectId: data.subjectId,
+                        },
+                        {
+                            userId: data.clientId,
+                            clientId: data.userId,
+                            subjectId: data.subjectId,
+                        },
+                    ],
+                },
             });
-            const savedChatRoom = await newChatRoom.save();
-            console.log('new chat room', savedChatRoom);
-            socket.emit("chat-details", savedChatRoom); // send the new conversation object to the client
+    
+            if (existingChatRoom) {
+                console.log('Existing chat room', existingChatRoom);
+                // Send the existing conversation object to the client
+                socket.emit("chat-details", existingChatRoom);
+            } else {
+                // Create a new chat room
+                const newChatRoom = await prisma.conversation.create({
+                    data: {
+                        userId: data.userId,
+                        clientId: data.clientId,
+                        subjectId: data.subjectId,
+                    },
+                });
+    
+                console.log('New chat room', newChatRoom);
+                // Send the new conversation object to the client
+                socket.emit("chat-details", newChatRoom);
+            }
+        } catch (err) {
+            console.error('Error handling chat details:', err);
         }
-
     });
 
     socket.on("chat-room", (data) => {
@@ -95,38 +117,116 @@ socketIO.on("connection", (socket) => {
     )
     socket.on('leave-room', async (data) => {
         console.log('leaving room', data);
-
-
+    
+        // User leaves the room
         socket.leave(data.conversationId);
-
-        let conversation = await Conversation.findById(data.conversationId);
-        log(conversation, 'this is mongoDb conversation object');
-        log(conversation.messages, 'this is mongoDb conversation message');
-        log(data, 'this is client object data');
-
-        log(data.allMessages.messages, 'this is message from client');
-        if (data.allMessages.messages !== undefined) {
-            conversation.messages = data.allMessages.messages;
+    
+        try {
+            // Fetch the conversation from the database using Prisma
+            const conversation = await prisma.conversation.findUnique({
+                where: {
+                    id: data.conversationId,
+                },
+                include: {
+                    messages: true, // Include all related messages
+                },
+            });
+    
+            if (!conversation) {
+                console.error(`Conversation with ID ${data.conversationId} not found.`);
+                return;
+            }
+    
+            console.log(conversation, 'this is Prisma conversation object');
+            console.log(conversation.messages, 'this is Prisma conversation messages');
+            console.log(data, 'this is client object data');
+            console.log(data.allMessages.messages, 'this is message from client');
+    
+            // Update messages if provided by the client
+            if (data.allMessages.messages !== undefined) {
+                for (const msg of data.allMessages.messages) {
+                    // Check if message ID exists or handle it as a new message
+                    if (msg.id) {
+                        // Update or create message
+                        await prisma.conversationMessage.upsert({
+                            where: {
+                                id: msg.id, // Unique identifier for existing messages
+                            },
+                            update: {
+                                text: msg.text,
+                                senderId: msg.senderId,
+                                messageId: msg.messageId,
+                            },
+                            create: {
+                                text: msg.text,
+                                senderId: msg.senderId,
+                                messageId: msg.messageId,
+                                conversationId: data.conversationId,
+                            },
+                        });
+                    } else {
+                        // Create a new message if no ID is provided
+                        await prisma.conversationMessage.create({
+                            data: {
+                                text: msg.text,
+                                senderId: msg.senderId,
+                                messageId: msg.messageId,
+                                conversationId: data.conversationId,
+                            },
+                        });
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('Error handling leave-room event:', err);
         }
-        await conversation.save();
-    })
+    });
+    
     socket.on('leave-room-community', async (data) => {
-        console.log('leaving room', data);
-
-
-        socket.leave(data.chatName);
-
-        let community = await Community.findById(data.chatName);
-        log(community, 'this is mongoDb Community object');
-        log(community.messages, 'this is mongoDb Community message');
-        log(data, 'this is client object data');
-
-        log(data.allMessages.messages, 'this is message from client');
-        if (data.allMessages.messages !== undefined) {
-            community.messages = data.allMessages.messages;
+        try {
+            console.log('leaving room', data);
+    
+            // Leave the chat room
+            socket.leave(data.chatName);
+    
+            // Find the community by ID (chatName represents communityId here)
+            let community = await prisma.community.findUnique({
+                where: { id: data.chatName },
+                include: {
+                    messages: true, // Fetch existing messages
+                },
+            });
+    
+            console.log(community, 'this is the Prisma Community object');
+            console.log(community?.messages, 'this is the Prisma Community messages');
+            console.log(data, 'this is the client object data');
+            console.log(data.allMessages.messages, 'this is messages from client');
+    
+            // If client provided updated messages, update the community messages
+            if (data.allMessages.messages !== undefined) {
+                // Delete existing messages
+                await prisma.communityMessage.deleteMany({
+                    where: { communityId: data.chatName },
+                });
+    
+                // Create new messages from the client
+                const newMessages = data.allMessages.messages.map((message) => ({
+                    text: message.text,
+                    messageId: message.messageId,
+                    senderId: message.senderId,
+                    communityId: data.chatName,
+                }));
+    
+                await prisma.communityMessage.createMany({
+                    data: newMessages,
+                });
+            }
+    
+            console.log('Community messages updated successfully');
+        } catch (err) {
+            console.error('Error in leave-room-community:', err);
         }
-        await community.save();
-    })
+    });
 
 
 

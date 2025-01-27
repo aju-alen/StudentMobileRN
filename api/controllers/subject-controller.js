@@ -2,44 +2,57 @@ import User from "../models/user.js";
 import dotenv from "dotenv";
 import Subject from "../models/subjects.js";
 dotenv.config();
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
-export const createSubject = async (req, res,next) => {
-    const { subjectName, subjectDescription, subjectImage, subjectPrice, subjectBoard, subjectGrade,subjectDuration } = req.body;
+export const createSubject = async (req, res, next) => {
+    const { subjectName, subjectDescription, subjectImage, subjectPrice, subjectBoard, subjectGrade, subjectDuration, subjectNameSubHeading,subjectSearchHeading, subjectLanguage, subjectPoints,teacherVerification } = req.body;
 
+    // Check for required fields
     if (!subjectName || !subjectDescription || !subjectImage || !subjectPrice || !subjectBoard || !subjectGrade) {
         return res.status(400).json({ message: "Please enter all fields" });
     }
 
-    try{
-        if( req.isTeacher === true ){
-
-            const newSubject = new Subject({
-                ...req.body,
-                subjectPrice: parseInt(subjectPrice),
-                subjectGrade: parseInt(subjectGrade),
-                subjectDuration: parseInt(subjectDuration),
-                user: req.userId
+    try {
+        if (req.isTeacher === true) {
+            // Create a new subject
+            const newSubject = await prisma.subject.create({
+                data: {
+                    subjectName,
+                    subjectDescription,
+                    subjectImage,
+                    subjectPrice: parseInt(subjectPrice),
+                    subjectBoard,
+                    subjectGrade: parseInt(subjectGrade),
+                    subjectDuration: parseInt(subjectDuration),
+                    subjectNameSubHeading,
+                    subjectSearchHeading,
+                    subjectLanguage,
+                    subjectPoints,
+                    teacherVerification,
+                    userId: req.userId, // Assuming `userId` matches the Prisma model
+                },
             });
-            const savedSubject = await newSubject.save();
-            const updateUser = await User.findById(req.userId);
-            updateUser.subjects.push(savedSubject._id);
-            await updateUser.save();
-    
-    
-    
-            return  res.status(202).json({ message: "Subject Created", savedSubject });
-        }
-        else{
-            return  res.status(400).json({ message: "Only teachers can create subjects" });
-        }
 
-        
-    }
-    catch(err){
-        console.log(err,'Error in createSubject api');
+            // Update the user's subjects list
+            await prisma.user.update({
+                where: { id: req.userId },
+                data: {
+                    subjects: {
+                        connect: { id: newSubject.id },
+                    },
+                },
+            });
+
+            return res.status(202).json({ message: "Subject Created", newSubject });
+        } else {
+            return res.status(400).json({ message: "Only teachers can create subjects" });
+        }
+    } catch (err) {
+        console.error(err, "Error in createSubject API");
         next(err);
     }
-}
+};
 export const getAllSubjects = async (req, res, next) => {
     try{
         const subjects = await Subject.find({subjectVerification:true}).populate('user', 'name profileImage');
@@ -53,46 +66,83 @@ export const getAllSubjects = async (req, res, next) => {
 }
 
 export const getAllSubjectsBySearch = async (req, res, next) => {
-    const { subjectGrade,subjectBoard,subjectTeacher,subjectTags } = req.query;
+    const { subjectGrade, subjectBoard, subjectTags } = req.query;
     const grade = parseInt(subjectGrade);
-    console.log('subjectTags',typeof subjectTags);
-   
-    try {
-        let filter = { subjectVerification: true };
-        if (!isNaN(grade)) {
-            filter.subjectGrade = grade;
-        }
-        if (subjectBoard !== undefined) {
-            filter.subjectBoard = subjectBoard;
-        }
-        let newfilter ={subjectVerification:true,
-            ...(!isNaN(grade) && {subjectGrade:grade}),
-            ...(subjectBoard !== "undefined" && {subjectBoard:{$regex:subjectBoard,$options:'i'}}),
-            ...(subjectTags !== "undefined" && {subjectTags:{$regex:subjectTags,$options:'i'}}),
-        };
-        console.log('newfilter',newfilter);
+    console.log("subjectTags", typeof subjectTags);
 
-        const subjects = await Subject.find(newfilter).populate('user', 'name profileImage');
+    try {
+        // Constructing the Prisma filter dynamically
+        const filter = {
+            subjectVerification: true, // Ensures only verified subjects are retrieved
+            ...(grade && !isNaN(grade) && { subjectGrade: grade }),
+            ...(subjectBoard && subjectBoard !== "undefined" && {
+                subjectBoard: {
+                    contains: subjectBoard,
+                    mode: "insensitive", // Case-insensitive match
+                },
+            }),
+            ...(subjectTags && subjectTags !== "undefined" && {
+                subjectTags: {
+                    contains: subjectTags,
+                    mode: "insensitive", // Case-insensitive match
+                },
+            }),
+        };
+
+        console.log("Filter:", filter);
+
+        // Fetch subjects with filters and include user details
+        const subjects = await prisma.subject.findMany({
+            where: filter,
+            include: {
+                user: {
+                    select: {
+                        name: true,
+                        profileImage: true,
+                    },
+                },
+            },
+        });
+
         res.status(200).json(subjects);
     } catch (err) {
-        console.log(err);
+        console.error(err);
         next(err);
     }
-}
+};
 
 export const getOneSubject = async (req, res, next) => {
     try {
-        const subject = await Subject.findById(req.params.subjectId).populate('user', '-password -subjects -userDescription');
+        const { subjectId } = req.params;
+
+        // Fetch the subject by ID and include the related user data
+        const subject = await prisma.subject.findUnique({
+            where: { id: subjectId },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        // Exclude sensitive fields like password and userDescription
+                        password: false,
+                        userDescription: false,
+                        subjects: false,
+                    },
+                },
+            },
+        });
+
         if (!subject) {
             return res.status(400).json({ message: "Subject not found" });
         }
+
         res.status(200).json(subject);
-    }
-    catch (err) {
-        console.log(err);
+    } catch (err) {
+        console.error(err);
         next(err);
     }
-}
+};
 
 export const updateSubject = async (req, res, next) => {
     try {
@@ -140,45 +190,64 @@ export const deleteSubject = async (req, res, next) => {
     }
 }
 
-export const getAllSubjectsToVerify = async (req, res,next) => {
+export const getAllSubjectsToVerify = async (req, res, next) => {
     try {
-        
-        const subjects = await Subject.find({subjectVerification:false});
+        // Fetch subjects where subjectVerification is false
+        const subjects = await prisma.subject.findMany({
+            where: {
+                subjectVerification: false,
+            },
+        });
+
         return res.status(200).json(subjects);
-    }
-    catch (err) {
-        console.log(err);
+    } catch (err) {
+        console.error(err);
         next(err);
     }
-}
+};
 
-export const verifySubject = async (req, res,next) => {
-    console.log('inside verifySubject routeeeeee');
-    try{
-        if(!req.isAdmin){
-            return res.status(400).json({message:"Only admin can Verify Subjects"});
-        }
-        console.log('qqqqqqqqqqqqqqqqqqqqqq');
-        const subject = await Subject.findById(req.params.subjectId);
-        console.log(subject,'aaaaaaaaaaaaaaaaaaa')
-        if(!subject){
-            return res.status(400).json({message:"Subject not found"});
-        }
-        console.log(subject, "subject in route");
-        if(subject.subjectVerification === true){
-            return res.status(400).json({message:"Subject already verified"});
-        }
-        subject.subjectVerification = true;
-        const newUpdatedSubject = await subject.save();
-        console.log(newUpdatedSubject,'newUpdatedSubject');
-        return  res.status(200).json({message:"Subject Verified"});
+export const verifySubject = async (req, res, next) => {
+    console.log("Inside verifySubject route");
 
-    }
-    catch(err){
-        console.log(err);
+    try {
+        // Check if the user is an admin
+        if (!req.isAdmin) {
+            return res.status(400).json({ message: "Only admin can verify subjects" });
+        }
+
+        console.log("Admin access granted");
+
+        // Fetch the subject by ID
+        const subject = await prisma.subject.findUnique({
+            where: { id: req.params.subjectId },
+        });
+
+        console.log(subject, "Fetched subject");
+
+        // Check if the subject exists
+        if (!subject) {
+            return res.status(400).json({ message: "Subject not found" });
+        }
+
+        // Check if the subject is already verified
+        if (subject.subjectVerification === true) {
+            return res.status(400).json({ message: "Subject already verified" });
+        }
+
+        // Update the subject verification status
+        const updatedSubject = await prisma.subject.update({
+            where: { id: req.params.subjectId },
+            data: { subjectVerification: true },
+        });
+
+        console.log(updatedSubject, "Subject verified successfully");
+
+        return res.status(200).json({ message: "Subject Verified" });
+    } catch (err) {
+        console.error(err);
         next(err);
     }
-}
+};
 
 export const getRecommendedSubjects = async (req, res, next) => {
     console.log(req.body,'req.body');
