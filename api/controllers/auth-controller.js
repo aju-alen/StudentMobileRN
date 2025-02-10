@@ -76,14 +76,25 @@ const sendVerificationEmail = async (email, verificationToken, name) => {
         }
     })
     const mailOptions = {
-        from: process.env.EMAIL,
-        to: email,
-        subject: 'Account Verification',
-        text: `
-        Hi ${name},
-
-        Please click the link below to verify your account: https://studentmobilern-31oo.onrender.com/api/auth/verify/${verificationToken}`
-    }
+      from: process.env.EMAIL,
+      to: email,
+      subject: 'Verify Your Account – Action Required',
+      text: `
+      Hi ${name},
+  
+      Welcome! We're excited to have you on board.
+  
+      To complete your registration, please verify your account by clicking the link below:
+  
+      🔗 https://studentmobilern-31oo.onrender.com/api/auth/verify/${verificationToken}
+  
+      If you didn’t sign up for this account, please ignore this email.
+  
+      Best,  
+      The Coach Academ Team
+      `
+  }
+  
 
     //send the mail
     try {
