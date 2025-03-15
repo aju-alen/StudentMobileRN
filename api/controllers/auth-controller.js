@@ -177,7 +177,7 @@ export const verifyEmail = async (req, res, next) => {
         isAdmin: user.isAdmin,
         userId: user.id,
         recommendedSubjects: user.recommendedSubjects,
-        text: "llllllllllllllllllllllllllllllllllllllllllllllll",
+        userProfileImage: user.profileImage,
       });
     } catch (err) {
       console.error(err);
@@ -203,6 +203,7 @@ export const verifyEmail = async (req, res, next) => {
           isAdmin: true,
           reccomendedSubjects: true,
           profileImage: true,
+          userDescription: true,
           // Populate related subjects (assumes subjects is a relation)
           subjects: true,
         },
@@ -248,3 +249,37 @@ export const updateProfileImage = async (req, res, next) => {
         next(err);
     }
 };
+
+export const getTeacherProfile = async (req, res, next) => {
+  try{
+    const { teacherProfileId } = req.params;
+    console.log(teacherProfileId, 'this is the teacher profile id');
+    const teacherProfile = await prisma.user.findUnique({
+      where: { id: teacherProfileId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        isTeacher: true,
+        profileImage: true,
+        userDescription: true,
+        reccomendedSubjects: true,
+        recommendedBoard: true,
+        recommendedGrade: true,
+        subjects: true,
+      },
+    });
+
+    if (!teacherProfile) {
+      return res.status(400).json({ message: "Teacher profile not found" });
+    }
+
+    res.status(200).json(teacherProfile);
+  }
+  catch(err){
+    next(err);
+  }
+  finally{
+    await prisma.$disconnect();
+  }
+}

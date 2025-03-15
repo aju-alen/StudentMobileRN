@@ -138,9 +138,25 @@ export const getAllCommunity = async (req, res, next) => {
           id: communityId,
         },
         include: {
-          messages: true, // Include messages associated with the community
+          messages: {
+            include: {
+              sender: {
+                select: {
+                  name: true,
+                  profileImage: true,
+                  createdAt: true,
+                },
+              }, // Include user details of the message sender
+            },
+          },
+          users: {
+            include: {
+              user: true, // Include user details of the community members
+            },
+          },
         },
       });
+      
   
       // If community not found, return 404
       if (!findCommunity) {

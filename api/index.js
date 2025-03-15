@@ -8,14 +8,12 @@ import paymentRoute from './routes/payment-route.js';
 import conversationRoute from './routes/conversation-route.js';
 import messageRoute from './routes/message.route.js';
 import communityRoute from './routes/community-route.js'
+import stripeOnboardRoute from './routes/stripeOnboard-route.js'
 import dotenv from 'dotenv';
 import { errorHandler } from './middlewares/errorHandler.js';
 import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import Conversation from './models/conversation.js';
-import { log } from 'console';
-import Community from './models/community.js';
 import s3route from './routes/s3route.js';
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
@@ -38,6 +36,7 @@ const socketIO = new Server(server, {
 
 app.use(cors({
     origin: [
+        "http://localhost:5173",
         "exp://192.168.0.174:8081",
         "http://localhost:8081",
         "http://localhost:19000",
@@ -255,6 +254,7 @@ app.use('/api/conversation', conversationRoute)
 app.use('/api/s3', s3route)
 app.use('/api/message', messageRoute)
 app.use('/api/community', communityRoute)
+app.use('/api/stripe-onboard',stripeOnboardRoute)
 
 
 app.use(errorHandler)
