@@ -5,9 +5,10 @@ import {
   TouchableOpacity,
   ScrollView,
   RefreshControl,
+  Animated,
 } from "react-native";
 import { Image } from 'expo-image';
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import axios from "axios";
@@ -20,7 +21,7 @@ import { StatusBar } from "expo-status-bar";
 import SubjectCards from "../../components/SubjectCards";
 import HorizontalSubjectCard from "../../components/horizontalSubjectCard";
 import ColumnSubjectCards from "../../components/colSubjectCards";
-import Video from "../../components/Video";
+import VideoPlayer from "../../components/VideoPlayer";
 
 interface User {
   email?: string;
@@ -28,19 +29,119 @@ interface User {
   profileImage?: string;
   userDescription?: string;
   reccomendedSubjects?: [string];
+  streakCount?: number;
+  totalPoints?: number;
+  completedCourses?: number;
+  level?: number;
+  nextLevelProgress?: number;
+  enrolledCourses?: number;
+  certificatesEarned?: number;
+  upcomingDeadlines?: Deadline[];
+}
+
+interface Deadline {
+  id: string;
+  courseTitle: string;
+  taskType: string;
+  dueDate: string;
+  priority: 'high' | 'medium' | 'low';
+}
+
+interface LiveSession {
+  id: string;
+  title: string;
+  instructor: string;
+  startTime: string;
+  duration: string;
+  thumbnail: string;
+  participantsCount: number;
+}
+
+interface CourseProgress {
+  id: string;
+  title: string;
+  progress: number;
+  lastAccessed: string;
+  nextLesson: string;
+  thumbnail: string;
 }
 
 const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
 const HomePage = () => {
+  const scrollY = useRef(new Animated.Value(0)).current;
   const [subjectData, setSubjectData] = React.useState([]);
   const [recommendedSubjects, setRecommendedSubjects] = React.useState([]);
   const [refreshing, setRefreshing] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
+  const [currentLearning, setCurrentLearning] = useState([]);
+  const [achievements, setAchievements] = useState([]);
   const params = useLocalSearchParams();
   const { subjectGrade, subjectBoard, subjectTags } = params;
-  const [user, setUser] = useState<User>({});
+  const [user, setUser] = useState<User>({
+    name: '',
+    profileImage: '',
+    streakCount: 0,
+    totalPoints: 0,
+    completedCourses: 0,
+  });
+
+
+
+  const [deadlines, setDeadlines] = useState<Deadline[]>([
+    {
+      id: '1',
+      courseTitle: 'Advanced Mathematics',
+      taskType: 'Class',
+      dueDate: 'Tomorrow',
+      priority: 'high'
+    },
+    {
+      id: '2',
+      courseTitle: 'Physics Basics',
+      taskType: 'Class',
+      dueDate: 'Tomorrow',
+      priority: 'medium'
+    }
+  ]);
+
+  const videoData = [
+    { id: '1', videoUrl: 'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4' },
+    { id: '2', videoUrl: 'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4' },
+    { id: '3', videoUrl: 'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4' },
+    { id: '4', videoUrl: 'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4' },
+  ];
+
+  // Updated Header animation for smoother transition
+  const headerHeight = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [verticalScale(200), verticalScale(140)], // Increased height
+    extrapolate: 'clamp',
+  });
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [1, 0.98],
+    extrapolate: 'clamp',
+  });
+
+  const StatsCard = ({ stats }: { stats: Stats }) => (
+    <View style={styles.statsCard}>
+      <Ionicons name={stats.icon as any} size={24} color="#1A4C6E" />
+      <Text style={styles.statsValue}>{stats.value}</Text>
+      <Text style={styles.statsLabel}>{stats.label}</Text>
+    </View>
+  );
+
+  const QuickActionButton = ({ icon, label, onPress }) => (
+    <TouchableOpacity style={styles.quickActionButton} onPress={onPress}>
+      <View style={styles.quickActionIcon}>
+        <Ionicons name={icon} size={24} color="#1A4C6E" />
+      </View>
+      <Text style={styles.quickActionLabel}>{label}</Text>
+    </TouchableOpacity>
+  );
 
   const SectionHeader = ({ title, showSeeAll = false }) => (
     <View style={styles.sectionHeader}>
@@ -54,6 +155,23 @@ const HomePage = () => {
           <Ionicons name="chevron-forward" size={16} color="#F1A568" />
         </TouchableOpacity>
       )}
+    </View>
+  );
+
+  
+
+
+  const DeadlineCard = ({ deadline }: { deadline: Deadline }) => (
+    <View style={styles.deadlineCard}>
+      <View style={[styles.priorityIndicator, styles[`priority${deadline.priority}`]]} />
+      <View style={styles.deadlineInfo}>
+        <Text style={styles.deadlineTitle}>{deadline.courseTitle}</Text>
+        <Text style={styles.deadlineType}>{deadline.taskType}</Text>
+      </View>
+      <View style={styles.deadlineTime}>
+        <Text style={styles.deadlineLabel}>Due</Text>
+        <Text style={styles.deadlineDate}>{deadline.dueDate}</Text>
+      </View>
     </View>
   );
 
@@ -96,51 +214,121 @@ const HomePage = () => {
     fetchData().finally(() => setRefreshing(false));
   }, []);
 
-  const handleItemPress = (itemId: { _id: any }) => {
-    router.push(`/(tabs)/home/${itemId._id}`);
+  const handleItemPress = (itemId: { id: any }) => {
+    router.push(`/(tabs)/home/${itemId.id}`);
   };
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
-      
-      {/* Header Section */}
-      <View style={styles.header}>
-        <View style={styles.userSection}>
-          <TouchableOpacity 
-            style={styles.profileButton}
-            onPress={() => router.replace('/(tabs)/profile')}
-          >
-            <Image
-              source={{ uri: user.profileImage }}
-              style={styles.profileImage}
-              placeholder={blurhash}
-              contentFit="cover"
-              transition={300}
-            />
-            <View style={styles.onlineIndicator} />
-          </TouchableOpacity>
-          
-          <View style={styles.welcomeText}>
-            <Text style={styles.greeting}>Welcome back,</Text>
-            <Text style={styles.userName}>{user.name}</Text>
-          </View>
-          
-          <TouchableOpacity style={styles.notificationButton}>
-            <Ionicons name="notifications-outline" size={24} color="white" />
-            <View style={styles.notificationBadge} />
-          </TouchableOpacity>
+    <StatusBar style="light" />
+    
+    {/* Enhanced Animated Header */}
+    <Animated.View style={[styles.header, { height: headerHeight, opacity: headerOpacity }]}>
+      <View style={styles.userSection}>
+        <TouchableOpacity 
+          style={styles.profileButton}
+          onPress={() => router.replace('/(tabs)/profile')}
+        >
+          <Image
+            source={{ uri: user.profileImage }}
+            style={styles.profileImage}
+            placeholder={blurhash}
+            contentFit="cover"
+            transition={300}
+          />
+          <View style={styles.onlineIndicator} />
+        </TouchableOpacity>
+        
+        <View style={styles.welcomeText}>
+          <Text style={styles.greeting}>Welcome back,</Text>
+          <Text style={styles.userName}>{user.name}</Text>
         </View>
+        
+        <TouchableOpacity style={styles.notificationButton}>
+          <Ionicons name="notifications-outline" size={24} color="white" />
+          <View style={styles.notificationBadge} />
+        </TouchableOpacity>
       </View>
 
-      {/* Content */}
-      <ScrollView
+        {/* Enhanced Stats Container */}
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.statsContainer}
+          contentContainerStyle={styles.statsContent}
+        >
+          <StatsCard stats={{ icon: "flame-outline", label: "Day Streak", value: user.streakCount || 0 }} />
+          <StatsCard stats={{ icon: "star-outline", label: "Total Points", value: user.totalPoints || 0 }} />
+          <StatsCard stats={{ icon: "trophy-outline", label: "Completed", value: user.completedCourses || 0 }} />
+        </ScrollView>
+      </Animated.View>
+
+      {/* Main Content */}
+      <Animated.ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing}  />
         }
       >
+        {/* Quick Actions */}
+        <View style={styles.quickActions}>
+          <QuickActionButton 
+            icon="search-outline" 
+            label="Find Courses"
+            onPress={() => router.push('/(tabs)/home/search')}
+          />
+          <QuickActionButton 
+            icon="calendar-outline" 
+            label="Schedule"
+            onPress={() => router.push('/(tabs)/home/schedule')}
+          />
+          <QuickActionButton 
+            icon="bookmark-outline" 
+            label="Saved"
+            onPress={() => router.push('/(tabs)/home/saved')}
+          />
+          <QuickActionButton 
+            icon="trending-up-outline" 
+            label="Progress"
+            onPress={() => router.push('/(tabs)/home/progress')}
+          />
+        </View>
+
+        {/* Continue Learning Section */}
+        {currentLearning.length > 0 && (
+          <View style={styles.section}>
+            <SectionHeader title="Continue Learning" />
+            <View style={styles.continueCard}>
+              <View style={styles.progressBar}>
+                <View style={[styles.progressFill, { width: '65%' }]} />
+              </View>
+              <Text style={styles.continueTitle}>Advanced Mathematics</Text>
+              <Text style={styles.continueProgress}>65% Complete</Text>
+              <TouchableOpacity style={styles.continueButton}>
+                <Text style={styles.continueButtonText}>Resume</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+
+
+        {/* Upcoming Deadlines */}
+        <View style={styles.section}>
+          <SectionHeader title="Upcoming Deadlines" />
+          <View style={styles.deadlinesContainer}>
+            {deadlines.map(deadline => (
+              <DeadlineCard key={deadline.id} deadline={deadline} />
+            ))}
+          </View>
+        </View>
+
         {/* Recommended Courses Section */}
         <View style={styles.section}>
           <SectionHeader title="Recommended for You" />
@@ -150,6 +338,8 @@ const HomePage = () => {
             isHorizontal={true}
           />
         </View>
+
+      
 
         {/* Popular Courses Section */}
         <View style={styles.section}>
@@ -174,9 +364,9 @@ const HomePage = () => {
         {/* Video Section */}
         <View style={[styles.section, styles.lastSection]}>
           <SectionHeader title="Recommended Videos" />
-          <Video />
+          <VideoPlayer videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4'} />
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 };
@@ -192,16 +382,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#1A4C6E',
     paddingTop: verticalScale(60),
     paddingBottom: verticalScale(25),
-    borderBottomLeftRadius: moderateScale(30),
-    borderBottomRightRadius: moderateScale(30),
+    borderBottomLeftRadius: moderateScale(35),
+    borderBottomRightRadius: moderateScale(35),
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
   userSection: {
     flexDirection: 'row',
@@ -213,11 +403,11 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   profileImage: {
-    height: verticalScale(45),
-    width: horizontalScale(45),
-    borderRadius: moderateScale(23),
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    height: verticalScale(48),
+    width: horizontalScale(48),
+    borderRadius: moderateScale(24),
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.8)',
   },
   onlineIndicator: {
     position: 'absolute',
@@ -239,20 +429,8 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
     color: '#E0E0E0',
   },
-  userName: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(18),
-    color: '#FFFFFF',
-  },
-  notificationButton: {
-    position: 'relative',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  
+  
   notificationBadge: {
     position: 'absolute',
     top: 8,
@@ -271,18 +449,8 @@ const styles = StyleSheet.create({
   lastSection: {
     marginBottom: verticalScale(24),
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: horizontalScale(20),
-    marginBottom: verticalScale(16),
-  },
-  sectionTitle: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(18),
-    color: '#1A4C6E',
-  },
+  
+ 
   seeAllButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -293,4 +461,369 @@ const styles = StyleSheet.create({
     color: '#F1A568',
     marginRight: horizontalScale(4),
   },
+  
+  statsValue: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(18),
+    color: '#1A4C6E',
+    marginTop: verticalScale(5),
+  },
+  statsLabel: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(12),
+    color: '#666',
+    marginTop: verticalScale(2),
+  },
+  quickActionButton: {
+    alignItems: 'center',
+  },
+  
+  quickActionLabel: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(12),
+    color: '#1A4C6E',
+    marginTop: verticalScale(8),
+  },
+  statsContainer: {
+    marginTop: verticalScale(20),
+  },
+  statsContent: {
+    paddingHorizontal: horizontalScale(20),
+  },
+  quickActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: horizontalScale(20),
+    marginTop: verticalScale(20),
+  },
+  continueCard: {
+    backgroundColor: '#F1A568',
+    borderRadius: moderateScale(15),
+    padding: moderateScale(20),
+    alignItems: 'center',
+  },
+ 
+  continueTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(18),
+    color: '#1A4C6E',
+  },
+  continueProgress: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
+    color: '#1A4C6E',
+    marginBottom: verticalScale(12),
+  },
+  continueButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(15),
+    paddingVertical: verticalScale(8),
+    paddingHorizontal: horizontalScale(20),
+  },
+  continueButtonText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
+    color: '#1A4C6E',
+  },
+  achievementsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  achievementCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(15),
+    padding: moderateScale(15),
+    width: horizontalScale(100),
+    alignItems: 'center',
+  },
+  achievementIcon: {
+    backgroundColor: '#F1A568',
+    width: horizontalScale(50),
+    height: verticalScale(50),
+    borderRadius: moderateScale(25),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  achievementTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(14),
+    color: '#1A4C6E',
+    marginTop: verticalScale(8),
+  },
+  achievementDesc: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(12),
+    color: '#666',
+    marginTop: verticalScale(4),
+  },
+  progressContainer: {
+    backgroundColor: '#FFFFFF',
+    margin: horizontalScale(20),
+    borderRadius: moderateScale(15),
+    padding: moderateScale(20),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: verticalScale(15),
+  },
+  progressTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(16),
+    color: '#1A4C6E',
+  },
+  progressStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  progressNumber: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(18),
+    color: '#1A4C6E',
+  },
+  progressLabel: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(12),
+    color: '#666666',
+    marginLeft: horizontalScale(4),
+  },
+  progressDivider: {
+    width: 1,
+    height: verticalScale(20),
+    backgroundColor: '#E0E0E0',
+    marginHorizontal: horizontalScale(12),
+  },
+  progressBar: {
+    height: verticalScale(8),
+    backgroundColor: 'rgba(26,76,110,0.1)',
+    borderRadius: moderateScale(4),
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#F1A568',
+    borderRadius: moderateScale(4),
+  },
+  progressText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(12),
+    color: '#666666',
+    marginTop: verticalScale(8),
+  },
+  liveSessionsContainer: {
+    paddingHorizontal: horizontalScale(20),
+  },
+  liveSessionCard: {
+    width: horizontalScale(280),
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(15),
+    marginRight: horizontalScale(16),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  sessionThumbnail: {
+    width: '100%',
+    height: verticalScale(140),
+    borderTopLeftRadius: moderateScale(15),
+    borderTopRightRadius: moderateScale(15),
+  },
+  liveIndicator: {
+    position: 'absolute',
+    top: verticalScale(12),
+    left: horizontalScale(12),
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: horizontalScale(8),
+    paddingVertical: verticalScale(4),
+    borderRadius: moderateScale(12),
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#FF4A4A',
+    marginRight: horizontalScale(4),
+  },
+  liveText: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(10),
+    color: '#FFFFFF',
+  },
+  sessionInfo: {
+    padding: moderateScale(16),
+  },
+  sessionTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(16),
+    color: '#1A4C6E',
+    marginBottom: verticalScale(4),
+  },
+  sessionInstructor: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
+    color: '#666666',
+    marginBottom: verticalScale(8),
+  },
+  sessionDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sessionTime: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: horizontalScale(16),
+  },
+  sessionTimeText: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(12),
+    color: '#666666',
+    marginLeft: horizontalScale(4),
+  },
+  sessionParticipants: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sessionParticipantsText: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(12),
+    color: '#666666',
+    marginLeft: horizontalScale(4),
+  },
+
+  // Deadlines
+  deadlinesContainer: {
+    paddingHorizontal: horizontalScale(20),
+  },
+  
+  priorityIndicator: {
+    width: 4,
+    height: verticalScale(40),
+    borderRadius: moderateScale(2),
+    marginRight: horizontalScale(12),
+  },
+  priorityhigh: {
+    backgroundColor: '#FF4A4A',
+  },
+  prioritymedium: {
+    backgroundColor: '#F1A568',
+  },
+  prioritylow: {
+    backgroundColor: '#2DCB63',
+  },
+  deadlineInfo: {
+    flex: 1,
+  },
+  deadlineTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(14),
+    color: '#1A4C6E',
+    marginBottom: verticalScale(4),
+  },
+  deadlineType: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(12),
+    color: '#666666',
+  },
+  deadlineTime: {
+    alignItems: 'flex-end',
+  },
+  deadlineLabel: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(12),
+    color: '#666666',
+  },
+  deadlineDate: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(14),
+    color: '#1A4C6E',
+  },
+  statsCard: {
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderRadius: moderateScale(20),
+    padding: moderateScale(18),
+    marginRight: horizontalScale(15),
+    alignItems: 'center',
+    minWidth: horizontalScale(110),
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  quickActionIcon: {
+    width: horizontalScale(56),
+    height: verticalScale(56),
+    borderRadius: moderateScale(28),
+    backgroundColor: 'rgba(26,76,110,0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#1A4C6E',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+
+  deadlineCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(16),
+    padding: moderateScale(18),
+    marginBottom: verticalScale(12),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: horizontalScale(20),
+    marginBottom: verticalScale(18),
+    marginTop: verticalScale(8),
+  },
+
+  sectionTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(20),
+    color: '#1A4C6E',
+    letterSpacing: -0.5,
+  },
+
+  notificationButton: {
+    position: 'relative',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  userName: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(20),
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+  },
+
 });

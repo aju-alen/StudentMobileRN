@@ -1,4 +1,3 @@
-import axios from "axios";
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -6,28 +5,31 @@ import {
   StyleSheet,
   ScrollView,
   TouchableWithoutFeedback,
-  Dimensions,
+  TouchableOpacity,
 } from "react-native";
+import { Alert } from "react-native";
 import { Image } from 'expo-image';
-import { ipURL } from "../../utils/utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import axios from "axios";
+import { ipURL } from "../../utils/utils";
 import KebabIcon from "../../components/KebabIcon";
 import { FONT } from "../../../constants";
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
 import SubjectCards from "../../components/SubjectCards";
 
 interface User {
-  _id?: string;
+  id?: string;
   email?: string;
   name?: string;
   profileImage?: string;
   userDescription?: string;
   subjects?: SubjectItem[];
+  reccomendedSubjects?: string[];
 }
 
 interface SubjectItem {
-  _id: string;
+  id: string;
   subjectName: string;
   subjectDescription?: string;
   subjectImage?: string;
@@ -41,10 +43,7 @@ interface UserDetails {
   isAdmin?: boolean;
 }
 
-const blurhash =
-  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
-
-const { width } = Dimensions.get('window');
+const blurhash = '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
 const ProfilePage = () => {
   const [user, setUser] = useState<User>({});
@@ -58,6 +57,8 @@ const ProfilePage = () => {
           Authorization: `Bearer ${await AsyncStorage.getItem("authToken")}`,
         },
       });
+      console.log("apiUser", apiUser.data);
+      
       setUser(apiUser.data);
       const user = JSON.parse(await AsyncStorage.getItem("userDetails"));
       setUserDetails(user);
@@ -65,32 +66,52 @@ const ProfilePage = () => {
     getUser();
   }, []);
 
+  console.log("user in profile", user);
+  
+
   const handleLogout = async () => {
     await AsyncStorage.removeItem("authToken");
     await AsyncStorage.removeItem("isTeacher");
     router.replace("/(authenticate)/login");
   };
 
-  const handleItemPress = (itemId: { _id: any }) => {
-    router.push(`/(tabs)/profile/${itemId._id}`);
+  const handleItemPress = (itemId: { id: any }) => {
+    router.push(`/(tabs)/profile/${itemId.id}`);
   };
 
   const handleCreateNewSubject = () => {
-    router.push(`/(tabs)/profile/createSubject/${user._id}`);
-  }
+    router.push(`/(tabs)/profile/createSubject/${user.id}`);
+  };
 
   const closeDropdown = () => {
     setShowDropdown(false);
   };
 
+  const confirmLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Logout",
+          onPress: handleLogout,
+          style: "destructive"
+        }
+      ]
+    );
+  };
+
   return (
     <TouchableWithoutFeedback onPress={closeDropdown}>
       <ScrollView style={styles.mainContainer}>
-        {/* Curved Header with Gradient Overlay */}
-        <View style={styles.headerContainer}>
-          <View style={styles.headerOverlay} />
-          <View style={styles.topBarContainer}>
-            <Text style={styles.topBarText}>Profile</Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.topBar}>
+            <Text style={styles.pageTitle}>My Profile</Text>
             <KebabIcon 
               handleLogout={handleLogout} 
               handleCreateNewSubject={handleCreateNewSubject} 
@@ -101,60 +122,111 @@ const ProfilePage = () => {
           </View>
           
           <View style={styles.profileSection}>
-            <View style={styles.imageWrapper}>
-              <Image
-                source={{ uri: user.profileImage }}
-                style={styles.profileImage}
-                placeholder={blurhash}
-                contentFit="cover"
-                transition={300}
-              />
-            </View>
-            <Text style={styles.userName}>{user.name}</Text>
-            <View style={styles.roleBadge}>
-              <Text style={styles.roleText}>
-                {userDetails?.isTeacher ? 'Teacher' : 'Student'}
+            <Image
+              source={{ uri: user.profileImage }}
+              style={styles.profileImage}
+              placeholder={blurhash}
+              contentFit="cover"
+              transition={500}
+            />
+            <View style={styles.profileInfo}>
+              <Text style={styles.name}>{user.name}</Text>
+              <Text style={styles.role}>
+                {userDetails?.isTeacher ? 'Instructor' : 'Student'}
               </Text>
+              <View style={styles.badgeContainer}>
+
+                {user?.reccomendedSubjects?.map((subjectTag,idx) =>
+
+                (<View style={styles.badge} key={idx} >
+                  <Text style={styles.badgeText}>{subjectTag.toLocaleUpperCase()}</Text>
+                </View>)
+                )}
+
+              </View>
             </View>
           </View>
         </View>
 
-        {/* Stats Cards */}
-        <View style={styles.statsContainer}>
-          <View style={[styles.statBox, styles.sessionsBox]}>
-            <View style={styles.statIconContainer}>
-              <View style={[styles.statIcon, styles.sessionsIcon]} />
+        {/* Stats Grid */}
+        {userDetails?.isTeacher && <View style={styles.statsGrid}>
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>24</Text>
+              <Text style={styles.statLabel}>Hours Taught</Text>
             </View>
-            <Text style={styles.statValue}>12</Text>
-            <Text style={styles.statLabel}>Sessions Completed</Text>
-          </View>
-          <View style={[styles.statBox, styles.ratingBox]}>
-            <View style={styles.statIconContainer}>
-              <View style={[styles.statIcon, styles.ratingIcon]} />
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>156</Text>
+              <Text style={styles.statLabel}>Students</Text>
             </View>
-            <Text style={styles.statValue}>4.2</Text>
-            <Text style={styles.statLabel}>Average Rating</Text>
           </View>
-        </View>
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>4.9</Text>
+              <Text style={styles.statLabel}>Rating</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>89%</Text>
+              <Text style={styles.statLabel}>Completion</Text>
+            </View>
+          </View>
+        </View>}
 
         {/* About Section */}
-        <View style={styles.aboutContainer}>
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>About</Text>
-          <View style={styles.descriptionCard}>
-            <Text style={styles.descriptionText}>
-              {user.userDescription || "No description available"}
+          <View style={styles.card}>
+            <Text style={styles.aboutText}>
+              {user.userDescription || "No description added."}
             </Text>
           </View>
         </View>
 
+        {/* Teaching Stats */}
+       {userDetails?.isTeacher && <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Teaching Overview</Text>
+          <View style={styles.overviewGrid}>
+            <View style={styles.overviewItem}>
+              <Text style={styles.overviewValue}>98%</Text>
+              <Text style={styles.overviewLabel}>Response Rate</Text>
+            </View>
+            <View style={styles.overviewItem}>
+              <Text style={styles.overviewValue}>2hr</Text>
+              <Text style={styles.overviewLabel}>Avg. Response</Text>
+            </View>
+            <View style={styles.overviewItem}>
+              <Text style={styles.overviewValue}>95%</Text>
+              <Text style={styles.overviewLabel}>Satisfaction</Text>
+            </View>
+          </View>
+        </View>}
+
         {/* Courses Section */}
-        <View style={styles.coursesContainer}>
-          <Text style={styles.sectionTitle}>Your Courses</Text>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Active Courses</Text>
+            {userDetails?.isTeacher && (
+              <TouchableWithoutFeedback onPress={handleCreateNewSubject}>
+                <View style={styles.addButton}>
+                  <Text style={styles.addButtonText}>+ New Course</Text>
+                </View>
+              </TouchableWithoutFeedback>
+            )}
+          </View>
           <SubjectCards 
             subjectData={user.subjects} 
             handleItemPress={handleItemPress} 
             isHorizontal={false} 
           />
+        </View>
+         {/* Add Logout Section */}
+         <View style={styles.logoutSection}>
+          <TouchableOpacity 
+            style={styles.logoutButton}
+            onPress={confirmLogout}
+          >
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </TouchableWithoutFeedback>
@@ -164,306 +236,192 @@ const ProfilePage = () => {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F4F6F8',
   },
-  headerContainer: {
-    height: verticalScale(300),
-    backgroundColor: '#1A4C6E',
-    borderBottomLeftRadius: moderateScale(40),
-    borderBottomRightRadius: moderateScale(40),
-    overflow: 'hidden',
-  },
-  headerOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.2)',
-  },
-  topBarContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: horizontalScale(20),
+  header: {
+    backgroundColor: '#FFFFFF',
     paddingTop: verticalScale(60),
     paddingBottom: verticalScale(20),
-    zIndex: 1,
-  },
-  topBarText: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(24),
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-  },
-  profileSection: {
-    alignItems: 'center',
-    paddingTop: verticalScale(20),
-    zIndex: 1,
-  },
-  imageWrapper: {
-    padding: moderateScale(3),
-    borderRadius: moderateScale(75),
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  profileImage: {
-    width: horizontalScale(140),
-    height: verticalScale(140),
-    borderRadius: moderateScale(70),
-    borderWidth: 4,
-    borderColor: '#FFFFFF',
-  },
-  userName: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(28),
-    color: '#FFFFFF',
-    marginTop: verticalScale(16),
-    letterSpacing: 0.5,
-  },
-  roleBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: horizontalScale(16),
-    paddingVertical: verticalScale(6),
-    borderRadius: moderateScale(20),
-    marginTop: verticalScale(8),
-  },
-  roleText: {
-    color: '#FFFFFF',
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(14),
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: horizontalScale(20),
-    marginTop: verticalScale(-30),
-    marginBottom: verticalScale(20),
-  },
-  statBox: {
-    width: '47%',
-    padding: moderateScale(20),
-    borderRadius: moderateScale(20),
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    elevation: 4,
+    borderBottomLeftRadius: moderateScale(30),
+    borderBottomRightRadius: moderateScale(30),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  statIconContainer: {
-    width: horizontalScale(50),
-    height: verticalScale(50),
-    borderRadius: moderateScale(25),
-    justifyContent: 'center',
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: verticalScale(10),
+    paddingHorizontal: horizontalScale(20),
+    marginBottom: verticalScale(20),
   },
-  statIcon: {
-    width: horizontalScale(30),
-    height: verticalScale(30),
+  pageTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(24),
+    color: '#1A2B4B',
+  },
+  profileSection: {
+    flexDirection: 'row',
+    paddingHorizontal: horizontalScale(20),
+    alignItems: 'center',
+  },
+  profileImage: {
+    width: horizontalScale(80),
+    height: verticalScale(80),
+    borderRadius: moderateScale(40),
+    marginRight: horizontalScale(15),
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  name: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(20),
+    color: '#1A2B4B',
+    marginBottom: verticalScale(4),
+  },
+  role: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
+    color: '#64748B',
+    marginBottom: verticalScale(8),
+  },
+  badgeContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  badge: {
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: horizontalScale(12),
+    paddingVertical: verticalScale(4),
+    borderRadius: moderateScale(12),
+    marginRight: horizontalScale(8),
+  },
+  badgeText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(12),
+    color: '#4F46E5',
+  },
+  statsGrid: {
+    padding: moderateScale(20),
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: verticalScale(15),
+  },
+  statCard: {
+    backgroundColor: '#FFFFFF',
+    width: '48%',
+    padding: moderateScale(15),
     borderRadius: moderateScale(15),
-  },
-  sessionsIcon: {
-    backgroundColor: '#FFD700',
-  },
-  ratingIcon: {
-    backgroundColor: '#90EE90',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   statValue: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(36),
-    color: '#2D3748',
+    fontSize: moderateScale(24),
+    color: '#1A2B4B',
     marginBottom: verticalScale(4),
   },
   statLabel: {
     fontFamily: FONT.medium,
     fontSize: moderateScale(14),
-    color: '#718096',
-    textAlign: 'center',
+    color: '#64748B',
   },
-  aboutContainer: {
+  section: {
     padding: moderateScale(20),
-    marginBottom: verticalScale(20),
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: verticalScale(15),
   },
   sectionTitle: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(22),
-    color: '#2D3748',
-    marginBottom: verticalScale(16),
+    fontSize: moderateScale(20),
+    color: '#1A2B4B',
   },
-  descriptionCard: {
+  card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: moderateScale(20),
     padding: moderateScale(20),
-    elevation: 2,
+    borderRadius: moderateScale(15),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  descriptionText: {
+  aboutText: {
     fontFamily: FONT.regular,
-    fontSize: moderateScale(16),
-    color: '#4A5568',
+    fontSize: moderateScale(15),
+    color: '#475569',
     lineHeight: moderateScale(24),
   },
-  coursesContainer: {
+  overviewGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
     padding: moderateScale(20),
+    borderRadius: moderateScale(15),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  overviewItem: {
+    alignItems: 'center',
+  },
+  overviewValue: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(20),
+    color: '#1A2B4B',
+    marginBottom: verticalScale(4),
+  },
+  overviewLabel: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(12),
+    color: '#64748B',
+  },
+  addButton: {
+    backgroundColor: '#4F46E5',
+    paddingHorizontal: horizontalScale(15),
+    paddingVertical: verticalScale(8),
+    borderRadius: moderateScale(20),
+  },
+  addButtonText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
+    color: '#FFFFFF',
+  },
+  logoutSection: {
+    padding: moderateScale(20),
+    alignItems: 'center',
+  },
+  logoutButton: {
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: horizontalScale(30),
+    paddingVertical: verticalScale(12),
+    borderRadius: moderateScale(20),
+    width: '100%',
+    alignItems: 'center',
+  },
+  logoutText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(16),
+    color: '#DC2626',
+  },
+  bottomPadding: {
+    height: verticalScale(20),
   },
 });
 
 export default ProfilePage;
-
-
-
-// return (
-//   <TouchableWithoutFeedback onPress={closeDropdown}>
-//   <SafeAreaView style={styles.MainContainer}>
-//     <View style={styles.container}>
-//       <View style={styles.buttonContainer}>
-     
-//         <KebabIcon handleLogout={handleLogout} handleCreateNewSubject={handleCreateNewSubject} isTeacher={userDetails?.isTeacher} setShowDropdown={setShowDropdown} showDropdown={showDropdown} />
-//       </View>
-//       <View style={styles.profileContainer}>
-       
-//         <Image
-//           source={{ uri: user.profileImage }}
-//           style={styles.profileImage}
-//           resizeMode="cover"
-//         />
-//         <Text style={styles.title}>{user.name}</Text>
-//         <View style={styles.rowContainer}>
-//           <Text style={styles.ratingText}>Rating: 4.5</Text>
-//           <Text style={styles.sessionsText}>Sessions Done: 10</Text>
-//         </View>
-//         <View style={styles.descriptionContainer}>
-//           <Text style={styles.descriptionText}>{user.userDescription}</Text>
-//         </View>
-//         <View style={styles.horizontalLine} />
-//         <Text style={styles.title}>Available Subjects</Text>
-//       </View>
-//     </View>
-//     <View style={{ flex: 1 }}>
-//       <HomeFlatlist 
-//       homeData={subjectArray}
-//       handleItemPress={handleItemPress}
-//       />
-//     </View>
-//   </SafeAreaView>
-//   </TouchableWithoutFeedback>
-// );
-
-
-// const styles = StyleSheet.create({
-//   MainContainer: {
-//     flex: 1,
-//     backgroundColor:"white" 
-//   },
-//   container: {
-//     backgroundColor: "light-gray",
-//   },
-//   profileContainer: {
-//     alignItems: "center",
-//     zIndex: -1,
-//   },
-//   priceGradeContainer: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     paddingTop: 5,
-//   },
-//   textContainer: {
-//     marginLeft: 5,
-//     flex: 1,
-//   },
-//   image: {
-//     width: 75,
-//     height: 75,
-//     resizeMode: "cover",
-//     borderRadius: 10,
-//   },
-//   button2: {
-//     backgroundColor: "orange",
-//     borderRadius: 20,
-//     paddingLeft: 6,
-//     paddingRight: 6,
-//   },
-//   text1: {
-//     fontSize: 20,
-//     fontFamily: "Roboto-Regular",
-//   },
-//   text2: {
-//     fontSize: 15,
-//     fontFamily: "Roboto-Regular",
-//   },
-//   descriptionContainer: {
-//     width: "95%",
-//     marginBottom: 10,
-//   },
-//   profileImage: {
-//     width: 150,
-//     height: 150,
-//     borderRadius: 75,
-//     marginBottom: 16,
-//     resizeMode: "contain",
-//     marginTop: 20,
-//   },
-//   title: {
-//     fontSize: 24,
-//     fontWeight: "bold",
-//     marginBottom: 16,
-//     color: "black",
-//   },
-//   rowContainer: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     width: "95%",
-//     marginBottom: 16,
-//   },
-//   ratingText: {
-//     color: "black",
-//     fontSize: 15,
-//     fontWeight: "bold",
-//   },
-//   sessionsText: {
-//     fontSize: 15,
-//     fontWeight: "bold",
-//     color: "black",
-//   },
-//   horizontalLine: {
-//     width: "90%",
-//     marginVertical: 5,
-//     height: 1,
-//     backgroundColor: "black",
-//   },
-//   buttonContainer: {
-//     flexDirection: "row",
-//     justifyContent: "flex-end",
-//     marginHorizontal: 10,
-//     marginVertical: 10,
-//   },
-//   button: {
-//     backgroundColor: "#36A0E2",
-//     borderRadius: 5,
-//     padding:4,
-//   },
-//   descriptionText: {
-//     textAlign: "justify",
-//   },
-//   card: {
-//     backgroundColor: "white",
-//     borderRadius: 8,
-//     borderWidth: 1,
-//     borderColor: "#ddd",
-//     padding: 10,
-//     margin: 10,
-//     shadowColor: "#000",
-//     shadowOffset: { width: 0, height: 2 },
-//     shadowOpacity: 0.3,
-//     shadowRadius: 4,
-//     elevation: 5,
-//   },
-//   titlePriceContainer: {
-//     flexDirection: "row",
-//     alignItems: "center",
-//     justifyContent: "space-between",
-//     paddingLeft: 2,
-//     paddingBottom: 3,
-//   },
-// });

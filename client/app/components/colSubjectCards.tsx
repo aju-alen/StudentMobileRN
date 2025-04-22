@@ -57,7 +57,7 @@ const ColumnSubjectCards = ({subjectData, handleItemPress, isHorizontal}) => {
     <View style={styles.container}>
       <FlatList 
         data={subjectData}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item) => item.id}
         renderItem={renderItem}
         horizontal={isHorizontal}
         scrollEnabled={false}

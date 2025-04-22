@@ -1,5 +1,4 @@
-import React, { useEffect } from "react";
-import ChatPage from "../../components/ChatPage";
+import React, { useEffect, useCallback, useRef, useState } from "react";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -7,248 +6,453 @@ import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import axios from "axios";
 import { ipURL } from "../../utils/utils";
-import {Text, FlatList, SafeAreaView, TextInput, TouchableOpacity, View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform} from "react-native";
+import {
+  Text,
+  SafeAreaView,
+  TextInput,
+  View,
+  StyleSheet,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Image,
+  Animated,
+  TouchableOpacity,
+} from "react-native";
 import { socket } from "../../utils/socket";
-import { moderateScale, verticalScale } from "../../utils/metrics";
-import {useSegments} from 'expo-router';
-import { FONT } from "../../../constants";
+import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
+import { COLORS, FONT } from "../../../constants";
+
 interface User {
   userId?: string;
- isTeacher?: boolean;
- isAdmin?: boolean;
+  isTeacher?: boolean;
+  isAdmin?: boolean;
 }
+
 interface Community {
   messages?: Message[];
 }
+
+interface SenderData {
+  createdAt?: Date;
+  name?: string;
+  profileImage?: string;
+}
+
 interface Message {
   text?: string;
   senderId?: User;
   messageId?: string;
+  timestamp?: Date;
+  sender?: SenderData;
 }
 
 const CommunityId = () => {
   const chatName = useLocalSearchParams().communityId;
+  const [allMessages, setAllMessages] = useState<Community>({});
+  const [message, setMessage] = useState("");
+  const [user, setUser] = useState<User>({});
+  const [userImage, setUserImage] = useState<string>('');
+  const [isTeacher, setIsTeacher] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [inputHeight, setInputHeight] = useState(40);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const [allMessages, setAllMessages] = React.useState<Community>({});
-  const [message, setMessage] = React.useState("");
-  const [user, setUser] = React.useState<User>({});
-  const [isTeacher, setIsTeacher] = React.useState(false);
-  const [isAdmin, setIsAdmin] = React.useState(false);
+  const handleSendMessage = useCallback(() => {
+    if (!message.trim()) return;
+    
+    const messageId = uuidv4();
+    const timestamp = new Date();
+    
+    socket.emit("send-single-message-to-Community-server", {
+      chatName,
+      text: message,
+      senderId: user,
+      messageId,
+      timestamp,
+      userImage
+    });
+    
+    setAllMessages(prev => ({
+      ...prev,
+      messages: [
+        ...(prev?.messages || []),
+        { 
+          text: message, 
+          senderId: user, 
+          messageId, 
+          timestamp, 
+          sender: { 
+            profileImage: userImage 
+          } 
+        }
+      ],
+    }));
+    
+    setMessage('');
+    scrollViewRef.current?.scrollToEnd({ animated: true });
+  }, [message, user, chatName, userImage]);
 
+  const handleLeaveRoom = useCallback(async () => {
+    socket.emit("leave-room-community", { allMessages, chatName });
+    router.replace('/(tabs)/community');
+  }, [allMessages, chatName]);
 
   useEffect(() => {
-    socket.on("server-joining-message", message => {
-      console.log(message, 'this is the message from the server');
-    })
-   
-    console.log('rendering socket useEffect');
-  }, [socket]);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
 
+    const getMessages = async () => {
+      try {
+        const token = await AsyncStorage.getItem('authToken');
+        const userDetails = await AsyncStorage.getItem('userDetails');
+        
+        const resp = await axios.get(`${ipURL}/api/community/${chatName}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        
+        const parsedDetails = JSON.parse(userDetails);
+        setUser(parsedDetails.userId);
+        setIsTeacher(parsedDetails.isTeacher);
+        setUserImage(parsedDetails.userProfileImage);
+        setIsAdmin(parsedDetails.isAdmin);
+        setAllMessages(resp.data);
 
-  
-  const handleSendMessage = () => {
-    const messageId = uuidv4();
-    socket.emit("send-single-message-to-Community-server", {chatName,  ...{ text: message }, ...{ senderId: user }, ...{ messageId } }) //create this new socket function
-    setAllMessages((prev) => ({
-      ...prev, messages: [...prev.messages, { text: message, senderId: user, messageId }]
-    }))
-    setMessage('')
-  }
-
-useEffect(() => {
-  const getMessages = async () => {
-
-    socket.on("server-message", (message) => {
-      console.log(message, 'this is the message from the server');
-      setAllMessages((prev) => ({ ...prev, messages: [...prev.messages, { text: message.text, senderId: message.senderId, messageId: uuidv4() }] }))
-    })
-    const token = await AsyncStorage.getItem('authToken')
-    const userDetails = await AsyncStorage.getItem('userDetails')
-     
-    const resp = await axios.get(`${ipURL}/api/community/${chatName}`,{
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    console.log(JSON.parse(userDetails), 'full teacher details');
-    
-    setUser(JSON.parse(userDetails).userId);
-    setIsTeacher(JSON.parse(userDetails).isTeacher);
-    setIsAdmin(JSON.parse(userDetails).isAdmin);
-    setAllMessages(resp.data);
-    
-    }
+        socket.on("server-message", (message) => {
+          setAllMessages(prev => ({
+            ...prev,
+            messages: [...prev.messages, {
+              ...message,
+              messageId: uuidv4(),
+              timestamp: new Date()
+            }]
+          }));
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        });
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
     getMessages();
-}, []);
-console.log(allMessages,'this is resp.data for getting chat messages');
-console.log(user,'this is user details in chat');
-console.log(isTeacher,'this is teacher details in chat');
-console.log(isAdmin,'this is Admin details in chat');
-console.log(message,'this is message');
-const handleLeaveRoom = async() => {
 
-  const data = { allMessages, chatName }
-    socket.emit("leave-room-community", data)
-    router.replace('/(tabs)/community')
+    return () => {
+      socket.off("server-message");
+    };
+  }, []);
 
-}
-const mainPath = useSegments()[1];
-console.log(mainPath, 'this is NAV location');
+  const formatTime = useCallback((date: Date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  }, []);
 
-console.log(allMessages, 'this is all messages1111111111111111111');
+  const renderMessage = useCallback(({ msg, index, arr }) => {
+    const isLastFromUser = index === arr.length - 1 || 
+      arr[index + 1].senderId !== msg.senderId;
 
-return (
-  <SafeAreaView style={styles.mainContainer} >
-    <Stack.Screen options={{
-      headerStyle: { backgroundColor: "white" },
-      headerShadowVisible: false,
-      headerBackVisible: false,
-      gestureEnabled:false,
-      headerLeft: () => (
-        <Ionicons name="arrow-back" size={24} color="black" onPress={handleLeaveRoom} style={{ marginLeft: 0 }} />
-      ),
-      headerTitle: 'Community',
-     
-    }}>
-    </Stack.Screen>
-
-    <ScrollView style={styles.chatContainer} >
-      {allMessages.messages?.map((message) => (
-        <View style={user === message.senderId ? styles.chatContainerRight : styles.chatContainerLeft} key={message.messageId}>
-          <View style={styles.chatBubbleContainer} >
-            <View style={user === message.senderId ? styles.userchatBubble : styles.clientchatBubble}>
-               <Text style={styles.textStyle}>{message?.text}</Text> 
-              
-            </View>
+    return (
+      <Animated.View
+        style={[
+          styles.messageRow,
+          user === msg.senderId ? styles.userMessageRow : styles.otherMessageRow,
+          { opacity: fadeAnim }
+        ]}
+        key={msg.messageId}
+      >
+        <View style={styles.messageContainer}>
+          {user !== msg.senderId && (
+            <Image
+              source={{ uri: msg.sender?.profileImage }}
+              style={styles.avatarImage}
+            />
+          )}
+          <View
+            style={[
+              styles.messageBubble,
+              user === msg.senderId ? styles.userBubble : styles.otherBubble
+            ]}
+          >
+            {user !== msg.senderId && isLastFromUser && (
+              <Text style={styles.senderName}>{msg.sender?.name}</Text>
+            )}
+            <Text style={[
+              styles.messageText,
+              user === msg.senderId ? styles.userMessageText : styles.otherMessageText
+            ]}>
+              {msg?.text}
+            </Text>
+            <Text style={[
+              styles.timeText,
+              user === msg.senderId ? styles.userTimeText : styles.otherTimeText
+            ]}>
+              {formatTime(msg.timestamp)}
+            </Text>
           </View>
         </View>
-      ))}
-    </ScrollView>
-    <KeyboardAvoidingView 
-    behavior={Platform.OS === "ios" ? "padding" : "height"}> 
-    <View >
-     {isAdmin === true || isTeacher === true ? (
-  <View style={styles.typeMessageContainer} >
-    <TextInput
-      style={styles.typeMessageInputBox}
-      placeholder="Type a message"
-      placeholderTextColor={"black"}
-      onChangeText={(text) => setMessage(text)}
-      value={message}
-    />
-    <View style={styles.typeMessageSendIcon}>
-      <Ionicons
-        name="send"
-        size={18}
-        color="gray"
-        onPress={handleSendMessage}
-        disabled={message.length > 0 ? false : true}
+      </Animated.View>
+    );
+  }, [user, formatTime, fadeAnim]);
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <Stack.Screen
+        options={{
+          headerStyle: styles.header,
+          headerShadowVisible: false,
+          headerBackVisible: false,
+          gestureEnabled: false,
+          headerLeft: () => (
+            <View style={styles.headerLeft}>
+              <TouchableOpacity onPress={handleLeaveRoom} style={styles.backButton}>
+                <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
+              </TouchableOpacity>
+              <View style={styles.headerTitleContainer}>
+                <Text style={styles.headerTitle}>Community Chats</Text>
+                <Text style={styles.headerSubtitle}></Text>
+              </View>
+            </View>
+          ),
+          headerTitle: () => null,
+        }}
       />
-    </View>
-  </View>
-) : (
-  <Text style={styles.studentTextField}>Only Teachers & Admins can send Text</Text>
-)}
-    </View>
-    </KeyboardAvoidingView>
-  </SafeAreaView>
-)
 
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+      ) : (
+        <View style={styles.chatWrapper}>
+          <ScrollView
+            style={styles.chatContainer}
+            ref={scrollViewRef}
+            onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+          >
+            {allMessages.messages?.map((msg, index, arr) => 
+              renderMessage({ msg, index, arr })
+            )}
+          </ScrollView>
 
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={100}
+            style={styles.keyboardAvoidingView}
+          >
+            {(isAdmin || isTeacher) ? (
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={[styles.input, { height: Math.max(40, inputHeight) }]}
+                  placeholder="Type your message..."
+                  placeholderTextColor="#95A5A6"
+                  onChangeText={setMessage}
+                  value={message}
+                  multiline
+                  maxLength={1000}
+                  onContentSizeChange={(e) => 
+                    setInputHeight(e.nativeEvent.contentSize.height)
+                  }
+                />
+                <TouchableOpacity 
+                  style={[
+                    styles.sendButton,
+                    !message.trim() && styles.sendButtonDisabled
+                  ]}
+                  onPress={handleSendMessage}
+                  disabled={!message.trim()}
+                >
+                  <Ionicons
+                    name="send"
+                    size={24}
+                    color={message.trim() ? COLORS.primary : "#BDC3C7"}
+                  />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.restrictedContainer}>
+                <Ionicons name="lock-closed" size={20} color="#7F8C8D" />
+                <Text style={styles.restrictedText}>
+                  Only Teachers & Admins can send messages
+                </Text>
+              </View>
+            )}
+          </KeyboardAvoidingView>
+        </View>
+      )}
+    </SafeAreaView>
+  );
 };
 
-
-
-export default CommunityId;
-
 const styles = StyleSheet.create({
-  mainContainer: {
+  container: {
     flex: 1,
-    backgroundColor: "white",
-    padding: 10,
+    backgroundColor: "#FFFFFF",
   },
-  stackHeaderImage: {
-    height: 40,
-    width: 40,
-    borderRadius: 20,
-    marginRight: 10
+  header: {
+    backgroundColor: "#FFFFFF",
+    elevation: 0,
+    shadowOpacity: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: horizontalScale(16),
+  },
+  backButton: {
+    padding: moderateScale(8),
+  },
+  headerTitleContainer: {
+    marginLeft: horizontalScale(12),
+  },
+  headerTitle: {
+    fontSize: moderateScale(18),
+    fontFamily: FONT.semiBold,
+    color: "#2C3E50",
+  },
+  headerSubtitle: {
+    fontSize: moderateScale(14),
+    fontFamily: FONT.regular,
+    color: "#7F8C8D",
+    marginTop: verticalScale(2),
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chatWrapper: {
+    flex: 1,
+    backgroundColor: "#F8F9FA",
   },
   chatContainer: {
-    backgroundColor: '#F5F5F1',
-    
+    flex: 1,
+    padding: moderateScale(16),
   },
-  chatContainerLeft: {
-    flexDirection: "column",
-    justifyContent: "flex-start",
-    alignItems: "flex-start",
+  messageRow: {
+    marginVertical: verticalScale(4),
+    maxWidth: '85%',
   },
-  chatContainerRight: {
-    flexDirection: "column",
-    justifyContent: "flex-start",
-    alignItems: "flex-end",
+  messageContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
   },
-
-  typeMessageContainer: {
-    borderWidth: 1,
-    borderColor: "gray",
-    flexDirection: "row",
-    justifyContent: 'center',
-
-    alignItems: 'center',
-    height: verticalScale(80),
-    borderStartStartRadius: moderateScale(0),
-    borderStartEndRadius: moderateScale(0),
-    backgroundColor: "white"
+  userMessageRow: {
+    alignSelf: 'flex-end',
   },
-
-  typeMessageInputBox: {
-    borderWidth: 1,
-    padding: moderateScale(10),
-    fontSize: moderateScale(15),
-    
-    borderColor: "gray",
-    height: verticalScale(50),
-    width: verticalScale(300),
+  otherMessageRow: {
+    alignSelf: 'flex-start',
+  },
+  avatarImage: {
+    width: moderateScale(32),
+    height: moderateScale(32),
+    borderRadius: moderateScale(16),
+    marginRight: horizontalScale(8),
+    marginBottom: verticalScale(4),
+  },
+  messageBubble: {
     borderRadius: moderateScale(20),
-    backgroundColor: "white",
+    padding: moderateScale(12),
+    paddingBottom: moderateScale(8),
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  typeMessageSendIcon: {
-    marginLeft: moderateScale(10),
-    height: '100%',
-    width: verticalScale(30),
-    justifyContent: 'center',
+  userBubble: {
+    backgroundColor: COLORS.primary,
+    borderBottomRightRadius: moderateScale(4),
+  },
+  otherBubble: {
+    backgroundColor: '#FFFFFF',
+    borderBottomLeftRadius: moderateScale(4),
+  },
+  senderName: {
+    fontSize: moderateScale(12),
+    fontFamily: FONT.medium,
+    color: "#7F8C8D",
+    marginBottom: verticalScale(4),
+  },
+  messageText: {
+    fontSize: moderateScale(16),
+    lineHeight: moderateScale(22),
+    fontFamily: FONT.regular,
+  },
+  userMessageText: {
+    color: '#FFFFFF',
+  },
+  otherMessageText: {
+    color: '#2C3E50',
+  },
+  timeText: {
+    fontSize: moderateScale(12),
+    marginTop: verticalScale(4),
+    textAlign: 'right',
+    fontFamily: FONT.regular,
+  },
+  userTimeText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  otherTimeText: {
+    color: '#95A5A6',
+  },
+  keyboardAvoidingView: {
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    padding: moderateScale(12),
+    backgroundColor: '#FFFFFF',
+  },
+  input: {
+    flex: 1,
+    backgroundColor: '#F8F9FA',
+    borderRadius: moderateScale(20),
+    paddingHorizontal: moderateScale(16),
+    paddingVertical: moderateScale(10),
+    fontSize: moderateScale(16),
+    maxHeight: verticalScale(120),
+    color: '#2C3E50',
+    fontFamily: FONT.regular,
+  },
+  sendButton: {
+    marginLeft: horizontalScale(12),
+    padding: moderateScale(8),
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
+  },
+  restrictedContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    padding: moderateScale(16),
+    backgroundColor: '#F8F9FA',
   },
-
-  chatBubbleContainer: {
-    maxWidth: '80%', // Set the maximum width of the chat container
-    alignItems: 'flex-start',
-    margin:moderateScale(3),
-
+  restrictedText: {
+    marginLeft: horizontalScale(8),
+    color: '#7F8C8D',
+    fontSize: moderateScale(14),
+    fontFamily: FONT.medium,
   },
-
-  userchatBubble: {
-    maxWidth: '80%', // Set the maximum width of the chat bubble
-    borderRadius: 15, // Rounded corners for the bubble
-    padding: 10, // Padding inside the bubble
-    backgroundColor: '#75CAD7', // Background color of the bubble
-    position: 'relative', // Required for positioning the tail
-  },
-  clientchatBubble: {
-    maxWidth: '80%', // Set the maximum width of the chat bubble
-    borderRadius: 15, // Rounded corners for the bubble
-    padding: 10, // Padding inside the bubble
-    backgroundColor: '#DCF8C6', // Background color of the bubble
-    position: 'relative', // Required for positioning the tail
-  },
-  textStyle:{
-textAlign:'justify'
-  },
-  studentTextField:{
-    fontSize: 14,
-    fontFamily:FONT.medium,
-    color: "black",
-    textAlign: "center",
-    marginTop: 10,
-  }
 });
+
+export default CommunityId;

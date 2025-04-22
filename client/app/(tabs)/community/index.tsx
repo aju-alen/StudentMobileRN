@@ -5,6 +5,9 @@ import {
   SafeAreaView,
   FlatList,
   TouchableOpacity,
+  StatusBar,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { Image } from 'expo-image';
 import React, { useEffect, useState } from "react";
@@ -18,74 +21,136 @@ import { socket } from "../../utils/socket";
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
 
 const blurhash =
-  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
+  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
+const CommunityCard = ({ item, onPress }) => (
+  <TouchableOpacity 
+    style={styles.card}
+    onPress={onPress}
+    activeOpacity={0.7}
+  >
+    <View style={styles.cardImageContainer}>
+      <Image 
+        source={{ uri: item.communityProfileImage }} 
+        style={styles.communityImage}
+        placeholder={blurhash}
+        contentFit="cover"
+        transition={200}
+      />
+      <View style={styles.memberBadge}>
+        <Ionicons name="people" size={12} color="#FFF" />
+        <Text style={styles.memberCount}>{item.users.length}</Text>
+      </View>
+    </View>
+    
+    <View style={styles.cardContent}>
+      <View style={styles.titleContainer}>
+        <Text style={styles.communityName} numberOfLines={1}>
+          {item.communityName}
+        </Text>
+        <View style={styles.statusIndicator} />
+      </View>
+      
+      <View style={styles.cardFooter}>
+        <View style={styles.tagContainer}>
+          <Text style={styles.tag}>Active</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={16} color="#A0A0A0" />
+      </View>
+    </View>
+  </TouchableOpacity>
+);
 
 const CommunityPage = () => {
- 
-
-  const [communites, setCommunites] = useState([]);
+  const [communities, setCommunities] = useState([]);
   const [token, setToken] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(()=>{
-    const getAllCommunities = async () => {
-      const token = await AsyncStorage.getItem("authToken");
-      console.log(token, "this is token in useEffect");
-
-
+  const getAllCommunities = async () => {
+    try {
+      const storedToken = await AsyncStorage.getItem("authToken");
       const resp = await axios.get(`${ipURL}/api/community`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${storedToken}` },
       });
-      setCommunites(resp.data);
-      setToken(token);
+      setCommunities(resp.data);
+      setToken(storedToken);
+    } catch (error) {
+      console.error("Error fetching communities:", error);
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false);
     }
+  }
+
+  useEffect(() => {
     getAllCommunities();
-  },[])
+  }, []);
 
   const handlePress = async(item) => {
-    console.log(item._id);
-    
-    const resp = await axios.post(`${ipURL}/api/community/${item._id}`, null, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    socket.emit('chat-room',item._id)
-    router.push(`/(tabs)/community/${item._id}`);
+    try {
+      const resp = await axios.post(
+        `${ipURL}/api/community/${item.id}`, 
+        null, 
+        { headers: { Authorization: `Bearer ${token}` }}
+      );
+      socket.emit('chat-room', item.id);
+      router.push(`/(tabs)/community/${item.id}`);
+    } catch (error) {
+      console.error("Error joining community:", error);
+    }
   }
-  console.log("this is all community",communites );
-  
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    getAllCommunities();
+  }
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={{ flex: 1,backgroundColor:"white" }}>
-      <Text style={[styles.text1]}>
-        <Ionicons name="people-outline" size={20} color="gray" /> Discover New
-        Communities
-      </Text>
-    
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Communities</Text>
+        <TouchableOpacity style={styles.searchButton}>
+          <Ionicons name="search-outline" size={22} color="#333" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.subHeader}>
+        <Text style={styles.subHeaderText}>
+          Join communities to connect with like-minded people
+        </Text>
+      </View>
+
       <FlatList
-        data={communites}
+        data={communities}
         renderItem={({ item }) => (
-          <View>
-            <TouchableOpacity onPress={() => handlePress(item)}>
-              <View style={styles.card}>
-                <View style={styles.rowContainer1}>
-                  <Image source={{ uri: item.communityProfileImage }} 
-                  style={styles.image}
-                  placeholder={blurhash}
-                  contentFit="cover"
-                  transition={100}
-                   />
-                  <View style={[styles.textContainer, { marginLeft: 10 }]}>
-                    <Text style={styles.text2}>{item.communityName}</Text>
-                    <Text style={styles.text2}>{item.users.length}Members</Text>
-                  </View>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </View>
+          <CommunityCard item={item} onPress={() => handlePress(item)} />
         )}
+        contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#007AFF']}
+            tintColor="#007AFF"
+          />
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No communities found</Text>
+          </View>
+        }
       />
     </SafeAreaView>
   );
@@ -94,46 +159,129 @@ const CommunityPage = () => {
 export default CommunityPage;
 
 const styles = StyleSheet.create({
-  text1: {
-    fontSize: moderateScale(20),
-    // fontFamily: FONT.semiBold,
-    padding: horizontalScale(10),
-    marginTop: verticalScale(15),
-
-    fontWeight: "800",
-    
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
-  text2: {
-    fontSize: 18,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: horizontalScale(20),
+    paddingVertical: verticalScale(16),
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  headerTitle: {
+    fontSize: moderateScale(24),
+    fontFamily: FONT.bold,
+    color: '#1A1A1A',
+  },
+  searchButton: {
+    padding: moderateScale(8),
+  },
+  subHeader: {
+    paddingHorizontal: horizontalScale(20),
+    paddingVertical: verticalScale(12),
+    backgroundColor: '#F8F9FA',
+  },
+  subHeaderText: {
+    fontSize: moderateScale(14),
     fontFamily: FONT.regular,
+    color: '#666666',
+  },
+  listContainer: {
+    padding: moderateScale(16),
+    gap: verticalScale(16),
   },
   card: {
-    backgroundColor: "white",
-    borderRadius: 8,
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(16),
+    padding: moderateScale(12),
+    marginBottom: verticalScale(16),
     borderWidth: 1,
-    borderColor: "#ddd",
-    padding: 10,
-    margin: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-    
+    borderColor: '#F0F0F0',
   },
-  image: {
-    width: 100,
-    height: 100,
-    resizeMode: "cover",
-    borderRadius: 8,
+  cardImageContainer: {
+    position: 'relative',
   },
-  rowContainer1: {
-    flexDirection: "row",
-    alignItems: "center",
+  communityImage: {
+    width: horizontalScale(70),
+    height: verticalScale(70),
+    borderRadius: moderateScale(12),
   },
-  textContainer: {
-    marginLeft: 1,
+  memberBadge: {
+    position: 'absolute',
+    bottom: -8,
+    right: -8,
+    backgroundColor: '#007AFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: horizontalScale(8),
+    paddingVertical: verticalScale(4),
+    borderRadius: moderateScale(12),
+    gap: 4,
+  },
+  memberCount: {
+    color: '#FFFFFF',
+    fontSize: moderateScale(12),
+    fontFamily: FONT.medium,
+  },
+  cardContent: {
+    flex: 1,
+    marginLeft: horizontalScale(16),
+    justifyContent: 'space-between',
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: horizontalScale(8),
+  },
+  communityName: {
+    fontSize: moderateScale(16),
+    fontFamily: FONT.semiBold,
+    color: '#1A1A1A',
     flex: 1,
   },
-
+  statusIndicator: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#4CAF50',
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: verticalScale(8),
+  },
+  tagContainer: {
+    backgroundColor: '#F0F8FF',
+    paddingHorizontal: horizontalScale(8),
+    paddingVertical: verticalScale(4),
+    borderRadius: moderateScale(8),
+  },
+  tag: {
+    fontSize: moderateScale(12),
+    fontFamily: FONT.medium,
+    color: '#007AFF',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: verticalScale(50),
+  },
+  emptyText: {
+    fontSize: moderateScale(16),
+    fontFamily: FONT.medium,
+    color: '#666666',
+  },
 });

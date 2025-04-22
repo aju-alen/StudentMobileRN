@@ -3,7 +3,7 @@ import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
 import { useFocusEffect } from '@react-navigation/native'; // to detect focus/unfocus
 
-export default function VideoPlayer() {
+export default function VideoPlayer({ videoUrl }) {
   const video = React.useRef(null);
   const [status, setStatus] = React.useState({});
   const [isPaused, setIsPaused] = React.useState(false);
@@ -47,7 +47,7 @@ export default function VideoPlayer() {
         ref={video}
         style={styles.video}
         source={{
-          uri: 'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4',
+          uri: videoUrl,
         }}
         useNativeControls
         resizeMode={ResizeMode.CONTAIN}
@@ -55,9 +55,9 @@ export default function VideoPlayer() {
         onPlaybackStatusUpdate={status => setStatus(status)}
       />
       <View style={styles.controls}>
-        <TouchableOpacity onPress={togglePlayPause} style={styles.playPauseButton}>
+        {/* <TouchableOpacity onPress={togglePlayPause} style={styles.playPauseButton}>
           <Text style={styles.buttonText}>{isPaused ? 'Play' : 'Pause'}</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </View>
   );

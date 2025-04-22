@@ -2,14 +2,15 @@ import { Redirect } from "expo-router";
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useCallback, useEffect, useState } from "react";
-import { View } from "react-native";
+import { View, Image, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+// Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
 export default function Page() {
-  const [token, setToken] = useState(null);  // Change initial state to null for better handling
-  const [wait, setWait] = useState(true);
+  const [token, setToken] = useState(null);
+  const [isReady, setIsReady] = useState(false);
   const [fontsLoaded] = useFonts({
     'SpaceMono-Regular': require('../assets/fonts/SpaceMono-Regular.ttf'),
     'Roboto-Regular': require('../assets/fonts/Roboto/Roboto-Regular.ttf'),
@@ -23,43 +24,76 @@ export default function Page() {
     DMRegular: require('../assets/fonts/DMSans-Regular.ttf')
   });
 
+  // Handle authentication check
   useEffect(() => {
-    const checkLogin = async () => {
+    async function checkLogin() {
       try {
-        const token = await AsyncStorage.getItem('authToken');
+        const storedToken = await AsyncStorage.getItem('authToken');
         const user = await AsyncStorage.getItem('userDetails');
-        console.log(token, 'this is token');
-        console.log(JSON.parse(user), 'this is userDetails');
-        setToken(token);
+        console.log('Token:', storedToken);
+        console.log('User Details:', JSON.parse(user));
+        setToken(storedToken);
       } catch (err) {
-        console.log(err);
+        console.error('Error checking login:', err);
       }
-    };
-
+    }
     checkLogin();
   }, []);
 
+  // Handle splash screen and initialization
   useEffect(() => {
-    const hideSplashScreen = async () => {
-      if (fontsLoaded) {
-        // Wait for 10 seconds before hiding the splash screen
-        setTimeout(async () => {
+    async function prepare() {
+      try {
+        // Wait for fonts to load
+        if (fontsLoaded) {
+          // Keep splash screen visible for 4 seconds
+          await new Promise(resolve => setTimeout(resolve, 4000));
+          // Hide splash screen
           await SplashScreen.hideAsync();
-          setWait(false);  // Update state to reflect that the splash screen has been hidden
-        }, 4000);
+          setIsReady(true);
+        }
+      } catch (error) {
+        console.error('Error preparing app:', error);
       }
-    };
-    hideSplashScreen();
+    }
+
+    prepare();
   }, [fontsLoaded]);
 
-  if (!fontsLoaded || wait) {
-    return null;
+  // Show splash screen while preparing
+  if (!fontsLoaded || !isReady) {
+    return (
+      <View style={styles.container}>
+        <Image 
+          source={require('../assets/images/logo.png')}  // Make sure this path matches your splash image location
+          style={styles.splashImage}
+          resizeMode="contain"
+        />
+      </View>
+    );
   }
 
+  // Once ready, redirect based on authentication status
   return (
     <View>
-      {!token ? <Redirect href={'/(authenticate)/welcome'} /> : <Redirect href={'/(tabs)/home'} />}
-      {/* <Redirect href={'/(authenticate)/uploadImage'} /> */}
+      {!token ? (
+        <Redirect href={'/(authenticate)/welcome'} />
+      ) : (
+        <Redirect href={'/(tabs)/home'} />
+      )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff', // Match this with your splash screen background color
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  splashImage: {
+    width: '100%',
+    height: '100%',
+  },
+});

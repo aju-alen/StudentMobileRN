@@ -8,6 +8,8 @@ const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
 const SubjectCards = ({ subjectData, handleItemPress, isHorizontal }) => {
+  console.log('subjectData', subjectData);
+  
   const renderSubjectCard = ({ item }) => (
     <TouchableOpacity 
       onPress={() => handleItemPress(item)}
@@ -45,7 +47,7 @@ const SubjectCards = ({ subjectData, handleItemPress, isHorizontal }) => {
 
         <View style={styles.divider} />
 
-        <View style={styles.teacherContainer}>
+        {/* <View style={styles.teacherContainer}>
           <View style={styles.teacherImageContainer}>
             <Image 
               style={styles.teacherImage} 
@@ -64,7 +66,7 @@ const SubjectCards = ({ subjectData, handleItemPress, isHorizontal }) => {
               <Text style={styles.expertText}>Expert Tutor</Text>
             </View>
           </View>
-        </View>
+        </View> */}
       </View>
     </TouchableOpacity>
   );
@@ -73,7 +75,7 @@ const SubjectCards = ({ subjectData, handleItemPress, isHorizontal }) => {
     <View style={styles.container}>
       <FlatList 
         data={subjectData}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item) => item.id}
         renderItem={renderSubjectCard}
         horizontal={isHorizontal}
         scrollEnabled={false}

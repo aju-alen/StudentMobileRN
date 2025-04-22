@@ -11,6 +11,7 @@ import {
   ScrollView,
   SafeAreaView,
   KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -23,9 +24,9 @@ import { welcomeCOLOR } from "../../../../constants/theme";
 import Button from "../../../components/Button";
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from "@expo/vector-icons";
-import { nanoid } from 'nanoid'
+import { nanoid } from 'nanoid';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system'; // Optional, for file manipulation
+import * as FileSystem from 'expo-file-system';
 
 
 const CreateSubject = () => {
@@ -44,6 +45,10 @@ const CreateSubject = () => {
   const [subjectPoints, setsubjectPoints] = useState([]);
   const [pdf1, setPdf1] = useState(null);
   const [pdf2, setPdf2] = useState(null);
+
+  console.log(pdf1, 'pdf1');
+  console.log(pdf2, 'pdf2');
+  
   
   const awsId = nanoid();
 
@@ -222,16 +227,16 @@ const CreateSubject = () => {
     const subject = {
       subjectName,
       subjectDescription,
+      subjectImage: image,
       subjectPrice,
       subjectBoard,
       subjectGrade,
-      subjectImage: image,
-      teacherVerification:[pdf1, pdf2],
-      subjectNameSubHeading,
       subjectDuration,
-      subjectPoints,
+      subjectNameSubHeading,
+      subjectSearchHeading:'search',
       subjectLanguage,
-      subjectSearchHeading:'search'
+      subjectPoints,
+      teacherVerification:[pdf1, pdf2],
     };
     console.log("subject", subject);
     const token = await AsyncStorage.getItem("authToken");
@@ -274,665 +279,345 @@ const CreateSubject = () => {
   
   
   return (
-    <SafeAreaView style={{ flex: 1,  }}>
-    <ScrollView>
-      
-    <View style={{ flex: 1, marginHorizontal: horizontalScale(22) }}>
-                    {/* <KeyboardAvoidingView style={styles.container} behavior= > */}
-                        <View style={{ marginVertical: verticalScale(22) }}>
-                            <Text style={{
-                                fontSize: moderateScale(22),
-                                fontWeight: 'bold',
-                                marginVertical: verticalScale(12),
-                                color: welcomeCOLOR.black
-                            }}>
-                                Create Account
-                            </Text>
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.container}
+      >
+        <ScrollView showsVerticalScrollIndicator={false}>
+          <View style={styles.headerContainer}>
+            <Text style={styles.headerText}>Create New Subject</Text>
+            <Text style={styles.subHeaderText}>Fill in the details to create your subject</Text>
+          </View>
 
-
-                        </View>
-
-                        <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8)
-                            }}>Subject Title</Text>
-
-                            <View style={{
-                                width: "100%",
-                                height: verticalScale(48),
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                                alignItems: "center",
-                                justifyContent: "center",
-                                paddingLeft: horizontalScale(22)
-                            }}>
-                                <TextInput
-                                    placeholder="This name will be displayed to students"
-                                    placeholderTextColor="gray"
-                                    value={subjectName}
-                                    onChangeText={setSubjectName}
-                                    keyboardType='default'
-                                    style={{
-                                        width: "100%"
-                                    }}
-                                />
-                            </View>
-                        </View>
-
-                        <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8)
-                            }}>Subject Description</Text>
-
-                            <View style={{
-                                width: "100%",
-                                height: verticalScale(48),
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                                alignItems: "center",
-                                justifyContent: "center",
-                                paddingLeft: horizontalScale(22)
-                            }}>
-                                <TextInput
-                                    placeholder="A brief description of the subject"
-                                    placeholderTextColor="gray"
-                                    multiline
-                                    numberOfLines={10}
-                                    value={subjectDescription}
-                                    onChangeText={setSubjectDescription}
-                                    keyboardType='default'
-                                    style={{
-                                        width: "100%"
-                                    }}
-                                />
-                            </View>
-                        </View>
-
-                        <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8)
-                            }}>Upload Image</Text>
-
-<TouchableOpacity style={styles.profilePictureContainer} onPress={pickImage}>
-        {image ? (
-          <Image source={{ uri: image }} style={styles.profilePicture} />
-        ) : (
-          <Text style={styles.addProfilePictureText}>Add Subject Image</Text>
-        )}
-      </TouchableOpacity>
-      {image && (
-        <View style={styles.imageConfirmContainer}> 
-      <TouchableOpacity onPress={uploadImageToBe}>
-        <Text> ✅ </Text>
-        </TouchableOpacity>
-        </View>
-        )}
-     
-                        </View>
-
-                        <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8)
-                            }}>Subject Price</Text>
-
-                            <View style={{
-                                width: "100%",
-                                height: verticalScale(48),
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                                alignItems: "center",
-                                justifyContent: "center",
-                                paddingLeft: horizontalScale(22)
-                            }}>
-                                <TextInput
-                                    placeholder="Enter Subject Price"
-                                    placeholderTextColor="gray"
-                                    multiline
-                                    numberOfLines={10}
-                                    value={subjectPrice.toString()}
-                                    onChangeText={setSubjectPrice}
-                                    keyboardType='default'
-                                    style={{
-                                        width: "100%"
-                                    }}
-                                />
-                            </View>
-                        </View>
-                        <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8)
-                            }}>Subject Board</Text>
-
-                            <View style={{
-                                width: "100%",
-                                height: verticalScale(48),
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                                alignItems: "center",
-                                justifyContent: "center",
-                                paddingLeft: horizontalScale(22)
-                            }}>
-                                <TextInput
-                                    placeholder="What Subject board"
-                                    placeholderTextColor="gray"
-                                    multiline
-                                    numberOfLines={10}
-                                    value={subjectBoard}
-                                    onChangeText={setSubjectBoard}
-                                    keyboardType='default'
-                                    style={{
-                                        width: "100%"
-                                    }}
-                                />
-                            </View>
-                        </View>
-                        <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8)
-                            }}>Subject Grade</Text>
-
-                            <View style={{
-                                width: "100%",
-                                height: verticalScale(48),
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                                alignItems: "center",
-                                justifyContent: "center",
-                                paddingLeft: horizontalScale(22)
-                            }}>
-                                <TextInput
-                                    placeholder="What Subject Grade"
-                                    placeholderTextColor="gray"
-                                    multiline
-                                    numberOfLines={10}
-                                    value={subjectGrade}
-                                    onChangeText={setSubjectGrade}
-                                    keyboardType='default'
-                                    style={{
-                                        width: "100%"
-                                    }}
-                                />
-                            </View>
-                        </View>
-                        <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8)
-                            }}>Subject Language</Text>
-
-                            <View style={{
-                                width: "100%",
-                                height: verticalScale(48),
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                                alignItems: "center",
-                                justifyContent: "center",
-                                paddingLeft: horizontalScale(22)
-                            }}>
-                                <TextInput
-                                    placeholder="What language will you teach in"
-                                    placeholderTextColor="gray"
-                                    multiline
-                                    numberOfLines={10}
-                                    value={subjectLanguage}
-                                    onChangeText={setSubjectLanguage}
-                                    keyboardType='default'
-                                    style={{
-                                        width: "100%"
-                                    }}
-                                />
-                            </View>
-                        </View>
-                        <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8)
-                            }}>Subject Name Heading</Text>
-
-                            <View style={{
-                                width: "100%",
-                                height: verticalScale(48),
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                                alignItems: "center",
-                                justifyContent: "center",
-                                paddingLeft: horizontalScale(22)
-                            }}>
-                                <TextInput
-                                    placeholder="Subject Name Heading"
-                                    placeholderTextColor="gray"
-                                    multiline
-                                    numberOfLines={10}
-                                    value={subjectNameSubHeading}
-                                    onChangeText={setSubjectNameSubHeading}
-                                    keyboardType='default'
-                                    style={{
-                                        width: "100%"
-                                    }}
-                                />
-                            </View>
-                        </View>
-                        <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8)
-                            }}>Subject Search Heading</Text>
-
-                            <View style={{
-                                width: "100%",
-                                height: verticalScale(48),
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                                alignItems: "center",
-                                justifyContent: "center",
-                                paddingLeft: horizontalScale(22)
-                            }}>
-                                <TextInput
-                                    placeholder="Subject Search Heading"
-                                    placeholderTextColor="gray"
-                                    multiline
-                                    numberOfLines={10}
-                                    value={subjectSearchHeading}
-                                    onChangeText={setSubjectSearchHeading}
-                                    keyboardType='default'
-                                    style={{
-                                        width: "100%"
-                                    }}
-                                />
-                            </View>
-                        </View>
-                        <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8)
-                            }}>Subject Duration</Text>
-
-                            <View style={{
-                                width: "100%",
-                                height: verticalScale(48),
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                                alignItems: "center",
-                                justifyContent: "center",
-                                paddingLeft: horizontalScale(22)
-                            }}>
-                                <TextInput
-                                    placeholder="Subject Duration"
-                                    placeholderTextColor="gray"
-                                    multiline
-                                    numberOfLines={10}
-                                    value={subjectDuration}
-                                    onChangeText={setSubjectDuration}
-                                    keyboardType='default'
-                                    style={{
-                                        width: "100%"
-                                    }}
-                                />
-                            </View>
-                        </View>
-                        <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8)
-                            }}>Add a skill</Text>
-
-                            <View style={{
-                                width: "100%",
-                                height: verticalScale(48),
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                                alignItems: "center",
-                                justifyContent: "center",
-                                paddingLeft: horizontalScale(22)
-                            }}>
-                                <TextInput
-                                    placeholder="Subject Duration"
-                                    placeholderTextColor="gray"
-                                    multiline
-                                    numberOfLines={10}
-                                    value={inputText}
-                                    onChangeText={handleInputChange}
-                                    keyboardType='default'
-                                    style={{
-                                        width: "100%"
-                                    }}
-                                />
-                                <TouchableOpacity onPress={handleAddItem}>
-            <View style={styles.addButton}>
-              <Ionicons name="add-circle-outline" size={20} color="#900" />
-              <Text>Add</Text>
-            </View>
-          </TouchableOpacity>
-                            </View>
-                        </View>
-
-
-                        <View style={styles.container}>
-      <Text style={styles.title}>Upload Two PDFs</Text>
-
-      {/* PDF 1 Input */}
-      <TouchableOpacity
-        style={[styles.pdfBox,pdf1]} 
-        onPress={() => pickPdf('pdf1')}>
-        {pdf1 ? (
-          <>
-            <Ionicons name="document-attach-outline" size={24} color="#4CAF50" />
-            <Text style={styles.pdfUploadedText}>PDF 1 Uploaded</Text>
-          </>
-        ) : (
-          <>
-            <Ionicons name="document-outline" size={24} color="#AAAAAA" />
-            <Text style={styles.pdfBoxText}>Add PDF 1</Text>
-          </>
-        )}
-      </TouchableOpacity >
-      <TouchableOpacity onPress={() => setPdf1(null)} style={{
-        alignItems: 'center',
-      }}>
-      <Text> ✅ </Text>
-            </TouchableOpacity>
-
-      {/* PDF 2 Input */}
-      <TouchableOpacity
-        style={[styles.pdfBox, pdf2]} 
-        onPress={() => pickPdf('pdf2')}>
-        {pdf2 ? (
-          <>
-            <Ionicons name="document-attach-outline" size={24} color="#4CAF50" />
-            <Text style={styles.pdfUploadedText}>PDF 2 Uploaded</Text>
-          </>
-        ) : (
-          <>
-            <Ionicons name="document-outline" size={24} color="#AAAAAA" />
-            <Text style={styles.pdfBoxText}>Add PDF 2</Text>
-          </>
-        )}
-      </TouchableOpacity>
-      <TouchableOpacity onPress={uploadPdfsToAws} style={{
-        alignItems: 'center',
-      }}>
-      <Text> ✅ </Text>
-            </TouchableOpacity>
-    </View>
-                    
-                    <Button
-                        title="Create Subject"
-                        filled
-                        color={COLORS.primary
-                        }
-                        style={{
-                            marginTop: verticalScale(18),
-                            marginBottom: verticalScale(4),
-                        }}
-                        onPress={handleCreateSubject}
-                    />
-                    {/* </KeyboardAvoidingView> */}
-
+          {/* Image Upload Section */}
+          <View style={styles.imageSection}>
+            <TouchableOpacity style={styles.imageUploadContainer} onPress={pickImage}>
+              {image ? (
+                <Image source={{ uri: image }} style={styles.uploadedImage} />
+              ) : (
+                <View style={styles.placeholderContainer}>
+                  <Ionicons name="image-outline" size={40} color={welcomeCOLOR.black} />
+                  <Text style={styles.uploadText}>Upload Subject Image</Text>
                 </View>
-    </ScrollView>
+              )}
+            </TouchableOpacity>
+            {image && (
+              <TouchableOpacity style={styles.confirmButton} onPress={uploadImageToBe}>
+                <Ionicons name="checkmark-circle" size={24} color={COLORS.primary} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Form Fields */}
+          <View style={styles.formContainer}>
+            {/* Basic Info Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Basic Information</Text>
+              <FormInput
+                label="Subject Title"
+                placeholder="Enter subject title"
+                value={subjectName}
+                onChangeText={setSubjectName}
+              />
+              <FormInput
+                label="Description"
+                placeholder="Brief description of the subject"
+                value={subjectDescription}
+                onChangeText={setSubjectDescription}
+                multiline
+                height={100}
+              />
+              <FormInput
+                label="Price"
+                placeholder="Enter price"
+                value={subjectPrice.toString()}
+                onChangeText={setSubjectPrice}
+                keyboardType="numeric"
+              />
+            </View>
+
+            {/* Academic Details Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Academic Details</Text>
+              <FormInput
+                label="Board"
+                placeholder="Educational board"
+                value={subjectBoard}
+                onChangeText={setSubjectBoard}
+              />
+              <FormInput
+                label="Grade"
+                placeholder="Target grade level"
+                value={subjectGrade}
+                onChangeText={setSubjectGrade}
+              />
+              <FormInput
+                label="Language"
+                placeholder="Teaching language"
+                value={subjectLanguage}
+                onChangeText={setSubjectLanguage}
+              />
+              <FormInput
+                label="Duration"
+                placeholder="Course duration"
+                value={subjectDuration}
+                onChangeText={setSubjectDuration}
+              />
+              <FormInput
+                label="Search Heading"
+                placeholder="What text should students seach to find this?"
+                value={subjectSearchHeading}
+                onChangeText={setSubjectSearchHeading}
+              />
+            </View>
+
+            {/* Skills Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Skills & Points</Text>
+              <View style={styles.skillInputContainer}>
+                <TextInput
+                  style={styles.skillInput}
+                  placeholder="Add a new skill"
+                  value={inputText}
+                  onChangeText={handleInputChange}
+                />
+                <TouchableOpacity style={styles.addSkillButton} onPress={handleAddItem}>
+                  <Ionicons name="add-circle" size={24} color={COLORS.primary} />
+                </TouchableOpacity>
+              </View>
+              {subjectPoints.map((point, index) => (
+                <View key={index} style={styles.skillTag}>
+                  <Text style={styles.skillText}>{point}</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Document Upload Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Verification Documents</Text>
+              <View style={styles.documentSection}>
+                <TouchableOpacity
+                  style={[styles.documentUpload, pdf1 && styles.documentUploaded]}
+                  onPress={() => pickPdf('pdf1')}
+                >
+                  <Ionicons 
+                    name={pdf1 ? "document-text" : "document-text-outline"} 
+                    size={24} 
+                    color={pdf1 ? COLORS.primary : "#666"}
+                  />
+                  <Text style={[styles.documentText, pdf1 && styles.documentUploadedText]}>
+                    {pdf1 ? "Document 1 Uploaded" : "Upload Document 1"}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.documentUpload, pdf2 && styles.documentUploaded]}
+                  onPress={() => pickPdf('pdf2')}
+                >
+                  <Ionicons 
+                    name={pdf2 ? "document-text" : "document-text-outline"} 
+                    size={24} 
+                    color={pdf2 ? COLORS.primary : "#666"}
+                  />
+                  <Text style={[styles.documentText, pdf2 && styles.documentUploadedText]}>
+                    {pdf2 ? "Document 2 Uploaded" : "Upload Document 2"}
+                  </Text>
+                </TouchableOpacity>
+
+                {(pdf1 || pdf2) && (
+                  <TouchableOpacity 
+                    style={styles.uploadDocsButton} 
+                    onPress={uploadPdfsToAws}
+                  >
+                    <Text style={styles.uploadDocsText}>Confirm Documents</Text>
+                    <Ionicons name="cloud-upload-outline" size={20} color="white" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+
+            <Button
+              title="Create Subject"
+              filled
+              color={COLORS.primary}
+              style={styles.submitButton}
+              onPress={handleCreateSubject}
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
 
+const FormInput = ({ label, ...props }) => (
+  <View style={styles.inputWrapper}>
+    <Text style={styles.inputLabel}>{label}</Text>
+    <TextInput
+      style={[styles.input, props.multiline && { height: props.height }]}
+      placeholderTextColor="#666"
+      {...props}
+    />
+  </View>
+);
+
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-  },
-  input1: {
+  safeArea: {
     flex: 1,
-    height: 40,
-    paddingHorizontal: 8,
+    backgroundColor: '#fff',
   },
-  addButton: {
-    flexDirection: "row",
-    borderWidth: 1,
-    borderColor: "#b54034",
-    borderRadius: 100,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+  container: {
+    flex: 1,
   },
-  addButton1: {
-    flexDirection: "row",
-    borderWidth: 1,
-    borderColor: "#b54034",
-    borderRadius: 100,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+  headerContainer: {
+    padding: moderateScale(20),
+    backgroundColor: '#fff',
   },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-    paddingHorizontal: 8,
-    borderRadius: 100,
-    borderWidth: 1,
-    borderColor: "gray",
+  headerText: {
+    fontSize: moderateScale(24),
+    fontWeight: 'bold',
+    color: welcomeCOLOR.black,
   },
-  inputContainerDesc: {
-    marginBottom: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: "gray",
-    borderRadius: 20,
+  subHeaderText: {
+    fontSize: moderateScale(14),
+    color: '#666',
+    marginTop: verticalScale(5),
   },
-  inputContainer1: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 2,
-    paddingHorizontal: 8,
-    borderRadius: 100,
-    borderWidth: 1,
-    borderColor: "gray",
+  formContainer: {
+    padding: moderateScale(20),
   },
-  button: {
-    backgroundColor: "#b54034",
-    padding: 10,
-    borderRadius: 100,
-    margin: 12,
+  section: {
+    marginBottom: verticalScale(24),
   },
-  text: {
-    fontSize: 18,
-    fontFamily: "Roboto-Regular",
-    color: "white",
-    textAlign: "center",
+  sectionTitle: {
+    fontSize: moderateScale(18),
+    fontWeight: '600',
+    color: welcomeCOLOR.black,
+    marginBottom: verticalScale(12),
   },
-  profilePictureContainer: {
+  imageSection: {
+    alignItems: 'center',
+    marginVertical: verticalScale(20),
+  },
+  imageUploadContainer: {
     width: horizontalScale(300),
     height: verticalScale(150),
-    marginLeft: horizontalScale(15),
-    borderRadius: 10,
+    borderRadius: moderateScale(12),
     borderWidth: 2,
-    borderColor: '#ccc',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderStyle: 'dashed',
+    borderColor: COLORS.primary,
     overflow: 'hidden',
+    backgroundColor: '#f8f9fa',
   },
-  profilePicture: {
+  uploadedImage: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
   },
-  addProfilePictureText: {
-    fontSize: 16,
-    color: '#555',
+  placeholderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  imageConfirmContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    paddingHorizontal: 10,
-    marginTop: 10,
+  uploadText: {
+    marginTop: verticalScale(8),
+    color: '#666',
+    fontSize: moderateScale(14),
   },
-  title: {
-    fontSize: moderateScale(18),
-    fontWeight: 'bold',
+  inputWrapper: {
     marginBottom: verticalScale(16),
-    textAlign: 'center',
-    color: '#333',
   },
-  pdfBox: {
+  inputLabel: {
+    fontSize: moderateScale(14),
+    color: '#444',
+    marginBottom: verticalScale(6),
+  },
+  input: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: moderateScale(8),
+    padding: moderateScale(12),
+    fontSize: moderateScale(16),
+    color: welcomeCOLOR.black,
+    borderWidth: 1,
+    borderColor: '#e1e1e1',
+  },
+  skillInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: verticalScale(12),
+  },
+  skillInput: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+    borderRadius: moderateScale(8),
+    padding: moderateScale(12),
+    marginRight: horizontalScale(8),
+    borderWidth: 1,
+    borderColor: '#e1e1e1',
+  },
+  addSkillButton: {
+    padding: moderateScale(8),
+  },
+  skillTag: {
+    backgroundColor: '#e3f2fd',
+    borderRadius: moderateScale(16),
+    paddingHorizontal: horizontalScale(12),
+    paddingVertical: verticalScale(6),
+    marginRight: horizontalScale(8),
+    marginBottom: verticalScale(8),
+    alignSelf: 'flex-start',
+  },
+  skillText: {
+    color: COLORS.primary,
+    fontSize: moderateScale(14),
+  },
+  documentSection: {
+    gap: verticalScale(12),
+  },
+  documentUpload: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: moderateScale(16),
+    backgroundColor: '#f8f9fa',
+    borderRadius: moderateScale(8),
+    borderWidth: 1,
+    borderColor: '#e1e1e1',
+  },
+  documentUploaded: {
+    backgroundColor: '#e3f2fd',
+    borderColor: COLORS.primary,
+  },
+  documentText: {
+    marginLeft: horizontalScale(12),
+    fontSize: moderateScale(14),
+    color: '#666',
+  },
+  documentUploadedText: {
+    color: COLORS.primary,
+    fontWeight: '500',
+  },
+  uploadDocsButton: {
+    backgroundColor: COLORS.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: moderateScale(16),
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    marginBottom: verticalScale(12),
-    borderWidth: 1,
-    borderColor: '#DDD',
+    padding: moderateScale(12),
+    borderRadius: moderateScale(8),
+    marginTop: verticalScale(8),
   },
-  pdfBoxFilled: {
-    backgroundColor: '#e8f5e9', // Light green for uploaded state
-    borderColor: '#4CAF50', // Green border for uploaded state
+  uploadDocsText: {
+    color: 'white',
+    fontSize: moderateScale(14),
+    marginRight: horizontalScale(8),
   },
-  pdfBoxText: {
-    fontSize: moderateScale(16),
-    marginLeft: moderateScale(8),
-    color: '#AAAAAA',
+  confirmButton: {
+    marginTop: verticalScale(8),
   },
-  pdfUploadedText: {
-    fontSize: moderateScale(16),
-    marginLeft: moderateScale(8),
-    color: '#4CAF50',
+  submitButton: {
+    marginTop: verticalScale(24),
+    marginBottom: verticalScale(40),
   },
 });
 
 export default CreateSubject;
-
-  {/* <View style={styles.container}>
-      
-       
-        <View style={styles.inputContainer}>
-          <Ionicons name="camera-outline" size={20} color="#900" />
-          <TextInput
-            style={styles.input1}
-            placeholder="Subject Image"
-            value={subjectImage}
-            onChangeText={setSubjectImage}
-          />
-        </View>
-        <View style={styles.inputContainer}>
-          <Ionicons name="cash-outline" size={20} color="#900" />
-          <TextInput
-            style={styles.input1}
-            placeholder="Subject Price"
-            keyboardType="numeric"
-            value={subjectPrice.toString()}
-            onChangeText={setSubjectPrice}
-          />
-        </View>
-        <View style={styles.inputContainer}>
-          <Ionicons name="school-outline" size={20} color="#900" />
-          <TextInput
-            style={styles.input1}
-            placeholder="Subject Board"
-            value={subjectBoard}
-            onChangeText={setSubjectBoard}
-          />
-        </View>
-        <View style={styles.inputContainer}>
-          <Ionicons name="trophy-outline" size={20} color="#900" />
-          <TextInput
-            style={styles.input1}
-            placeholder="Subject Grade"
-            value={subjectGrade}
-            onChangeText={setSubjectGrade}
-          />
-        </View>
-        <View style={styles.inputContainer}>
-          <Ionicons name="chatbox-ellipses-outline" size={20} color="#900" />
-          <TextInput
-            style={styles.input1}
-            placeholder="Subject Language"
-            value={subjectLanguage}
-            onChangeText={setSubjectLanguage}
-          />
-        </View>
-        <View style={styles.inputContainer}>
-          <Ionicons name="chatbox-ellipses-outline" size={20} color="#900" />
-          <TextInput
-            style={styles.input1}
-            placeholder="Subject Sub Heading"
-            value={subjectNameSubHeading}
-            onChangeText={setSubjectNameSubHeading}
-          />
-        </View>
-        <View style={styles.inputContainer}>
-          <Ionicons name="chatbox-ellipses-outline" size={20} color="#900" />
-          <TextInput
-            style={styles.input1}
-            placeholder="Subject Duration"
-            value={subjectDuration}
-            onChangeText={setSubjectDuration}
-          />
-        </View>
-        <View style={styles.inputContainer}>
-          <Ionicons name="construct-outline" size={20} color="#900" />
-          <TextInput
-            style={styles.input1}
-            value={inputText}
-            onChangeText={handleInputChange}
-            placeholder="Add One Skill At A Time"
-            placeholderTextColor={"gray"}
-          />
-          <TouchableOpacity onPress={handleAddItem}>
-            <View style={styles.addButton}>
-              <Ionicons name="add-circle-outline" size={20} color="#900" />
-              <Text>Add</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {teacherVerification.map((verification, index) => (
-          <View key={index}>
-            <View style={styles.inputContainer}>
-              <Ionicons name="body-outline" size={20} color="#900" />
-              <TextInput
-                style={styles.input1}
-                placeholder="Teacher Verification"
-                value={verification}
-                onChangeText={(value) =>
-                  handleTeacherVerificationChange(index, value)
-                }
-              />
-            </View>
-          </View>
-        ))}
-        <TouchableOpacity onPress={addTeacherVerificationField}>
-          <View style={styles.addButton1}>
-            <Ionicons name="add-circle-outline" size={20} color="#900" />
-            <Text>Add</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleCreateSubject}>
-          <Text style={styles.text}>Create Your Subject</Text>
-        </TouchableOpacity>
-      </View> */}

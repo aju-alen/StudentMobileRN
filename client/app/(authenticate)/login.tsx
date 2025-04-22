@@ -2,250 +2,275 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
-import { Alert, Pressable, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Alert,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  ActivityIndicator,
+  Animated,
+  Easing,
+} from 'react-native';
 import { COLORS } from '../../constants';
 import { welcomeCOLOR } from '../../constants/theme';
-import Button from '../components/Button';
 import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
 import { ipURL } from '../utils/utils';
 
-
 const LoginPage = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isPasswordShown, setIsPasswordShown] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [isPasswordShown, setIsPasswordShown] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current; // For fade-in animation
 
-    // useEffect(() => {
-    //     const checkLogin = async () => {
-    //         const token = await AsyncStorage.getItem('authToken');
-    //         const user = await AsyncStorage.getItem('userDetails');
-    //         console.log(token,'this is token');
-    //         console.log(JSON.parse(user),'this is userDetails');
-            
-    //         if (token) {
-    //             router.replace('/(tabs)/home');
-                
-    //         }
-    //     }
-    //     checkLogin();
+  useEffect(() => {
+    // Fade-in animation when the component mounts
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 1000,
+      easing: Easing.ease,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
-    // }, []);
-
-    const handleLogin = async () => {
-        const user = {
-            email,
-            password:password.trim(),
-        }
-        try {
-            const resp = await axios.post(`${ipURL}/api/auth/login`, user)
-            console.log(resp.data, 'Logged in succesfully');
-            
-            AsyncStorage.setItem('authToken', resp.data.token);
-            AsyncStorage.setItem('userDetails', JSON.stringify({isTeacher:resp.data.isTeacher, isAdmin:resp.data.isAdmin,userId:resp.data.userId}));
-            router.replace('/(tabs)/home');
-
-        }
-        catch (err) {
-            console.log(err);
-            Alert.alert(err.response.data.message)
-            return;
-        }
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setError('Please fill in all fields');
+      return;
     }
 
-    return (
-       
-        <SafeAreaView style={{ flex: 1,  }}>
-          
-                <View style={{ flex: 1, 
-                    marginHorizontal: horizontalScale(22),
-                    display:"flex",
-                    flexDirection:"column",
-                     justifyContent:"center"  }}>
-                  
-                        <View style={{ marginVertical: verticalScale(22) }}>
-                            <Text style={{
-                                fontSize: moderateScale(22),
-                                fontWeight: 'bold',
-                                marginVertical: verticalScale(12),
-                                color: welcomeCOLOR.black
-                            }}>
-                                Login to your account
-                            </Text>
+    setIsLoading(true);
+    setError('');
 
+    const user = {
+      email,
+      password: password.trim(),
+    };
 
-                        </View>
+    try {
+      const resp = await axios.post(`${ipURL}/api/auth/login`, user);
+      console.log(resp.data, 'Logged in successfully');
 
-                        
-                        <View >
-                        <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8)
-                            }}>Email address</Text>
+      await AsyncStorage.setItem('authToken', resp.data.token);
+      await AsyncStorage.setItem('userDetails', JSON.stringify({
+        isTeacher: resp.data.isTeacher,
+        isAdmin: resp.data.isAdmin,
+        userId: resp.data.userId,
+        userProfileImage: resp.data.userProfileImage,
+      }));
 
-                            <View style={{
-                                width: "100%",
-                                height: verticalScale(48),
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                                alignItems: "center",
-                                justifyContent: "center",
-                                paddingLeft: horizontalScale(22)
-                            }}>
-                                <TextInput
-                                    placeholder="Enter Your Email"
-                                    placeholderTextColor="gray"
-                                    autoCapitalize="none"
-                                    value={email}
-                                    onChangeText={setEmail}
-                                    keyboardType='email-address'
-                                    style={{
-                                        width: "100%"
-                                    }}
-                                />
-                            </View>
-                        </View>
+      router.replace('/(tabs)/home');
+    } catch (err) {
+      console.log(err);
+      setError(err.response?.data?.message || 'Login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  return (
+  
+      <SafeAreaView style={styles.safeArea}>
+        <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+          <View style={styles.header}>
+            <Text style={styles.headerText}>Welcome Back</Text>
+            <Text style={styles.subHeaderText}>Login to continue</Text>
+          </View>
 
+          <View style={styles.form}>
+            {error ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            ) : null}
 
-                        <View style={{ marginBottom: verticalScale(12) }}>
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                fontWeight: "400",
-                                marginVertical: verticalScale(8)
-                            }}>Password</Text>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email Address</Text>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  placeholder="Enter your email"
+                  placeholderTextColor="#999"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  style={styles.input}
+                />
+              </View>
+            </View>
 
-                            <View style={{
-                                width: "100%",
-                                height: verticalScale(48),
-                                borderColor: welcomeCOLOR.black,
-                                borderWidth: moderateScale(1),
-                                borderRadius: moderateScale(8),
-                                alignItems: "center",
-                                justifyContent: "center",
-                                paddingLeft: horizontalScale(22)
-                            }}>
-                                <TextInput
-                                    placeholder='Enter your password'
-                                    value={password}
-                                    onChangeText={setPassword}
-                                    placeholderTextColor="gray"
-                                    secureTextEntry={isPasswordShown}
-                                    style={{
-                                        width: "100%"
-                                    }}
-                                />
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Password</Text>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  placeholder="Enter your password"
+                  placeholderTextColor="#999"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!isPasswordShown}
+                  style={styles.input}
+                />
+                <TouchableOpacity
+                  onPress={() => setIsPasswordShown(!isPasswordShown)}
+                  style={styles.eyeIcon}
+                >
+                  <Ionicons
+                    name={isPasswordShown ? 'eye-off' : 'eye'}
+                    size={24}
+                    color="#999"
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
 
-                                <TouchableOpacity
-                                    onPress={() => setIsPasswordShown(!isPasswordShown)}
-                                    style={{
-                                        position: "absolute",
-                                        right: 12
-                                    }}
-                                >
-                                    {
-                                        isPasswordShown == true ? (
-                                            <Ionicons name="eye-off" size={24} color={welcomeCOLOR.black} />
-                                        ) : (
-                                            <Ionicons name="eye" size={24} color={welcomeCOLOR.black} />
-                                        )
-                                    }
+            <Pressable
+              style={({ pressed }) => [
+                styles.loginButton,
+                pressed && { opacity: 0.9 },
+              ]}
+              onPress={handleLogin}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.loginButtonText}>Login</Text>
+              )}
+            </Pressable>
 
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    
-                    <Button
-                        title="Login"
-                        filled
-                        color={COLORS.primary
-                        }
-                        style={{
-                            marginTop: verticalScale(18),
-                            marginBottom: verticalScale(4),
-                        }}
-                        onPress={handleLogin}
-                    />
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Don't have an account?</Text>
+              <Pressable onPress={() => router.replace('/(authenticate)/register')}>
+                <Text style={styles.footerLink}>Register</Text>
+              </Pressable>
+            </View>
+          </View>
+        </Animated.View>
+      </SafeAreaView>
 
-
-
-                    <View style={{
-                        flexDirection: "row",
-                        justifyContent: "center",
-                        marginVertical: verticalScale(22)
-                    }}>
-                        <Text style={{ 
-                            fontSize: moderateScale(16),
-                             color: welcomeCOLOR.black 
-                             }}>Don't have an account?</Text>
-                        <Pressable
-                            onPress={() => router.replace('/(authenticate)/register')}
-                        >
-                            <Text style={{
-                                fontSize: moderateScale(16),
-                                color: COLORS.primary,
-                                fontWeight: "bold",
-                                marginLeft: horizontalScale(6)
-                            }}>Register</Text>
-                        </Pressable>
-                    </View>
-                    </View>
-                </View>
-        </SafeAreaView>
-    )
+  );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    header: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom:50,
-        alignItems: 'center',
+  safeArea: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    marginHorizontal: horizontalScale(24),
+  },
+  header: {
+    marginBottom: verticalScale(32),
+  },
+  headerText: {
+    fontSize: moderateScale(32),
+    fontWeight: 'bold',
 
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 10,
-    },
-    icon: {
-        marginRight: 10,
-    },
-    input: {
-        width: 300,
-        height: 40,
-        borderWidth: 1,
-        borderRadius: 5,
-        paddingLeft: 10,
-    },
-    button: {
-        backgroundColor: '#1E90FF',
-        padding: 10,
-        borderRadius: 5,
-        marginTop: 25,
-        width: 150,
-    },
-    buttonText: {
-        color: 'white',
-        fontWeight: 'bold',
-        textAlign: 'center',
-        fontSize: 22,
-    },
-    link: {
-        marginTop: 10,
-        color: 'gray',
-        textAlign: 'center',
-        fontSize: 14,
-    }
+    textAlign: 'center',
+  },
+  subHeaderText: {
+    fontSize: moderateScale(16),
+
+    textAlign: 'center',
+    marginTop: verticalScale(8),
+  },
+  form: {
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: moderateScale(20),
+    padding: moderateScale(24),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  inputContainer: {
+    marginBottom: verticalScale(16),
+  },
+  label: {
+    fontSize: moderateScale(14),
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: verticalScale(8),
+  },
+  inputWrapper: {
+    width: '100%',
+    height: verticalScale(50),
+    borderColor: '#ddd',
+    borderWidth: moderateScale(1),
+    borderRadius: moderateScale(12),
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: horizontalScale(16),
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  input: {
+    flex: 1,
+    fontSize: moderateScale(16),
+    color: '#333',
+  },
+  eyeIcon: {
+    padding: moderateScale(8),
+  },
+  loginButton: {
+    width: '100%',
+    height: verticalScale(50),
+    backgroundColor: COLORS.primary,
+    borderRadius: moderateScale(12),
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: verticalScale(24),
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  loginButtonText: {
+    fontSize: moderateScale(16),
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: verticalScale(24),
+  },
+  footerText: {
+    fontSize: moderateScale(16),
+    color: '#666',
+  },
+  footerLink: {
+    fontSize: moderateScale(16),
+    color: COLORS.primary,
+    fontWeight: 'bold',
+    marginLeft: horizontalScale(6),
+  },
+  errorContainer: {
+    backgroundColor: '#ffebee',
+    padding: moderateScale(12),
+    borderRadius: moderateScale(8),
+    marginBottom: verticalScale(16),
+  },
+  errorText: {
+    fontSize: moderateScale(14),
+    color: '#c62828',
+    textAlign: 'center',
+  },
 });
 
 export default LoginPage;

@@ -4,9 +4,9 @@ import {
   View,
   TouchableOpacity,
   FlatList,
+  Dimensions,
 } from "react-native";
 import { Image } from 'expo-image';
-
 import React, { useEffect, useState } from "react";
 import { router, usePathname } from "expo-router";
 import axios from "axios";
@@ -14,188 +14,258 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ipURL } from "../utils/utils";
 import { SIZES } from "../../constants";
 
+const { width } = Dimensions.get('window');
+const CARD_PADDING = 16;
+const IMAGE_SIZE = 90;
+
 const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
+interface User {
+  isTeacher?: boolean;
+  subjects?: SubjectItem[];
+}
+
+interface SubjectItem {
+  id: string;
+  subjectName: string;
+  subjectDescription?: string;
+  subjectImage?: string;
+  subjectPrice?: number;
+  subjectBoard?: string;
+  subjectGrade?: number;
+}
 
 const HomeFlatlist = ({ homeData, handleItemPress }) => {
-  const [showAllText, setShowAllText] = useState(false);
-  const maxLines = 2;
-  console.log("homeData", homeData);
-
-  const handlePressEdit = (item) => {
-    console.log("Edit item", item._id);
-    router.push(`../profile/editSubject/${item._id}`);
-  };
-
-  const handleIPressDelete = async (item) => {
-    console.log("Delete item", item);
-    try {
-      const token = await AsyncStorage.getItem("authToken");
-      const resp = await axios.delete(
-        `${ipURL}/api/subjects/${item._id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      alert("Subject deleted successfully");
-    } catch (error) {
-      console.error("Error fetching subject data:", error);
-    }
-  };
+  const [showAllText, setShowAllText] = useState({});
+  const maxLines = 3;
   const routeInfo = usePathname();
-  interface User {
-    isTeacher?: boolean;
-    subjects?: SubjectItem[];
-  }
-  interface SubjectItem {
-    _id: string;
-    subjectName: string;
-    subjectDescription?: string;
-    subjectImage?: string;
-    subjectPrice?: number;
-    subjectBoard?: string;
-    subjectGrade?: number;
-  }
-
   const [user, setUser] = useState<User>({});
+
   useEffect(() => {
     const getUser = async () => {
-      const apiUser = await axios.get(`${ipURL}/api/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem("authToken")}`,
-        },
-      });
-      setUser(apiUser.data);
+      try {
+        const token = await AsyncStorage.getItem("authToken");
+        const apiUser = await axios.get(`${ipURL}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUser(apiUser.data);
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
     };
     getUser();
   }, []);
 
-  console.log("User>>>>", user);
+  const handlePressEdit = (item) => {
+    router.push(`../profile/editSubject/${item.id}`);
+  };
+
+  const handleIPressDelete = async (item) => {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      await axios.delete(`${ipURL}/api/subjects/${item.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      alert("Subject deleted successfully");
+    } catch (error) {
+      console.error("Error deleting subject:", error);
+      alert("Failed to delete subject");
+    }
+  };
+
+  const toggleShowAllText = (itemId) => {
+    setShowAllText(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
+    }));
+  };
+
+  const renderActionButtons = (item) => (
+    <View style={styles.actionButtons}>
+      <TouchableOpacity 
+        style={styles.actionButton} 
+        onPress={() => handlePressEdit(item)}
+      >
+        <Text style={styles.actionButtonText}>Edit</Text>
+      </TouchableOpacity>
+      <TouchableOpacity 
+        style={[styles.actionButton, styles.deleteButton]} 
+        onPress={() => handleIPressDelete(item)}
+      >
+        <Text style={[styles.actionButtonText, styles.deleteButtonText]}>Delete</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
-    <View style={{ flex:1 }}>
-      <View style={styles.cardsContainer}>
+    <View style={styles.container}>
       <FlatList
         data={homeData}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handleItemPress(item)}>
+          <TouchableOpacity 
+            style={styles.cardWrapper}
+            onPress={() => handleItemPress(item)}
+          >
             <View style={styles.card}>
-              <View style={styles.titlePriceContainer}>
-                <Text style={styles.text1}>{item.subjectName}</Text>
-                <View>
-                  <Text style={[styles.text2, styles.button2]}>
-                    {item.subjectBoard}
-                  </Text>
-                  {routeInfo === "/profile" && user.isTeacher && (
-                    <View style={styles.editButtonContainer}>
-                      <TouchableOpacity onPress={() => handlePressEdit(item)}>
-                        <Text style={[styles.text2, styles.button2]}>Edit</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => handleIPressDelete(item)}
-                      >
-                        <Text style={[styles.text2, styles.button2]}>
-                          Delete
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
+              <View style={styles.headerContainer}>
+                <View style={styles.titleContainer}>
+                  <Text style={styles.subjectName}>{item.subjectName}</Text>
+                  <View style={styles.badgeContainer}>
+                    <Text style={styles.badge}>{item.subjectBoard}</Text>
+                  </View>
                 </View>
+                {routeInfo === "/profile" && user.isTeacher && renderActionButtons(item)}
               </View>
-              <View style={styles.rowContainer}>
+
+              <View style={styles.contentContainer}>
                 <Image
                   source={{ uri: item.subjectImage }}
                   style={styles.image}
                   placeholder={blurhash}
                   contentFit="cover"
-                  transition={100}
+                  transition={200}
                 />
                 <View style={styles.textContainer}>
-                  <Text numberOfLines={showAllText ? undefined : maxLines}>
-                    {item.subjectDescription}
-                  </Text>
-                  <View style={styles.priceGradeContainer}>
-                    <Text style={styles.text2}>Price: {item.subjectPrice}</Text>
-                    <Text style={styles.text2}>Grade: {item.subjectGrade}</Text>
+                  <TouchableOpacity onPress={() => toggleShowAllText(item.id)}>
+                    <Text 
+                      numberOfLines={showAllText[item.id] ? undefined : maxLines}
+                      style={styles.description}
+                    >
+                      {item.subjectDescription}
+                    </Text>
+                  </TouchableOpacity>
+                  <View style={styles.detailsContainer}>
+                    <Text style={styles.price}>{item.subjectPrice}</Text>
+                    <Text style={styles.grade}>Grade {item.subjectGrade}</Text>
                   </View>
                 </View>
               </View>
             </View>
           </TouchableOpacity>
         )}
-        keyExtractor={(item) => item._id}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.flatListContent}
         scrollEnabled={false}
       />
-      </View>
     </View>
   );
 };
 
-export default HomeFlatlist;
-
 const styles = StyleSheet.create({
-  text1: {
-    fontSize: 20,
-    fontFamily: "Roboto-Regular",
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
   },
-  text2: {
-    fontSize: 15,
-    fontFamily: "Roboto-Regular",
+  flatListContent: {
+    padding: SIZES.small,
+  },
+  cardWrapper: {
+    marginBottom: 12,
   },
   card: {
-    backgroundColor: "white",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    padding: 10,
-    margin: 10,
-    shadowColor: "orange",
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: CARD_PADDING,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  titleContainer: {
+    flex: 1,
+    marginRight: 8,
+  },
+  subjectName: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 4,
+    fontFamily: "Roboto-Regular",
+  },
+  badgeContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  badge: {
+    backgroundColor: '#fff3e0',
+    color: '#f57c00',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 16,
+    fontSize: 14,
+    fontWeight: '500',
+    overflow: 'hidden',
+  },
+  contentContainer: {
+    flexDirection: 'row',
+    gap: 12,
   },
   image: {
-    width: 75,
-    height: 75,
-    resizeMode: "cover",
-    borderRadius: 10,
-  },
-  rowContainer: {
-    flexDirection: "row",
+    width: IMAGE_SIZE,
+    height: IMAGE_SIZE,
+    borderRadius: 8,
+    backgroundColor: '#f0f0f0',
   },
   textContainer: {
-    marginLeft: 5,
     flex: 1,
+    justifyContent: 'space-between',
   },
-  titlePriceContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingLeft: 2,
-    paddingBottom: 3,
+  description: {
+    fontSize: 15,
+    color: '#666',
+    lineHeight: 20,
+    marginBottom: 8,
   },
-  button2: {
-    backgroundColor: "orange",
-    borderRadius: 20,
-    paddingLeft: 6,
-    paddingRight: 6,
-    textAlign: "center",
+  detailsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  editButtonContainer: {
-    flexDirection: "row",
-    paddingTop: 5,
+  price: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2e7d32',
   },
-  priceGradeContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingTop: 5,
+  grade: {
+    fontSize: 14,
+    color: '#666',
+    backgroundColor: '#f5f5f5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
   },
-  cardsContainer: {
-    marginTop: SIZES.medium,
-    gap: SIZES.small,
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: '#f57c00',
+  },
+  deleteButton: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#dc3545',
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  deleteButtonText: {
+    color: '#dc3545',
   },
 });
+
+export default HomeFlatlist;

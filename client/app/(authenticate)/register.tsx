@@ -174,7 +174,7 @@ const RegisterPage = () => {
                         <View style={styles.pickerContainer}>
                             <Picker
                                 selectedValue={recommendedBoard}
-                                style={styles.picker}
+
                                 onValueChange={setRecommendedBoard}
                             >
                                 <Picker.Item label="Select your board" value="" />
@@ -192,7 +192,7 @@ const RegisterPage = () => {
                         <View style={styles.pickerContainer}>
                             <Picker
                                 selectedValue={recommendedGrade}
-                                style={styles.picker}
+
                                 onValueChange={(value) => setRecommendedGrade(Number(value))}
                             >
                                 <Picker.Item label="Select your grade" value="0" />

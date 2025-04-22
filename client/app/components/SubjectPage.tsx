@@ -37,7 +37,7 @@ interface SubjectData {
 interface User {
   name?: string;
   profileImage?: string;
-  _id?: string;
+  id?: string;
 }
 
 const blurhash =
@@ -52,7 +52,7 @@ const SubjectPage = ({ subjectId }) => {
     const token = await AsyncStorage.getItem('authToken');
     const userDetails = await AsyncStorage.getItem('userDetails');
     const userId = JSON.parse(userDetails).userId;
-    const clientId = singleSubjectData.user?._id;
+    const clientId = singleSubjectData.user?.id;
     try {
       socket.emit('send-chat-details', { userId, clientId, subjectId });
       socket.on("chat-details", (data) => {
@@ -71,7 +71,7 @@ const SubjectPage = ({ subjectId }) => {
         const resp = await axios.get(`${ipURL}/api/subjects/${subjectId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setTeacherId(resp.data.user._id);
+        setTeacherId(resp.data.user.id);
         setSingleSubjectData(resp.data);
       } catch (error) {
         console.error("Error fetching subject data:", error);
@@ -116,7 +116,7 @@ const SubjectPage = ({ subjectId }) => {
 
           <TouchableOpacity 
             style={styles.teacherCard}
-            onPress={() => router.replace(`/(tabs)/home/singleProfile/${teacherId}`)}
+            onPress={() => router.push(`/(tabs)/home/singleProfile/${teacherId}`)}
           >
             <Image
               source={{ uri: singleSubjectData?.user?.profileImage }}

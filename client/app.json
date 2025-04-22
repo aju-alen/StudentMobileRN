@@ -16,14 +16,19 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cimaf11680.StudyMobileApp"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.cimaf11680.StudyMobileApp"
+      "package": "com.cimaf11680.StudyMobileApp",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "favicon": "./assets/images/logo.png",
@@ -60,7 +65,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "4ee4cf53-f32f-451a-b636-6b914a48a78b"
+        "projectId": "01bf117c-ee23-4c0c-a357-c4279c9e8082"
       }
     }
   }
