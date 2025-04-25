@@ -1,5 +1,4 @@
 import dotenv from "dotenv";
-import Message from "../models/message.js";
 dotenv.config();
 
 

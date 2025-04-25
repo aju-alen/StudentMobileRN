@@ -1,4 +1,3 @@
-import User from "../models/user.js";
 import crypto from "crypto";
 import bcrypt from 'bcrypt';
 import nodemailer from "nodemailer";

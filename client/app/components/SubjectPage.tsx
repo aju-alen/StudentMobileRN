@@ -8,7 +8,7 @@ import {
   StatusBar,
 } from "react-native";
 import { Image } from 'expo-image';
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ipURL } from "../utils/utils";
@@ -17,6 +17,7 @@ import { router } from "expo-router";
 import { horizontalScale, verticalScale, moderateScale } from '../utils/metrics';
 import { FONT } from "../../constants";
 import { socket } from '../utils/socket';
+import BookingCalendar from './BookingCalendar';
 
 interface SubjectData {
   subjectImage?: string;
@@ -47,6 +48,7 @@ const SubjectPage = ({ subjectId }) => {
   const [singleSubjectData, setSingleSubjectData] = React.useState<SubjectData>({});
   const [userData, setUserData] = React.useState<User>({});
   const [teacherId, setTeacherId] = React.useState<string>("");
+  const [isBookingModalVisible, setIsBookingModalVisible] = useState(false);
 
   const handleChatNow = async () => {
     const token = await AsyncStorage.getItem('authToken');
@@ -62,6 +64,10 @@ const SubjectPage = ({ subjectId }) => {
     } catch (err) {
       console.log(err, 'this is the error when clicking chat now button');
     }
+  };
+
+  const handleEnrollPress = () => {
+    setIsBookingModalVisible(true);
   };
 
   useEffect(() => {
@@ -160,7 +166,10 @@ const SubjectPage = ({ subjectId }) => {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.primaryButton} onPress={() => console.log("Enroll pressed")}>
+        <TouchableOpacity 
+          style={styles.primaryButton} 
+          onPress={handleEnrollPress}
+        >
           <Text style={styles.primaryButtonText}>Enroll Now</Text>
           <Text style={styles.priceText}>AED {singleSubjectData.subjectPrice}</Text>
         </TouchableOpacity>
@@ -169,6 +178,13 @@ const SubjectPage = ({ subjectId }) => {
           <Text style={styles.secondaryButtonText}>Chat</Text>
         </TouchableOpacity>
       </View>
+
+      <BookingCalendar
+        teacherId={teacherId}
+        subjectId={subjectId}
+        visible={isBookingModalVisible}
+        onClose={() => setIsBookingModalVisible(false)}
+      />
     </SafeAreaView>
   );
 };

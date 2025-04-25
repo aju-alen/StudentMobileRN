@@ -1,6 +1,4 @@
-import User from "../models/user.js";
 import dotenv from "dotenv";
-import Subject from "../models/subjects.js";
 dotenv.config();
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();

@@ -4,11 +4,12 @@ import bodyParser from 'body-parser';
 import mongoose from 'mongoose';
 import authRoute from './routes/auth-route.js';
 import subjectRoute from './routes/subject-routes.js';
-import paymentRoute from './routes/payment-route.js';
 import conversationRoute from './routes/conversation-route.js';
 import messageRoute from './routes/message.route.js';
 import communityRoute from './routes/community-route.js'
 import stripeOnboardRoute from './routes/stripeOnboard-route.js'
+import bookingRoutes from './routes/bookingRoutes.js';
+import zoomRoutes from './routes/zoomRoutes.js';
 import dotenv from 'dotenv';
 import { errorHandler } from './middlewares/errorHandler.js';
 import cors from 'cors';
@@ -249,12 +250,13 @@ const connect = async () => {
 
 app.use('/api/auth', authRoute)
 app.use('/api/subjects', subjectRoute)
-app.use('/api/payments', paymentRoute)
 app.use('/api/conversation', conversationRoute)
 app.use('/api/s3', s3route)
 app.use('/api/message', messageRoute)
 app.use('/api/community', communityRoute)
 app.use('/api/stripe-onboard',stripeOnboardRoute)
+app.use('/api/bookings', bookingRoutes); 
+app.use('/api/zoom', zoomRoutes);
 
 
 app.use(errorHandler)

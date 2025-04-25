@@ -128,7 +128,7 @@ const HomePage = () => {
 
   const StatsCard = ({ stats }: { stats: Stats }) => (
     <View style={styles.statsCard}>
-      <Ionicons name={stats.icon as any} size={24} color="#1A4C6E" />
+
       <Text style={styles.statsValue}>{stats.value}</Text>
       <Text style={styles.statsLabel}>{stats.label}</Text>
     </View>
@@ -257,9 +257,9 @@ const HomePage = () => {
           style={styles.statsContainer}
           contentContainerStyle={styles.statsContent}
         >
-          <StatsCard stats={{ icon: "flame-outline", label: "Day Streak", value: user.streakCount || 0 }} />
-          <StatsCard stats={{ icon: "star-outline", label: "Total Points", value: user.totalPoints || 0 }} />
-          <StatsCard stats={{ icon: "trophy-outline", label: "Completed", value: user.completedCourses || 0 }} />
+          <StatsCard stats={{ icon: "flame-outline", label: "Day Streak", value: user.streakCount || 4 }} />
+          <StatsCard stats={{ icon: "star-outline", label: "Total Points", value: user.totalPoints || 11 }} />
+          <StatsCard stats={{ icon: "trophy-outline", label: "Completed", value: user.completedCourses || 81 }} />
         </ScrollView>
       </Animated.View>
 
@@ -480,12 +480,12 @@ const styles = StyleSheet.create({
   
   quickActionLabel: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(12),
+    fontSize: moderateScale(2),
     color: '#1A4C6E',
     marginTop: verticalScale(8),
   },
   statsContainer: {
-    marginTop: verticalScale(20),
+    marginTop: verticalScale(10),
   },
   statsContent: {
     paddingHorizontal: horizontalScale(20),
@@ -749,8 +749,8 @@ const styles = StyleSheet.create({
   statsCard: {
     backgroundColor: 'rgba(255,255,255,0.95)',
     borderRadius: moderateScale(20),
-    padding: moderateScale(18),
-    marginRight: horizontalScale(15),
+    padding: moderateScale(4),
+    marginHorizontal: horizontalScale(4),
     alignItems: 'center',
     minWidth: horizontalScale(110),
     shadowColor: '#000',

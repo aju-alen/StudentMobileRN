@@ -29,6 +29,8 @@ model User {
   recommendedGrade    Int?
   reccomendedSubjects Json @default("[]")     // Keeping original typo
   subjects            Subject[]
+  teacherBookings     Booking[]     @relation("TeacherBookings")
+  studentBookings     Booking[]     @relation("StudentBookings")
   createdAt           DateTime      @default(now())
   
   // Relations
@@ -48,7 +50,7 @@ model Subject {
   subjectDescription   String
   subjectPoints        Json @default("[]") 
   subjectImage         String
-  subjectPrice        Float
+  subjectPrice         Float
   subjectBoard         String
   subjectLanguage      String
   subjectTags          Json @default("[]") 
@@ -62,6 +64,7 @@ model Subject {
   userId              String
   reviews             Review[]
   conversations       Conversation[]
+  bookings            Booking[]
 }
 
 model Review {
@@ -151,4 +154,29 @@ model CommunityMessage {
   communityId String
   sender      User      @relation(fields: [senderId], references: [id])
   senderId    String
+}
+
+model Booking {
+  id String @id @default(cuid())
+  subjectId String
+  teacherId String
+  studentId String
+
+  subject Subject @relation(fields: [subjectId], references: [id])
+  teacher User @relation("TeacherBookings", fields: [teacherId], references: [id])
+  student User @relation("StudentBookings", fields: [studentId], references: [id])
+
+  bookingDate DateTime
+  bookingTime String
+  bookingStatus BookingStatus @default(PENDING)
+  bookingPrice Float
+  bookingPaymentCompleted Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
 }

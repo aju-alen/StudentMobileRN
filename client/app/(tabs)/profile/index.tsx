@@ -17,6 +17,7 @@ import KebabIcon from "../../components/KebabIcon";
 import { FONT } from "../../../constants";
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
 import SubjectCards from "../../components/SubjectCards";
+import CalendarSummary from "../../components/CalendarSummary";
 
 interface User {
   id?: string;
@@ -180,6 +181,11 @@ const ProfilePage = () => {
               {user.userDescription || "No description added."}
             </Text>
           </View>
+        </View>
+
+        {/* Calendar Summary Section */}
+        <View style={styles.section}>
+          <CalendarSummary isTeacher={userDetails?.isTeacher} />
         </View>
 
         {/* Teaching Stats */}
