@@ -36,7 +36,7 @@ console.log(token);
       topic,
       type: 2,
       start_time: startTime,
-      duration: 60,
+      duration: 500,
       timezone: 'UTC',
       settings: {
         join_before_host: true,

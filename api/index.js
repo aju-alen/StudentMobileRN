@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import authRoute from './routes/auth-route.js';
 import subjectRoute from './routes/subject-routes.js';
 import conversationRoute from './routes/conversation-route.js';
+import reviewRoutes from "./routes/review-routes.js";
 import messageRoute from './routes/message.route.js';
 import communityRoute from './routes/community-route.js'
 import stripeOnboardRoute from './routes/stripeOnboard-route.js'
@@ -257,6 +258,7 @@ app.use('/api/community', communityRoute)
 app.use('/api/stripe-onboard',stripeOnboardRoute)
 app.use('/api/bookings', bookingRoutes); 
 app.use('/api/zoom', zoomRoutes);
+app.use("/api/reviews", reviewRoutes); 
 
 
 app.use(errorHandler)

@@ -21,7 +21,7 @@ try {
       users: {
         create: {
           user: {
-            connect: { id: "cm666o4hy0000obvmehlfgpho" },
+            connect: { id: userId },
           },
         },
       },

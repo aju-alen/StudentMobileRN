@@ -23,7 +23,9 @@ import { horizontalScale, moderateScale, verticalScale } from "../../utils/metri
 const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
-const CommunityCard = ({ item, onPress }) => (
+const CommunityCard = ({ item, onPress }) => {
+  console.log(item,'community card');
+  return(
   <TouchableOpacity 
     style={styles.card}
     onPress={onPress}
@@ -34,7 +36,7 @@ const CommunityCard = ({ item, onPress }) => (
         source={{ uri: item.communityProfileImage }} 
         style={styles.communityImage}
         placeholder={blurhash}
-        contentFit="cover"
+        contentFit="fill"
         transition={200}
       />
       <View style={styles.memberBadge}>
@@ -59,7 +61,7 @@ const CommunityCard = ({ item, onPress }) => (
       </View>
     </View>
   </TouchableOpacity>
-);
+)};
 
 const CommunityPage = () => {
   const [communities, setCommunities] = useState([]);

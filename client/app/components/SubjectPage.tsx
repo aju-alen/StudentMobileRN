@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
   StatusBar,
+  TextInput,
+  Dimensions,
 } from "react-native";
 import { Image } from 'expo-image';
 import React, { useEffect, useState } from "react";
@@ -18,6 +20,17 @@ import { horizontalScale, verticalScale, moderateScale } from '../utils/metrics'
 import { FONT } from "../../constants";
 import { socket } from '../utils/socket';
 import BookingCalendar from './BookingCalendar';
+
+interface Review {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  user: {
+    name: string;
+    profileImage: string;
+  };
+}
 
 interface SubjectData {
   subjectImage?: string;
@@ -33,6 +46,7 @@ interface SubjectData {
   subjectPoints?: [string];
   subjectNameSubHeading?: string;
   subjectDuration?: string;
+  reviews?: Review[];
 }
 
 interface User {
@@ -40,6 +54,8 @@ interface User {
   profileImage?: string;
   id?: string;
 }
+
+const { width } = Dimensions.get('window');
 
 const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
@@ -49,6 +65,13 @@ const SubjectPage = ({ subjectId }) => {
   const [userData, setUserData] = React.useState<User>({});
   const [teacherId, setTeacherId] = React.useState<string>("");
   const [isBookingModalVisible, setIsBookingModalVisible] = useState(false);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [newReview, setNewReview] = useState({ title: '', description: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [usertoken, setUserToken] = useState<string>("");
+  console.log(usertoken, 'this is the user token');
+  
 
   const handleChatNow = async () => {
     const token = await AsyncStorage.getItem('authToken');
@@ -74,6 +97,7 @@ const SubjectPage = ({ subjectId }) => {
     const getSubjects = async () => {
       try {
         const token = await AsyncStorage.getItem("authToken");
+        setUserToken(token);
         const resp = await axios.get(`${ipURL}/api/subjects/${subjectId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -84,43 +108,136 @@ const SubjectPage = ({ subjectId }) => {
       }
     };
 
+    const fetchReviews = async () => {
+      setIsLoadingReviews(true);
+      try {
+        const token = await AsyncStorage.getItem("authToken");
+        const response = await axios.get(
+          `${ipURL}/api/reviews/subject/${subjectId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setReviews(response.data);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      }
+      setIsLoadingReviews(false);
+    };
+
     getSubjects();
+    fetchReviews();
   }, [subjectId]);
 
-  const FeatureItem = ({ icon, text }) => (
-    <View style={styles.featureItem}>
-      <Ionicons name={icon} size={24} color="#1A4C6E" />
-      <Text style={styles.featureText}>{text}</Text>
+  const handleSubmitReview = async () => {
+    if (!newReview.title || !newReview.description) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await axios.post(
+        `${ipURL}/api/reviews`,
+        {
+          title: newReview.title,
+          description: newReview.description,
+          subjectId: subjectId,
+        },
+        {
+          headers: { authorization: `Bearer ${usertoken}` },
+        }
+      );
+      
+      setReviews([response.data, ...reviews]);
+      setNewReview({ title: '', description: '' });
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      alert('Failed to submit review. Please try again.');
+    }
+    setIsSubmitting(false);
+  };
+
+  const handleViewAllReviews = () => {
+    router.push(`/(tabs)/home/subjectReviews/${subjectId}`);
+  };
+
+  const ReviewItem = ({ review }) => (
+    <View style={styles.reviewItem}>
+      <View style={styles.reviewHeader}>
+        <Image
+          source={{ uri: review.user.profileImage }}
+          style={styles.reviewerImage}
+          placeholder={blurhash}
+          contentFit="cover"
+          transition={100}
+        />
+        <View style={styles.reviewerInfo}>
+          <Text style={styles.reviewerName}>{review.user.name}</Text>
+          <Text style={styles.reviewDate}>
+            {new Date(review.createdAt).toLocaleDateString()}
+          </Text>
+        </View>
+      </View>
+      <Text style={styles.reviewTitle}>{review.title}</Text>
+      <Text style={styles.reviewDescription}>{review.description}</Text>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
-        <View style={styles.imageWrapper}>
-          <Image
-            source={{ uri: singleSubjectData?.subjectImage }}
-            style={styles.mainImage}
-            placeholder={blurhash}
-            contentFit="cover"
-            transition={300}
-          />
-          <View style={styles.imageOverlay} />
-        </View>
+      <ScrollView style={styles.scrollView} bounces={false}>
+        <Image
+          source={{ uri: singleSubjectData?.subjectImage }}
+          style={styles.headerImage}
+          placeholder={blurhash}
+          contentFit="cover"
+          transition={300}
+        />
 
         <View style={styles.contentContainer}>
-          <View style={styles.gradeContainer}>
-            <Text style={styles.gradeText}>Grade {singleSubjectData.subjectGrade}</Text>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{singleSubjectData.subjectLanguage}</Text>
+          {/* Status Bar */}
+          <View style={styles.statusBar}>
+            <View style={styles.statusIndicator}>
+              <Ionicons name="star" size={24} color="#FFA000" />
+              <Text style={[styles.statusText, {color: "#FFA000"}]}>
+                Premium Course
+              </Text>
+            </View>
+            <Text style={styles.dateText}>
+              Last updated {new Date().toLocaleDateString()}
+            </Text>
+          </View>
+
+          {/* Subject Header */}
+          <View style={styles.headerContainer}>
+            <View style={styles.titleContainer}>
+              <Text style={styles.subjectName}>{singleSubjectData.subjectName}</Text>
+              <View style={styles.badgeContainer}>
+                <View style={styles.badge}>
+                  <Ionicons name="school" size={16} color="#0066cc" />
+                  <Text style={styles.badgeText}>{singleSubjectData.subjectBoard}</Text>
+                </View>
+                <View style={[styles.badge, styles.gradeBadge]}>
+                  <Ionicons name="bookmark" size={16} color="#f57c00" />
+                  <Text style={[styles.badgeText, {color: '#f57c00'}]}>
+                    Grade {singleSubjectData.subjectGrade}
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <View style={styles.priceContainer}>
+              <Text style={styles.priceLabel}>Course Fee</Text>
+              <Text style={styles.price}>AED {singleSubjectData.subjectPrice}</Text>
+              <Text style={styles.durationText}>
+                {singleSubjectData.subjectDuration} hours
+              </Text>
             </View>
           </View>
 
-          <Text style={styles.titleText}>{singleSubjectData.subjectName}</Text>
-          <Text style={styles.subtitleText}>{singleSubjectData.subjectNameSubHeading}</Text>
-
-          <TouchableOpacity 
+          {/* Teacher Info */}
+          <TouchableOpacity  
             style={styles.teacherCard}
             onPress={() => router.push(`/(tabs)/home/singleProfile/${teacherId}`)}
           >
@@ -138,30 +255,112 @@ const SubjectPage = ({ subjectId }) => {
             <Ionicons name="chevron-forward" size={24} color="#1A4C6E" />
           </TouchableOpacity>
 
-          <View style={styles.featuresContainer}>
-            <FeatureItem icon="time-outline" text={`${singleSubjectData.subjectDuration} Hours`} />
-            <FeatureItem icon="globe-outline" text="100% Online" />
-            <FeatureItem icon="calendar-outline" text="Flexible Schedule" />
+          {/* Quick Info Cards */}
+          <View style={styles.quickInfoContainer}>
+            <View style={styles.quickInfoCard}>
+              <Ionicons name="language" size={24} color="#1976D2" />
+              <Text style={styles.quickInfoLabel}>Language</Text>
+              <Text style={styles.quickInfoValue}>{singleSubjectData.subjectLanguage}</Text>
+            </View>
+            <View style={styles.quickInfoCard}>
+              <Ionicons name="time" size={24} color="#388E3C" />
+              <Text style={styles.quickInfoLabel}>Duration</Text>
+              <Text style={styles.quickInfoValue}>{singleSubjectData.subjectDuration} Hours</Text>
+            </View>
           </View>
 
+          {/* Description Section */}
           {singleSubjectData.subjectDescription && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Course Description</Text>
-              <Text style={styles.descriptionText}>{singleSubjectData.subjectDescription}</Text>
+              <Text style={styles.description}>{singleSubjectData.subjectDescription}</Text>
             </View>
           )}
 
+          {/* Key Points Section */}
           {singleSubjectData.subjectPoints && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>What You'll Learn</Text>
-              {singleSubjectData.subjectPoints.map((point, i) => (
-                <View key={i} style={styles.bulletPoint}>
-                  <View style={styles.bullet} />
-                  <Text style={styles.bulletText}>{point}</Text>
+              {singleSubjectData.subjectPoints.map((point, index) => (
+                <View key={index} style={styles.pointRow}>
+                  <View style={styles.bulletPoint}>
+                    <Text style={styles.bulletNumber}>{index + 1}</Text>
+                  </View>
+                  <Text style={styles.pointText}>{point}</Text>
                 </View>
               ))}
             </View>
           )}
+
+          {/* Reviews Section */}
+          <View style={styles.section}>
+            <View style={styles.reviewsHeader}>
+              <Text style={styles.sectionTitle}>Reviews</Text>
+              {reviews.length > 0 && (
+                <TouchableOpacity onPress={handleViewAllReviews}>
+                  <Text style={styles.viewAllButton}>View All Reviews</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+            
+            {reviews.length > 0 ? (
+              <>
+                {reviews.slice(0, 3).map((review) => (
+                  <View key={review.id} style={styles.reviewItem}>
+                    <View style={styles.reviewHeader}>
+                      <Image
+                        source={{ uri: review.user.profileImage }}
+                        style={styles.reviewerImage}
+                        placeholder={blurhash}
+                        contentFit="cover"
+                        transition={100}
+                      />
+                      <View style={styles.reviewerInfo}>
+                        <Text style={styles.reviewerName}>{review.user.name}</Text>
+                        <Text style={styles.reviewDate}>
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.reviewTitle}>{review.title}</Text>
+                    <Text style={styles.reviewDescription}>{review.description}</Text>
+                  </View>
+                ))}
+              </>
+            ) : (
+              <Text style={styles.noReviewsText}>No reviews yet. Be the first to review!</Text>
+            )}
+            
+            {/* Review Form */}
+            <View style={styles.reviewForm}>
+              <Text style={styles.sectionTitle}>Submit Your Review</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Review Title"
+                placeholderTextColor="#A0AEC0"
+                value={newReview.title} 
+                onChangeText={(text) => setNewReview({ ...newReview, title: text })}
+              />
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Give a brief description of your experience."
+                placeholderTextColor="#A0AEC0"
+                value={newReview.description}
+                onChangeText={(text) => setNewReview({ ...newReview, description: text })}
+                multiline
+                numberOfLines={4}
+              />
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={handleSubmitReview}
+                disabled={isSubmitting}
+              >
+                <Text style={styles.submitButtonText}>
+                  {isSubmitting ? 'Submitting...' : 'Submit Review'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </ScrollView>
 
@@ -170,6 +369,7 @@ const SubjectPage = ({ subjectId }) => {
           style={styles.primaryButton} 
           onPress={handleEnrollPress}
         >
+          <Ionicons name="cart" size={24} color="white" />
           <Text style={styles.primaryButtonText}>Enroll Now</Text>
           <Text style={styles.priceText}>AED {singleSubjectData.subjectPrice}</Text>
         </TouchableOpacity>
@@ -189,72 +389,108 @@ const SubjectPage = ({ subjectId }) => {
   );
 };
 
-export default SubjectPage;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#f5f5f5',
   },
-  imageWrapper: {
-    height: verticalScale(250),
-    position: 'relative',
+  scrollView: {
+    flex: 1,
   },
-  mainImage: {
-    width: '100%',
-    height: '100%',
-  },
-  imageOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.2)',
+  headerImage: {
+    width: width,
+    height: 220,
+    backgroundColor: '#e0e0e0',
   },
   contentContainer: {
-    flex: 1,
-    paddingHorizontal: horizontalScale(20),
-    paddingTop: verticalScale(20),
-    paddingBottom: verticalScale(100),
+    padding: 16,
+    marginTop: -30,
+    backgroundColor: 'white',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
   },
-  gradeContainer: {
+  statusBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: verticalScale(15),
+    marginBottom: 20,
+    paddingTop: 10,
   },
-  gradeText: {
-    fontFamily: FONT.semiBold,
-    fontSize: moderateScale(16),
-    color: '#2DCB63',
+  statusIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  statusText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  dateText: {
+    color: '#666',
+    fontSize: 14,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 24,
+  },
+  titleContainer: {
+    flex: 1,
+    marginRight: 16,
+  },
+  subjectName: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginBottom: 12,
+  },
+  badgeContainer: {
+    flexDirection: 'row',
+    gap: 8,
   },
   badge: {
-    backgroundColor: '#E8F5FF',
-    paddingHorizontal: horizontalScale(12),
-    paddingVertical: verticalScale(6),
+    backgroundColor: '#f0f7ff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  gradeBadge: {
+    backgroundColor: '#fff3e0',
   },
   badgeText: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(12),
-    color: '#1A4C6E',
+    color: '#0066cc',
+    fontSize: 14,
+    fontWeight: '600',
   },
-  titleText: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(24),
-    color: '#1A4C6E',
-    marginBottom: verticalScale(8),
+  priceContainer: {
+    alignItems: 'flex-end',
   },
-  subtitleText: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(16),
-    color: '#5D6D7E',
-    marginBottom: verticalScale(20),
+  priceLabel: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 4,
+  },
+  price: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#2e7d32',
+  },
+  durationText: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
   },
   teacherCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8F9FA',
-    padding: moderateScale(15),
+    padding: 16,
     borderRadius: 12,
-    marginBottom: verticalScale(20),
+    marginBottom: 24,
   },
   teacherImage: {
     width: 50,
@@ -263,66 +499,166 @@ const styles = StyleSheet.create({
   },
   teacherInfo: {
     flex: 1,
-    marginLeft: horizontalScale(15),
+    marginLeft: 15,
   },
   teacherName: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(16),
-    color: '#1A4C6E',
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a1a1a',
   },
   teacherRole: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(14),
-    color: '#5D6D7E',
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
   },
-  featuresContainer: {
+  quickInfoContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: verticalScale(25),
+    gap: 12,
+    marginBottom: 24,
   },
-  featureItem: {
-    alignItems: 'center',
+  quickInfoCard: {
     flex: 1,
+    backgroundColor: '#f8f9fa',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
   },
-  featureText: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(12),
-    color: '#5D6D7E',
-    marginTop: verticalScale(8),
-    textAlign: 'center',
+  quickInfoLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 8,
+  },
+  quickInfoValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginTop: 4,
   },
   section: {
-    marginBottom: verticalScale(25),
+    marginBottom: 24,
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
   },
   sectionTitle: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(18),
-    color: '#1A4C6E',
-    marginBottom: verticalScale(15),
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 16,
   },
-  descriptionText: {
-    fontFamily: FONT.regular,
-    fontSize: moderateScale(15),
-    color: '#5D6D7E',
+  description: {
+    fontSize: 16,
+    color: '#666',
     lineHeight: 24,
   },
+  pointRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    gap: 12,
+  },
   bulletPoint: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#f0f7ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bulletNumber: {
+    color: '#0066cc',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  pointText: {
+    flex: 1,
+    fontSize: 16,
+    color: '#666',
+    lineHeight: 24,
+  },
+  reviewItem: {
+    backgroundColor: '#f8f9fa',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  reviewHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: verticalScale(12),
+    marginBottom: 12,
   },
-  bullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+  reviewerImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  reviewerInfo: {
+    marginLeft: 12,
+  },
+  reviewerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a1a1a',
+  },
+  reviewDate: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+  },
+  reviewTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 8,
+  },
+  reviewDescription: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+  },
+  reviewForm: {
+    marginTop: 16,
+  },
+  input: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    fontSize: 14,
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  submitButton: {
     backgroundColor: '#2DCB63',
-    marginRight: horizontalScale(12),
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
   },
-  bulletText: {
-    flex: 1,
-    fontFamily: FONT.regular,
-    fontSize: moderateScale(15),
-    color: '#5D6D7E',
+  submitButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  noReviewsText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 12,
+  },
+  reviewsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  viewAllButton: {
+    fontSize: 14,
+    color: '#2DCB63',
+    textDecorationLine: 'underline',
   },
   footer: {
     position: 'absolute',
@@ -330,42 +666,45 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: 'row',
-    padding: moderateScale(15),
-    backgroundColor: '#FFFFFF',
+    padding: 16,
+    backgroundColor: 'white',
     borderTopWidth: 1,
-    borderTopColor: '#E8E8E8',
+    borderTopColor: '#f0f0f0',
   },
   primaryButton: {
     flex: 1,
     backgroundColor: '#2DCB63',
     borderRadius: 12,
-    padding: moderateScale(15),
-    marginRight: horizontalScale(10),
+    padding: 16,
+    marginRight: 12,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   primaryButtonText: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(16),
-    color: '#FFFFFF',
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
   priceText: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(14),
-    color: '#FFFFFF',
-    marginTop: verticalScale(4),
+    color: 'white',
+    fontSize: 14,
+    marginLeft: 8,
   },
   secondaryButton: {
     backgroundColor: '#3498DB',
     borderRadius: 12,
-    padding: moderateScale(15),
-    width: horizontalScale(70),
+    padding: 16,
+    width: 70,
     alignItems: 'center',
     justifyContent: 'center',
   },
   secondaryButtonText: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(12),
-    color: '#FFFFFF',
-    marginTop: verticalScale(4),
+    color: 'white',
+    fontSize: 12,
+    marginTop: 4,
   },
 });
+
+export default SubjectPage;

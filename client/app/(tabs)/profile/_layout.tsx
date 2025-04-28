@@ -9,6 +9,7 @@ const ProfileLayout = () => {
     <Stack.Screen name="index" options={{ headerShown: false }} />
     <Stack.Screen name="editSubject/[editSubjectId]" options={{presentation:'modal'}}/>
     <Stack.Screen name="createSubject/[createSubjectId]" options={{presentation:'modal'}}/>
+    <Stack.Screen name="settings" options={{ headerShown: false }}/>
     
     
 </Stack>

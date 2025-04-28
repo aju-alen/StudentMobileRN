@@ -18,6 +18,7 @@ import { FONT } from "../../../constants";
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
 import SubjectCards from "../../components/SubjectCards";
 import CalendarSummary from "../../components/CalendarSummary";
+import { Ionicons } from '@expo/vector-icons';
 
 interface User {
   id?: string;
@@ -106,6 +107,10 @@ const ProfilePage = () => {
     );
   };
 
+  const handleSettingsPress = () => {
+    router.push('/(tabs)/profile/settings');
+  };
+
   return (
     <TouchableWithoutFeedback onPress={closeDropdown}>
       <ScrollView style={styles.mainContainer}>
@@ -113,13 +118,21 @@ const ProfilePage = () => {
         <View style={styles.header}>
           <View style={styles.topBar}>
             <Text style={styles.pageTitle}>My Profile</Text>
-            <KebabIcon 
-              handleLogout={handleLogout} 
-              handleCreateNewSubject={handleCreateNewSubject} 
-              isTeacher={userDetails?.isTeacher} 
-              setShowDropdown={setShowDropdown} 
-              showDropdown={showDropdown} 
-            />
+            <View style={styles.iconsContainer}>
+              <TouchableOpacity 
+                style={styles.settingsButton}
+                onPress={handleSettingsPress}
+              >
+                <Ionicons name="settings-outline" size={24} color="#1A2B4B" />
+              </TouchableOpacity>
+              <KebabIcon 
+                handleLogout={handleLogout} 
+                handleCreateNewSubject={handleCreateNewSubject} 
+                isTeacher={userDetails?.isTeacher} 
+                setShowDropdown={setShowDropdown} 
+                showDropdown={showDropdown} 
+              />
+            </View>
           </View>
           
           <View style={styles.profileSection}>
@@ -427,6 +440,13 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: verticalScale(20),
+  },
+  iconsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  settingsButton: {
+    marginRight: horizontalScale(15),
   },
 });
 
