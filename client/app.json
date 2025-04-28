@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "CoachAcadem",
-    "slug": "StudyMobileApp",
-    "scheme": "StudyMobileApp",
+    "name": "Coach Academ",
+    "slug": "coach-academ",
+    "scheme": "coach-academ",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
@@ -17,14 +17,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.cimaf11680.StudyMobileApp"
+      "bundleIdentifier": "com.rise.coachacadem"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.cimaf11680.StudyMobileApp",
+      "package": "com.rise_admin.coachacadem",
       "permissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS"
@@ -63,10 +63,8 @@
     "extra": {
       "router": {
         "origin": false
-      },
-      "eas": {
-        "projectId": "01bf117c-ee23-4c0c-a357-c4279c9e8082"
       }
+     
     }
   }
 }
