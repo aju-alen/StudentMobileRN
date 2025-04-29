@@ -14,7 +14,7 @@ const SubjectId = () => {
   return (
     <View style={{flex:1}}>
        <Stack.Screen options={{
-        headerStyle: { backgroundColor: "'rgba(255, 255, 255, 0.1)'" },
+        headerStyle: { backgroundColor: "'rgba(255, 255, 255, 0.1)'" }, 
         headerTitle: "",
         headerShadowVisible: false,
         headerBackVisible: false,

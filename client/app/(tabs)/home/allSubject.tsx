@@ -1,4 +1,4 @@
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, Image, TextInput } from 'react-native'
+import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, TextInput, ActivityIndicator } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import SubjectCards from '../../components/SubjectCards'
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -8,162 +8,264 @@ import { debounce } from "lodash";
 import { Ionicons } from "@expo/vector-icons";
 import { ipURL } from '../../utils/utils';
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
-import { FONT } from '../../../constants';
-import { ScrollView,GestureHandlerRootView } from 'react-native-gesture-handler';
+import { FONT, COLORS } from '../../../constants';
+import { ScrollView, GestureHandlerRootView } from 'react-native-gesture-handler';
 
-interface User {
-    email?: string;
-    name?: string;
-    profileImage?: string;
-    userDescription?: string;
-  }
+interface Subject {
+  _id: string;
+  subjectName: string;
+  subjectDescription: string;
+  subjectGrade: string;
+  subjectBoard: string;
+  subjectTags: string[];
+  thumbnail: string;
+}
 
 const allSubject = () => {
-    const [subjectData, setSubjectData] = React.useState([]);
-    const [search, setSearch] = React.useState("");
-    const [focus, setFocus] = React.useState(false);
-    const params = useLocalSearchParams();
-    const { subjectGrade, subjectBoard, subjectTeacher, subjectTags } = params;
-    console.log(params, 'this is params in homeeee');
-  
-  
-    const handleSearch = debounce(async () => {
-      const token = await AsyncStorage.getItem("authToken");
-      const resp = await axios.get(`${ipURL}/api/subjects?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log(resp.data, "resp data normal function");
-  
-      const filtered = resp.data.filter((subject: { subjectName: string }) => {
-        return subject.subjectName.toLowerCase().includes(search.toLowerCase());
-      });
-      setSubjectData(filtered);
-    }, 1000);
-  
-    const [user, setUser] = useState<User>({});
-    useEffect(() => {
-      const getUser = async () => {
-        const apiUser = await axios.get(`${ipURL}/api/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${await AsyncStorage.getItem("authToken")}`,
-          },
-        });
-        setUser(apiUser.data);
-      };
-      getUser();
-    }, []);
-  
-    console.log("User11>>>>", user);
-  
-    useEffect(() => {
-      const getSubjects = async () => {
-        const token = await AsyncStorage.getItem("authToken");
-  
-        const resp = await axios.get(`${ipURL}/api/subjects/search?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        console.log(resp.data, "resp data in useEffect");
-        setSubjectData(resp.data);
-  
-        console.log("THIS IS RERENDERING AGAIN AFTER MODAL");
-  
-      };
-      getSubjects();
-    }, []);
-  
-    console.log(subjectData, "outside");
-  
-    const handleItemPress = (itemId: { _id: any }) => {
-      console.log(itemId, "this is the item id");
-  
-      router.push(`/(tabs)/home/${itemId._id}`);
-    };
+  const [subjectData, setSubjectData] = useState<Subject[]>([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
-    return (
-      <GestureHandlerRootView style={{ flex: 1 }}> {/* Wrap your component tree */}
-      <SafeAreaView style={styles.mainContainer}>
-        <View >
-            <ScrollView>
-          <View >
-            <View style={styles.searchContainer}>
-              <Ionicons name={"search"} size={moderateScale(26)} color={"black"} />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search Course..."
-                placeholderTextColor="gray"
-                value={search}
-                onChangeText={(text) => {
-                  setSearch(text);
-                  handleSearch();
-                }}
-              />
-              <TouchableOpacity onPress={() => router.push('/home/filter')}>
-                <Ionicons name={"filter"} size={moderateScale(26)} color={"gray"} />
-              </TouchableOpacity>
-            </View>
-          </View>
+  const fetchSubjects = async (searchTerm?: string) => {
+    try {
+      setLoading(true);
+      const token = await AsyncStorage.getItem("authToken");
+      const url = searchTerm && searchTerm.trim() !== ''
+        ? `${ipURL}/api/subjects?q=${encodeURIComponent(searchTerm.trim())}`
+        : `${ipURL}/api/subjects`;
+      
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSubjectData(response.data);
+    } catch (err) {
+      setError('Failed to fetch subjects. Please try again.');
+      console.error('Error fetching subjects:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = (text: string) => {
+    setSearch(text);
     
-          <View style={styles.flatlistHeaderContainer}>
-            <Text style={styles.flatlistHeaderTextLeft}>All Courses</Text>
-            
-          </View>
-          <SubjectCards subjectData={subjectData} handleItemPress={handleItemPress} isHorizontal={false} />
-        </ScrollView>
+    // Clear existing timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    // Set new timeout
+    const timeout = setTimeout(() => {
+      if (!text.trim()) {
+        fetchSubjects();
+        return;
+      }
+      fetchSubjects(text);
+    }, 1500);
+
+    setSearchTimeout(timeout);
+  };
+
+  const handleKeyPress = (e: any) => {
+    if (e.nativeEvent.key === 'Enter') {
+      // Clear existing timeout
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+      // Trigger search immediately
+      if (!search.trim()) {
+        fetchSubjects();
+        return;
+      }
+      fetchSubjects(search);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      // Cleanup timeout on component unmount
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
+  }, [searchTimeout]);
+
+  useEffect(() => {
+    fetchSubjects();
+  }, []);
+
+  const handleItemPress = (itemId: { _id: string }) => {
+    router.push(`/(tabs)/home/${itemId._id}`);
+  };
+
+  const handleFilterPress = () => {
+    router.push('/home/filter');
+  };
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaView style={styles.mainContainer}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>All Courses</Text>
+          <TouchableOpacity onPress={handleFilterPress} style={styles.filterButton}>
+            <Ionicons name="options-outline" size={24} color={COLORS.primary} />
+          </TouchableOpacity>
         </View>
+
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color={COLORS.gray} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search courses, subjects, or tags..."
+            placeholderTextColor={COLORS.gray}
+            value={search}
+            onChangeText={handleSearch}
+            onKeyPress={handleKeyPress}
+            returnKeyType="search"
+          />
+          {search.length > 0 && (
+            <TouchableOpacity 
+              onPress={() => {
+                setSearch('');
+                fetchSubjects();
+              }}
+              style={styles.clearButton}
+            >
+              <Ionicons name="close-circle" size={20} color={COLORS.gray} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity onPress={() => fetchSubjects()} style={styles.retryButton}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : subjectData.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="search-outline" size={48} color={COLORS.gray} />
+            <Text style={styles.emptyText}>No courses found</Text>
+            <Text style={styles.emptySubtext}>Try different search terms</Text>
+          </View>
+        ) : (
+          <ScrollView 
+            style={styles.contentContainer}
+            showsVerticalScrollIndicator={false}
+          >
+            <SubjectCards 
+              subjectData={subjectData} 
+              handleItemPress={handleItemPress} 
+              isHorizontal={false} 
+            />
+          </ScrollView>
+        )}
       </SafeAreaView>
     </GestureHandlerRootView>
   );
-      
-}
+};
 
-export default allSubject
+export default allSubject;
 
 const styles = StyleSheet.create({
-
-    mainContainer: {
-      flex: 1,
-      backgroundColor: "white",
-    },
-    
- 
-   
-  
-    searchContainer: {
-      backgroundColor: "white",
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-around",
-      marginTop: verticalScale(24),
-      height: verticalScale(50),
-      borderRadius: moderateScale(10),
-      borderWidth: 1,
-      borderColor: "black",
-    },
-    searchInput: {
-      width: horizontalScale(250),
-      height: verticalScale(40),
-      fontFamily: FONT.medium,
-      fontSize: moderateScale(13),
-    },
-    horizontalFlatlistHeaderContainer: {
-      justifyContent: "space-between",
-      alignItems: "flex-start",
-      marginHorizontal: horizontalScale(25),
-      marginTop: verticalScale(24),
-    },
-    flatlistHeaderContainer: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginHorizontal: horizontalScale(25),
-      marginTop: verticalScale(24),
-    },
-    flatlistHeaderTextLeft: {
-      fontFamily: FONT.semiBold,
-      fontSize: moderateScale(18),
-    },
-  })
+  mainContainer: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: horizontalScale(20),
+    paddingTop: verticalScale(20),
+    paddingBottom: verticalScale(10),
+  },
+  headerTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(24),
+    color: COLORS.primary,
+  },
+  filterButton: {
+    padding: moderateScale(8),
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.lightGray,
+    marginHorizontal: horizontalScale(20),
+    marginVertical: verticalScale(10),
+    borderRadius: moderateScale(12),
+    paddingHorizontal: horizontalScale(15),
+  },
+  searchIcon: {
+    marginRight: horizontalScale(10),
+  },
+  searchInput: {
+    flex: 1,
+    height: verticalScale(45),
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
+    color: COLORS.black,
+  },
+  clearButton: {
+    padding: moderateScale(5),
+  },
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: horizontalScale(20),
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: horizontalScale(20),
+  },
+  errorText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(16),
+    color: COLORS.error,
+    textAlign: 'center',
+    marginBottom: verticalScale(20),
+  },
+  retryButton: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: horizontalScale(20),
+    paddingVertical: verticalScale(10),
+    borderRadius: moderateScale(8),
+  },
+  retryButtonText: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(14),
+    color: COLORS.white,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: horizontalScale(20),
+  },
+  emptyText: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(18),
+    color: COLORS.black,
+    marginTop: verticalScale(20),
+  },
+  emptySubtext: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(14),
+    color: COLORS.gray,
+    marginTop: verticalScale(10),
+  },
+});

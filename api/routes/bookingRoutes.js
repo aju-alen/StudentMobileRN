@@ -11,7 +11,7 @@ import { verifyToken } from '../middlewares/jwt.js';
 const router = express.Router();
 
 // Get teacher availability for a specific date
-router.get('/upcoming-classes', getUpcomingClasses);
+router.get('/upcoming-classes',verifyToken, getUpcomingClasses);
 
 
 // Create a new booking

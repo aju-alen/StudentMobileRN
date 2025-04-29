@@ -39,6 +39,7 @@ CREATE TABLE `Subject` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `userId` VARCHAR(191) NOT NULL,
 
+    UNIQUE INDEX `Subject_id_userId_key`(`id`, `userId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -108,7 +109,6 @@ CREATE TABLE `CommunityUser` (
     `userId` VARCHAR(191) NOT NULL,
     `communityId` VARCHAR(191) NOT NULL,
 
-    UNIQUE INDEX `CommunityUser_userId_communityId_key`(`userId`, `communityId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -138,6 +138,15 @@ CREATE TABLE `Booking` (
     `bookingPaymentCompleted` BOOLEAN NOT NULL DEFAULT false,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `SavedSubject` (
+    `id` VARCHAR(191) NOT NULL,
+    `subjectId` VARCHAR(191) NOT NULL,
+    `userId` VARCHAR(191) NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -183,3 +192,9 @@ ALTER TABLE `Booking` ADD CONSTRAINT `Booking_teacherId_fkey` FOREIGN KEY (`teac
 
 -- AddForeignKey
 ALTER TABLE `Booking` ADD CONSTRAINT `Booking_studentId_fkey` FOREIGN KEY (`studentId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `SavedSubject` ADD CONSTRAINT `SavedSubject_subjectId_fkey` FOREIGN KEY (`subjectId`) REFERENCES `Subject`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `SavedSubject` ADD CONSTRAINT `SavedSubject_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

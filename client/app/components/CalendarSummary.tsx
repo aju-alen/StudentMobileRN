@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { FONT } from '../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
 import { ipURL } from '../utils/utils';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Mock data for upcoming classes - replace with actual API data
 
@@ -49,7 +50,12 @@ const CalendarSummary = ({isTeacher}:{isTeacher:boolean}) => {
   useEffect(() => {
     const fetchUpcomingClasses = async () => {
       try{
-        const getUpcomingClass = await axios.get(`${ipURL}/api/bookings/upcoming-classes?limit=3`)
+        const token = await AsyncStorage.getItem('authToken');
+        const getUpcomingClass = await axios.get(`${ipURL}/api/bookings/upcoming-classes?limit=3`,{
+          headers:{
+            Authorization: `Bearer ${token}`
+          }
+        })
         setUpcomingClasses(getUpcomingClass.data);
       }
       catch(error){

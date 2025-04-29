@@ -17,5 +17,14 @@
       "distribution": "internal"
     },
     "production": {}
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "rightintellectual@gmail.com",
+        "ascAppId": "6745173635",
+        "appleTeamId": "46LHZT8BN9"
+      }
+    }
   }
 }

@@ -51,13 +51,65 @@ export const createSubject = async (req, res, next) => {
         next(err);
     }
 };
-export const getAllSubjects = async (req, res, next) => {
-    try{
-        const subjects = await Subject.find({subjectVerification:true}).populate('user', 'name profileImage');
-        res.status(200).json(subjects);
 
-    }
-    catch(err){
+export const getAllSubjects = async (req, res, next) => {
+    try {
+        const { q } = req.query;
+        
+        if (!q || q === '') {
+            const subjects = await prisma.subject.findMany({
+                where: {
+                    AND: [
+                        { subjectVerification: true },
+                        {
+                            OR: [
+                                { subjectName: { contains: searchTerm, mode: 'insensitive' } },
+                                { subjectDescription: { contains: searchTerm, mode: 'insensitive' } },
+                                { subjectTags: { has: searchTerm } } // <-- corrected here
+                            ]
+                        }
+                    ]
+                },
+                include: {
+                    user: {
+                        select: {
+                            name: true,
+                            profileImage: true
+                        }
+                    }
+                }
+            });
+            
+            return res.status(200).json(subjects);
+        }
+
+        const searchTerm = q.toString().toLowerCase();
+        
+        const subjects = await prisma.subject.findMany({
+            where: {
+                AND: [
+                    { subjectVerification: true },
+                    {
+                        OR: [
+                            { subjectName: { contains: searchTerm, mode: 'insensitive' } },
+                            { subjectDescription: { contains: searchTerm, mode: 'insensitive' } },
+                            { subjectTags: { array_contains: [searchTerm] } }
+                        ]
+                    }
+                ]
+            },
+            include: {
+                user: {
+                    select: {
+                        name: true,
+                        profileImage: true
+                    }
+                }
+            }
+        });
+
+        res.status(200).json(subjects);
+    } catch (err) {
         console.log(err);
         next(err);
     }
@@ -265,3 +317,56 @@ export const getRecommendedSubjects = async (req, res, next) => {
         res.status(500).json({ error: error.message });
     }
 }
+
+export const getSavedSubjects = async (req, res, next) => {
+    try {
+        const savedSubjects = await prisma.savedSubject.findMany({
+            where: { userId: req.userId },
+            include: {
+                subject: true
+            }
+        });
+        res.status(200).json(savedSubjects);
+    } catch (err) {
+        console.error(err);
+}
+}
+
+export const saveSubject = async (req, res, next) => {
+    try {
+        const { subjectId } = req.params;
+        const userId = req.userId;
+
+        const savedSubject = await prisma.savedSubject.create({
+            data: {
+                subjectId,
+                userId,
+            },
+        }); 
+        res.status(200).json({ message: "Subject saved", savedSubject });
+    } catch (err) {
+        console.error(err);
+        next(err);
+    }
+}
+
+export const unsaveSubject = async (req, res, next) => {
+    try {
+        const { subjectId } = req.params;
+        const userId = req.userId;
+
+        const savedSubject = await prisma.savedSubject.delete({
+            where: { 
+                subjectId_userId: {
+                    subjectId: subjectId,
+                    userId: userId
+                }
+            },
+        });
+        res.status(200).json({ message: "Subject unsaved", savedSubject });
+    } catch (err) {
+        console.error(err);
+        next(err);
+    }
+}
+

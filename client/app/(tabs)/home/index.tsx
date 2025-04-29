@@ -22,6 +22,13 @@ import SubjectCards from "../../components/SubjectCards";
 import HorizontalSubjectCard from "../../components/horizontalSubjectCard";
 import ColumnSubjectCards from "../../components/colSubjectCards";
 import VideoPlayer from "../../components/VideoPlayer";
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import 'dayjs/locale/en';
+
+// Initialize dayjs plugins
+dayjs.extend(relativeTime);
+dayjs.locale('en');
 
 interface User {
   email?: string;
@@ -41,10 +48,18 @@ interface User {
 
 interface Deadline {
   id: string;
-  courseTitle: string;
-  taskType: string;
-  dueDate: string;
-  priority: 'high' | 'medium' | 'low';
+  bookingDate: string; // ISO date string
+  bookingTime: string; // e.g., "11:00"
+  subject: {
+    subjectName: string;
+  };
+  teacher: {
+    name: string;
+  };
+  student: {
+    name: string;
+  };
+  priority?: 'high' | 'medium' | 'low';
 }
 
 interface LiveSession {
@@ -87,24 +102,7 @@ const HomePage = () => {
     completedCourses: 0,
   });
 
-
-
-  const [deadlines, setDeadlines] = useState<Deadline[]>([
-    {
-      id: '1',
-      courseTitle: 'Advanced Mathematics',
-      taskType: 'Class',
-      dueDate: 'Tomorrow',
-      priority: 'high'
-    },
-    {
-      id: '2',
-      courseTitle: 'Physics Basics',
-      taskType: 'Class',
-      dueDate: 'Tomorrow',
-      priority: 'medium'
-    }
-  ]);
+  const [deadlines, setDeadlines] = useState<Deadline[]>([]);
 
   const videoData = [
     { id: '1', videoUrl: 'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4' },
@@ -161,19 +159,53 @@ const HomePage = () => {
   
 
 
-  const DeadlineCard = ({ deadline }: { deadline: Deadline }) => (
-    <View style={styles.deadlineCard}>
-      <View style={[styles.priorityIndicator, styles[`priority${deadline.priority}`]]} />
-      <View style={styles.deadlineInfo}>
-        <Text style={styles.deadlineTitle}>{deadline.courseTitle}</Text>
-        <Text style={styles.deadlineType}>{deadline.taskType}</Text>
+  const getRelativeDate = (dateString: string) => {
+    const bookingDate = dayjs(dateString);
+    const today = dayjs().startOf('day');
+    const tomorrow = today.add(1, 'day');
+    
+    if (bookingDate.isSame(today, 'day')) {
+      return 'Today';
+    } else if (bookingDate.isSame(tomorrow, 'day')) {
+      return 'Tomorrow';
+    } else {
+      return bookingDate.format('MMM D, YYYY');
+    }
+  };
+
+  const getPriority = (dateString: string): 'high' | 'medium' | 'low' => {
+    const bookingDate = dayjs(dateString);
+    const today = dayjs().startOf('day');
+    const tomorrow = today.add(1, 'day');
+    
+    if (bookingDate.isSame(today, 'day')) {
+      return 'high';
+    } else if (bookingDate.isSame(tomorrow, 'day')) {
+      return 'medium';
+    } else {
+      return 'low';
+    }
+  };
+
+  const DeadlineCard = ({ deadline }: { deadline: Deadline }) => {
+    const priority = getPriority(deadline.bookingDate);
+    
+    return (
+      <View style={styles.deadlineCard}>
+        <View style={[styles.priorityIndicator, styles[`priority${priority}`]]} />
+        <View style={styles.deadlineInfo}>
+          <Text style={styles.deadlineTitle}>{deadline?.subject.subjectName}</Text>
+          <Text style={styles.deadlineType}>Live Class</Text>
+          <Text style={styles.teacherName}>with {deadline?.teacher.name}</Text>
+        </View>
+        <View style={styles.deadlineTime}>
+          <Text style={styles.deadlineLabel}>Due</Text>
+          <Text style={styles.deadlineDate}>{getRelativeDate(deadline.bookingDate)}</Text>
+          <Text style={styles.classTime}>{deadline.bookingTime}</Text>
+        </View>
       </View>
-      <View style={styles.deadlineTime}>
-        <Text style={styles.deadlineLabel}>Due</Text>
-        <Text style={styles.deadlineDate}>{deadline.dueDate}</Text>
-      </View>
-    </View>
-  );
+    );
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -205,13 +237,26 @@ const HomePage = () => {
     }
   };
 
+  const fetchDeadlines = async () => {
+    try {
+      const token = await AsyncStorage.getItem("authToken");
+      const response = await axios.get(`${ipURL}/api/bookings/upcoming-classes?limit=2`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDeadlines(response.data);
+    } catch (error) {
+      console.error('Error fetching deadlines:', error);
+    }
+  };
+
   useEffect(() => {
     fetchData();
+    fetchDeadlines();
   }, []);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    fetchData().finally(() => setRefreshing(false));
+    Promise.all([fetchData(), fetchDeadlines()]).finally(() => setRefreshing(false));
   }, []);
 
   const handleItemPress = (itemId: { id: any }) => {
@@ -241,7 +286,7 @@ const HomePage = () => {
         
         <View style={styles.welcomeText}>
           <Text style={styles.greeting}>Welcome back,</Text>
-          <Text style={styles.userName}>{user.name}</Text>
+          <Text style={styles.userName}>{user.name.split(' ')[0]}</Text>
         </View>
         
         <TouchableOpacity style={styles.notificationButton}>
@@ -281,7 +326,7 @@ const HomePage = () => {
           <QuickActionButton 
             icon="search-outline" 
             label="Find Courses"
-            onPress={() => router.push('/(tabs)/home/search')}
+            onPress={() => router.push('/(tabs)/home/filter')}
           />
           <QuickActionButton 
             icon="calendar-outline" 
@@ -476,12 +521,13 @@ const styles = StyleSheet.create({
   },
   quickActionButton: {
     alignItems: 'center',
+    width: horizontalScale(80),
   },
   
   quickActionLabel: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(2),
-    color: '#1A4C6E',
+    fontSize: moderateScale(12),
+    color: COLORS.primary,
     marginTop: verticalScale(8),
   },
   statsContainer: {
@@ -721,6 +767,7 @@ const styles = StyleSheet.create({
   },
   deadlineInfo: {
     flex: 1,
+    marginRight: horizontalScale(12),
   },
   deadlineTitle: {
     fontFamily: FONT.bold,
@@ -735,6 +782,7 @@ const styles = StyleSheet.create({
   },
   deadlineTime: {
     alignItems: 'flex-end',
+    minWidth: horizontalScale(100),
   },
   deadlineLabel: {
     fontFamily: FONT.regular,
@@ -745,6 +793,18 @@ const styles = StyleSheet.create({
     fontFamily: FONT.bold,
     fontSize: moderateScale(14),
     color: '#1A4C6E',
+  },
+  teacherName: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(12),
+    color: '#666666',
+    marginTop: verticalScale(4),
+  },
+  classTime: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(14),
+    color: '#1A4C6E',
+    marginTop: verticalScale(4),
   },
   statsCard: {
     backgroundColor: 'rgba(255,255,255,0.95)',

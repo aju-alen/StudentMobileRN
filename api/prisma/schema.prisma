@@ -39,6 +39,7 @@ model User {
   clientConversations Conversation[] @relation("ClientConversations")
   communityMemberships CommunityUser[]
   communityMessages    CommunityMessage[]
+  savedSubjects       SavedSubject[]
 }
 
 model Subject {
@@ -65,6 +66,9 @@ model Subject {
   reviews             Review[]
   conversations       Conversation[]
   bookings            Booking[]
+  savedSubjects       SavedSubject[]
+
+  @@unique([id, userId])
 }
 
 model Review {
@@ -139,7 +143,7 @@ model CommunityUser {
   community   Community @relation(fields: [communityId], references: [id])
   communityId String
 
-  @@unique([userId, communityId])
+
 }
 
 model CommunityMessage {
@@ -173,6 +177,17 @@ model Booking {
   bookingPaymentCompleted Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model SavedSubject {
+  id String @id @default(cuid())
+  subjectId String
+  userId String
+  
+  subject Subject @relation(fields: [subjectId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([subjectId, userId])
 }
 
 enum BookingStatus {

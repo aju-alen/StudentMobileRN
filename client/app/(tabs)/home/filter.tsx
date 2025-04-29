@@ -1,7 +1,9 @@
-import { SafeAreaView, ScrollView, StyleSheet, Text, TextInput, Touchable, TouchableOpacity, View } from 'react-native'
+import { SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import React from 'react'
 import { Ionicons } from "@expo/vector-icons";
 import { router } from 'expo-router';
+import { COLORS, FONT, SIZES } from '../../../constants';
+import { horizontalScale, verticalScale, moderateScale } from '../../utils/metrics';
 
 const Filter = () => {
   const [grade, setGrade] = React.useState('');
@@ -12,129 +14,156 @@ const Filter = () => {
   console.log(grade,'this is tagsInput');
   
   return (
-<SafeAreaView style={styles.container}>
-  <ScrollView style={styles.container}>
-    <View style={styles.container}>
-      <View style={styles.searchHeaderContainer}>
-        <Text style={styles.text1}>
-        <Ionicons name="people-outline" size={20} color="#900" /> Advanced Search</Text>
-      </View>
-      <View style={styles.line}></View>
-      <View style={styles.bodyContainer}>
-        <Text style={styles.text2}>Search By Grade</Text>
-        <TextInput style={styles.inputBox} 
-        placeholder="Search By Grade"
-        placeholderTextColor="gray"
-        value={grade}
-        onChangeText={setGrade}
+    <SafeAreaView style={styles.container}>
+      <ScrollView 
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.header}>
+          <Ionicons name="search" size={24} color={COLORS.primary} />
+          <Text style={styles.headerTitle}>Advanced Search</Text>
+        </View>
 
-        />
-        
-      </View>
-      <View style={styles.bodyContainer}>
-        <Text style={styles.text2}>Search By Subject Board</Text>
-        <TextInput style={styles.inputBox} 
-        placeholder="Subject Board eg: CBSE, ICSE, State Board"
-        placeholderTextColor="gray"
-        value={board}
-        onChangeText={setBoard}
-        />
-        
-      </View>
-      <View style={styles.bodyContainer}>
-        <Text style={styles.text2}>Search By Subject Tags</Text>
-        <TextInput style={styles.inputBox} 
-        placeholder="Subject by Tags eg: Maths, Science, English"
-        placeholderTextColor="gray"
-        value={tags }
-        onChangeText={setTags}
-        />
-        
-      </View>
-      {/* <View style={styles.bodyContainer}>
-        <Text style={styles.text2}>Search By Teacher Name</Text>
-        <TextInput style={styles.inputBox} 
-        placeholder="Subject by teacher name"
-        placeholderTextColor="gray"
-        value={teacher}
-        onChangeText={setTeacher}
-        />
-        
-      </View> */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={()=>{
-           router.replace({
-            pathname: "/(tabs)/home/",
-            params: {
-              ...(grade && {subjectGrade: grade}),
-              ...(board&& {subjectBoard: board}),
-              ...(tags&& {subjectTags: tags}),
-              // ...(teacher&& {subjectTeacher: teacher}),
-            },
-          });
-        }} >
-          <Text style={styles.buttonText}>Search</Text>
+        <View style={styles.searchSection}>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Grade</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput 
+                style={styles.input}
+                placeholder="Enter grade (e.g., 10, 11, 12)"
+                placeholderTextColor="#999"
+                value={grade}
+                onChangeText={setGrade}
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Board</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput 
+                style={styles.input}
+                placeholder="Enter board (e.g., CBSE, ICSE)"
+                placeholderTextColor="#999"
+                value={board}
+                onChangeText={setBoard}
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Subject Tags</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput 
+                style={styles.input}
+                placeholder="Enter subjects (e.g., Maths, Science)"
+                placeholderTextColor="#999"
+                value={tags}
+                onChangeText={setTags}
+              />
+            </View>
+          </View>
+        </View>
+
+        <TouchableOpacity 
+          style={styles.searchButton}
+          onPress={() => {
+            router.replace({
+              pathname: "/(tabs)/home/",
+              params: {
+                ...(grade && { subjectGrade: grade }),
+                ...(board && { subjectBoard: board }),
+                ...(tags && { subjectTags: tags }),
+              },
+            });
+          }}
+        >
+          <Text style={styles.searchButtonText}>Search Courses</Text>
+          <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
         </TouchableOpacity>
-      </View>
-    </View>
-    </ScrollView>
+      </ScrollView>
     </SafeAreaView>
-    
-  )
-}
+  );
+};
 
-export default Filter
+export default Filter;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#DBE8D8",
+    backgroundColor: '#FFFFFF',
   },
-  searchHeaderContainer:{
-    marginLeft: 10,
-    borderRadius: 10,
-    height: 45,
+  scrollView: {
+    flex: 1,
   },
-  text1: {
-    fontSize: 20,
-    fontFamily: "Roboto-Regular",
-    padding: 10,
+  scrollContent: {
+    paddingBottom: verticalScale(30),
   },
-  text2: {
-    fontSize: 17,
-    fontFamily: "Roboto-Regular",
-    padding: 10,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: horizontalScale(20),
+    paddingTop: verticalScale(20),
+    paddingBottom: verticalScale(10),
   },
-  inputBox: {
-    backgroundColor: "white",
-    borderRadius: 10,
-    height: 45,
-    marginVertical: 5,
-    paddingLeft: 10,
+  headerTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(24),
+    color: COLORS.primary,
+    marginLeft: horizontalScale(10),
   },
-  line: {
-    borderBottomColor: "black",
-    borderBottomWidth: 1,
-    marginVertical: 1,
-    marginHorizontal: 20,
+  searchSection: {
+    paddingHorizontal: horizontalScale(20),
+    marginTop: verticalScale(20),
   },
-  bodyContainer: {
-    marginHorizontal: 10,
-    marginVertical: 10,
+  inputContainer: {
+    marginBottom: verticalScale(20),
   },
-  buttonContainer: {
-    backgroundColor: "#45B08C",
-    borderRadius: 10,
-    padding: 13,
-    marginHorizontal: 10,
-    marginVertical: 10,
-    alignItems: "center",
+  label: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(16),
+    color: COLORS.primary,
+    marginBottom: verticalScale(8),
   },
-  buttonText: {
-
-    color: "white",
-    fontSize: 20,
-    fontFamily: "Roboto-Bold",
+  inputWrapper: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: moderateScale(12),
+    paddingHorizontal: horizontalScale(15),
+    height: verticalScale(50),
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
-
-})
+  input: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(16),
+    color: '#333',
+    height: '100%',
+  },
+  searchButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: moderateScale(12),
+    paddingVertical: verticalScale(15),
+    paddingHorizontal: horizontalScale(20),
+    marginHorizontal: horizontalScale(20),
+    marginTop: verticalScale(20),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  searchButtonText: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(16),
+    color: '#FFFFFF',
+    marginRight: horizontalScale(10),
+  },
+});

@@ -149,12 +149,15 @@ export const updatePaymentStatus = async (req, res) => {
 
 export const getUpcomingClasses = async (req, res) => {
   try{
-    const {studentId} = req.body;
+    const userId = req.userId;
+    const isTeacher = req.isTeacher;
     const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
     
     const upcomingClasses = await prisma.booking.findMany({
       where: {
-        studentId,
+        OR: [
+          isTeacher ? { teacherId: userId } : { studentId: userId }
+        ],
         bookingStatus: BookingStatus.CONFIRMED
       },
       select: {

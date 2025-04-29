@@ -70,27 +70,114 @@ const SubjectPage = ({ subjectId }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   const [usertoken, setUserToken] = useState<string>("");
-  console.log(usertoken, 'this is the user token');
-  
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleChatNow = async () => {
     const token = await AsyncStorage.getItem('authToken');
     const userDetails = await AsyncStorage.getItem('userDetails');
     const userId = JSON.parse(userDetails).userId;
     const clientId = singleSubjectData.user?.id;
+
     try {
-      socket.emit('send-chat-details', { userId, clientId, subjectId });
-      socket.on("chat-details", (data) => {
-        console.log(data, 'this is the chat room details from server');
-      });
-      router.replace(`/(tabs)/chat`);
+        // First check if a conversation already exists
+        socket.emit("check-existing-conversation", {
+            userId,
+            clientId,
+            subjectId
+        });
+
+        // Set up listeners for the response
+        socket.once("conversation-exists", async (conversation) => {
+            // Remove other listeners to prevent memory leaks
+            socket.off("no-conversation-found");
+            socket.off("conversation-check-error");
+            
+            // Join the existing conversation room
+            socket.emit('chat-room', conversation.id);
+            
+            // Navigate to the existing conversation
+            router.push(`/(tabs)/chat/${conversation.id}`);
+        });
+
+        socket.once("no-conversation-found", async () => {
+            // Remove other listeners
+            socket.off("conversation-exists");
+            socket.off("conversation-check-error");
+            
+            try {
+                // Create a new conversation since none exists
+                const response = await axios.post(
+                    `${ipURL}/api/conversation`,
+                    {
+                        userId,
+                        clientId,
+                        subjectId
+                    },
+                    {
+                        headers: { Authorization: `Bearer ${token}` }
+                    }
+                );
+
+                // Join the new chat room
+                socket.emit('chat-room', response.data.id);
+                
+                // Navigate to the new conversation
+                router.push(`/(tabs)/chat/${response.data.id}`);
+            } catch (err) {
+                console.error('Error creating new conversation:', err);
+                alert('Failed to create new chat. Please try again.');
+            }
+        });
+
+        socket.once("conversation-check-error", (error) => {
+            // Remove other listeners
+            socket.off("conversation-exists");
+            socket.off("no-conversation-found");
+            
+            console.error('Error checking for conversation:', error);
+            alert('Failed to check for existing chat. Please try again.');
+        });
+
     } catch (err) {
-      console.log(err, 'this is the error when clicking chat now button');
+        console.error('Error in chat initialization:', err);
+        alert('Failed to start chat. Please try again.');
     }
   };
 
   const handleEnrollPress = () => {
     setIsBookingModalVisible(true);
+  };
+
+  const handleSaveSubject = async () => {
+    try {
+      setIsSaving(true);
+      const token = await AsyncStorage.getItem("authToken");
+      const userDetails = await AsyncStorage.getItem("userDetails");
+      const userId = JSON.parse(userDetails).userId;
+
+      if (isSaved) {
+        setIsSaved(false);
+        // Unsave the subject
+        await axios.delete(`${ipURL}/api/subjects/saved/${subjectId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+      } else {
+        setIsSaved(true);
+        // Save the subject
+        await axios.post(
+          `${ipURL}/api/subjects/save/${subjectId}`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+    } catch (error) {
+      console.error("Error saving/unsaving subject:", error);
+      alert("Failed to save/unsave subject. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   useEffect(() => {
@@ -99,7 +186,7 @@ const SubjectPage = ({ subjectId }) => {
         const token = await AsyncStorage.getItem("authToken");
         setUserToken(token);
         const resp = await axios.get(`${ipURL}/api/subjects/${subjectId}`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${token}` }
         });
         setTeacherId(resp.data.user.id);
         setSingleSubjectData(resp.data);
@@ -125,8 +212,22 @@ const SubjectPage = ({ subjectId }) => {
       setIsLoadingReviews(false);
     };
 
+    const checkIfSaved = async () => {
+      try {
+        const token = await AsyncStorage.getItem("authToken");
+        const response = await axios.get(`${ipURL}/api/subjects/saved`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const savedSubjects = response.data;
+        setIsSaved(savedSubjects.some((subject: any) => subject.subjectId === subjectId));
+      } catch (error) {
+        console.error("Error checking saved status:", error);
+      }
+    };
+
     getSubjects();
     fetchReviews();
+    checkIfSaved();
   }, [subjectId]);
 
   const handleSubmitReview = async () => {
@@ -205,9 +306,20 @@ const SubjectPage = ({ subjectId }) => {
                 Premium Course
               </Text>
             </View>
-            <Text style={styles.dateText}>
-              Last updated {new Date().toLocaleDateString()}
-            </Text>
+            <TouchableOpacity 
+              style={[styles.saveButton, isSaved && styles.savedButton]} 
+              onPress={handleSaveSubject}
+              disabled={isSaving}
+            >
+              <Ionicons 
+                name={isSaved ? "bookmark" : "bookmark-outline"} 
+                size={24} 
+                color={isSaved ? "#FFFFFF" : "#FFFFFF"} 
+              />
+              <Text style={styles.saveButtonText}>
+                {  (isSaved ? "Saved" : "Save")}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* Subject Header */}
@@ -541,6 +653,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#f0f0f0',
+    flex: 1,
   },
   sectionTitle: {
     fontSize: 20,
@@ -620,6 +733,7 @@ const styles = StyleSheet.create({
   },
   reviewForm: {
     marginTop: 16,
+    paddingBottom: 24,
   },
   input: {
     backgroundColor: '#f8f9fa',
@@ -637,6 +751,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     alignItems: 'center',
+    minHeight: 44,
+    marginTop: 16,
+    marginBottom: 16,
+    justifyContent: 'center',
+    width: '100%',
   },
   submitButtonText: {
     color: 'white',
@@ -704,6 +823,23 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
     marginTop: 4,
+  },
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3498DB',
+    paddingHorizontal: horizontalScale(12),
+    paddingVertical: verticalScale(6),
+    borderRadius: moderateScale(20),
+    gap: horizontalScale(6),
+  },
+  savedButton: {
+    backgroundColor: '#2DCB63',
+  },
+  saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: moderateScale(14),
+    fontFamily: FONT.medium,
   },
 });
 

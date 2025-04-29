@@ -108,6 +108,15 @@ export const getSingleConversation = async (req, res, next) => {
     }
 };
 export const createConversation = async (req, res, next) => {
-    
+    try {
+        const { userId, clientId, subjectId } = req.body;
+        const conversation = await prisma.conversation.create({
+            data: { userId, clientId, subjectId },
+        });
+        res.status(201).json(conversation);
+    } catch (err) {
+        console.error(err);
+        next(err);
+    }
 }
     

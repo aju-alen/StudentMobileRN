@@ -11,7 +11,9 @@ const HomeLayout = () => {
         <Stack.Screen name='filter' options={{presentation:'modal', headerShown:false, }}/>
         <Stack.Screen name='[subjectId]' options={{ headerShown:true, headerTitle:'Subject' }}/>
         <Stack.Screen name='allSubject' options={{ headerShown:false, headerTitle:'Subject' }}/>
-        <Stack.Screen name='schedule' options={{ headerShown:false, headerTitle:'Schedule' }}/>
+        <Stack.Screen name='saved' options={{ headerShown:true, headerTitle:'Subject' }}/>
+        <Stack.Screen name='progress' options={{ headerShown:true, headerTitle:'Progress' }}/>
+        <Stack.Screen name='schedule' options={{ headerShown:true, headerTitle:'Schedule' }}/>
         <Stack.Screen name= 'singleProfile/[singleProfileId]' options={{presentation:'modal', 
       headerLeft: () => (
         <Ionicons name="arrow-back" size={24} color="black" onPress={()=>router.back()} style={{ marginLeft: 0 }} />
