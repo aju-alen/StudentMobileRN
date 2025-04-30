@@ -32,8 +32,16 @@ app.use(cors({
         "http://localhost:8081",
         "http://localhost:19000",
         "http://192.168.0.174:19006",
-    ],
-})); //frontend url
+        "exp://", // Allow all Expo URLs
+        "https://*.expo.dev", // Allow Expo development URLs
+        "https://*.render.com", // Allow Render URLs
+        process.env.FRONTEND_URL, // Allow your production frontend URL
+        "*" // Allow all origins in development
+    ].filter(Boolean), // Remove any undefined values
+    credentials: true, // Allow credentials
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
