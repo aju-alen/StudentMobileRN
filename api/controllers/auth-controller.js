@@ -212,6 +212,8 @@ export const verifyEmail = async (req, res, next) => {
       if (!user) {
         return res.status(400).json({ message: "User not found" });
       }
+      console.log(user, 'this is the user');
+      
       console.log('second phase ');
       res.status(200).json(user);
     } catch (err) {
