@@ -46,7 +46,10 @@ const connect = async () => {
         console.log(err);
     }
 }
-
+app.get('/health', (req, res) => {
+    res.status(200).json({ message: "Server is healthy" });
+}
+);
 app.use('/api/auth', authRoute)
 app.use('/api/subjects', subjectRoute)
 app.use('/api/conversation', conversationRoute)
