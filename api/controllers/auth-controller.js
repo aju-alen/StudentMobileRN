@@ -189,7 +189,8 @@ export const verifyEmail = async (req, res, next) => {
   export const singleUser = async (req, res, next) => {
     try {
       const { userId } = req;
-  
+      console.log('first phase ');
+      
       // Find the user by ID and include related subjects
       const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -211,7 +212,7 @@ export const verifyEmail = async (req, res, next) => {
       if (!user) {
         return res.status(400).json({ message: "User not found" });
       }
-  
+      console.log('second phase ');
       res.status(200).json(user);
     } catch (err) {
       next(err);
