@@ -152,6 +152,9 @@ export const getUpcomingClasses = async (req, res) => {
     const userId = req.userId;
     const isTeacher = req.isTeacher;
     const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
+
+    console.log('reached 111');
+    
     
     const upcomingClasses = await prisma.booking.findMany({
       where: {
@@ -185,6 +188,7 @@ export const getUpcomingClasses = async (req, res) => {
         bookingDate: 'asc'
       }
     })
+    console.log('reached 222');
     res.status(200).json(upcomingClasses);
   }
   catch(error){
