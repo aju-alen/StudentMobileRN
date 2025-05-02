@@ -40,6 +40,7 @@ model User {
   communityMemberships CommunityUser[]
   communityMessages    CommunityMessage[]
   savedSubjects       SavedSubject[]
+  reviewVotes         ReviewVote[]
 }
 
 model Subject {
@@ -72,16 +73,20 @@ model Subject {
 }
 
 model Review {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   title       String
   description String
-  createdAt   DateTime @default(now())
-  
-  // Relations
-  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime      @default(now())
+  upvotes     Int          @default(0)
+  downvotes   Int          @default(0)
   userId      String
-  subject     Subject  @relation(fields: [subjectId], references: [id])
   subjectId   String
+  user        User         @relation(fields: [userId], references: [id])
+  subject     Subject      @relation(fields: [subjectId], references: [id])
+  votes       ReviewVote[]
+
+  @@index([userId])
+  @@index([subjectId])
 }
 
 model Message {
@@ -194,4 +199,17 @@ enum BookingStatus {
   PENDING
   CONFIRMED
   CANCELLED
+}
+
+model ReviewVote {
+  id        String   @id @default(cuid())
+  userId    String
+  reviewId  String
+  voteType  String   // 'up' or 'down'
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  review Review @relation(fields: [reviewId], references: [id])
+
+  @@unique([userId, reviewId])
 }

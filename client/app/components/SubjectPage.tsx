@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from "react-native";
 import { Image } from 'expo-image';
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ipURL } from "../utils/utils";
@@ -26,6 +26,9 @@ interface Review {
   title: string;
   description: string;
   createdAt: string;
+  upvotes: number;
+  downvotes: number;
+  userVote?: 'up' | 'down' | null;
   user: {
     name: string;
     profileImage: string;
@@ -60,13 +63,59 @@ const { width } = Dimensions.get('window');
 const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
+interface ReviewFormProps {
+  onSubmit: (reviewData: { title: string; description: string }) => void;
+  isSubmitting: boolean;
+}
+
+const ReviewForm = React.memo(({ onSubmit, isSubmitting }: ReviewFormProps) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+
+  const handleSubmit = useCallback(() => {
+    onSubmit({ title, description });
+    setTitle('');
+    setDescription('');
+  }, [title, description, onSubmit]);
+
+  return (
+    <View style={styles.reviewForm}>
+      <Text style={styles.sectionTitle}>Submit Your Review</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Review Title"
+        placeholderTextColor="#A0AEC0"
+        value={title}
+        onChangeText={setTitle}
+      />
+      <TextInput
+        style={[styles.input, styles.textArea]}
+        placeholder="Give a brief description of your experience."
+        placeholderTextColor="#A0AEC0"
+        value={description}
+        onChangeText={setDescription}
+        multiline
+        numberOfLines={4}
+      />
+      <TouchableOpacity
+        style={styles.submitButton}
+        onPress={handleSubmit}
+        disabled={isSubmitting}
+      >
+        <Text style={styles.submitButtonText}>
+          {isSubmitting ? 'Submitting...' : 'Submit Review'}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+});
+
 const SubjectPage = ({ subjectId }) => {
   const [singleSubjectData, setSingleSubjectData] = React.useState<SubjectData>({});
   const [userData, setUserData] = React.useState<User>({});
   const [teacherId, setTeacherId] = React.useState<string>("");
   const [isBookingModalVisible, setIsBookingModalVisible] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [newReview, setNewReview] = useState({ title: '', description: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   const [usertoken, setUserToken] = useState<string>("");
@@ -230,8 +279,8 @@ const SubjectPage = ({ subjectId }) => {
     checkIfSaved();
   }, [subjectId]);
 
-  const handleSubmitReview = async () => {
-    if (!newReview.title || !newReview.description) {
+  const handleSubmitReview = useCallback(async (reviewData) => {
+    if (!reviewData.title || !reviewData.description) {
       alert('Please fill in all fields');
       return;
     }
@@ -241,8 +290,8 @@ const SubjectPage = ({ subjectId }) => {
       const response = await axios.post(
         `${ipURL}/api/reviews`,
         {
-          title: newReview.title,
-          description: newReview.description,
+          title: reviewData.title,
+          description: reviewData.description,
           subjectId: subjectId,
         },
         {
@@ -250,40 +299,97 @@ const SubjectPage = ({ subjectId }) => {
         }
       );
       
-      setReviews([response.data, ...reviews]);
-      setNewReview({ title: '', description: '' });
+      setReviews(prevReviews => [response.data, ...prevReviews]);
     } catch (error) {
       console.error("Error submitting review:", error);
       alert('Failed to submit review. Please try again.');
     }
     setIsSubmitting(false);
-  };
+  }, [subjectId, usertoken]);
 
   const handleViewAllReviews = () => {
     router.push(`/(tabs)/home/subjectReviews/${subjectId}`);
   };
 
-  const ReviewItem = ({ review }) => (
-    <View style={styles.reviewItem}>
-      <View style={styles.reviewHeader}>
-        <Image
-          source={{ uri: review.user.profileImage }}
-          style={styles.reviewerImage}
-          placeholder={blurhash}
-          contentFit="cover"
-          transition={100}
-        />
-        <View style={styles.reviewerInfo}>
-          <Text style={styles.reviewerName}>{review.user.name}</Text>
-          <Text style={styles.reviewDate}>
-            {new Date(review.createdAt).toLocaleDateString()}
-          </Text>
+  const ReviewItem = ({ review }) => {
+    const [voteState, setVoteState] = useState({
+      upvotes: review.upvotes,
+      downvotes: review.downvotes,
+      userVote: review.userVote
+    });
+
+    const handleVote = async (voteType: 'up' | 'down') => {
+      try {
+        const token = await AsyncStorage.getItem("authToken");
+        const response = await axios.post(
+          `${ipURL}/api/reviews/${review.id}/vote`,
+          { voteType },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        setVoteState({
+          upvotes: response.data.upvotes,
+          downvotes: response.data.downvotes,
+          userVote: response.data.userVote
+        });
+      } catch (error) {
+        console.error("Error voting:", error);
+        alert('Failed to vote. Please try again.');
+      }
+    };
+
+    return (
+      <View style={styles.reviewItem}>
+        <View style={styles.reviewHeader}>
+          <Image
+            source={{ uri: review.user.profileImage }}
+            style={styles.reviewerImage}
+            placeholder={blurhash}
+            contentFit="cover"
+            transition={100}
+          />
+          <View style={styles.reviewerInfo}>
+            <Text style={styles.reviewerName}>{review.user.name}</Text>
+            <Text style={styles.reviewDate}>
+              {new Date(review.createdAt).toLocaleDateString()}
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.reviewTitle}>{review.title}</Text>
+        <Text style={styles.reviewDescription}>{review.description}</Text>
+        
+        <View style={styles.voteContainer}>
+          <TouchableOpacity 
+            style={[styles.voteButton, voteState.userVote === 'up' && styles.activeVoteButton]}
+            onPress={() => handleVote('up')}
+          >
+            <Ionicons 
+              name="thumbs-up" 
+              size={16} 
+              color={voteState.userVote === 'up' ? '#2DCB63' : '#666'} 
+            />
+            <Text style={[styles.voteCount, voteState.userVote === 'up' && styles.activeVoteCount]}>
+              {voteState.upvotes}
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.voteButton, voteState.userVote === 'down' && styles.activeVoteButton]}
+            onPress={() => handleVote('down')}
+          >
+            <Ionicons 
+              name="thumbs-down" 
+              size={16} 
+              color={voteState.userVote === 'down' ? '#E74C3C' : '#666'} 
+            />
+            <Text style={[styles.voteCount, voteState.userVote === 'down' && styles.activeVoteCount]}>
+              {voteState.downvotes}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
-      <Text style={styles.reviewTitle}>{review.title}</Text>
-      <Text style={styles.reviewDescription}>{review.description}</Text>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -418,25 +524,7 @@ const SubjectPage = ({ subjectId }) => {
             {reviews.length > 0 ? (
               <>
                 {reviews.slice(0, 3).map((review) => (
-                  <View key={review.id} style={styles.reviewItem}>
-                    <View style={styles.reviewHeader}>
-                      <Image
-                        source={{ uri: review.user.profileImage }}
-                        style={styles.reviewerImage}
-                        placeholder={blurhash}
-                        contentFit="cover"
-                        transition={100}
-                      />
-                      <View style={styles.reviewerInfo}>
-                        <Text style={styles.reviewerName}>{review.user.name}</Text>
-                        <Text style={styles.reviewDate}>
-                          {new Date(review.createdAt).toLocaleDateString()}
-                        </Text>
-                      </View>
-                    </View>
-                    <Text style={styles.reviewTitle}>{review.title}</Text>
-                    <Text style={styles.reviewDescription}>{review.description}</Text>
-                  </View>
+                  <ReviewItem key={review.id} review={review} />
                 ))}
               </>
             ) : (
@@ -444,34 +532,7 @@ const SubjectPage = ({ subjectId }) => {
             )}
             
             {/* Review Form */}
-            <View style={styles.reviewForm}>
-              <Text style={styles.sectionTitle}>Submit Your Review</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Review Title"
-                placeholderTextColor="#A0AEC0"
-                value={newReview.title} 
-                onChangeText={(text) => setNewReview({ ...newReview, title: text })}
-              />
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Give a brief description of your experience."
-                placeholderTextColor="#A0AEC0"
-                value={newReview.description}
-                onChangeText={(text) => setNewReview({ ...newReview, description: text })}
-                multiline
-                numberOfLines={4}
-              />
-              <TouchableOpacity
-                style={styles.submitButton}
-                onPress={handleSubmitReview}
-                disabled={isSubmitting}
-              >
-                <Text style={styles.submitButtonText}>
-                  {isSubmitting ? 'Submitting...' : 'Submit Review'}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <ReviewForm onSubmit={handleSubmitReview} isSubmitting={isSubmitting} />
           </View>
         </View>
       </ScrollView>
@@ -840,6 +901,30 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: moderateScale(14),
     fontFamily: FONT.medium,
+  },
+  voteContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    gap: 16,
+  },
+  voteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#f8f9fa',
+    gap: 4,
+  },
+  activeVoteButton: {
+    backgroundColor: '#f0f0f0',
+  },
+  voteCount: {
+    fontSize: 14,
+    color: '#666',
+  },
+  activeVoteCount: {
+    color: '#2DCB63',
   },
 });
 
