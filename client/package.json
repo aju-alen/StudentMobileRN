@@ -5,14 +5,13 @@
   "scripts": {
     "start": "expo start",
     "dev": "npx expo start -c && cd ../api && npm run start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-picker/picker": "2.7.5",
-    "@stripe/stripe-react-native": "0.37.2",
     "aws-amplify": "^6.0.27",
     "aws-sdk": "^2.1591.0",
     "axios": "^1.6.2",
@@ -48,7 +47,8 @@
     "react-native-svg": "15.2.0",
     "react-native-web": "~0.19.10",
     "socket.io-client": "4.1.2",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "expo-dev-client": "~4.0.29"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
