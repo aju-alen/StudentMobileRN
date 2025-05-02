@@ -10,6 +10,7 @@ import communityRoute from './routes/community-route.js'
 import stripeOnboardRoute from './routes/stripeOnboard-route.js'
 import bookingRoutes from './routes/bookingRoutes.js';
 import zoomRoutes from './routes/zoomRoutes.js';
+import reportRoutes from './routes/report-routes.js';
 import dotenv from 'dotenv';
 import { errorHandler } from './middlewares/errorHandler.js';
 import cors from 'cors';
@@ -68,7 +69,7 @@ app.use('/api/stripe-onboard',stripeOnboardRoute)
 app.use('/api/bookings', bookingRoutes); 
 app.use('/api/zoom', zoomRoutes);
 app.use("/api/reviews", reviewRoutes); 
-
+app.use('/api/reports', reportRoutes);
 app.use(errorHandler)
 
 const port = process.env.PORT || 3000;

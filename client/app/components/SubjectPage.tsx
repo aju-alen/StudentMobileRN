@@ -8,6 +8,7 @@ import {
   StatusBar,
   TextInput,
   Dimensions,
+  Modal,
 } from "react-native";
 import { Image } from 'expo-image';
 import React, { useEffect, useState, useCallback, useMemo } from "react";
@@ -20,6 +21,7 @@ import { horizontalScale, verticalScale, moderateScale } from '../utils/metrics'
 import { FONT } from "../../constants";
 import { socket } from '../utils/socket';
 import BookingCalendar from './BookingCalendar';
+import { axiosWithAuth } from "../utils/customAxios";
 
 interface Review {
   id: string;
@@ -121,6 +123,9 @@ const SubjectPage = ({ subjectId }) => {
   const [usertoken, setUserToken] = useState<string>("");
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
 
   const handleChatNow = async () => {
     const token = await AsyncStorage.getItem('authToken');
@@ -226,6 +231,45 @@ const SubjectPage = ({ subjectId }) => {
       alert("Failed to save/unsave subject. Please try again.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleReportSubject = async () => {
+    if (!reportReason.trim()) {
+      alert('Please provide a reason for reporting');
+      return;
+    }
+    console.log(reportReason);
+    
+    try {
+      const cleanedReportReason = reportReason.replace(/\s+/g, ' ').trim()
+
+   //ToDo: Implement API call to report subject with reason
+   const sendReport = await axiosWithAuth.post(`${ipURL}/api/reports/create-report`,{subjectId,reportReason:cleanedReportReason})
+   console.log(sendReport);
+
+      alert('Subject reported successfully');
+      setReportReason('');
+      setShowReportModal(false);
+      setShowMenu(false);
+    } catch (error) {
+      console.error('Error reporting subject:', error);
+      alert('Failed to report subject. Please try again.');
+    }
+  };
+
+  const handleBlockUser = async () => {
+    try {
+      // TODO: Implement API call to block user
+      const blockUser = await axiosWithAuth.post(`${ipURL}/api/reports/block-user`,{subjectId})
+      console.log(blockUser);
+      
+      alert('User blocked successfully');
+      setShowMenu(false);
+      router.replace('/(tabs)/home');
+    } catch (error) {
+      console.error('Error blocking user:', error);
+      alert('Failed to block user. Please try again.');
     }
   };
 
@@ -395,13 +439,43 @@ const SubjectPage = ({ subjectId }) => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
       <ScrollView style={styles.scrollView} bounces={false}>
-        <Image
-          source={{ uri: singleSubjectData?.subjectImage }}
-          style={styles.headerImage}
-          placeholder={blurhash}
-          contentFit="cover"
-          transition={300}
-        />
+        <View style={styles.headerImageContainer}>
+          <Image
+            source={{ uri: singleSubjectData?.subjectImage }}
+            style={styles.headerImage}
+            placeholder={blurhash}
+            contentFit="cover"
+            transition={300}
+          />
+          <TouchableOpacity 
+            style={styles.menuButton}
+            onPress={() => setShowMenu(!showMenu)}
+          >
+            <Ionicons name="ellipsis-vertical" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+
+        {showMenu && (
+          <View style={styles.menuContainer}>
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => {
+                setShowMenu(false);
+                setShowReportModal(true);
+              }}
+            >
+              <Ionicons name="flag-outline" size={20} color="#E74C3C" />
+              <Text style={styles.menuItemText}>Report Subject</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={handleBlockUser}
+            >
+              <Ionicons name="ban-outline" size={20} color="#E74C3C" />
+              <Text style={styles.menuItemText}>Block User</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         <View style={styles.contentContainer}>
           {/* Status Bar */}
@@ -423,7 +497,7 @@ const SubjectPage = ({ subjectId }) => {
                 color={isSaved ? "#FFFFFF" : "#FFFFFF"} 
               />
               <Text style={styles.saveButtonText}>
-                {  (isSaved ? "Saved" : "Save")}
+                {isSaved ? "Saved" : "Save"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -558,6 +632,45 @@ const SubjectPage = ({ subjectId }) => {
         visible={isBookingModalVisible}
         onClose={() => setIsBookingModalVisible(false)}
       />
+
+      <Modal
+        visible={showReportModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowReportModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Report Subject</Text>
+            <TextInput
+              style={styles.reportInput}
+              placeholder="Please provide a reason for reporting..."
+              placeholderTextColor="#A0AEC0"
+              value={reportReason}
+              onChangeText={setReportReason}
+              multiline
+              numberOfLines={4}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalCancelButton]}
+                onPress={() => {
+                  setShowReportModal(false);
+                  setReportReason('');
+                }}
+              >
+                <Text style={styles.modalCancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalSubmitButton]}
+                onPress={handleReportSubject}
+              >
+                <Text style={styles.modalSubmitButtonText}>Submit Report</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -569,6 +682,9 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+  },
+  headerImageContainer: {
+    position: 'relative',
   },
   headerImage: {
     width: width,
@@ -925,6 +1041,101 @@ const styles = StyleSheet.create({
   },
   activeVoteCount: {
     color: '#2DCB63',
+  },
+  rightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  menuButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 20,
+    padding: 8,
+  },
+  menuContainer: {
+    position: 'absolute',
+    top: 70,
+    right: 16,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    gap: 8,
+  },
+  menuItemText: {
+    fontSize: 16,
+    color: '#1A4C6E',
+    fontWeight: '500',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1A4C6E',
+    marginBottom: 16,
+  },
+  reportInput: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    fontSize: 14,
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  modalButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  modalCancelButton: {
+    backgroundColor: '#f8f9fa',
+  },
+  modalSubmitButton: {
+    backgroundColor: '#E74C3C',
+  },
+  modalCancelButtonText: {
+    color: '#1A4C6E',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  modalSubmitButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 
