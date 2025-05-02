@@ -219,19 +219,20 @@ const HomePage = () => {
           headers: { Authorization: `Bearer ${token}` },
         })
       ]);
-
+      console.log('RESPONSE:', userResponse.data);
       setUser(userResponse.data);
       setSubjectData(subjectsResponse.data);
 
       const { reccomendedSubjects: recommendedSubjects, recommendedGrade, recommendedBoard } = userResponse.data;
-      const recommendedResponse = await axios.post(
-        `${ipURL}/api/subjects/get-recommended-subjects`,
-        { recommendedSubjects, recommendedBoard, recommendedGrade },
-        { headers: { Authorization: `Bearer ${token}` }}
-      );
-      setRecommendedSubjects(recommendedResponse.data);
+      // const recommendedResponse = await axios.post(
+      //   `${ipURL}/api/subjects/get-recommended-subjects`,
+      //   { recommendedSubjects, recommendedBoard, recommendedGrade },
+      //   { headers: { Authorization: `Bearer ${token}` }}
+      // );
+      // setRecommendedSubjects(recommendedResponse.data);
     } catch (error) {
       console.error('Error fetching data:', error);
+      console.log('AXIOS ERROR:', JSON.stringify(error, null, 2));
     } finally {
       setLoading(false);
     }
@@ -243,9 +244,12 @@ const HomePage = () => {
       const response = await axios.get(`${ipURL}/api/bookings/upcoming-classes?limit=2`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log('DEADLINES:', response.data);
+    
       setDeadlines(response.data);
     } catch (error) {
       console.error('Error fetching deadlines:', error);
+      
     }
   };
 
@@ -375,14 +379,14 @@ const HomePage = () => {
         </View>
 
         {/* Recommended Courses Section */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <SectionHeader title="Recommended for You" />
           <HorizontalSubjectCard 
             subjectData={recommendedSubjects} 
             handleItemPress={handleItemPress} 
             isHorizontal={true}
           />
-        </View>
+        </View> */}
 
       
 
