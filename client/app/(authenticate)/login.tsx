@@ -76,91 +76,93 @@ const LoginPage = () => {
   };
 
   return (
-  
-      <SafeAreaView style={styles.safeArea}>
-        <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-          <View style={styles.header}>
-            <Text style={styles.headerText}>Welcome Back</Text>
-            <Text style={styles.subHeaderText}>Login to continue</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Welcome Back</Text>
+          <Text style={styles.subHeaderText}>Login to continue</Text>
+        </View>
+
+        <View style={styles.form}>
+          {error ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          ) : null}
+
+          <View style={styles.inputContainer}>
+            <View style={styles.inputWrapper}>
+              <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
+              <TextInput
+                placeholder="Email Address"
+                placeholderTextColor="#999"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                style={styles.input}
+              />
+            </View>
           </View>
 
-          <View style={styles.form}>
-            {error ? (
-              <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>{error}</Text>
-              </View>
-            ) : null}
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email Address</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  placeholder="Enter your email"
-                  placeholderTextColor="#999"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  style={styles.input}
+          <View style={styles.inputContainer}>
+            <View style={styles.inputWrapper}>
+              <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
+              <TextInput
+                placeholder="Password"
+                placeholderTextColor="#999"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!isPasswordShown}
+                style={styles.input}
+              />
+              <TouchableOpacity
+                onPress={() => setIsPasswordShown(!isPasswordShown)}
+                style={styles.eyeIcon}
+              >
+                <Ionicons
+                  name={isPasswordShown ? 'eye-off' : 'eye'}
+                  size={24}
+                  color="#666"
                 />
-              </View>
+              </TouchableOpacity>
             </View>
+          </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
-              <View style={styles.inputWrapper}>
-                <TextInput
-                  placeholder="Enter your password"
-                  placeholderTextColor="#999"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!isPasswordShown}
-                  style={styles.input}
-                />
-                <TouchableOpacity
-                  onPress={() => setIsPasswordShown(!isPasswordShown)}
-                  style={styles.eyeIcon}
-                >
-                  <Ionicons
-                    name={isPasswordShown ? 'eye-off' : 'eye'}
-                    size={24}
-                    color="#999"
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
+          <Pressable
+            style={({ pressed }) => [
+              styles.loginButton,
+              pressed && styles.loginButtonPressed,
+            ]}
+            onPress={handleLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.loginButtonText}>Login</Text>
+            )}
+          </Pressable>
 
-            <Pressable
-              style={({ pressed }) => [
-                styles.loginButton,
-                pressed && { opacity: 0.9 },
-              ]}
-              onPress={handleLogin}
-              disabled={isLoading}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Don't have an account?</Text>
+            <Pressable 
+              onPress={() => router.replace('/(authenticate)/register')}
+              style={({ pressed }) => pressed && { opacity: 0.7 }}
             >
-              {isLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.loginButtonText}>Login</Text>
-              )}
+              <Text style={styles.footerLink}>Register</Text>
             </Pressable>
-
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Don't have an account?</Text>
-              <Pressable onPress={() => router.replace('/(authenticate)/register')}>
-                <Text style={styles.footerLink}>Register</Text>
-              </Pressable>
-            </View>
           </View>
-        </Animated.View>
-      </SafeAreaView>
-
+        </View>
+      </Animated.View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: '#fff',
   },
   container: {
     flex: 1,
@@ -171,36 +173,25 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(32),
   },
   headerText: {
-    fontSize: moderateScale(32),
+    fontSize: moderateScale(28),
     fontWeight: 'bold',
-
+    color: '#333',
     textAlign: 'center',
   },
   subHeaderText: {
     fontSize: moderateScale(16),
-
+    color: '#666',
     textAlign: 'center',
     marginTop: verticalScale(8),
   },
   form: {
     width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: moderateScale(20),
+    backgroundColor: '#fff',
+    borderRadius: moderateScale(16),
     padding: moderateScale(24),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 10,
   },
   inputContainer: {
-    marginBottom: verticalScale(16),
-  },
-  label: {
-    fontSize: moderateScale(14),
-    fontWeight: '500',
-    color: '#333',
-    marginBottom: verticalScale(8),
+    marginBottom: verticalScale(20),
   },
   inputWrapper: {
     width: '100%',
@@ -211,12 +202,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: horizontalScale(16),
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: '#f8f8f8',
+  },
+  inputIcon: {
+    marginRight: horizontalScale(12),
   },
   input: {
     flex: 1,
@@ -234,11 +223,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: verticalScale(24),
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 6,
+  },
+  loginButtonPressed: {
+    opacity: 0.9,
   },
   loginButtonText: {
     fontSize: moderateScale(16),

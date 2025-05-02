@@ -46,6 +46,12 @@ interface User {
   upcomingDeadlines?: Deadline[];
 }
 
+interface Stats {
+  icon: string;
+  label: string;
+  value: number;
+}
+
 interface Deadline {
   id: string;
   bookingDate: string; // ISO date string
@@ -219,7 +225,7 @@ const HomePage = () => {
           headers: { Authorization: `Bearer ${token}` },
         })
       ]);
-      console.log('RESPONSE:', userResponse.data);
+
       setUser(userResponse.data);
       setSubjectData(subjectsResponse.data);
 
@@ -232,7 +238,6 @@ const HomePage = () => {
       // setRecommendedSubjects(recommendedResponse.data);
     } catch (error) {
       console.error('Error fetching data:', error);
-      console.log('AXIOS ERROR:', JSON.stringify(error, null, 2));
     } finally {
       setLoading(false);
     }
@@ -244,12 +249,9 @@ const HomePage = () => {
       const response = await axios.get(`${ipURL}/api/bookings/upcoming-classes?limit=2`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log('DEADLINES:', response.data);
-    
       setDeadlines(response.data);
     } catch (error) {
       console.error('Error fetching deadlines:', error);
-      
     }
   };
 
