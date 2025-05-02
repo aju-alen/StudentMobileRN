@@ -59,14 +59,24 @@ const SettingsPage = () => {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Preferences</Text>
-        {/* <TouchableOpacity style={styles.settingItem}>
-          <Text style={styles.settingText}>Language</Text>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/(tabs)/profile/reports')}
+        >
+          <Text style={styles.settingText}>Your Reports</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
-        </TouchableOpacity> */}
-        {/* <TouchableOpacity style={styles.settingItem}>
-          <Text style={styles.settingText}>Theme</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/(tabs)/profile/blocked-users')}
+        >
+          <Text style={styles.settingText}>Blocked Users</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
-        </TouchableOpacity> */}
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.settingItem}>
+          <Text style={styles.settingText}>Your Reviews</Text>
+          <Ionicons name="chevron-forward" size={24} color="#64748B" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.section}>

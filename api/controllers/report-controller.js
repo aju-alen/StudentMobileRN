@@ -87,3 +87,91 @@ export const blockUser = async (req, res,next) => {
         next(err);
     }
 }
+
+export const getUserReports = async (req, res, next) => {
+    const userId = req.userId;
+    try {
+        const reports = await prisma.report.findMany({
+            where: {
+                userId: userId
+            },
+            include: {
+                reportedSubject: {
+                    select: {
+                        subjectName: true
+                    }
+                }
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        return res.status(200).json(reports);
+    } catch (err) {
+        console.log(err);
+        next(err);
+    }
+}
+
+export const getBlockedUsers = async (req, res, next) => {
+    const userId = req.userId;
+    try {
+        const blockedUsers = await prisma.blockedTeacher.findMany({
+            where: {
+                userId: userId
+            },
+            include: {
+                blockedTeacher: {
+                    select: {
+                        name: true,
+                        email: true,
+                        profileImage: true
+                    }
+                }
+            },
+            orderBy: {
+                createdAt: 'desc'
+            }
+        });
+
+        return res.status(200).json(blockedUsers);
+    } catch (err) {
+        console.log(err);
+        next(err);
+    }
+}
+
+export const unblockUser = async (req, res, next) => {
+    const userId = req.userId;
+    const { blockedTeacherId } = req.body;
+    try {
+        const findBlockedRecord = await prisma.blockedTeacher.findUnique({
+            where: {
+                userId_blockedTeacherId: {
+                    userId: userId,
+                    blockedTeacherId: blockedTeacherId
+                }
+            },
+           
+        });
+
+        if (!findBlockedRecord) {
+            return res.status(400).json({ message: "User not found in blocked list" });
+        }
+
+        await prisma.blockedTeacher.delete({
+            where: {
+                userId_blockedTeacherId: {
+                    userId: userId,
+                    blockedTeacherId
+                }
+            }
+        });
+
+        return res.status(200).json({ message: "User unblocked successfully" });
+    } catch (err) {
+        console.log(err);
+        next(err);
+    }
+}
