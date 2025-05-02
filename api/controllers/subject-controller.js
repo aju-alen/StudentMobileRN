@@ -118,30 +118,47 @@ export const getAllSubjects = async (req, res, next) => {
 export const getAllSubjectsBySearch = async (req, res, next) => {
     const { subjectGrade, subjectBoard, subjectTags } = req.query;
     const grade = parseInt(subjectGrade);
-    console.log("subjectTags", typeof subjectTags);
+    const currentUserId = req.userId;
 
     try {
-        // Constructing the Prisma filter dynamically
+        // Step 1: Get all blocked teacher IDs for this user
+        const blocked = await prisma.blockedTeacher.findMany({
+            where: {
+                userId: currentUserId,
+            },
+            select: {
+                blockedTeacherId: true,
+            },
+        });
+
+        const blockedTeacherIds = blocked.map(b => b.blockedTeacherId);
+
+        // Step 2: Construct the filter with exclusions
         const filter = {
-            subjectVerification: true, // Ensures only verified subjects are retrieved
+            subjectVerification: true,
             ...(grade && !isNaN(grade) && { subjectGrade: grade }),
             ...(subjectBoard && subjectBoard !== "undefined" && {
                 subjectBoard: {
                     contains: subjectBoard,
-                    mode: "insensitive", // Case-insensitive match
+                    mode: "insensitive",
                 },
             }),
             ...(subjectTags && subjectTags !== "undefined" && {
                 subjectTags: {
                     contains: subjectTags,
-                    mode: "insensitive", // Case-insensitive match
+                    mode: "insensitive",
+                },
+            }),
+            ...(blockedTeacherIds.length > 0 && {
+                NOT: {
+                    userId: {
+                        in: blockedTeacherIds,
+                    },
                 },
             }),
         };
 
-        console.log("Filter:", filter);
-
-        // Fetch subjects with filters and include user details
+        // Step 3: Fetch filtered subjects
         const subjects = await prisma.subject.findMany({
             where: filter,
             include: {
@@ -160,6 +177,7 @@ export const getAllSubjectsBySearch = async (req, res, next) => {
         next(err);
     }
 };
+
 
 export const getOneSubject = async (req, res, next) => {
     try {
