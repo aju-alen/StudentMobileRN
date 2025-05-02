@@ -5,8 +5,6 @@ const prisma = new PrismaClient();
 dotenv.config();
 
 export const getAllConversations = async (req, res, next) => {
-    console.log('req.params', req.params);
-    console.log('inside conversation controller API');
 
     try {
         const userId = req.params.userId;
@@ -51,8 +49,10 @@ export const getAllConversations = async (req, res, next) => {
         });
 
         if (!conversations || conversations.length === 0) {
-            return res.status(400).json({ message: 'No conversations found' });
-        }
+            console.log('No conversations found');
+             res.status(204).json({ message: 'No conversations found' });
+             return;
+            }
 
         return res.status(200).json(conversations);
     } catch (err) {
