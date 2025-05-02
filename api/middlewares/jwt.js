@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'
 export const verifyToken = (req,res,next)=>{
 
-    console.log(req.headers.authorization,'this is the headers');
+    // console.log(req.headers.authorization,'this is the headers');
     
     
     const token = req.headers.authorization.split(" ")[1];
@@ -13,7 +13,7 @@ export const verifyToken = (req,res,next)=>{
         req.userId = payload.userId;
         req.isTeacher = payload.isTeacher;
         req.isAdmin = payload.isAdmin;
-        console.log(req.userId,req.isTeacher,req.isAdmin,'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz');
+        req.email = payload.email;
         next()
     });
 }

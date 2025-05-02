@@ -165,7 +165,7 @@ export const verifyEmail = async (req, res, next) => {
   
       // Generate a JWT token
       const token = jwt.sign(
-        { userId: user.id, isTeacher: user.isTeacher, isAdmin: user.isAdmin },
+        { userId: user.id, isTeacher: user.isTeacher, isAdmin: user.isAdmin, email: user.email },
         process.env.SECRET_KEY
       );
   
