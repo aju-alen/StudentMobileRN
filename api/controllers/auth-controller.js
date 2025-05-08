@@ -87,7 +87,7 @@ const sendVerificationEmail = async (email, verificationToken, name) => {
   
       🔗 https://studentmobilern-31oo.onrender.com/api/auth/verify/${verificationToken}
   
-      If you didn’t sign up for this account, please ignore this email.
+      If you didn't sign up for this account, please ignore this email.
   
       Best,  
       The Coach Academ Team
@@ -134,9 +134,7 @@ export const verifyEmail = async (req, res, next) => {
       res.status(202).json({ message: "Account verified", updatedUser });
     } catch (err) {
       next(err);
-    } finally {
-      await prisma.$disconnect();
-    }
+    } 
   };
 
   export const login = async (req, res, next) => {
@@ -181,9 +179,7 @@ export const verifyEmail = async (req, res, next) => {
     } catch (err) {
       console.error(err);
       next(err);
-    } finally {
-      await prisma.$disconnect();
-    }
+    } 
   };
 
   export const singleUser = async (req, res, next) => {
@@ -204,7 +200,7 @@ export const verifyEmail = async (req, res, next) => {
           reccomendedSubjects: true,
           profileImage: true,
           userDescription: true,
-          // Populate related subjects (assumes subjects is a relation)
+          // Populate related subjects
           subjects: true,
         },
       });
@@ -218,9 +214,7 @@ export const verifyEmail = async (req, res, next) => {
       res.status(200).json(user);
     } catch (err) {
       next(err);
-    } finally {
-      await prisma.$disconnect();
-    }
+    } 
   };
 
 export const updateProfileImage = async (req, res, next) => {
@@ -280,8 +274,140 @@ export const getTeacherProfile = async (req, res, next) => {
   }
   catch(err){
     next(err);
+    }
+}
+
+export const updateMetadata = async (req, res, next) => {
+  try{
+    const userId = req.userId;
+    const { name, email, userDescription } = req.body.body;
+    console.log(userId, 'this is the user id');
+    console.log(name, email, userDescription, 'this is the name, email, user description');
+    
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: name,
+        email: email,
+        userDescription: userDescription,
+      },
+    });
+
+    console.log(updatedUser, 'this is the updated user');
+
+    const token = jwt.sign(
+      { userId: updatedUser.id, isTeacher: updatedUser.isTeacher, isAdmin: updatedUser.isAdmin, email: updatedUser.email },
+      process.env.SECRET_KEY
+    );
+
+    res.status(200).json({ message: "Metadata updated", token });
   }
-  finally{
-    await prisma.$disconnect();
+  catch(err){
+    next(err);
+  }
+}
+
+export const changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.userId;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Please provide both current and new password" });
+    }
+
+    // Find the user
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    // Verify current password
+    const isCorrect = bcrypt.compareSync(currentPassword, user.password);
+    if (!isCorrect) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    // Hash the new password
+    const hash = bcrypt.hashSync(newPassword, 5);
+
+    // Update the password
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hash },
+    });
+
+    res.status(200).json({ message: "Password changed successfully" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteAccount = async (req, res, next) => {
+  try {
+    const { password } = req.body;
+    const userId = req.userId;
+
+    if (!password) {
+      return res.status(400).json({ message: "Please provide your password" });
+    }
+
+    // Find the user
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    // Verify password
+    const isCorrect = bcrypt.compareSync(password, user.password);
+    if (!isCorrect) {
+      return res.status(400).json({ message: "Incorrect password" });
+    }
+
+    // Delete the user - all related records will be deleted automatically due to onDelete: Cascade
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+
+    res.status(200).json({ message: "Account deleted successfully" });
+  } catch (err) {
+    console.error('Error deleting account:', err);
+    next(err);
+  }
+
+};
+
+export const verifyPurchase = async (req, res, next) => {
+  const userId = req.userId;
+  const { subjectId } = req.params;
+
+  if (!subjectId) {
+    return res.status(400).json({ message: "Subject ID is required" });
+  }
+
+  try {
+    const purchase = await prisma.stripePurchases.findFirst({
+      where: {
+        userId: userId,
+        subjectId: subjectId,
+        purchaseStatus: 'CONFIRMED'
+      }
+    });
+
+    res.status(200).json({
+      message: "Purchase verification completed",
+      hasPurchased: !!purchase
+    });
+  }
+  catch(err){
+    console.log('error in verify purchase', err);
+    next(err);
   }
 }

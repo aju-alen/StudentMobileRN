@@ -155,7 +155,5 @@ export const voteReview = async (req, res, next) => {
     });
   } catch (err) {
     next(err);
-  } finally {
-    await prisma.$disconnect();
-  }
+  } 
 }; 

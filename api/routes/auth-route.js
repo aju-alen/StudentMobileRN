@@ -1,13 +1,17 @@
 import express from "express";
-import {  register, verifyEmail,login,singleUser,updateProfileImage,getTeacherProfile } from "../controllers/auth-controller.js";
+import {  register, verifyEmail,login,singleUser,updateMetadata,getTeacherProfile,changePassword,deleteAccount,updateProfileImage,verifyPurchase } from "../controllers/auth-controller.js";
 import { verifyToken } from "../middlewares/jwt.js";
 const router = express.Router()
 
 router.post('/register', register);
 router.get('/verify/:token', verifyEmail);
+router.put(`/update-metadata`,verifyToken, updateMetadata)
+router.put('/change-password', verifyToken, changePassword)
+router.delete('/delete-account', verifyToken, deleteAccount)
 router.get('/teacher/profile/:teacherProfileId', getTeacherProfile);
 router.post('/login', login);
-router.get('/me',verifyToken, singleUser);
+router.get('/metadata',verifyToken, singleUser);
+router.get('/metadata/verify-purchase/:subjectId',verifyToken, verifyPurchase);
 router.put(`/update-profile/:uploadImage`,updateProfileImage)
 
 export default router;

@@ -196,3 +196,89 @@ export const getUpcomingClasses = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch upcoming classes' });
   }
 }
+
+export const getStudentTeacherAvailability = async (req, res) => {
+  try {
+    const { teacherId } = req.params;
+    const studentId = req.userId;
+    const { date } = req.query;
+    
+    if (!date) {
+      return res.status(400).json({ error: 'Date is required' });
+    }
+
+    // Convert date string to start and end of day
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    // Get all bookings for the teacher on the specified date
+    const teacherBookings = await prisma.booking.findMany({
+      where: {
+        teacherId,
+        bookingDate: {
+          gte: startDate,
+          lte: endDate
+        },
+        bookingStatus: {
+          in: [BookingStatus.CONFIRMED, BookingStatus.PENDING]
+        }
+      },
+      select: {
+        bookingTime: true
+      }
+    });
+
+    // Get all bookings for the student on the specified date
+    const studentBookings = await prisma.booking.findMany({
+      where: {
+        studentId,
+        bookingDate: {
+          gte: startDate,
+          lte: endDate
+        },
+        bookingStatus: {
+          in: [BookingStatus.CONFIRMED, BookingStatus.PENDING]
+        }
+      },
+      select: {
+        bookingTime: true
+      }
+    });
+
+    // Extract booked time slots
+    const teacherBookedSlots = teacherBookings.map(booking => booking.bookingTime);
+    const studentBookedSlots = studentBookings.map(booking => booking.bookingTime);
+
+    // Combine both sets of booked slots
+    const bookedSlots = [...new Set([...teacherBookedSlots, ...studentBookedSlots])];
+
+    // Get all dates where the teacher has bookings
+    const teacherBookedDates = await prisma.booking.findMany({
+      where: {
+        teacherId,
+        bookingStatus: {
+          in: [BookingStatus.CONFIRMED]
+        }
+      },
+      select: {
+        bookingDate: true
+      },
+      distinct: ['bookingDate']
+    });
+
+    // Format unavailable dates
+    const unavailableDates = teacherBookedDates.map(booking => 
+      booking.bookingDate.toISOString().split('T')[0]
+    );
+
+    res.status(200).json({
+      bookedSlots,
+    });
+  } catch (error) {
+    console.error('Error in getStudentTeacherAvailability:', error);
+    res.status(500).json({ error: 'Failed to fetch availability' });
+  }
+};
