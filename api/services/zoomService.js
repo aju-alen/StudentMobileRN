@@ -25,26 +25,34 @@ export const getZoomAccessToken = async () => {
   return accessToken;
 };
 
-export const createZoomMeeting = async (hostEmail, topic, startTime) => {
+export const createZoomMeeting = async (hostEmail, topic, startTime, bookingTimeInMinutes) => {
   const token = await getZoomAccessToken();
   console.log(token);
+  console.log(hostEmail, topic, startTime, bookingTimeInMinutes, 'hostEmail, topic, startTime, bookingTimeInMinutes');
 
   try {
     const res = await axios.post(
       `https://api.zoom.us/v2/users/${hostEmail}/meetings`,
       {
-        topic,
+        topic: topic,
         type: 2,
         start_time: startTime,
-        duration: 500,
-        timezone: 'UTC',
+        duration: bookingTimeInMinutes,
+        timezone: 'Asia/Dubai',
         settings: {
-          join_before_host: true,
-          alternative_hosts: 'rightintellectual@gmail.com', // 👈 Add this line
-        },
+          host_video: true,
+          participant_video: true,
+          join_before_host: false,
+          mute_upon_entry: true,
+          waiting_room: true,
+          meeting_authentication: true
+        }
       },
       {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       }
     );
 
@@ -54,8 +62,6 @@ export const createZoomMeeting = async (hostEmail, topic, startTime) => {
     console.error("Error creating Zoom meeting:", error.response?.data || error.message);
   }
 };
-
- 
 
 export const updateZoomMeeting = async (meetingId, updates) => {
   const token = await getZoomAccessToken();

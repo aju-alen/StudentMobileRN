@@ -34,6 +34,10 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [paymentInitialized, setPaymentInitialized] = useState(false);
 
+  console.log(subjectData, 'subjectData');
+  console.log(teacherData, 'teacherData');
+  
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -77,6 +81,9 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
             subjectId: subjectId,
             date: date,
             time: time,
+            subjectDuration: subjectData.subjectDuration,
+            teacherEmail: teacherData.email,
+            subjectName: subjectData.subjectName,
           }),
           headers: {
             'Content-Type': 'application/json',

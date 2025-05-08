@@ -333,7 +333,7 @@ const HomePage = () => {
           <QuickActionButton 
             icon="calendar-outline" 
             label="Schedule"
-            onPress={() => router.push('/(tabs)/home/schedule')}
+            onPress={() => router.push('/(tabs)/profile/schedule')}
           />
           <QuickActionButton 
             icon="bookmark-outline" 

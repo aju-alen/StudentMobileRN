@@ -167,6 +167,7 @@ export const getUpcomingClasses = async (req, res) => {
         id: true,
         bookingDate: true,
         bookingTime: true,
+        bookingZoomUrl: true,
         subject: {
           select: {
             subjectName: true
@@ -227,7 +228,8 @@ export const getStudentTeacherAvailability = async (req, res) => {
         }
       },
       select: {
-        bookingTime: true
+        bookingTime: true,
+        bookingHours: true
       }
     });
 
@@ -244,15 +246,39 @@ export const getStudentTeacherAvailability = async (req, res) => {
         }
       },
       select: {
-        bookingTime: true
+        bookingTime: true,
+        bookingHours: true
       }
     });
 
-    // Extract booked time slots
-    const teacherBookedSlots = teacherBookings.map(booking => booking.bookingTime);
-    const studentBookedSlots = studentBookings.map(booking => booking.bookingTime);
+    // Helper function to generate all time slots for a booking
+    const generateTimeSlots = (booking) => {
+      const slots = [];
+      const [startHour, startMinute] = booking.bookingTime.split(':').map(Number);
+      
+      // Include the end hour in the blocked slots
+      for (let i = 0; i <= booking.bookingHours; i++) {
+        const hour = (startHour + i) % 24;
+        const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+        slots.push(timeSlot);
+      }
 
-    // Combine both sets of booked slots
+      // Also block slots that would overlap with this booking
+      // For example, if booking is 3 hours starting at 16:00, block 13:00, 14:00, 15:00
+      for (let i = 1; i < booking.bookingHours; i++) {
+        const hour = (startHour - i + 24) % 24; // Add 24 before modulo to handle negative numbers
+        const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+        slots.push(timeSlot);
+      }
+      
+      return slots;
+    };
+
+    // Generate all booked slots for both teacher and student
+    const teacherBookedSlots = teacherBookings.flatMap(generateTimeSlots);
+    const studentBookedSlots = studentBookings.flatMap(generateTimeSlots);
+
+    // Combine both sets of booked slots and remove duplicates
     const bookedSlots = [...new Set([...teacherBookedSlots, ...studentBookedSlots])];
 
     // Get all dates where the teacher has bookings

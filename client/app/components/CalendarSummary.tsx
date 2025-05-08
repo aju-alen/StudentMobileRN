@@ -67,7 +67,7 @@ const CalendarSummary = ({isTeacher}:{isTeacher:boolean}) => {
   console.log(upcomingClasses,'---upcomingClasses');
 
   const handleViewAll = () => {
-    router.push('/(tabs)/home/schedule');
+    router.push('/(tabs)/profile/schedule');
   };
 
   return (

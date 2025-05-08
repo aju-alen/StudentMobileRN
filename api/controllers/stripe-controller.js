@@ -1,5 +1,6 @@
 import { BookingStatus, PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
+import { createZoomMeeting } from "../services/zoomService.js";
 dotenv.config();
 import Stripe from 'stripe';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -17,7 +18,7 @@ export const getPublisherKey = async (req, res, next) => {
 
 export const paymentSheet = async (req, res, next) => {
     try {
-        const { amount, currency = 'aed', customerId, teacherId, subjectId, date, time } = req.body;
+        const { amount, currency = 'aed', customerId, teacherId, subjectId, date, time, subjectDuration, teacherEmail, subjectName } = req.body;
         const userId = req.userId;
         
         
@@ -76,7 +77,10 @@ export const paymentSheet = async (req, res, next) => {
                 teacherId,
                 subjectId,
                 date,
-                time
+                time,
+                subjectDuration,
+                teacherEmail,
+                subjectName
             }
         });
 
@@ -119,6 +123,20 @@ export const stripeWebhook = async (req, res, next) => {
                 
                 if(chargeSucceeded.status === 'succeeded' && chargeSucceeded.paid === true){
                     console.log("payment inside if");
+                    const bookingTime = chargeSucceeded.metadata.date;
+                    const bookingHour = chargeSucceeded.metadata.time
+                    console.log('bookingTime', bookingTime);
+                    console.log('bookingHour', bookingHour);
+                    
+                    const dateTimeString = `${bookingTime}T${bookingHour}:00+04:00`;
+                    console.log('dateTimeString', dateTimeString);
+                    const uaeDate = new Date(dateTimeString);
+                    
+                const zoomCreateMeetingResponse = await createZoomMeeting(chargeSucceeded.metadata.teacherEmail, chargeSucceeded.metadata.subjectName, uaeDate, (chargeSucceeded.metadata.subjectDuration) * 60 )
+                console.log('zoomCreateMeetingResponse', zoomCreateMeetingResponse);
+
+              
+                
                 const { saveTransaction, createBooking } = await prisma.$transaction(async (tx) => {
                     // Create booking first
                     const createBooking = await tx.booking.create({
@@ -131,6 +149,11 @@ export const stripeWebhook = async (req, res, next) => {
                             bookingStatus: BookingStatus.CONFIRMED,
                             bookingPrice: chargeSucceeded.amount,
                             bookingPaymentCompleted: true,
+                            bookingZoomUrl: zoomCreateMeetingResponse.join_url,
+                            bookingZoomPassword: zoomCreateMeetingResponse.password,
+                            bookingHours: parseInt(chargeSucceeded.metadata.subjectDuration),
+                            bookingMinutes: (chargeSucceeded.metadata.subjectDuration) * 60,
+                            bookingZoomId: zoomCreateMeetingResponse.id
                         }
                     });
 
@@ -148,9 +171,27 @@ export const stripeWebhook = async (req, res, next) => {
                         }
                     });
 
+                    const saveSubject = await tx.userSubject
+
                     return { saveTransaction, createBooking };
                 });
 
+                const checkUserSubject = await prisma.userSubject.findUnique({
+                    where: {
+                       userId_subjectId: {
+                        userId: chargeSucceeded.metadata.userId,
+                        subjectId: chargeSucceeded.metadata.subjectId
+                       }
+                    }
+                })
+                if(!checkUserSubject){
+                    await prisma.userSubject.create({
+                        data: {
+                            userId: chargeSucceeded.metadata.userId,
+                            subjectId: chargeSucceeded.metadata.subjectId
+                        }
+                    })
+                }
                 console.log('saveTransaction', saveTransaction);
                 console.log('createBooking', createBooking);
             }

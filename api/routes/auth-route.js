@@ -1,5 +1,5 @@
 import express from "express";
-import {  register, verifyEmail,login,singleUser,updateMetadata,getTeacherProfile,changePassword,deleteAccount,updateProfileImage,verifyPurchase } from "../controllers/auth-controller.js";
+import {  register, verifyEmail,login,singleUser,updateMetadata,getTeacherProfile,changePassword,deleteAccount,updateProfileImage,verifyPurchase,getActiveStudentCourses } from "../controllers/auth-controller.js";
 import { verifyToken } from "../middlewares/jwt.js";
 const router = express.Router()
 
@@ -13,5 +13,6 @@ router.post('/login', login);
 router.get('/metadata',verifyToken, singleUser);
 router.get('/metadata/verify-purchase/:subjectId',verifyToken, verifyPurchase);
 router.put(`/update-profile/:uploadImage`,updateProfileImage)
+router.get('/student/active-courses',verifyToken, getActiveStudentCourses )
 
 export default router;

@@ -202,6 +202,17 @@ export const verifyEmail = async (req, res, next) => {
           userDescription: true,
           // Populate related subjects
           subjects: true,
+          userSubjects: {
+            include: {
+              subject: {
+                select: {
+                  id: true,
+                  subjectName: true,
+                  subjectImage: true
+                }
+              }
+            }
+          }
         },
       });
   
@@ -410,4 +421,26 @@ export const verifyPurchase = async (req, res, next) => {
     console.log('error in verify purchase', err);
     next(err);
   }
+}
+
+export const getActiveStudentCourses = async (req, res, next) => {
+const userId = req.userId;
+console.log(userId, 'this is the user id');
+
+try{
+  const activeCourses = await prisma.userSubject.findMany({
+    where: {
+      userId: userId
+    },
+    include: {
+      subject: true
+    }
+  })
+  res.status(200).json(activeCourses);
+}
+catch(err){
+  console.log('error in get active courses', err);
+  
+  next(err);
+}
 }

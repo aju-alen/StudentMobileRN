@@ -12,6 +12,7 @@ const ProfileLayout = () => {
     <Stack.Screen name="change-password" options={{ headerShown: true }} />
     <Stack.Screen name="delete-account" options={{ headerShown: true }} />
     <Stack.Screen name="blocked-users" options={{ headerShown:true }} />
+    <Stack.Screen name='schedule' options={{ headerShown:true, headerTitle:'Schedule' }}/>
     <Stack.Screen name="editSubject/[editSubjectId]" options={{presentation:'modal'}}/>
     <Stack.Screen name="createSubject/[createSubjectId]" options={{presentation:'modal'}}/>
     <Stack.Screen name="settings" options={{ headerShown: false }}/>

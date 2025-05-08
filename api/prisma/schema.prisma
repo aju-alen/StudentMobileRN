@@ -45,6 +45,7 @@ model User {
   blockedByTeachers   BlockedTeacher[] @relation("BlockedUser")
   reports             Report[]
   stripePurchases     StripePurchases[]
+  userSubjects        UserSubject[]
 }
 
 model Subject {
@@ -74,6 +75,7 @@ model Subject {
   savedSubjects       SavedSubject[]
   reports             Report[]
   stripePurchases     StripePurchases[]
+  userSubjects        UserSubject[]
   @@unique([id, userId])
 }
 
@@ -183,6 +185,12 @@ model Booking {
   bookingStatus BookingStatus @default(PENDING)
   bookingPrice Float
   bookingPaymentCompleted Boolean @default(false)
+  bookingZoomUrl String? @default("")
+  bookingZoomPassword String? @default("")
+  bookingHours Int
+  bookingMinutes Int
+  bookingZoomId Int 
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -265,4 +273,15 @@ model StripePurchases {
   subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   booking Booking @relation(fields: [bookingId], references: [id])
   bookingId String @unique
+}
+
+model UserSubject{
+  id String @id @default(cuid())
+  userId String
+  subjectId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, subjectId])
 }

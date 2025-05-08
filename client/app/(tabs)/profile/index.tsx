@@ -18,6 +18,7 @@ import SubjectCards from "../../components/SubjectCards";
 import CalendarSummary from "../../components/CalendarSummary";
 import { Ionicons } from '@expo/vector-icons';
 import { axiosWithAuth } from "../../utils/customAxios";
+import UserSubjectCards from "../../components/UserSubjectCards";
 
 interface User {
   id?: string;
@@ -27,6 +28,7 @@ interface User {
   userDescription?: string;
   subjects?: SubjectItem[];
   reccomendedSubjects?: string[];
+  userSubjects?: SubjectItem[];
 }
 
 interface SubjectItem {
@@ -39,10 +41,7 @@ interface SubjectItem {
   subjectGrade?: number;
 }
 
-interface UserDetails {
-  isTeacher?: boolean;
-  isAdmin?: boolean;
-}
+
 
 const blurhash = '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
@@ -50,7 +49,7 @@ const ProfilePage = () => {
   const [user, setUser] = useState<User>({});
   const [userDetails, setUserDetails] = useState<UserDetails>({});
   const [showDropdown, setShowDropdown] = useState(false);
-
+  const [activeCourses, setActiveCourses] = useState<SubjectItem[]>([]);
   useEffect(() => {
     const getUser = async () => {
       const apiUser = await axiosWithAuth.get(`${ipURL}/api/auth/metadata`);
@@ -85,6 +84,9 @@ const ProfilePage = () => {
   const handleSettingsPress = () => {
     router.push('/(tabs)/profile/settings');
   };
+
+  console.log(user, 'this is the user');
+  
 
   return (
     <TouchableWithoutFeedback onPress={closeDropdown}>
@@ -200,11 +202,16 @@ const ProfilePage = () => {
               </TouchableWithoutFeedback>
             )}
           </View>
-          <SubjectCards 
+       {userDetails?.isTeacher && <SubjectCards 
             subjectData={user.subjects} 
             handleItemPress={handleItemPress} 
             isHorizontal={false} 
-          />
+          />}
+          {!userDetails?.isTeacher && <UserSubjectCards 
+            subjectData={user?.userSubjects} 
+            handleItemPress={handleItemPress} 
+            isHorizontal={false} 
+          />}
         </View>
          {/* Add Logout Section */}
          

@@ -8,12 +8,15 @@ import { ipURL } from '../../utils/utils';
 import { FONT } from '../../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
 import { axiosWithAuth } from '../../utils/customAxios';
-
+import { Linking } from 'react-native';
 const SchedulePage = () => {
   const [events, setEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [userDetails, setUserDetails] = useState({});
   const [loading, setLoading] = useState(true);
+
+  console.log(events, 'this is the events');
+  
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,7 +35,8 @@ const SchedulePage = () => {
           date: classData.bookingDate,
           time: classData.bookingTime,
           subject: classData.subject.subjectName,
-          status: 'upcoming' // Since these are upcoming classes
+          status: 'upcoming',
+          zoomUrl: classData.bookingZoomUrl
         }));
 
         setEvents(formattedEvents);
@@ -66,12 +70,13 @@ const SchedulePage = () => {
   };
 
   const handleEventPress = (event) => {
+    console.log(event, 'this is the event in click');
     Alert.alert(
       event.title,
       `Instructor: ${event.instructor}\nDate: ${formatDate(event.date)}\nTime: ${event.time}\nSubject: ${event.subject}`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Join', onPress: () => console.log('Join pressed') }
+        { text: 'Join', onPress: () => Linking.openURL(event.zoomUrl) }
       ]
     );
   };
