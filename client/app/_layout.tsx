@@ -2,9 +2,10 @@ import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
-
+import { StripeProviderWrapper } from './components/StripeProviderWrapper';
 const MainLayout = () => {
   return (
+    <StripeProviderWrapper>
     <View style={{ flex: 1 }}>
       <StatusBar style="dark" backgroundColor="#FFFFFF" />
       <Stack
@@ -44,6 +45,7 @@ const MainLayout = () => {
         />
       </Stack>
     </View>
+    </StripeProviderWrapper>
   );
 };
 

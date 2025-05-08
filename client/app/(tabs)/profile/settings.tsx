@@ -43,11 +43,17 @@ const SettingsPage = () => {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/(tabs)/profile/edit-profile')}
+        >
           <Text style={styles.settingText}>Edit Profile</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/(tabs)/profile/change-password')}
+        >
           <Text style={styles.settingText}>Change Password</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
         </TouchableOpacity>
@@ -92,6 +98,17 @@ const SettingsPage = () => {
         <TouchableOpacity style={styles.settingItem}>
           <Text style={styles.settingText}>Privacy Policy</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Dangerous Zone</Text>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/(tabs)/profile/delete-account')}
+        >
+          <Text style={[styles.settingText, { color: '#DC2626' }]}>Delete Account</Text>
+          <Ionicons name="chevron-forward" size={24} color="#DC2626" />
         </TouchableOpacity>
       </View>
 

@@ -9,6 +9,7 @@ import {
   TextInput,
   Dimensions,
   Modal,
+  ActivityIndicator
 } from "react-native";
 import { Image } from 'expo-image';
 import React, { useEffect, useState, useCallback, useMemo } from "react";
@@ -68,9 +69,10 @@ const blurhash =
 interface ReviewFormProps {
   onSubmit: (reviewData: { title: string; description: string }) => void;
   isSubmitting: boolean;
+  purchaseStatus: boolean;
 }
 
-const ReviewForm = React.memo(({ onSubmit, isSubmitting }: ReviewFormProps) => {
+const ReviewForm = React.memo(({ onSubmit, isSubmitting, purchaseStatus }: ReviewFormProps) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
@@ -83,6 +85,7 @@ const ReviewForm = React.memo(({ onSubmit, isSubmitting }: ReviewFormProps) => {
   return (
     <View style={styles.reviewForm}>
       <Text style={styles.sectionTitle}>Submit Your Review</Text>
+      {purchaseStatus ? <View>
       <TextInput
         style={styles.input}
         placeholder="Review Title"
@@ -108,6 +111,7 @@ const ReviewForm = React.memo(({ onSubmit, isSubmitting }: ReviewFormProps) => {
           {isSubmitting ? 'Submitting...' : 'Submit Review'}
         </Text>
       </TouchableOpacity>
+      </View> : <Text style={styles.purchaseStatusText}>Please purchase the course to submit a review</Text>}
     </View>
   );
 });
@@ -126,8 +130,16 @@ const SubjectPage = ({ subjectId }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
-
+  const [isTeacher, setIsTeacher] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  const [purchaseStatus, setPurchaseStatus] = useState(false);
   const handleChatNow = async () => {
+
+    if(!purchaseStatus){
+      alert('Please purchase the course to chat with the teacher');
+      return;
+    }
+
     const token = await AsyncStorage.getItem('authToken');
     const userDetails = await AsyncStorage.getItem('userDetails');
     const userId = JSON.parse(userDetails).userId;
@@ -277,12 +289,16 @@ const SubjectPage = ({ subjectId }) => {
     const getSubjects = async () => {
       try {
         const token = await AsyncStorage.getItem("authToken");
+        const userDetails = await AsyncStorage.getItem('userDetails');
+        setIsTeacher(JSON.parse(userDetails).isTeacher);
         setUserToken(token);
-        const resp = await axios.get(`${ipURL}/api/subjects/${subjectId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const resp = await axiosWithAuth.get(`${ipURL}/api/subjects/${subjectId}`);
         setTeacherId(resp.data.user.id);
         setSingleSubjectData(resp.data);
+
+        const purchaseStatus = await axiosWithAuth.get(`${ipURL}/api/auth/metadata/verify-purchase/${subjectId}`);
+        setPurchaseStatus(purchaseStatus.data.hasPurchased);
+        setIsPageLoading(false);
       } catch (error) {
         console.error("Error fetching subject data:", error);
       }
@@ -436,6 +452,7 @@ const SubjectPage = ({ subjectId }) => {
   };
 
   return (
+   isPageLoading ? <ActivityIndicator size="large" color="#0000ff" style={{flex: 1, justifyContent: 'center', alignItems: 'center'}} /> : 
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
       <ScrollView style={styles.scrollView} bounces={false}>
@@ -521,7 +538,7 @@ const SubjectPage = ({ subjectId }) => {
             </View>
             <View style={styles.priceContainer}>
               <Text style={styles.priceLabel}>Course Fee</Text>
-              <Text style={styles.price}>AED {singleSubjectData.subjectPrice}</Text>
+              <Text style={styles.price}>AED {(singleSubjectData.subjectPrice) / 100}</Text>
               <Text style={styles.durationText}>
                 {singleSubjectData.subjectDuration} hours
               </Text>
@@ -606,24 +623,30 @@ const SubjectPage = ({ subjectId }) => {
             )}
             
             {/* Review Form */}
-            <ReviewForm onSubmit={handleSubmitReview} isSubmitting={isSubmitting} />
+            <ReviewForm purchaseStatus={purchaseStatus} onSubmit={handleSubmitReview} isSubmitting={isSubmitting} />
           </View>
         </View>
       </ScrollView>
 
       <View style={styles.footer}>
         <TouchableOpacity 
-          style={styles.primaryButton} 
+          style={[
+            styles.primaryButton,
+            isTeacher && styles.disabledButton
+          ]} 
           onPress={handleEnrollPress}
+          disabled={isTeacher}
         >
           <Ionicons name="cart" size={24} color="white" />
-          <Text style={styles.primaryButtonText}>Enroll Now</Text>
-          <Text style={styles.priceText}>AED {singleSubjectData.subjectPrice}</Text>
+          <Text style={styles.primaryButtonText}>
+            {isTeacher ? "Please login as student to purchase" : "Enroll Now"}
+          </Text>
+          {!isTeacher && <Text style={styles.priceText}>AED {(singleSubjectData.subjectPrice) / 100}</Text>}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.secondaryButton} onPress={handleChatNow}>
+       { <TouchableOpacity style={styles.secondaryButton} onPress={handleChatNow}>
           <Ionicons name="chatbubbles-outline" size={24} color="#FFFFFF" />
           <Text style={styles.secondaryButtonText}>Chat</Text>
-        </TouchableOpacity>
+        </TouchableOpacity>}
       </View>
 
       <BookingCalendar
@@ -909,8 +932,9 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   reviewForm: {
+    flex: 1,
     marginTop: 16,
-    paddingBottom: 24,
+    paddingBottom: 104,
   },
   input: {
     backgroundColor: '#f8f9fa',
@@ -1136,6 +1160,16 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: '500',
+  },
+  disabledButton: {
+    backgroundColor: '#cccccc',
+    opacity: 0.7,
+  },
+  purchaseStatusText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 12,
   },
 });
 

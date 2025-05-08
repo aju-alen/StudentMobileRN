@@ -7,18 +7,17 @@ import {
   TouchableWithoutFeedback,
   TouchableOpacity,
 } from "react-native";
-import { Alert } from "react-native";
 import { Image } from 'expo-image';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import axios from "axios";
 import { ipURL } from "../../utils/utils";
-import KebabIcon from "../../components/KebabIcon";
 import { FONT } from "../../../constants";
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
 import SubjectCards from "../../components/SubjectCards";
 import CalendarSummary from "../../components/CalendarSummary";
 import { Ionicons } from '@expo/vector-icons';
+import { axiosWithAuth } from "../../utils/customAxios";
 
 interface User {
   id?: string;
@@ -54,11 +53,7 @@ const ProfilePage = () => {
 
   useEffect(() => {
     const getUser = async () => {
-      const apiUser = await axios.get(`${ipURL}/api/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem("authToken")}`,
-        },
-      });
+      const apiUser = await axiosWithAuth.get(`${ipURL}/api/auth/metadata`);
       console.log("apiUser", apiUser.data);
       
       setUser(apiUser.data);
@@ -71,11 +66,7 @@ const ProfilePage = () => {
   console.log("user in profile", user);
   
 
-  const handleLogout = async () => {
-    await AsyncStorage.removeItem("authToken");
-    await AsyncStorage.removeItem("isTeacher");
-    router.replace("/(authenticate)/login");
-  };
+
 
   const handleItemPress = (itemId: { id: any }) => {
     router.push(`/(tabs)/profile/${itemId.id}`);
@@ -89,23 +80,7 @@ const ProfilePage = () => {
     setShowDropdown(false);
   };
 
-  const confirmLogout = () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Logout",
-          onPress: handleLogout,
-          style: "destructive"
-        }
-      ]
-    );
-  };
+  
 
   const handleSettingsPress = () => {
     router.push('/(tabs)/profile/settings');
@@ -125,13 +100,6 @@ const ProfilePage = () => {
               >
                 <Ionicons name="settings-outline" size={24} color="#1A2B4B" />
               </TouchableOpacity>
-              <KebabIcon 
-                handleLogout={handleLogout} 
-                handleCreateNewSubject={handleCreateNewSubject} 
-                isTeacher={userDetails?.isTeacher} 
-                setShowDropdown={setShowDropdown} 
-                showDropdown={showDropdown} 
-              />
             </View>
           </View>
           
@@ -239,14 +207,7 @@ const ProfilePage = () => {
           />
         </View>
          {/* Add Logout Section */}
-         <View style={styles.logoutSection}>
-          <TouchableOpacity 
-            style={styles.logoutButton}
-            onPress={confirmLogout}
-          >
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
+         
       </ScrollView>
     </TouchableWithoutFeedback>
   );

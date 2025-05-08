@@ -25,6 +25,7 @@ import VideoPlayer from "../../components/VideoPlayer";
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/en';
+import { axiosWithAuth } from "../../utils/customAxios";
 
 // Initialize dayjs plugins
 dayjs.extend(relativeTime);
@@ -216,14 +217,9 @@ const HomePage = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const token = await AsyncStorage.getItem("authToken");
       const [userResponse, subjectsResponse] = await Promise.all([
-        axios.get(`${ipURL}/api/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get(`${ipURL}/api/subjects/search?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        axiosWithAuth.get(`${ipURL}/api/auth/metadata`),
+        axiosWithAuth.get(`${ipURL}/api/subjects/search?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`)
       ]);
 
       setUser(userResponse.data);
@@ -274,7 +270,7 @@ const HomePage = () => {
     <StatusBar style="light" />
     
     {/* Enhanced Animated Header */}
-    <Animated.View style={[styles.header, { height: headerHeight, opacity: headerOpacity }]}>
+    <Animated.View style={[styles.header, {  opacity: headerOpacity }]}>
       <View style={styles.userSection}>
         <TouchableOpacity 
           style={styles.profileButton}
@@ -302,7 +298,7 @@ const HomePage = () => {
       </View>
 
         {/* Enhanced Stats Container */}
-        <ScrollView 
+        {/* <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false}
           style={styles.statsContainer}
@@ -311,7 +307,7 @@ const HomePage = () => {
           <StatsCard stats={{ icon: "flame-outline", label: "Day Streak", value: user.streakCount || 4 }} />
           <StatsCard stats={{ icon: "star-outline", label: "Total Points", value: user.totalPoints || 11 }} />
           <StatsCard stats={{ icon: "trophy-outline", label: "Completed", value: user.completedCourses || 81 }} />
-        </ScrollView>
+        </ScrollView> */}
       </Animated.View>
 
       {/* Main Content */}

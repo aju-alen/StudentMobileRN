@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, ActivityIndicator } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { FONT } from '../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
@@ -7,6 +7,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { ipURL } from '../utils/utils';
 import { Ionicons } from '@expo/vector-icons';
+import BookingSummaryModal from './BookingSummaryModal';
+import { axiosWithAuth } from '../utils/customAxios';
+import { router } from 'expo-router';
 
 interface BookingCalendarProps {
   teacherId: string;
@@ -25,6 +28,8 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, subjectId,
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [markedDates, setMarkedDates] = useState({});
   const [loading, setLoading] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
+  const [selectedTime, setSelectedTime] = useState('');
 
   console.log(markedDates,'---markedDates');
   
@@ -52,9 +57,9 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, subjectId,
       setLoading(true);
       console.log(selectedDate);
       
-      const token = await AsyncStorage.getItem('authToken');
-      const response = await axios.get(`${ipURL}/api/bookings/teacher/availability/${teacherId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+
+      
+      const response = await axiosWithAuth.get(`${ipURL}/api/bookings/available/${teacherId}`, {
         params: { date: selectedDate }
       });
 
@@ -74,6 +79,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, subjectId,
         available: !bookedSlots.includes(slot.time)
       }));
       setTimeSlots(updatedSlots);
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching teacher availability:', error);
       Alert.alert('Error', 'Failed to fetch teacher availability');
@@ -87,24 +93,32 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, subjectId,
   };
 
   const handleTimeSlotSelect = async (time: string) => {
+    setSelectedTime(time);
+    onClose();
+    setShowSummary(true);
+  };
+
+  const handleConfirmBooking = async () => {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem('authToken');
       const userDetails = await AsyncStorage.getItem('userDetails');
       const userId = JSON.parse(userDetails).userId;
 
-      const response = await axios.post(`${ipURL}/api/bookings`, {
-        teacherId,
-        subjectId,
-        studentId: userId,
-        date: selectedDate,
-        time,
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // const response = await axios.post(`${ipURL}/api/bookings`, {
+      //   teacherId,
+      //   subjectId,
+      //   studentId: userId,
+      //   date: selectedDate,
+      //   time: selectedTime,
+      // }, {
+      //   headers: { Authorization: `Bearer ${token}` }
+      // });
 
       Alert.alert('Success', 'Session booked successfully!');
+      setShowSummary(false);
       onClose();
+      router.push('/home');
     } catch (error) {
       console.error('Error booking session:', error);
       Alert.alert('Error', 'Failed to book session');
@@ -114,73 +128,85 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, subjectId,
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Book a Session</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Ionicons name="close" size={24} color="#1A4C6E" />
-            </TouchableOpacity>
-          </View>
-
-          <Calendar
-            onDayPress={handleDateSelect}
-            markedDates={{
-              ...markedDates,
-              [selectedDate]: {
-                selected: false,
-                selectedColor: '#2DCB63',
-                fullBooked: false,
-              },
-            }}
-            minDate={new Date().toISOString().split('T')[0]}
-            theme={{
-              todayTextColor: '#2DCB63',
-              selectedDayBackgroundColor: '#2DCB63',
-              selectedDayTextColor: '#ffffff',
-              textDayFontFamily: FONT.regular,
-              textMonthFontFamily: FONT.bold,
-              textDayHeaderFontFamily: FONT.medium,
-              textDayFontSize: moderateScale(14),
-              textMonthFontSize: moderateScale(16),
-              textDayHeaderFontSize: moderateScale(14),
-            }}
-          />
-
-          {selectedDate && (
-            <View style={styles.timeSlotsContainer}>
-              <Text style={styles.timeSlotsTitle}>Available Time Slots</Text>
-              <View style={styles.timeSlotsGrid}>
-                {timeSlots.map((slot, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      styles.timeSlot,
-                      !slot.available && styles.unavailableSlot
-                    ]}
-                    onPress={() => slot.available && handleTimeSlotSelect(slot.time)}
-                    disabled={!slot.available || loading}
-                  >
-                    <Text style={[
-                      styles.timeSlotText,
-                      !slot.available && styles.unavailableSlotText
-                    ]}>
-                      {slot.time}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+    <>
+      <Modal
+        visible={visible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={onClose}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Book a Session</Text>
+              <TouchableOpacity onPress={onClose}>
+                <Ionicons name="close" size={24} color="#1A4C6E" />
+              </TouchableOpacity>
             </View>
-          )}
+
+            <Calendar
+              onDayPress={handleDateSelect}
+              markedDates={{
+                ...markedDates,
+                [selectedDate]: {
+                  selected: true,
+                  selectedColor: '#2DCB63',
+                  fullBooked: false,
+                },
+              }}
+              minDate={new Date().toISOString().split('T')[0]}
+              theme={{
+                todayTextColor: '#2DCB63',
+                selectedDayBackgroundColor: '#2DCB63',
+                selectedDayTextColor: '#ffffff',
+                textDayFontFamily: FONT.regular,
+                textMonthFontFamily: FONT.bold,
+                textDayHeaderFontFamily: FONT.medium,
+                textDayFontSize: moderateScale(14),
+                textMonthFontSize: moderateScale(16),
+                textDayHeaderFontSize: moderateScale(14),
+              }}
+            />
+
+            {selectedDate && (
+              <View style={styles.timeSlotsContainer}>
+                <Text style={styles.timeSlotsTitle}>Available Time Slots</Text>
+               {loading ? <ActivityIndicator size="large" color="#0000ff" style={{flex: 1, justifyContent: 'center', alignItems: 'center'}} /> : <View style={styles.timeSlotsGrid}>
+                  {timeSlots.map((slot, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.timeSlot,
+                        !slot.available && styles.unavailableSlot
+                      ]}
+                      onPress={() => slot.available && handleTimeSlotSelect(slot.time)}
+                      disabled={!slot.available || loading}
+                    >
+                      <Text style={[
+                        styles.timeSlotText,
+                        !slot.available && styles.unavailableSlotText
+                      ]}>
+                        {slot.time}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>}
+              </View>
+            )}
+          </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+
+      <BookingSummaryModal
+        visible={showSummary}
+        onClose={() => setShowSummary(false)}
+        teacherId={teacherId}
+        subjectId={subjectId}
+        date={selectedDate}
+        time={selectedTime}
+        onConfirm={handleConfirmBooking}
+      />
+    </>
   );
 };
 

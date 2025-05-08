@@ -7,63 +7,44 @@ import axios from 'axios';
 import { ipURL } from '../../utils/utils';
 import { FONT } from '../../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
-
-// Mock data for calendar events - replace with actual API data
-const mockEvents = [
-  {
-    id: '1',
-    title: 'Mathematics Class',
-    instructor: 'John Smith',
-    date: '2023-05-15',
-    time: '10:00 AM - 11:30 AM',
-    subject: 'Advanced Mathematics',
-    status: 'upcoming'
-  },
-  {
-    id: '2',
-    title: 'Physics Lab',
-    instructor: 'Sarah Johnson',
-    date: '2023-05-16',
-    time: '2:00 PM - 3:30 PM',
-    subject: 'Physics',
-    status: 'upcoming'
-  },
-  {
-    id: '3',
-    title: 'Chemistry Lecture',
-    instructor: 'Michael Brown',
-    date: '2023-05-18',
-    time: '11:00 AM - 12:30 PM',
-    subject: 'Chemistry',
-    status: 'completed'
-  },
-  {
-    id: '4',
-    title: 'Biology Workshop',
-    instructor: 'Emily Davis',
-    date: '2023-05-20',
-    time: '3:00 PM - 4:30 PM',
-    subject: 'Biology',
-    status: 'upcoming'
-  }
-];
+import { axiosWithAuth } from '../../utils/customAxios';
 
 const SchedulePage = () => {
-  const [events, setEvents] = useState(mockEvents);
+  const [events, setEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [userDetails, setUserDetails] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUserDetails = async () => {
+    const fetchData = async () => {
       try {
         const user = JSON.parse(await AsyncStorage.getItem("userDetails"));
         setUserDetails(user);
+        
+
+        const response = await axiosWithAuth.get(`${ipURL}/api/bookings/upcoming-classes`);
+
+        // Transform the API data to match the component's expected format
+        const formattedEvents = response.data.map((classData) => ({
+          id: classData.id,
+          title: `${classData.subject.subjectName} Class`,
+          instructor: classData.teacher.name,
+          date: classData.bookingDate,
+          time: classData.bookingTime,
+          subject: classData.subject.subjectName,
+          status: 'upcoming' // Since these are upcoming classes
+        }));
+
+        setEvents(formattedEvents);
+        setLoading(false);
       } catch (error) {
-        console.error("Error fetching user details:", error);
+        console.error("Error fetching data:", error);
+        Alert.alert("Error", "Failed to fetch schedule data");
+        setLoading(false);
       }
     };
     
-    fetchUserDetails();
+    fetchData();
   }, []);
 
   // Group events by date
@@ -95,6 +76,29 @@ const SchedulePage = () => {
     );
   };
 
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Stack.Screen 
+          options={{
+            title: 'My Schedule',
+            headerShown: true,
+            headerStyle: {
+              backgroundColor: '#FFFFFF',
+            },
+            headerTintColor: '#1A2B4B',
+            headerTitleStyle: {
+              fontFamily: FONT.bold,
+            },
+          }} 
+        />
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading schedule...</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Stack.Screen 
@@ -114,48 +118,46 @@ const SchedulePage = () => {
       <ScrollView style={styles.content}>
         <View style={styles.calendarSummary}>
           <Text style={styles.summaryTitle}>Upcoming Classes</Text>
-          <Text style={styles.summaryCount}>{events.filter(e => e.status === 'upcoming').length} classes scheduled</Text>
+          <Text style={styles.summaryCount}>{events.length} classes scheduled</Text>
         </View>
 
-        {sortedDates.map((date) => (
-          <View key={date} style={styles.dateSection}>
-            <Text style={styles.dateHeader}>{formatDate(date)}</Text>
-            {groupedEvents[date].map((event) => (
-              <TouchableOpacity 
-                key={event.id} 
-                style={[
-                  styles.eventCard,
-                  event.status === 'completed' && styles.completedEvent
-                ]}
-                onPress={() => handleEventPress(event)}
-              >
-                <View style={styles.eventTime}>
-                  <Ionicons name="time-outline" size={16} color="#64748B" />
-                  <Text style={styles.timeText}>{event.time}</Text>
-                </View>
-                <Text style={styles.eventTitle}>{event.title}</Text>
-                <View style={styles.eventDetails}>
-                  <View style={styles.instructorInfo}>
-                    <Ionicons name="person-outline" size={16} color="#64748B" />
-                    <Text style={styles.instructorText}>{event.instructor}</Text>
+        {sortedDates.length > 0 ? (
+          sortedDates.map((date) => (
+            <View key={date} style={styles.dateSection}>
+              <Text style={styles.dateHeader}>{formatDate(date)}</Text>
+              {groupedEvents[date].map((event) => (
+                <TouchableOpacity 
+                  key={event.id} 
+                  style={styles.eventCard}
+                  onPress={() => handleEventPress(event)}
+                >
+                  <View style={styles.eventTime}>
+                    <Ionicons name="time-outline" size={16} color="#64748B" />
+                    <Text style={styles.timeText}>{event.time}</Text>
                   </View>
-                  <View style={styles.subjectInfo}>
-                    <Ionicons name="book-outline" size={16} color="#64748B" />
-                    <Text style={styles.subjectText}>{event.subject}</Text>
+                  <Text style={styles.eventTitle}>{event.title}</Text>
+                  <View style={styles.eventDetails}>
+                    <View style={styles.instructorInfo}>
+                      <Ionicons name="person-outline" size={16} color="#64748B" />
+                      <Text style={styles.instructorText}>{event.instructor}</Text>
+                    </View>
+                    <View style={styles.subjectInfo}>
+                      <Ionicons name="book-outline" size={16} color="#64748B" />
+                      <Text style={styles.subjectText}>{event.subject}</Text>
+                    </View>
                   </View>
-                </View>
-                <View style={[
-                  styles.statusBadge,
-                  event.status === 'completed' ? styles.completedBadge : styles.upcomingBadge
-                ]}>
-                  <Text style={styles.statusText}>
-                    {event.status === 'completed' ? 'Completed' : 'Upcoming'}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ))}
+                  <View style={[styles.statusBadge, styles.upcomingBadge]}>
+                    <Text style={styles.statusText}>Upcoming</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ))
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No upcoming classes scheduled</Text>
           </View>
-        ))}
+        )}
       </ScrollView>
     </View>
   );
@@ -214,9 +216,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  completedEvent: {
-    opacity: 0.7,
-  },
   eventTime: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -268,13 +267,32 @@ const styles = StyleSheet.create({
   upcomingBadge: {
     backgroundColor: '#EEF2FF',
   },
-  completedBadge: {
-    backgroundColor: '#F1F5F9',
-  },
   statusText: {
     fontFamily: FONT.medium,
     fontSize: moderateScale(12),
     color: '#4F46E5',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(16),
+    color: '#64748B',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: moderateScale(20),
+  },
+  emptyText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(16),
+    color: '#64748B',
+    textAlign: 'center',
   },
 });
 

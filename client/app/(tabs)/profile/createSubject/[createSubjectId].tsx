@@ -12,6 +12,7 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  Linking,
 } from "react-native";
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -45,6 +46,8 @@ const CreateSubject = () => {
   const [subjectPoints, setsubjectPoints] = useState([]);
   const [pdf1, setPdf1] = useState(null);
   const [pdf2, setPdf2] = useState(null);
+  const [isEulaAccepted, setIsEulaAccepted] = useState(false);
+  const EULA_PDF_URL = `https://coachacademic.s3.ap-southeast-1.amazonaws.com/EULA+/COACHACADEM_TOU_(EULA).pdf`; // Replace with your actual EULA PDF URL
 
   console.log(pdf1, 'pdf1');
   console.log(pdf2, 'pdf2');
@@ -437,12 +440,38 @@ const CreateSubject = () => {
               </View>
             </View>
 
+            {/* EULA Section */}
+            <View style={styles.section}>
+              <View style={styles.eulaContainer}>
+                <TouchableOpacity 
+                  style={styles.checkboxContainer}
+                  onPress={() => setIsEulaAccepted(!isEulaAccepted)}
+                >
+                  <View style={[styles.checkbox, isEulaAccepted && styles.checked]}>
+                    {isEulaAccepted && (
+                      <Ionicons name="checkmark" size={16} color="white" />
+                    )}
+                  </View>
+                  <Text style={styles.eulaText}>
+                    I agree to the{' '}
+                    <Text 
+                      style={styles.eulaLink}
+                      onPress={() => Linking.openURL(EULA_PDF_URL)}
+                    >
+                      End User License Agreement (EULA)
+                    </Text>
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
             <Button
               title="Create Subject"
               filled
               color={COLORS.primary}
               style={styles.submitButton}
               onPress={handleCreateSubject}
+              disabled={!isEulaAccepted}
             />
           </View>
         </ScrollView>
@@ -617,6 +646,36 @@ const styles = StyleSheet.create({
   submitButton: {
     marginTop: verticalScale(24),
     marginBottom: verticalScale(40),
+  },
+  eulaContainer: {
+    marginTop: verticalScale(20),
+    marginBottom: verticalScale(20),
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: moderateScale(20),
+    height: moderateScale(20),
+    borderRadius: moderateScale(4),
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    marginRight: horizontalScale(10),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checked: {
+    backgroundColor: COLORS.primary,
+  },
+  eulaText: {
+    fontSize: moderateScale(14),
+    color: '#666',
+    flex: 1,
+  },
+  eulaLink: {
+    color: COLORS.primary,
+    textDecorationLine: 'underline',
   },
 });
 

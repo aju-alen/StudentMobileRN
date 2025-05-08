@@ -46,7 +46,7 @@ const HomeFlatlist = ({ homeData, handleItemPress }) => {
     const getUser = async () => {
       try {
         const token = await AsyncStorage.getItem("authToken");
-        const apiUser = await axios.get(`${ipURL}/api/auth/me`, {
+        const apiUser = await axios.get(`${ipURL}/api/auth/metadata`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser(apiUser.data);
