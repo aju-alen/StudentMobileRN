@@ -1,1 +1,0 @@
-export const portConfig = 'https://studentmobilern-31oo.onrender.com'
