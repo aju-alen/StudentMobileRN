@@ -9,10 +9,12 @@ import {
   TextInput,
   Dimensions,
   Modal,
-  ActivityIndicator
+  ActivityIndicator,
+  Animated,
+  Easing
 } from "react-native";
 import { Image } from 'expo-image';
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ipURL } from "../utils/utils";
@@ -133,6 +135,18 @@ const SubjectPage = ({ subjectId }) => {
   const [isTeacher, setIsTeacher] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [purchaseStatus, setPurchaseStatus] = useState(false);
+
+  // Animation values
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const headerTranslateY = useRef(new Animated.Value(50)).current;
+  const contentOpacity = useRef(new Animated.Value(0)).current;
+  const contentTranslateY = useRef(new Animated.Value(30)).current;
+  const buttonScale = useRef(new Animated.Value(1)).current;
+  const buttonOpacity = useRef(new Animated.Value(0)).current;
+  const menuScale = useRef(new Animated.Value(0)).current;
+  const menuOpacity = useRef(new Animated.Value(0)).current;
+
   const handleChatNow = async () => {
 
     if(!purchaseStatus){
@@ -339,6 +353,117 @@ const SubjectPage = ({ subjectId }) => {
     checkIfSaved();
   }, [subjectId]);
 
+  useEffect(() => {
+    // Entrance animations
+    Animated.parallel([
+      Animated.timing(headerOpacity, {
+        toValue: 1,
+        duration: 800,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+      Animated.timing(headerTranslateY, {
+        toValue: 0,
+        duration: 800,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+      Animated.timing(contentOpacity, {
+        toValue: 1,
+        duration: 800,
+        delay: 200,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+      Animated.timing(contentTranslateY, {
+        toValue: 0,
+        duration: 800,
+        delay: 200,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+      Animated.timing(buttonOpacity, {
+        toValue: 1,
+        duration: 800,
+        delay: 400,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      })
+    ]).start();
+  }, []);
+
+  const handleMenuPress = () => {
+    if (showMenu) {
+      Animated.parallel([
+        Animated.timing(menuScale, {
+          toValue: 0,
+          duration: 200,
+          easing: Easing.bezier(0.4, 0, 0.2, 1),
+          useNativeDriver: true,
+        }),
+        Animated.timing(menuOpacity, {
+          toValue: 0,
+          duration: 200,
+          easing: Easing.bezier(0.4, 0, 0.2, 1),
+          useNativeDriver: true,
+        })
+      ]).start(() => setShowMenu(false));
+    } else {
+      setShowMenu(true);
+      Animated.parallel([
+        Animated.spring(menuScale, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(menuOpacity, {
+          toValue: 1,
+          duration: 200,
+          easing: Easing.bezier(0.4, 0, 0.2, 1),
+          useNativeDriver: true,
+        })
+      ]).start();
+    }
+  };
+
+  const handleButtonPress = () => {
+    Animated.sequence([
+      Animated.timing(buttonScale, {
+        toValue: 0.95,
+        duration: 100,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+      Animated.spring(buttonScale, {
+        toValue: 1,
+        friction: 3,
+        tension: 40,
+        useNativeDriver: true,
+      })
+    ]).start();
+  };
+
+  const headerStyle = {
+    opacity: headerOpacity,
+    transform: [{ translateY: headerTranslateY }]
+  };
+
+  const contentStyle = {
+    opacity: contentOpacity,
+    transform: [{ translateY: contentTranslateY }]
+  };
+
+  const buttonStyle = {
+    opacity: buttonOpacity,
+    transform: [{ scale: buttonScale }]
+  };
+
+  const menuStyle = {
+    opacity: menuOpacity,
+    transform: [{ scale: menuScale }]
+  };
+
   const handleSubmitReview = useCallback(async (reviewData) => {
     if (!reviewData.title || !reviewData.description) {
       alert('Please fill in all fields');
@@ -455,8 +580,16 @@ const SubjectPage = ({ subjectId }) => {
    isPageLoading ? <ActivityIndicator size="large" color="#0000ff" style={{flex: 1, justifyContent: 'center', alignItems: 'center'}} /> : 
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <ScrollView style={styles.scrollView} bounces={false}>
-        <View style={styles.headerImageContainer}>
+      <Animated.ScrollView 
+        style={styles.scrollView} 
+        bounces={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+      >
+        <Animated.View style={[styles.headerImageContainer, headerStyle]}>
           <Image
             source={{ uri: singleSubjectData?.subjectImage }}
             style={styles.headerImage}
@@ -466,14 +599,14 @@ const SubjectPage = ({ subjectId }) => {
           />
           <TouchableOpacity 
             style={styles.menuButton}
-            onPress={() => setShowMenu(!showMenu)}
+            onPress={handleMenuPress}
           >
             <Ionicons name="ellipsis-vertical" size={24} color="white" />
           </TouchableOpacity>
-        </View>
+        </Animated.View>
 
         {showMenu && (
-          <View style={styles.menuContainer}>
+          <Animated.View style={[styles.menuContainer, menuStyle]}>
             <TouchableOpacity 
               style={styles.menuItem}
               onPress={() => {
@@ -491,10 +624,10 @@ const SubjectPage = ({ subjectId }) => {
               <Ionicons name="ban-outline" size={20} color="#E74C3C" />
               <Text style={styles.menuItemText}>Block User</Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
         )}
 
-        <View style={styles.contentContainer}>
+        <Animated.View style={[styles.contentContainer, contentStyle]}>
           {/* Status Bar */}
           <View style={styles.statusBar}>
             <View style={styles.statusIndicator}>
@@ -625,16 +758,19 @@ const SubjectPage = ({ subjectId }) => {
             {/* Review Form */}
             <ReviewForm purchaseStatus={purchaseStatus} onSubmit={handleSubmitReview} isSubmitting={isSubmitting} />
           </View>
-        </View>
-      </ScrollView>
+        </Animated.View>
+      </Animated.ScrollView>
 
-      <View style={styles.footer}>
+      <Animated.View style={[styles.footer, buttonStyle]}>
         <TouchableOpacity 
           style={[
             styles.primaryButton,
             isTeacher && styles.disabledButton
           ]} 
-          onPress={handleEnrollPress}
+          onPress={() => {
+            handleButtonPress();
+            handleEnrollPress();
+          }}
           disabled={isTeacher}
         >
           <Ionicons name="cart" size={24} color="white" />
@@ -643,11 +779,17 @@ const SubjectPage = ({ subjectId }) => {
           </Text>
           {!isTeacher && <Text style={styles.priceText}>AED {(singleSubjectData.subjectPrice) / 100}</Text>}
         </TouchableOpacity>
-       { <TouchableOpacity style={styles.secondaryButton} onPress={handleChatNow}>
+        <TouchableOpacity 
+          style={styles.secondaryButton} 
+          onPress={() => {
+            handleButtonPress();
+            handleChatNow();
+          }}
+        >
           <Ionicons name="chatbubbles-outline" size={24} color="#FFFFFF" />
           <Text style={styles.secondaryButtonText}>Chat</Text>
-        </TouchableOpacity>}
-      </View>
+        </TouchableOpacity>
+      </Animated.View>
 
       <BookingCalendar
         teacherId={teacherId}

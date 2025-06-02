@@ -6,6 +6,7 @@ import {
   ScrollView,
   RefreshControl,
   Animated,
+  ActivityIndicator,
 } from "react-native";
 import { Image } from 'expo-image';
 import React, { useEffect, useState, useRef } from "react";
@@ -93,6 +94,7 @@ const blurhash =
 
 const HomePage = () => {
   const scrollY = useRef(new Animated.Value(0)).current;
+  const buttonScale = useRef(new Animated.Value(1)).current;
   const [subjectData, setSubjectData] = React.useState([]);
   const [recommendedSubjects, setRecommendedSubjects] = React.useState([]);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -110,6 +112,7 @@ const HomePage = () => {
   });
 
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   const videoData = [
     { id: '1', videoUrl: 'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4' },
@@ -133,38 +136,87 @@ const HomePage = () => {
 
   const StatsCard = ({ stats }: { stats: Stats }) => (
     <View style={styles.statsCard}>
-
       <Text style={styles.statsValue}>{stats.value}</Text>
       <Text style={styles.statsLabel}>{stats.label}</Text>
     </View>
   );
 
-  const QuickActionButton = ({ icon, label, onPress }) => (
-    <TouchableOpacity style={styles.quickActionButton} onPress={onPress}>
-      <View style={styles.quickActionIcon}>
-        <Ionicons name={icon} size={24} color="#1A4C6E" />
-      </View>
-      <Text style={styles.quickActionLabel}>{label}</Text>
-    </TouchableOpacity>
-  );
+  const animateButton = (scale: Animated.Value) => {
+    Animated.sequence([
+      Animated.timing(scale, {
+        toValue: 0.95,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
-  const SectionHeader = ({ title, showSeeAll = false }) => (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {showSeeAll && (
-        <TouchableOpacity 
-          style={styles.seeAllButton} 
-          onPress={() => router.push('/(tabs)/home/allSubject')}
+  const QuickActionButton = ({ icon, label, onPress }) => {
+    const scale = useRef(new Animated.Value(1)).current;
+
+    const handlePress = () => {
+      animateButton(scale);
+      onPress();
+    };
+
+    return (
+      <TouchableOpacity 
+        style={styles.quickActionButton} 
+        onPress={handlePress}
+        activeOpacity={0.7}
+      >
+        <Animated.View 
+          style={[
+            styles.quickActionIcon,
+            {
+              transform: [{ scale }]
+            }
+          ]}
         >
-          <Text style={styles.seeAllText}>See All</Text>
-          <Ionicons name="chevron-forward" size={16} color="#F1A568" />
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+          <Ionicons name={icon} size={24} color="#1A4C6E" />
+        </Animated.View>
+        <Text style={styles.quickActionLabel}>{label}</Text>
+      </TouchableOpacity>
+    );
+  };
 
-  
+  const SectionHeader = ({ title, showSeeAll = false }) => {
+    const scale = useRef(new Animated.Value(1)).current;
 
+    const handleSeeAllPress = () => {
+      animateButton(scale);
+      router.push('/(tabs)/home/allSubject');
+    };
+
+    return (
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        {showSeeAll && (
+          <TouchableOpacity 
+            style={styles.seeAllButton} 
+            onPress={handleSeeAllPress}
+            activeOpacity={0.7}
+          >
+            <Animated.View 
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                transform: [{ scale }]
+              }}
+            >
+              <Text style={styles.seeAllText}>See All</Text>
+              <Ionicons name="chevron-forward" size={16} color="#F1A568" />
+            </Animated.View>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
 
   const getRelativeDate = (dateString: string) => {
     const bookingDate = dayjs(dateString);
@@ -195,22 +247,39 @@ const HomePage = () => {
   };
 
   const DeadlineCard = ({ deadline }: { deadline: Deadline }) => {
+    const scale = useRef(new Animated.Value(1)).current;
     const priority = getPriority(deadline.bookingDate);
     
+    const handlePress = () => {
+      animateButton(scale);
+    };
+
     return (
-      <View style={styles.deadlineCard}>
-        <View style={[styles.priorityIndicator, styles[`priority${priority}`]]} />
-        <View style={styles.deadlineInfo}>
-          <Text style={styles.deadlineTitle}>{deadline?.subject.subjectName}</Text>
-          <Text style={styles.deadlineType}>Live Class</Text>
-          <Text style={styles.teacherName}>with {deadline?.teacher.name}</Text>
-        </View>
-        <View style={styles.deadlineTime}>
-          <Text style={styles.deadlineLabel}>Due</Text>
-          <Text style={styles.deadlineDate}>{getRelativeDate(deadline.bookingDate)}</Text>
-          <Text style={styles.classTime}>{deadline.bookingTime}</Text>
-        </View>
-      </View>
+      <TouchableOpacity 
+        onPress={handlePress}
+        activeOpacity={0.7}
+      >
+        <Animated.View 
+          style={[
+            styles.deadlineCard,
+            {
+              transform: [{ scale }]
+            }
+          ]}
+        >
+          <View style={[styles.priorityIndicator, styles[`priority${priority}`]]} />
+          <View style={styles.deadlineInfo}>
+            <Text style={styles.deadlineTitle}>{deadline?.subject.subjectName}</Text>
+            <Text style={styles.deadlineType}>Live Class</Text>
+            <Text style={styles.teacherName}>with {deadline?.teacher.name}</Text>
+          </View>
+          <View style={styles.deadlineTime}>
+            <Text style={styles.deadlineLabel}>Due</Text>
+            <Text style={styles.deadlineDate}>{getRelativeDate(deadline.bookingDate)}</Text>
+            <Text style={styles.classTime}>{deadline.bookingTime}</Text>
+          </View>
+        </Animated.View>
+      </TouchableOpacity>
     );
   };
 
@@ -252,8 +321,15 @@ const HomePage = () => {
   };
 
   useEffect(() => {
-    fetchData();
-    fetchDeadlines();
+    const loadAllData = async () => {
+      try {
+        await Promise.all([fetchData(), fetchDeadlines()]);
+        setIsDataLoaded(true);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
+    };
+    loadAllData();
   }, []);
 
   const onRefresh = React.useCallback(() => {
@@ -265,6 +341,14 @@ const HomePage = () => {
     router.push(`/(tabs)/home/${itemId.id}`);
   };
 
+  if (!isDataLoaded) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color="#1A4C6E" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
     <StatusBar style="light" />
@@ -274,16 +358,22 @@ const HomePage = () => {
       <View style={styles.userSection}>
         <TouchableOpacity 
           style={styles.profileButton}
-          onPress={() => router.replace('/(tabs)/profile')}
+          onPress={() => {
+            animateButton(buttonScale);
+            router.replace('/(tabs)/profile');
+          }}
+          activeOpacity={0.7}
         >
-          <Image
-            source={{ uri: user.profileImage }}
-            style={styles.profileImage}
-            placeholder={blurhash}
-            contentFit="cover"
-            transition={300}
-          />
-          <View style={styles.onlineIndicator} />
+          <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+            <Image
+              source={{ uri: user.profileImage }}
+              style={styles.profileImage}
+              placeholder={blurhash}
+              contentFit="cover"
+              transition={300}
+            />
+            <View style={styles.onlineIndicator} />
+          </Animated.View>
         </TouchableOpacity>
         
         <View style={styles.welcomeText}>
@@ -291,9 +381,15 @@ const HomePage = () => {
           <Text style={styles.userName}>{user.name.split(' ')[0]}</Text>
         </View>
         
-        <TouchableOpacity style={styles.notificationButton}>
-          <Ionicons name="notifications-outline" size={24} color="white" />
-          <View style={styles.notificationBadge} />
+        <TouchableOpacity 
+          style={styles.notificationButton}
+          onPress={() => animateButton(buttonScale)}
+          activeOpacity={0.7}
+        >
+          <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+            <Ionicons name="notifications-outline" size={24} color="white" />
+            <View style={styles.notificationBadge} />
+          </Animated.View>
         </TouchableOpacity>
       </View>
 
@@ -364,8 +460,6 @@ const HomePage = () => {
           </View>
         )}
 
-
-
         {/* Upcoming Deadlines */}
         <View style={styles.section}>
           <SectionHeader title="Upcoming Deadlines" />
@@ -385,8 +479,6 @@ const HomePage = () => {
             isHorizontal={true}
           />
         </View> */}
-
-      
 
         {/* Popular Courses Section */}
         <View style={styles.section}>
@@ -887,5 +979,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: -0.5,
   },
-
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });

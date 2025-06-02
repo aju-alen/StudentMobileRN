@@ -8,9 +8,12 @@ import {
   StatusBar,
   ActivityIndicator,
   RefreshControl,
+  Animated,
+  Easing,
+  Dimensions
 } from "react-native";
 import { Image } from 'expo-image';
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { FONT } from "../../../constants";
@@ -20,54 +23,163 @@ import { ipURL } from "../../utils/utils";
 import { socket } from "../../utils/socket";
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
 
+const { width } = Dimensions.get('window');
+
 const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
-const CommunityCard = ({ item, onPress }) => {
-  console.log(item,'community card');
-  return(
-  <TouchableOpacity 
-    style={styles.card}
-    onPress={onPress}
-    activeOpacity={0.7}
-  >
-    <View style={styles.cardImageContainer}>
-      <Image 
-        source={{ uri: item.communityProfileImage }} 
-        style={styles.communityImage}
-        placeholder={blurhash}
-        contentFit="fill"
-        transition={200}
-      />
-      <View style={styles.memberBadge}>
-        <Ionicons name="people" size={12} color="#FFF" />
-        <Text style={styles.memberCount}>{item.users.length}</Text>
-      </View>
-    </View>
-    
-    <View style={styles.cardContent}>
-      <View style={styles.titleContainer}>
-        <Text style={styles.communityName} numberOfLines={1}>
-          {item.communityName}
-        </Text>
-        <View style={styles.statusIndicator} />
-      </View>
-      
-      <View style={styles.cardFooter}>
-        <View style={styles.tagContainer}>
-          <Text style={styles.tag}>Active</Text>
+const CommunityCard = ({ item, onPress, index }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+  const translateYAnim = useRef(new Animated.Value(50)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 500,
+        delay: index * 100,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateYAnim, {
+        toValue: 0,
+        duration: 500,
+        delay: index * 100,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      })
+    ]).start();
+  }, []);
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.98,
+      friction: 5,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  return (
+    <Animated.View style={{
+      opacity: opacityAnim,
+      transform: [
+        { translateY: translateYAnim },
+        { scale: scaleAnim }
+      ]
+    }}>
+      <TouchableOpacity 
+        style={styles.card}
+        onPress={onPress}
+        activeOpacity={1}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+      >
+        <View style={styles.cardImageContainer}>
+          <Image 
+            source={{ uri: item.communityProfileImage }} 
+            style={styles.communityImage}
+            placeholder={blurhash}
+            contentFit="fill"
+            transition={200}
+          />
+          <View style={styles.memberBadge}>
+            <Ionicons name="people" size={12} color="#FFF" />
+            <Text style={styles.memberCount}>{item.users.length}</Text>
+          </View>
         </View>
-        <Ionicons name="chevron-forward" size={16} color="#A0A0A0" />
-      </View>
-    </View>
-  </TouchableOpacity>
-)};
+        
+        <View style={styles.cardContent}>
+          <View style={styles.titleContainer}>
+            <Text style={styles.communityName} numberOfLines={1}>
+              {item.communityName}
+            </Text>
+            <View style={styles.statusIndicator} />
+          </View>
+          
+          <View style={styles.cardFooter}>
+            <View style={styles.tagContainer}>
+              <Text style={styles.tag}>Active</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color="#A0A0A0" />
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
 
 const CommunityPage = () => {
   const [communities, setCommunities] = useState([]);
   const [token, setToken] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Animation values
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const headerTranslateY = useRef(new Animated.Value(20)).current;
+  const subHeaderOpacity = useRef(new Animated.Value(0)).current;
+  const subHeaderTranslateY = useRef(new Animated.Value(20)).current;
+  const searchButtonScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    // Entrance animations
+    Animated.parallel([
+      Animated.timing(headerOpacity, {
+        toValue: 1,
+        duration: 600,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+      Animated.timing(headerTranslateY, {
+        toValue: 0,
+        duration: 600,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+      Animated.timing(subHeaderOpacity, {
+        toValue: 1,
+        duration: 600,
+        delay: 200,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+      Animated.timing(subHeaderTranslateY, {
+        toValue: 0,
+        duration: 600,
+        delay: 200,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      })
+    ]).start();
+  }, []);
+
+  const handleSearchPress = () => {
+    Animated.sequence([
+      Animated.timing(searchButtonScale, {
+        toValue: 0.95,
+        duration: 100,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+      Animated.spring(searchButtonScale, {
+        toValue: 1,
+        friction: 3,
+        tension: 40,
+        useNativeDriver: true,
+      })
+    ]).start();
+  };
 
   const getAllCommunities = async () => {
     try {
@@ -120,23 +232,44 @@ const CommunityPage = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
       
-      <View style={styles.header}>
+      <Animated.View style={[
+        styles.header,
+        {
+          opacity: headerOpacity,
+          transform: [{ translateY: headerTranslateY }]
+        }
+      ]}>
         <Text style={styles.headerTitle}>Communities</Text>
-        <TouchableOpacity style={styles.searchButton}>
-          <Ionicons name="search-outline" size={22} color="#333" />
+        <TouchableOpacity 
+          style={styles.searchButton}
+          onPress={handleSearchPress}
+        >
+          <Animated.View style={{ transform: [{ scale: searchButtonScale }] }}>
+            <Ionicons name="search-outline" size={22} color="#333" />
+          </Animated.View>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
 
-      <View style={styles.subHeader}>
+      <Animated.View style={[
+        styles.subHeader,
+        {
+          opacity: subHeaderOpacity,
+          transform: [{ translateY: subHeaderTranslateY }]
+        }
+      ]}>
         <Text style={styles.subHeaderText}>
           Join communities to connect with like-minded people
         </Text>
-      </View>
+      </Animated.View>
 
       <FlatList
         data={communities}
-        renderItem={({ item }) => (
-          <CommunityCard item={item} onPress={() => handlePress(item)} />
+        renderItem={({ item, index }) => (
+          <CommunityCard 
+            item={item} 
+            onPress={() => handlePress(item)} 
+            index={index}
+          />
         )}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}

@@ -70,7 +70,7 @@ const SavedPage = () => {
         <View style={styles.titleRow}>
           <Text style={styles.subjectName} numberOfLines={1}>{subject.subjectName}</Text>
           <View style={styles.priceContainer}>
-            <Text style={styles.priceText}>AED {subject.subjectPrice}</Text>
+            <Text style={styles.priceText}>AED {subject.subjectPrice / 100}</Text>
           </View>
         </View>
         <Text style={styles.subjectDescription} numberOfLines={2}>

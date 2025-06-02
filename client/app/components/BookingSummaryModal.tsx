@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator, ScrollView, Image, Alert } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator, ScrollView, Image, Alert, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONT } from '../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
@@ -7,6 +7,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ipURL } from '../utils/utils';
 import { useStripe } from '@stripe/stripe-react-native';
+import ConfettiCannon from 'react-native-confetti-cannon';
 
 interface BookingSummaryModalProps {
   visible: boolean;
@@ -33,6 +34,12 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
   const [loadingModal, setLoadingModal] = useState(true);
   const [loading, setLoading] = useState(false);
   const [paymentInitialized, setPaymentInitialized] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.5)).current;
+  const confettiRef = useRef(null);
+  const [isClosing, setIsClosing] = useState(false);
+  const fadeOutAnim = useRef(new Animated.Value(1)).current;
 
   console.log(subjectData, 'subjectData');
   console.log(teacherData, 'teacherData');
@@ -72,6 +79,8 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
 
       try {
         const token = await AsyncStorage.getItem('authToken');
+        console.log(token, 'this is the token in stripe');
+        
         const response = await fetch(`${ipURL}/api/stripe/payment-sheet`, {
           method: 'POST',
           body: JSON.stringify({
@@ -122,6 +131,80 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
     return new Date(dateString).toLocaleDateString('en-US', options);
   };
 
+  const SuccessAnimation = () => {
+    useEffect(() => {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      // Start confetti animation
+      if (confettiRef.current) {
+        confettiRef.current.start();
+      }
+
+      // Start closing sequence after 4 seconds
+      const timer = setTimeout(() => {
+        setIsClosing(true);
+        Animated.timing(fadeOutAnim, {
+          toValue: 0,
+          duration: 500,
+          useNativeDriver: true,
+        }).start(() => {
+          setShowSuccess(false);
+          onConfirm();
+        });
+      }, 4000);
+
+      return () => clearTimeout(timer);
+    }, []);
+
+    return (
+      <Animated.View 
+        style={[
+          styles.successContainer,
+          {
+            opacity: fadeOutAnim
+          }
+        ]}
+      >
+        <ConfettiCannon
+          ref={confettiRef}
+          count={200}
+          origin={{ x: -10, y: 0 }}
+          autoStart={false}
+          fadeOut={true}
+          fallSpeed={3000}
+          colors={['#2DCB63', '#1A4C6E', '#F1A568', '#FFFFFF']}
+        />
+        <Animated.View 
+          style={[
+            styles.successContent,
+            {
+              opacity: fadeAnim,
+              transform: [{ scale: scaleAnim }]
+            }
+          ]}
+        >
+          <View style={styles.checkmarkCircle}>
+            <Ionicons name="checkmark" size={50} color="#FFFFFF" />
+          </View>
+          <Text style={styles.successTitle}>Payment Successful!</Text>
+          <Text style={styles.successMessage}>Your booking has been confirmed</Text>
+        </Animated.View>
+      </Animated.View>
+    );
+  };
+
   const openPaymentSheet = async () => {
     if (!paymentInitialized) {
       Alert.alert('Error', 'Payment system is not ready. Please try again.');
@@ -135,8 +218,9 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
       if (error) {
         Alert.alert(`Error code: ${error.code}`, error.message);
       } else {
-        Alert.alert('Success', 'Your booking is confirmed!');
-        onConfirm();
+        setShowSuccess(true);
+        setIsClosing(false);
+        fadeOutAnim.setValue(1);
       }
     } catch (error) {
       console.error('Payment error:', error);
@@ -172,113 +256,119 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={onClose} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color="#1A4C6E" />
-            </TouchableOpacity>
-            <Text style={styles.title}>Booking Summary</Text>
-          </View>
-
-          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-            <View style={styles.content}>
-              {/* Teacher Profile Section */}
-              <View style={styles.teacherProfileSection}>
-                <Image
-                  source={{ uri: teacherData.profileImage || 'https://via.placeholder.com/100' }}
-                  style={styles.teacherImage}
-                />
-                <View style={styles.teacherInfo}>
-                  <Text style={styles.teacherName}>{teacherData.name}</Text>
-                  <Text style={styles.teacherRole}>Teacher</Text>
-                </View>
+          {showSuccess ? (
+            <SuccessAnimation />
+          ) : (
+            <>
+              <View style={styles.header}>
+                <TouchableOpacity onPress={onClose} style={styles.backButton}>
+                  <Ionicons name="arrow-back" size={24} color="#1A4C6E" />
+                </TouchableOpacity>
+                <Text style={styles.title}>Booking Summary</Text>
               </View>
 
-              {/* Subject Details Section */}
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Ionicons name="book" size={24} color="#1A4C6E" />
-                  <Text style={styles.sectionTitle}>Subject Details</Text>
-                </View>
-                <View style={styles.sectionContent}>
-                  <Text style={styles.subjectName}>{subjectData.subjectName}</Text>
-                  <View style={styles.subjectMeta}>
-                    <View style={styles.metaItem}>
-                      <Ionicons name="school" size={16} color="#64748B" />
-                      <Text style={styles.metaText}>{subjectData.subjectBoard}</Text>
-                    </View>
-                    <View style={styles.metaItem}>
-                      <Ionicons name="bookmark" size={16} color="#64748B" />
-                      <Text style={styles.metaText}>Grade {subjectData.subjectGrade}</Text>
+              <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+                <View style={styles.content}>
+                  {/* Teacher Profile Section */}
+                  <View style={styles.teacherProfileSection}>
+                    <Image
+                      source={{ uri: teacherData.profileImage || 'https://via.placeholder.com/100' }}
+                      style={styles.teacherImage}
+                    />
+                    <View style={styles.teacherInfo}>
+                      <Text style={styles.teacherName}>{teacherData.name}</Text>
+                      <Text style={styles.teacherRole}>Teacher</Text>
                     </View>
                   </View>
-                </View>
-              </View>
 
-              {/* Session Details Section */}
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Ionicons name="calendar" size={24} color="#1A4C6E" />
-                  <Text style={styles.sectionTitle}>Session Details</Text>
-                </View>
-                <View style={styles.sectionContent}>
-                  <View style={styles.sessionDetail}>
-                    <Ionicons name="calendar-outline" size={20} color="#64748B" />
-                    <Text style={styles.detailText}>{formatDate(date)}</Text>
+                  {/* Subject Details Section */}
+                  <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                      <Ionicons name="book" size={24} color="#1A4C6E" />
+                      <Text style={styles.sectionTitle}>Subject Details</Text>
+                    </View>
+                    <View style={styles.sectionContent}>
+                      <Text style={styles.subjectName}>{subjectData.subjectName}</Text>
+                      <View style={styles.subjectMeta}>
+                        <View style={styles.metaItem}>
+                          <Ionicons name="school" size={16} color="#64748B" />
+                          <Text style={styles.metaText}>{subjectData.subjectBoard}</Text>
+                        </View>
+                        <View style={styles.metaItem}>
+                          <Ionicons name="bookmark" size={16} color="#64748B" />
+                          <Text style={styles.metaText}>Grade {subjectData.subjectGrade}</Text>
+                        </View>
+                      </View>
+                    </View>
                   </View>
-                  <View style={styles.sessionDetail}>
-                    <Ionicons name="time-outline" size={20} color="#64748B" />
-                    <Text style={styles.detailText}>{time}</Text>
-                  </View>
-                  <View style={styles.sessionDetail}>
-                    <Ionicons name="hourglass-outline" size={20} color="#64748B" />
-                    <Text style={styles.detailText}>{subjectData.subjectDuration} months duration</Text>
-                  </View>
-                </View>
-              </View>
 
-              {/* Payment Details Section */}
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Ionicons name="wallet" size={24} color="#1A4C6E" />
-                  <Text style={styles.sectionTitle}>Payment Details</Text>
-                </View>
-                <View style={styles.priceContainer}>
-                  <View style={styles.priceRow}>
-                    <Text style={styles.priceLabel}>Course Fee</Text>
-                    <Text style={styles.price}>AED {(subjectData.subjectPrice) / 100}</Text>
+                  {/* Session Details Section */}
+                  <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                      <Ionicons name="calendar" size={24} color="#1A4C6E" />
+                      <Text style={styles.sectionTitle}>Session Details</Text>
+                    </View>
+                    <View style={styles.sectionContent}>
+                      <View style={styles.sessionDetail}>
+                        <Ionicons name="calendar-outline" size={20} color="#64748B" />
+                        <Text style={styles.detailText}>{formatDate(date)}</Text>
+                      </View>
+                      <View style={styles.sessionDetail}>
+                        <Ionicons name="time-outline" size={20} color="#64748B" />
+                        <Text style={styles.detailText}>{time}</Text>
+                      </View>
+                      <View style={styles.sessionDetail}>
+                        <Ionicons name="hourglass-outline" size={20} color="#64748B" />
+                        <Text style={styles.detailText}>{subjectData.subjectDuration} months duration</Text>
+                      </View>
+                    </View>
                   </View>
-                  <View style={styles.priceRow}>
-                    <Text style={styles.priceLabel}>Duration</Text>
-                    <Text style={styles.priceValue}>{subjectData.subjectDuration} months</Text>
-                  </View>
-                  <View style={[styles.priceRow, styles.totalRow]}>
-                    <Text style={styles.totalLabel}>Total Amount</Text>
-                    <Text style={styles.totalPrice}>AED {(subjectData.subjectPrice) / 100}</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-          </ScrollView>
 
-          <View style={styles.footer}>
-            <TouchableOpacity 
-              style={[
-                styles.confirmButton,
-                (!paymentInitialized || loading) && styles.disabledButton
-              ]} 
-              onPress={openPaymentSheet}
-              disabled={!paymentInitialized || loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <>
-                  <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" style={styles.confirmIcon} />
-                  <Text style={styles.confirmButtonText}>Confirm Booking</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
+                  {/* Payment Details Section */}
+                  <View style={styles.section}>
+                    <View style={styles.sectionHeader}>
+                      <Ionicons name="wallet" size={24} color="#1A4C6E" />
+                      <Text style={styles.sectionTitle}>Payment Details</Text>
+                    </View>
+                    <View style={styles.priceContainer}>
+                      <View style={styles.priceRow}>
+                        <Text style={styles.priceLabel}>Course Fee</Text>
+                        <Text style={styles.price}>AED {(subjectData.subjectPrice) / 100}</Text>
+                      </View>
+                      <View style={styles.priceRow}>
+                        <Text style={styles.priceLabel}>Duration</Text>
+                        <Text style={styles.priceValue}>{subjectData.subjectDuration} months</Text>
+                      </View>
+                      <View style={[styles.priceRow, styles.totalRow]}>
+                        <Text style={styles.totalLabel}>Total Amount</Text>
+                        <Text style={styles.totalPrice}>AED {(subjectData.subjectPrice) / 100}</Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </ScrollView>
+
+              <View style={styles.footer}>
+                <TouchableOpacity 
+                  style={[
+                    styles.confirmButton,
+                    (!paymentInitialized || loading) && styles.disabledButton
+                  ]} 
+                  onPress={openPaymentSheet}
+                  disabled={!paymentInitialized || loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <>
+                      <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" style={styles.confirmIcon} />
+                      <Text style={styles.confirmButtonText}>Confirm Booking</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
         </View>
       </View>
     </Modal>
@@ -295,6 +385,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: moderateScale(20),
     borderTopRightRadius: moderateScale(20),
+    height: '90%',
     maxHeight: '90%',
   },
   header: {
@@ -313,10 +404,11 @@ const styles = StyleSheet.create({
     color: '#1A4C6E',
   },
   scrollView: {
-    maxHeight: '80%',
+    flex: 1,
   },
   content: {
     padding: moderateScale(20),
+    flexGrow: 1,
   },
   teacherProfileSection: {
     flexDirection: 'row',
@@ -473,6 +565,46 @@ const styles = StyleSheet.create({
     fontFamily: FONT.bold,
     fontSize: moderateScale(16),
     color: '#FFFFFF',
+  },
+  successContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    height: '100%',
+  },
+  successContent: {
+    alignItems: 'center',
+  },
+  checkmarkCircle: {
+    width: moderateScale(100),
+    height: moderateScale(100),
+    borderRadius: moderateScale(50),
+    backgroundColor: '#2DCB63',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: verticalScale(20),
+    shadowColor: '#2DCB63',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  successTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(24),
+    color: '#1A4C6E',
+    marginBottom: verticalScale(10),
+    textAlign: 'center',
+  },
+  successMessage: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(16),
+    color: '#64748B',
+    textAlign: 'center',
   },
 });
 

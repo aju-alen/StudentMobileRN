@@ -1,7 +1,7 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 import { Stack, router } from 'expo-router'
-
+import { Ionicons } from '@expo/vector-icons';
 
 const ProfileLayout = () => {
   return (
@@ -12,7 +12,11 @@ const ProfileLayout = () => {
     <Stack.Screen name="change-password" options={{ headerShown: true }} />
     <Stack.Screen name="delete-account" options={{ headerShown: true }} />
     <Stack.Screen name="blocked-users" options={{ headerShown:true }} />
-    <Stack.Screen name='schedule' options={{ headerShown:true, headerTitle:'Schedule' }}/>
+    <Stack.Screen name='schedule' options={{ headerShown:false,
+    headerLeft: () => (
+        <Ionicons name="arrow-back" size={24} color="black" onPress={()=>router.back()} style={{ marginLeft: 0 }} />
+      ),
+    }}/>
     <Stack.Screen name="editSubject/[editSubjectId]" options={{presentation:'modal'}}/>
     <Stack.Screen name="createSubject/[createSubjectId]" options={{presentation:'modal'}}/>
     <Stack.Screen name="settings" options={{ headerShown: false }}/>
