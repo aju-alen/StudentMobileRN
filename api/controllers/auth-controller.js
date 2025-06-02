@@ -68,10 +68,12 @@ export const register = async (req, res,next) => {
 const sendVerificationEmail = async (email, verificationToken, name, isTeacher) => {
 
     const transporter = nodemailer.createTransport({
-        service: 'gmail',
+      host: 'mail.privateemail.com',
+      port: 587,
+      secure: false,
         auth: {
-            user: process.env.EMAIL,
-            pass: process.env.GMAIL_PASSWORD
+            user: process.env.NAMECHEAP_EMAIL,
+            pass: process.env.NAMECHEAP_EMAIL_PASSWORD
         }
     })
 
