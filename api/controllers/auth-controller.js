@@ -82,7 +82,7 @@ const sendVerificationEmail = async (email, verificationToken, name, isTeacher) 
         : "Welcome to Coach Academ! We're thrilled to have you join our community of learners. As a student, you'll have access to expert teachers and comprehensive learning resources.";
 
     const mailOptions = {
-      from: process.env.EMAIL,
+      from: process.env.NAMECHEAP_EMAIL,
       to: email,
       subject: 'Verify Your Account – Action Required',
       html: `
@@ -247,10 +247,10 @@ export const verifyEmail = async (req, res, next) => {
                 <div style="width: 30%; height: 3px; background-color: #FFD700;"></div>
               </div>
               
-              <a href="https://studentmobilern-31oo.onrender.com/login" 
-                 style="background-color: #000000; color: #ffffff; padding: 15px 30px; text-decoration: none; font-weight: 700; display: inline-block; text-transform: uppercase; letter-spacing: 1px; margin-top: 20px;">
-                Proceed to Login
-              </a>
+              // <a href="https://studentmobilern-31oo.onrender.com/login" 
+              //    style="background-color: #000000; color: #ffffff; padding: 15px 30px; text-decoration: none; font-weight: 700; display: inline-block; text-transform: uppercase; letter-spacing: 1px; margin-top: 20px;">
+              //   Proceed to Login
+              // </a>
             </div>
             
             <!-- Bauhaus-style footer -->
