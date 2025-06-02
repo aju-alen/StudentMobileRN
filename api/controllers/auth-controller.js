@@ -50,7 +50,7 @@ export const register = async (req, res,next) => {
         });
 
         // Send the verification email
-        sendVerificationEmail(newUser.email, verificationToken, name);
+        sendVerificationEmail(newUser.email, verificationToken, name, isTeacher);
 
         res.status(202).json({
             message: "User Registered",
@@ -65,7 +65,7 @@ export const register = async (req, res,next) => {
 }
 
 // not a route controller, function to send verification email
-const sendVerificationEmail = async (email, verificationToken, name) => {
+const sendVerificationEmail = async (email, verificationToken, name, isTeacher) => {
 
     const transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -74,25 +74,75 @@ const sendVerificationEmail = async (email, verificationToken, name) => {
             pass: process.env.GMAIL_PASSWORD
         }
     })
+
+    const welcomeMessage = isTeacher 
+        ? "Welcome to Coach Academ! We're excited to have you join our community of educators. As a teacher, you'll be able to share your expertise and help students achieve their academic goals."
+        : "Welcome to Coach Academ! We're thrilled to have you join our community of learners. As a student, you'll have access to expert teachers and comprehensive learning resources.";
+
     const mailOptions = {
       from: process.env.EMAIL,
       to: email,
       subject: 'Verify Your Account – Action Required',
+      html: `
+      <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #ffffff;">
+        <!-- Bauhaus-style header with primary colors -->
+        <div style="display: flex; margin-bottom: 20px;">
+          <div style="width: 20%; background-color: #FF0000;"></div>
+          <div style="width: 60%; background-color: #000000; color: #ffffff; padding: 30px 20px; text-align: center;">
+            <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase;">VERIFY</h1>
+          </div>
+          <div style="width: 20%; background-color: #FFD700;"></div>
+        </div>
+        
+        <div style="padding: 30px; color: #000000;">
+          <p style="font-size: 20px; margin-bottom: 20px; font-weight: 700;">Hello <strong>${name}</strong>,</p>
+          
+          <!-- Geometric highlight box -->
+          <div style="background-color: #f5f5f5; padding: 25px; margin: 25px 0; border-left: 8px solid #FF0000;">
+            <p style="margin: 0; font-size: 16px; line-height: 1.8; font-weight: 500;">${welcomeMessage}</p>
+          </div>
+          
+          <p style="font-size: 16px; line-height: 1.6; font-weight: 500;">To complete your registration, please verify your account by clicking the button below:</p>
+          
+          <!-- Bauhaus-style button -->
+          <div style="text-align: center; margin: 40px 0;">
+            <a href="https://studentmobilern-31oo.onrender.com/api/auth/verify/${verificationToken}" 
+               style="background-color: #000000; color: #ffffff; padding: 20px 40px; text-decoration: none; font-weight: 900; display: inline-block; border: 3px solid #000000; text-transform: uppercase; letter-spacing: 2px;">
+              VERIFY NOW
+            </a>
+          </div>
+          
+          <!-- Geometric separator -->
+          <div style="display: flex; margin: 30px 0;">
+            <div style="width: 30%; height: 3px; background-color: #FF0000;"></div>
+            <div style="width: 40%; height: 3px; background-color: #000000;"></div>
+            <div style="width: 30%; height: 3px; background-color: #FFD700;"></div>
+          </div>
+          
+          <p style="font-size: 14px; color: #666666; margin: 0; font-weight: 500;">If you didn't sign up for this account, please ignore this email.</p>
+        </div>
+        
+        <!-- Bauhaus-style footer -->
+        <div style="background-color: #000000; color: #ffffff; padding: 20px; text-align: center;">
+          <p style="margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 1px;">Best regards,<br>The Coach Academ Team</p>
+        </div>
+      </div>
+      `,
       text: `
       Hi ${name},
-  
-      Welcome! We're excited to have you on board.
-  
+
+      ${welcomeMessage}
+
       To complete your registration, please verify your account by clicking the link below:
-  
-      🔗 https://studentmobilern-31oo.onrender.com/api/auth/verify/${verificationToken}
-  
+
+      https://studentmobilern-31oo.onrender.com/api/auth/verify/${verificationToken}
+
       If you didn't sign up for this account, please ignore this email.
-  
-      Best,  
+
+      Best regards,
       The Coach Academ Team
       `
-  }
+    }
   
 
     //send the mail
@@ -117,7 +167,21 @@ export const verifyEmail = async (req, res, next) => {
       });
   
       if (!user) {
-        return res.status(400).json({ message: "Invalid token" });
+        return res.status(400).send(`
+          <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0; background-color: #ffffff;">
+            <div style="display: flex; margin-bottom: 20px;">
+              <div style="width: 20%; background-color: #FF0000;"></div>
+              <div style="width: 60%; background-color: #000000; color: #ffffff; padding: 30px 20px; text-align: center;">
+                <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase;">Error</h1>
+              </div>
+              <div style="width: 20%; background-color: #FFD700;"></div>
+            </div>
+            <div style="padding: 30px; text-align: center;">
+              <p style="font-size: 20px; color: #FF0000; font-weight: 700;">Invalid verification token</p>
+              <p style="font-size: 16px; margin-top: 20px;">Please check your email for the correct verification link.</p>
+            </div>
+          </div>
+        `);
       }
   
       // Update the user to mark as verified and remove the verification token
@@ -131,7 +195,70 @@ export const verifyEmail = async (req, res, next) => {
         },
       });
   
-      res.status(202).json({ message: "Account verified", updatedUser });
+      // Send HTML success page
+      res.status(202).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Account Verified - Coach Academ</title>
+          <style>
+            @keyframes fadeIn {
+              from { opacity: 0; transform: translateY(20px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+            .success-icon {
+              animation: fadeIn 0.5s ease-out;
+            }
+          </style>
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+          <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <!-- Bauhaus-style header -->
+            <div style="display: flex; margin-bottom: 20px;">
+              <div style="width: 20%; background-color: #FF0000;"></div>
+              <div style="width: 60%; background-color: #000000; color: #ffffff; padding: 30px 20px; text-align: center;">
+                <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase;">Verified</h1>
+              </div>
+              <div style="width: 20%; background-color: #FFD700;"></div>
+            </div>
+            
+            <div style="padding: 40px 30px; text-align: center;">
+              <!-- Success Icon -->
+              <div class="success-icon" style="width: 80px; height: 80px; margin: 0 auto 30px; background-color: #000000; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20 6L9 17L4 12" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              
+              <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 20px; color: #000000;">Account Successfully Verified!</h2>
+              
+              <p style="font-size: 16px; line-height: 1.6; color: #333333; margin-bottom: 30px;">
+                Welcome to Coach Academ! Your account has been verified and you can now access all features.
+              </p>
+              
+              <!-- Geometric separator -->
+              <div style="display: flex; margin: 30px auto; max-width: 200px;">
+                <div style="width: 30%; height: 3px; background-color: #FF0000;"></div>
+                <div style="width: 40%; height: 3px; background-color: #000000;"></div>
+                <div style="width: 30%; height: 3px; background-color: #FFD700;"></div>
+              </div>
+              
+              <a href="https://studentmobilern-31oo.onrender.com/login" 
+                 style="background-color: #000000; color: #ffffff; padding: 15px 30px; text-decoration: none; font-weight: 700; display: inline-block; text-transform: uppercase; letter-spacing: 1px; margin-top: 20px;">
+                Proceed to Login
+              </a>
+            </div>
+            
+            <!-- Bauhaus-style footer -->
+            <div style="background-color: #000000; color: #ffffff; padding: 20px; text-align: center;">
+              <p style="margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 1px;">Coach Academ Team</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `);
     } catch (err) {
       next(err);
     } 
