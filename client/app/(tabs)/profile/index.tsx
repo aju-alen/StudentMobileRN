@@ -12,7 +12,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import axios from "axios";
 import { ipURL } from "../../utils/utils";
-import { FONT } from "../../../constants";
+import { COLORS, FONT } from "../../../constants";
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
 import SubjectCards from "../../components/SubjectCards";
 import CalendarSummary from "../../components/CalendarSummary";
@@ -29,6 +29,7 @@ interface User {
   subjects?: SubjectItem[];
   reccomendedSubjects?: string[];
   userSubjects?: SubjectItem[];
+  isTeacher?: boolean;
 }
 
 interface SubjectItem {
@@ -47,7 +48,7 @@ const blurhash = '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWX
 
 const ProfilePage = () => {
   const [user, setUser] = useState<User>({});
-  const [userDetails, setUserDetails] = useState<UserDetails>({});
+  const [userDetails, setUserDetails] = useState<User>({});
   const [showDropdown, setShowDropdown] = useState(false);
   const [activeCourses, setActiveCourses] = useState<SubjectItem[]>([]);
   useEffect(() => {
@@ -57,6 +58,7 @@ const ProfilePage = () => {
       
       setUser(apiUser.data);
       const user = JSON.parse(await AsyncStorage.getItem("userDetails"));
+      console.log(user,'user in profile');
       setUserDetails(user);
     };
     getUser();
@@ -133,7 +135,7 @@ const ProfilePage = () => {
         </View>
 
         {/* Stats Grid */}
-        {userDetails?.isTeacher && <View style={styles.statsGrid}>
+        {/* {userDetails?.isTeacher && <View style={styles.statsGrid}>
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>24</Text>
@@ -154,7 +156,7 @@ const ProfilePage = () => {
               <Text style={styles.statLabel}>Completion</Text>
             </View>
           </View>
-        </View>}
+        </View>} */}
 
         {/* About Section */}
         <View style={styles.section}>
@@ -172,7 +174,7 @@ const ProfilePage = () => {
         </View>
 
         {/* Teaching Stats */}
-       {userDetails?.isTeacher && <View style={styles.section}>
+       {/* {userDetails?.isTeacher && <View style={styles.section}>
           <Text style={styles.sectionTitle}>Teaching Overview</Text>
           <View style={styles.overviewGrid}>
             <View style={styles.overviewItem}>
@@ -188,7 +190,7 @@ const ProfilePage = () => {
               <Text style={styles.overviewLabel}>Satisfaction</Text>
             </View>
           </View>
-        </View>}
+        </View>} */}
 
         {/* Courses Section */}
         <View style={styles.section}>
@@ -379,7 +381,7 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   addButton: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: COLORS.primary,
     paddingHorizontal: horizontalScale(15),
     paddingVertical: verticalScale(8),
     borderRadius: moderateScale(20),

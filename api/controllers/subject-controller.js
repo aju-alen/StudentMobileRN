@@ -6,6 +6,8 @@ const prisma = new PrismaClient();
 export const createSubject = async (req, res, next) => {
     const { subjectName, subjectDescription, subjectImage, subjectPrice, subjectBoard, subjectGrade, subjectDuration, subjectNameSubHeading,subjectSearchHeading, subjectLanguage, subjectPoints,teacherVerification } = req.body;
 
+    console.log(req.userId,'req.userId');
+    
     // Check for required fields
     if (!subjectName || !subjectDescription || !subjectImage || !subjectPrice || !subjectBoard || !subjectGrade) {
         return res.status(400).json({ message: "Please enter all fields" });
@@ -19,7 +21,7 @@ export const createSubject = async (req, res, next) => {
                     subjectName,
                     subjectDescription,
                     subjectImage,
-                    subjectPrice: parseInt(subjectPrice),
+                    subjectPrice: parseInt(subjectPrice) * 100,
                     subjectBoard,
                     subjectGrade: parseInt(subjectGrade),
                     subjectDuration: parseInt(subjectDuration),
@@ -178,6 +180,50 @@ export const getAllSubjectsBySearch = async (req, res, next) => {
     }
 };
 
+export const getAllSubjectsByAdvanceSearch = async (req, res, next) => {
+    const { q } = req.query; // q from query params will be a string or undefined
+
+    try {
+        // It's good practice to ensure 'q' is a non-empty string.
+        if (!q || typeof q !== 'string' || q.trim() === '') {
+            // Option: Return empty array, all verified subjects, or an error.
+            // For this example, returning an empty array for an invalid/empty search.
+            return res.status(200).json([]);
+        }
+
+        const searchTerm = q.toLowerCase();
+
+        const subjects = await prisma.subject.findMany({
+            where: {
+                AND: [
+                    { subjectVerification: true },
+                    {
+                        OR: [
+                            { subjectName: { contains: searchTerm } },
+                            { subjectDescription: { contains: searchTerm } },
+                            { subjectSearchHeading: { contains: searchTerm } },
+                            { subjectNameSubHeading: { contains: searchTerm } }
+                        ]
+                    }
+                ]
+            },
+            include: {
+                user: { // Assuming 'user' is the correct relation name
+                    select: {
+                        name: true,
+                        profileImage: true
+                    }
+                }
+            }
+        });
+
+        res.status(200).json(subjects);
+    }
+    catch (err) {
+        console.error(err);
+        next(err); // Pass error to your Express error handler
+    }
+};
 
 export const getOneSubject = async (req, res, next) => {
     try {
@@ -196,6 +242,7 @@ export const getOneSubject = async (req, res, next) => {
                         password: false,
                         userDescription: false,
                         subjects: false,
+                        profileImage: true,
                     },
                 },
             },
@@ -204,8 +251,15 @@ export const getOneSubject = async (req, res, next) => {
         if (!subject) {
             return res.status(400).json({ message: "Subject not found" });
         }
+        const addUserAdmin = {
+            ...subject,
+            user: {
+                ...subject.user,
+                isTeacher: req.isTeacher,
+            },
+        }
 
-        res.status(200).json(subject);
+        res.status(200).json(addUserAdmin);
     } catch (err) {
         console.error(err);
         next(err);

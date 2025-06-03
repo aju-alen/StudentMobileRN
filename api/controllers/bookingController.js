@@ -170,17 +170,20 @@ export const getUpcomingClasses = async (req, res) => {
         bookingZoomUrl: true,
         subject: {
           select: {
-            subjectName: true
+            subjectName: true,
+            id: true
           }
         },
         teacher: {
           select: {
-            name: true
+            name: true,
+            id: true
           }
         },
         student: {
           select: {
-            name: true
+            name: true,
+            id: true
           }
         }
       },

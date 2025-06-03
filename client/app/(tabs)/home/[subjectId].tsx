@@ -14,12 +14,13 @@ const SubjectId = () => {
   return (
     <View style={{flex:1}}>
        <Stack.Screen options={{
-        headerStyle: { backgroundColor: "'rgba(255, 255, 255, 0.1)'" }, 
+        headerStyle: { backgroundColor: COLORS.primary }, 
+        headerTintColor: COLORS.primary,
         headerTitle: "",
         headerShadowVisible: false,
         headerBackVisible: false,
         headerLeft: () => (
-          <Ionicons name="arrow-back" size={24} color="black" onPress={()=>router.replace('/(tabs)/home')}  style={{ marginLeft: 0 }} />
+          <Ionicons name="arrow-back" size={24} color={COLORS.white} onPress={()=>router.replace('/(tabs)/home')}  style={{ marginLeft: 0 }} />
         ),
       }}>
       </Stack.Screen>

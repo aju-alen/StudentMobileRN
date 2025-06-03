@@ -13,6 +13,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Linking,
+  ActivityIndicator,
+  Modal,
 } from "react-native";
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -28,6 +30,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { nanoid } from 'nanoid';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
+import { axiosWithAuth } from "../../../utils/customAxios";
 
 
 const CreateSubject = () => {
@@ -47,7 +50,10 @@ const CreateSubject = () => {
   const [pdf1, setPdf1] = useState(null);
   const [pdf2, setPdf2] = useState(null);
   const [isEulaAccepted, setIsEulaAccepted] = useState(false);
+  const [isDocumentsConfirmed, setIsDocumentsConfirmed] = useState(false);
+  const [isCreatingSubject, setIsCreatingSubject] = useState(false);
   const EULA_PDF_URL = `https://coachacademic.s3.ap-southeast-1.amazonaws.com/EULA+/COACHACADEM_TOU_(EULA).pdf`; // Replace with your actual EULA PDF URL
+  const [isImageUploading, setIsImageUploading] = useState(false);
 
   console.log(pdf1, 'pdf1');
   console.log(pdf2, 'pdf2');
@@ -113,8 +119,8 @@ const CreateSubject = () => {
     });
   
     // Append additional data if needed
-    formData.append('uploadKey', 'pdfId'); // your key
-    formData.append('awsId', awsId); // assuming awsId is a variable
+    formData.append('uploadKey', 'pdfId');
+    formData.append('awsId', awsId);
   
     try {
       console.log('Form Data to be sent:', formData);
@@ -132,15 +138,16 @@ const CreateSubject = () => {
       console.log('PDFs uploaded successfully:', response.data);
   
       // Handle response locations for both PDFs
-      setPdf1(response['data']['data1']['Location']); // Assume API sends back locations
-      
+      setPdf1(response['data']['data1']['Location']);
       setPdf2(response['data']['data2']['Location']);
+      setIsDocumentsConfirmed(true);
   
       Alert.alert('PDFs uploaded successfully.');
   
     } catch (error) {
       console.error('PDF upload failed:', error);
       Alert.alert('PDF upload failed', error.message);
+      setIsDocumentsConfirmed(false);
     }
   };
   const pickImage = async () => {
@@ -151,58 +158,66 @@ const CreateSubject = () => {
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 1,
-    });
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 1,
+      });
 
-    if (!result.canceled) {
-      const manipResult = await ImageManipulator.manipulateAsync(
-        result.assets[0].uri,
-        [{ resize: { width: 800 } }], // Resize the image
-        { compress: 0.5, format: ImageManipulator.SaveFormat.WEBP } // Compress the image
-      );
-      setImage(manipResult.uri);
+      if (!result.canceled) {
+        setIsImageUploading(true);
+        const manipResult = await ImageManipulator.manipulateAsync(
+          result.assets[0].uri,
+          [{ resize: { width: 800 } }],
+          { compress: 0.5, format: ImageManipulator.SaveFormat.WEBP }
+        );
+        
+        // Show temporary image while uploading
+        setImage(manipResult.uri);
+        
+        // Automatically upload the image
+        await uploadImageToBe(manipResult.uri);
+        setIsImageUploading(false);
+      }
+    } catch (error) {
+      setIsImageUploading(false);
+      Alert.alert('Error', 'Failed to process image. Please try again.');
+      setImage(null);
     }
   };
 
-  const uploadImageToBe = async () => {
-    if (!image) return;
-    console.log(awsId, 'awsIdinUploadImage');
+  const uploadImageToBe = async (imageUri) => {
+    if (!imageUri) return;
     
-    const uriParts = image.split('.');
-    const fileType = uriParts[uriParts.length - 1];
-    console.log("file type", fileType);
-    console.log("uri parts", uriParts);
-    
-
-    const formData = new FormData();
-    formData.append('image', {
-      uri: image,
-      name: `photo.${fileType}`,
-      type: `image/${fileType}`,
-    });
-    formData.append('uploadKey','subjectImageId' ); // assuming userId is a variable
-    formData.append('awsId',awsId); // assuming userId is a variable
-
     try {
-      console.log(formData, 'form data');
+      const uriParts = imageUri.split('.');
+      const fileType = uriParts[uriParts.length - 1];
       
-      const response = await axios.post(`${ipURL}/api/s3/upload-to-aws/${createSubjectId}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      const formData = new FormData();
+      formData.append('image', {
+        uri: imageUri,
+        name: `photo.${fileType}`,
+        type: `image/${fileType}`,
       });
-      console.log('Image uploaded successfully', response.data.data.Location);
+      formData.append('uploadKey', 'subjectImageId');
+      formData.append('awsId', awsId);
+
+      const response = await axios.post(
+        `${ipURL}/api/s3/upload-to-aws/${createSubjectId}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
 
       setImage(response.data.data.Location);
-
-      // Alert.alert('Image uploaded successfully. You can now submit the form');
-      
     } catch (error) {
       console.error('Image upload failed', error);
-      Alert.alert('Image upload failed', error.message);
+      Alert.alert('Error', 'Failed to upload image. Please try again.');
+      setImage(null);
     }
   };
 
@@ -223,9 +238,63 @@ const CreateSubject = () => {
   };
 
   const handleCreateSubject = async () => {
-    console.log("image in final link", image);
-    console.log("pdf1", pdf1);
+    if (!isDocumentsConfirmed) {
+      Alert.alert('Please confirm your documents first.');
+      return;
+    }
+
+    setIsCreatingSubject(true);
     
+    // Validate all required fields
+    const validationErrors = [];
+    
+    if (!subjectName.trim()) {
+      validationErrors.push("Subject name is required");
+    }
+    if (!subjectDescription.trim()) {
+      validationErrors.push("Subject description is required");
+    }
+    if (!image) {
+      validationErrors.push("Subject image is required");
+    }
+    if (!subjectPrice.trim()) {
+      validationErrors.push("Subject price is required");
+    }
+    if (!subjectBoard.trim()) {
+      validationErrors.push("Educational board is required");
+    }
+    if (!subjectGrade.trim()) {
+      validationErrors.push("Grade level is required");
+    }
+    if (!subjectDuration.trim()) {
+      validationErrors.push("Course duration is required");
+    }
+    if (!subjectLanguage.trim()) {
+      validationErrors.push("Teaching language is required");
+    }
+    // if (!subjectNameSubHeading.trim()) {
+    //   validationErrors.push("Subject subheading is required");
+    // }
+    if (subjectPoints.length === 0) {
+      validationErrors.push("At least one skill point is required");
+    }
+    if (!pdf1 || !pdf2) {
+      validationErrors.push("Both verification documents are required");
+    }
+    if (!isEulaAccepted) {
+      validationErrors.push("You must accept the EULA to continue");
+    }
+
+    // If there are validation errors, show them and return
+    if (validationErrors.length > 0) {
+      Alert.alert(
+        "Missing Information",
+        validationErrors.join("\n\n"),
+        [{ text: "OK" }]
+      );
+      setIsCreatingSubject(false);
+      return;
+    }
     
     const subject = {
       subjectName,
@@ -241,19 +310,42 @@ const CreateSubject = () => {
       subjectPoints,
       teacherVerification:[pdf1, pdf2],
     };
+    
     console.log("subject", subject);
     const token = await AsyncStorage.getItem("authToken");
+    
     try {
-      axios.post(`${ipURL}/api/subjects/create`, subject, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      Alert.alert("Subject Created Successfully");
-      router.push(`/(tabs)/profile`);
+      const response = await axiosWithAuth.post(
+        `${ipURL}/api/subjects/create`, 
+        subject,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      if (response.status === 200 || response.status === 201) {
+        Alert.alert(
+          "Success",
+          "Subject created successfully!",
+          [
+            {
+              text: "OK",
+              onPress: () => router.push(`/(tabs)/profile`)
+            }
+          ]
+        );
+      }
     } catch (err) {
-      Alert.alert("Subject not created, Something Happened");
-      console.log(err);
+      console.log("error", err);
+      Alert.alert(
+        "Error",
+        err.response?.data?.message || "Failed to create subject. Please try again.",
+        [{ text: "OK" }]
+      );
+    } finally {
+      setIsCreatingSubject(false);
     }
   };
   console.log(
@@ -295,9 +387,25 @@ const CreateSubject = () => {
 
           {/* Image Upload Section */}
           <View style={styles.imageSection}>
-            <TouchableOpacity style={styles.imageUploadContainer} onPress={pickImage}>
+            <TouchableOpacity 
+              style={[
+                styles.imageUploadContainer,
+                image && styles.imageUploadContainerActive,
+                isImageUploading && styles.uploadingContainer
+              ]} 
+              onPress={pickImage}
+              disabled={isImageUploading}
+            >
               {image ? (
-                <Image source={{ uri: image }} style={styles.uploadedImage} />
+                <>
+                  <Image source={{ uri: image }} style={styles.uploadedImage} />
+                  {isImageUploading && (
+                    <View style={styles.uploadingOverlay}>
+                      <ActivityIndicator size="large" color={COLORS.primary} />
+                      <Text style={styles.uploadingText}>Uploading...</Text>
+                    </View>
+                  )}
+                </>
               ) : (
                 <View style={styles.placeholderContainer}>
                   <Ionicons name="image-outline" size={40} color={welcomeCOLOR.black} />
@@ -305,11 +413,6 @@ const CreateSubject = () => {
                 </View>
               )}
             </TouchableOpacity>
-            {image && (
-              <TouchableOpacity style={styles.confirmButton} onPress={uploadImageToBe}>
-                <Ionicons name="checkmark-circle" size={24} color={COLORS.primary} />
-              </TouchableOpacity>
-            )}
           </View>
 
           {/* Form Fields */}
@@ -319,12 +422,14 @@ const CreateSubject = () => {
               <Text style={styles.sectionTitle}>Basic Information</Text>
               <FormInput
                 label="Subject Title"
+                info="Enter a clear and concise title for your subject. This will be the main identifier for your course."
                 placeholder="Enter subject title"
                 value={subjectName}
                 onChangeText={setSubjectName}
               />
               <FormInput
                 label="Description"
+                info="Provide a detailed description of what students will learn in this subject. Include key topics and learning outcomes."
                 placeholder="Brief description of the subject"
                 value={subjectDescription}
                 onChangeText={setSubjectDescription}
@@ -333,43 +438,70 @@ const CreateSubject = () => {
               />
               <FormInput
                 label="Price"
+                info="Set the price for your subject in AED."
                 placeholder="Enter price"
                 value={subjectPrice.toString()}
-                onChangeText={setSubjectPrice}
-                keyboardType="numeric"
+                onChangeText={(text) => {
+                  // Only allow numbers
+                  const numericValue = text.replace(/[^0-9]/g, '');
+                  setSubjectPrice(numericValue);
+                }}
+                isPrice
               />
             </View>
 
             {/* Academic Details Section */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Academic Details</Text>
-              <FormInput
+              <CustomDropdown
                 label="Board"
-                placeholder="Educational board"
+                info="Select the educational board that this subject aligns with."
                 value={subjectBoard}
-                onChangeText={setSubjectBoard}
+                options={[
+                  { label: 'CBSE', value: 'CBSE' },
+                  { label: 'ICSE', value: 'ICSE' },
+                  { label: 'AP', value: 'AP' },
+                  { label: 'IGCSE-A Levels', value: 'IGCSE-A Levels' },
+                  { label: 'IB', value: 'IB' },
+                ]}
+                onSelect={setSubjectBoard}
+                placeholder="Select educational board"
               />
-              <FormInput
+              <CustomDropdown
                 label="Grade"
-                placeholder="Target grade level"
+                info="Select the target grade level for this subject."
                 value={subjectGrade}
-                onChangeText={setSubjectGrade}
+                options={Array.from({ length: 13 }, (_, i) => ({
+                  label: `Grade ${i + 1}`,
+                  value: (i + 1).toString()
+                }))}
+                onSelect={setSubjectGrade}
+                placeholder="Select grade level"
               />
               <FormInput
                 label="Language"
+                info="Specify the primary language of instruction for this subject."
                 placeholder="Teaching language"
                 value={subjectLanguage}
                 onChangeText={setSubjectLanguage}
               />
               <FormInput
                 label="Duration"
-                placeholder="Course duration"
+                info="Enter the total number of hours for this course."
+                placeholder="Enter duration"
                 value={subjectDuration}
-                onChangeText={setSubjectDuration}
+                onChangeText={(text) => {
+                  // Only allow numbers
+                  const numericValue = text.replace(/[^0-9]/g, '');
+                  setSubjectDuration(numericValue);
+                }}
+                keyboardType="numeric"
+                isDuration
               />
               <FormInput
                 label="Search Heading"
-                placeholder="What text should students seach to find this?"
+                info="Add keywords that will help students find your subject when searching. Use relevant terms and topics."
+                placeholder="What text should students search to find this?"
                 value={subjectSearchHeading}
                 onChangeText={setSubjectSearchHeading}
               />
@@ -432,9 +564,12 @@ const CreateSubject = () => {
                   <TouchableOpacity 
                     style={styles.uploadDocsButton} 
                     onPress={uploadPdfsToAws}
+                    activeOpacity={0.7}
                   >
-                    <Text style={styles.uploadDocsText}>Confirm Documents</Text>
-                    <Ionicons name="cloud-upload-outline" size={20} color="white" />
+                    <View style={styles.uploadDocsButtonContent}>
+                      <Ionicons name="cloud-upload" size={24} color="white" />
+                      <Text style={styles.uploadDocsText}>Confirm Documents</Text>
+                    </View>
                   </TouchableOpacity>
                 )}
               </View>
@@ -466,12 +601,12 @@ const CreateSubject = () => {
             </View>
 
             <Button
-              title="Create Subject"
+              title={isCreatingSubject ? "Creating Subject..." : "Create Subject"}
               filled
               color={COLORS.primary}
               style={styles.submitButton}
               onPress={handleCreateSubject}
-              disabled={!isEulaAccepted}
+              disabled={!isEulaAccepted || !isDocumentsConfirmed || isCreatingSubject}
             />
           </View>
         </ScrollView>
@@ -480,16 +615,130 @@ const CreateSubject = () => {
   );
 };
 
-const FormInput = ({ label, ...props }) => (
+interface FormInputProps {
+  label: string;
+  info?: string;
+  isPrice?: boolean;
+  isDuration?: boolean;
+  [key: string]: any;
+}
+
+const FormInput = ({ label, info, isPrice = false, isDuration = false, ...props }: FormInputProps) => (
   <View style={styles.inputWrapper}>
-    <Text style={styles.inputLabel}>{label}</Text>
-    <TextInput
-      style={[styles.input, props.multiline && { height: props.height }]}
-      placeholderTextColor="#666"
-      {...props}
-    />
+    <View style={styles.labelContainer}>
+      <Text style={styles.inputLabel}>{label}</Text>
+      {info && (
+        <TouchableOpacity 
+          onPress={() => Alert.alert(label, info)}
+          style={styles.infoButton}
+        >
+          <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
+        </TouchableOpacity>
+      )}
+    </View>
+    <View style={styles.inputContainer}>
+      <TextInput
+        style={[
+          styles.input,
+          props.multiline && { height: props.height },
+          (isPrice || isDuration) && styles.numericInput
+        ]}
+        placeholderTextColor="#666"
+        keyboardType={(isPrice || isDuration) ? "numeric" : "default"}
+        {...props}
+      />
+      {isPrice && (
+        <View style={styles.currencySuffix}>
+          <Text style={styles.currencyText}>/AED</Text>
+        </View>
+      )}
+      {isDuration && (
+        <View style={styles.currencySuffix}>
+          <Text style={styles.currencyText}>/hours</Text>
+        </View>
+      )}
+    </View>
   </View>
 );
+
+const CustomDropdown = ({ label, info, value, options, onSelect, placeholder }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <View style={styles.inputWrapper}>
+      <View style={styles.labelContainer}>
+        <Text style={styles.inputLabel}>{label}</Text>
+        {info && (
+          <TouchableOpacity 
+            onPress={() => Alert.alert(label, info)}
+            style={styles.infoButton}
+          >
+            <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
+          </TouchableOpacity>
+        )}
+      </View>
+      <TouchableOpacity 
+        style={styles.dropdownButton}
+        onPress={() => setIsOpen(true)}
+      >
+        <Text style={[
+          styles.dropdownButtonText,
+          !value && styles.placeholderText
+        ]}>
+          {value || placeholder}
+        </Text>
+        <Ionicons name="chevron-down" size={20} color="#666" />
+      </TouchableOpacity>
+
+      <Modal
+        visible={isOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsOpen(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsOpen(false)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{label}</Text>
+              <TouchableOpacity onPress={() => setIsOpen(false)}>
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.optionsList}>
+              {options.map((option, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.optionItem,
+                    value === option.value && styles.selectedOption
+                  ]}
+                  onPress={() => {
+                    onSelect(option.value);
+                    setIsOpen(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.optionText,
+                    value === option.value && styles.selectedOptionText
+                  ]}>
+                    {option.label}
+                  </Text>
+                  {value === option.value && (
+                    <Ionicons name="checkmark" size={20} color={COLORS.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -539,6 +788,13 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#f8f9fa',
   },
+  imageUploadContainerActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: '#fff',
+  },
+  uploadingContainer: {
+    opacity: 0.7,
+  },
   uploadedImage: {
     width: '100%',
     height: '100%',
@@ -562,31 +818,56 @@ const styles = StyleSheet.create({
     color: '#444',
     marginBottom: verticalScale(6),
   },
-  input: {
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#f8f9fa',
     borderRadius: moderateScale(8),
+    borderWidth: 1,
+    borderColor: '#e1e1e1',
+  },
+  input: {
+    flex: 1,
     padding: moderateScale(12),
     fontSize: moderateScale(16),
     color: welcomeCOLOR.black,
-    borderWidth: 1,
-    borderColor: '#e1e1e1',
+  },
+  priceInput: {
+    flex: 1,
+    padding: moderateScale(12),
+    fontSize: moderateScale(16),
+    color: welcomeCOLOR.black,
+  },
+  currencySuffix: {
+    paddingRight: moderateScale(12),
+    paddingLeft: moderateScale(4),
+    borderLeftWidth: 1,
+    borderLeftColor: '#e1e1e1',
+  },
+  currencyText: {
+    fontSize: moderateScale(14),
+    color: '#666',
+    fontWeight: '500',
   },
   skillInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: verticalScale(12),
-  },
-  skillInput: {
-    flex: 1,
     backgroundColor: '#f8f9fa',
     borderRadius: moderateScale(8),
-    padding: moderateScale(12),
-    marginRight: horizontalScale(8),
     borderWidth: 1,
     borderColor: '#e1e1e1',
   },
+  skillInput: {
+    flex: 1,
+    padding: moderateScale(12),
+    fontSize: moderateScale(16),
+    color: welcomeCOLOR.black,
+  },
   addSkillButton: {
-    padding: moderateScale(8),
+    padding: moderateScale(12),
+    borderLeftWidth: 1,
+    borderLeftColor: '#e1e1e1',
   },
   skillTag: {
     backgroundColor: '#e3f2fd',
@@ -628,20 +909,47 @@ const styles = StyleSheet.create({
   },
   uploadDocsButton: {
     backgroundColor: COLORS.primary,
+    borderRadius: moderateScale(8),
+    padding: moderateScale(12),
+    marginTop: verticalScale(12),
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  uploadDocsButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: moderateScale(12),
-    borderRadius: moderateScale(8),
-    marginTop: verticalScale(8),
+    gap: horizontalScale(8),
   },
   uploadDocsText: {
     color: 'white',
-    fontSize: moderateScale(14),
-    marginRight: horizontalScale(8),
+    fontSize: moderateScale(16),
+    fontWeight: '600',
   },
   confirmButton: {
-    marginTop: verticalScale(8),
+    marginTop: verticalScale(12),
+    backgroundColor: COLORS.primary,
+    borderRadius: moderateScale(8),
+    padding: moderateScale(12),
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  confirmButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: horizontalScale(8),
+  },
+  confirmButtonText: {
+    color: 'white',
+    fontSize: moderateScale(16),
+    fontWeight: '600',
   },
   submitButton: {
     marginTop: verticalScale(24),
@@ -676,6 +984,97 @@ const styles = StyleSheet.create({
   eulaLink: {
     color: COLORS.primary,
     textDecorationLine: 'underline',
+  },
+  uploadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  uploadingText: {
+    marginTop: 8,
+    color: COLORS.primary,
+    fontSize: moderateScale(14),
+    fontWeight: '500',
+  },
+  labelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: verticalScale(6),
+  },
+  infoButton: {
+    marginLeft: horizontalScale(8),
+    padding: moderateScale(4),
+  },
+  dropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f8f9fa',
+    padding: moderateScale(12),
+    borderRadius: moderateScale(8),
+    borderWidth: 1,
+    borderColor: '#e1e1e1',
+  },
+  dropdownButtonText: {
+    fontSize: moderateScale(16),
+    color: welcomeCOLOR.black,
+  },
+  placeholderText: {
+    color: '#666',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: moderateScale(12),
+    width: '80%',
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: moderateScale(16),
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e1e1',
+  },
+  modalTitle: {
+    fontSize: moderateScale(18),
+    fontWeight: '600',
+    color: welcomeCOLOR.black,
+  },
+  optionsList: {
+    maxHeight: moderateScale(300),
+  },
+  optionItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: moderateScale(16),
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e1e1',
+  },
+  selectedOption: {
+    backgroundColor: '#f8f9fa',
+  },
+  optionText: {
+    fontSize: moderateScale(16),
+    color: welcomeCOLOR.black,
+  },
+  selectedOptionText: {
+    color: COLORS.primary,
+    fontWeight: '500',
+  },
+  numericInput: {
+    flex: 1,
+    padding: moderateScale(12),
+    fontSize: moderateScale(16),
+    color: welcomeCOLOR.black,
   },
 });
 

@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { router } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
+import { router, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { FONT } from '../../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import StatusBarComponent from '../../components/StatusBarComponent';
 
 const SettingsPage = () => {
   const handleLogout = async () => {
@@ -29,8 +30,37 @@ const SettingsPage = () => {
     );
   };
 
+  const handlePrivacyPolicy = async () => {
+    const url = 'https://coachacademic.s3.ap-southeast-1.amazonaws.com/EULA+/Privacy+Policy+for+CoachAcadem1.pdf';
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        console.log("Cannot open URL: " + url);
+      }
+    } catch (error) {
+      console.error("Error opening URL:", error);
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
+      <StatusBarComponent />
+      <Stack.Screen 
+        options={{
+          title: 'Settings',
+          headerShown: true,
+          headerStyle: {
+            backgroundColor: '#FFFFFF',
+          },
+          headerTintColor: '#1A2B4B',
+          headerTitleStyle: {
+            fontFamily: FONT.bold,
+          },
+        }} 
+      />
+
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
@@ -57,14 +87,14 @@ const SettingsPage = () => {
           <Text style={styles.settingText}>Change Password</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
+        {/* <TouchableOpacity style={styles.settingItem}>
           <Text style={styles.settingText}>Notification Settings</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Preferences</Text>
+        <Text style={styles.sectionTitle}>Actions</Text>
         <TouchableOpacity 
           style={styles.settingItem}
           onPress={() => router.push('/(tabs)/profile/reports')}
@@ -87,16 +117,30 @@ const SettingsPage = () => {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Support</Text>
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/(tabs)/profile/help-center')}
+        >
           <Text style={styles.settingText}>Help Center</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity style={styles.settingItem} onPress={() => router.push('/(tabs)/profile/contact-us')}>
           <Text style={styles.settingText}>Contact Us</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity style={styles.settingItem} onPress={handlePrivacyPolicy}>
           <Text style={styles.settingText}>Privacy Policy</Text>
+          <Ionicons name="chevron-forward" size={24} color="#64748B" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Developer</Text>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/(tabs)/profile/dev-stats')}
+        >
+          <Text style={styles.settingText}>Dev Stats</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
         </TouchableOpacity>
       </View>

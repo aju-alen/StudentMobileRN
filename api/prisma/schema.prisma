@@ -27,6 +27,7 @@ model User {
   isAdmin             Boolean       @default(false)
   recommendedBoard    String?
   recommendedGrade    Int?
+  hasSeenOnboarding   Boolean       @default(false)
   reccomendedSubjects Json @default("[]")     // Keeping original typo
   subjects            Subject[]
   teacherBookings     Booking[]     @relation("TeacherBookings")

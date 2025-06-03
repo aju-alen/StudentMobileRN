@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import { createZoomMeeting } from "../services/zoomService.js";
 dotenv.config();
 import Stripe from 'stripe';
+import { sendEmailService } from "../services/emailService.js";
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const prisma = new PrismaClient();
 export const getPublisherKey = async (req, res, next) => {
@@ -18,7 +20,7 @@ export const getPublisherKey = async (req, res, next) => {
 
 export const paymentSheet = async (req, res, next) => {
     try {
-        const { amount, currency = 'aed', customerId, teacherId, subjectId, date, time, subjectDuration, teacherEmail, subjectName } = req.body;
+        const { amount, currency = 'aed', customerId, teacherId, subjectId, date, time, subjectDuration, teacherEmail, subjectName, userEmail } = req.body;
         const userId = req.userId;
         
         
@@ -80,7 +82,8 @@ export const paymentSheet = async (req, res, next) => {
                 time,
                 subjectDuration,
                 teacherEmail,
-                subjectName
+                subjectName,
+                userEmail
             }
         });
 
@@ -98,11 +101,19 @@ export const paymentSheet = async (req, res, next) => {
         });
     }
 };
-
+const endpointSecret = process.env.STRIPE_WEBHOOK_ENDPOINT;
 export const stripeWebhook = async (req, res, next) => {
     try {
-        const event = req.body;
+        const sig = req.headers['stripe-signature'];
 
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    res.status(400).send(`Webhook Error: ${err.message}`);
+    return;
+  }
         // Handle the event
         switch (event.type) {
             case 'payment_intent.succeeded':
@@ -192,6 +203,503 @@ export const stripeWebhook = async (req, res, next) => {
                         }
                     })
                 }
+
+                sendEmailService(chargeSucceeded.metadata.userEmail, 'Course Booking Success', `
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <style>
+                        body {
+                            font-family: 'Helvetica Neue', Arial, sans-serif;
+                            line-height: 1.6;
+                            margin: 0;
+                            padding: 0;
+                            background-color: #f5f5f5;
+                        }
+                        .container {
+                            max-width: 600px;
+                            margin: 0 auto;
+                            padding: 0;
+                            background-color: #ffffff;
+                            border: 2px solid #000;
+                        }
+                        .header {
+                            background-color: #E31E24;
+                            color: white;
+                            padding: 40px 20px;
+                            text-align: center;
+                            position: relative;
+                            overflow: hidden;
+                        }
+                        .header::before {
+                            content: '';
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            height: 20px;
+                            background: #FFD100;
+                        }
+                        .header::after {
+                            content: '';
+                            position: absolute;
+                            bottom: 0;
+                            left: 0;
+                            right: 0;
+                            height: 20px;
+                            background: #1B4B9C;
+                        }
+                        .header h1 {
+                            margin: 0;
+                            font-size: 32px;
+                            font-weight: 900;
+                            text-transform: uppercase;
+                            letter-spacing: 3px;
+                            position: relative;
+                            z-index: 1;
+                        }
+                        .content {
+                            padding: 30px;
+                            background-color: #ffffff;
+                        }
+                        .booking-details {
+                            background-color: #f8f8f8;
+                            padding: 25px;
+                            margin: 25px 0;
+                            border: 2px solid #000;
+                            position: relative;
+                        }
+                        .booking-details::before {
+                            content: '';
+                            position: absolute;
+                            top: -10px;
+                            left: -10px;
+                            width: 20px;
+                            height: 20px;
+                            background: #E31E24;
+                            z-index: 1;
+                        }
+                        .booking-details::after {
+                            content: '';
+                            position: absolute;
+                            bottom: -10px;
+                            right: -10px;
+                            width: 20px;
+                            height: 20px;
+                            background: #1B4B9C;
+                            z-index: 1;
+                        }
+                        .detail-row {
+                            margin: 15px 0;
+                            display: flex;
+                            justify-content: space-between;
+                            border-bottom: 1px solid #ddd;
+                            padding-bottom: 10px;
+                        }
+                        .detail-row:last-child {
+                            border-bottom: none;
+                        }
+                        .detail-label {
+                            font-weight: 800;
+                            color: #000;
+                            text-transform: uppercase;
+                            font-size: 14px;
+                            letter-spacing: 1px;
+                        }
+                        .detail-value {
+                            color: #333;
+                            font-weight: 500;
+                        }
+                        .footer {
+                            text-align: center;
+                            padding: 30px;
+                            background-color: #000;
+                            color: white;
+                            position: relative;
+                        }
+                        .footer::before {
+                            content: '';
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            height: 4px;
+                            background: linear-gradient(90deg, #E31E24 33%, #FFD100 33%, #FFD100 66%, #1B4B9C 66%);
+                        }
+                        .geometric-shape {
+                            width: 100%;
+                            height: 30px;
+                            background: 
+                                linear-gradient(45deg, #E31E24 25%, transparent 25%),
+                                linear-gradient(-45deg, #FFD100 25%, transparent 25%),
+                                linear-gradient(45deg, transparent 75%, #1B4B9C 75%),
+                                linear-gradient(-45deg, transparent 75%, #E31E24 75%);
+                            background-size: 30px 30px;
+                            background-position: 0 0, 0 15px, 15px -15px, -15px 0px;
+                            margin: 30px 0;
+                        }
+                        .button {
+                            display: inline-block;
+                            padding: 15px 40px;
+                            background-color: #000;
+                            color: white;
+                            text-decoration: none;
+                            text-transform: uppercase;
+                            font-weight: 800;
+                            letter-spacing: 2px;
+                            margin: 20px 0;
+                            border: 2px solid #000;
+                            transition: all 0.3s ease;
+                        }
+                        .button:hover {
+                            background-color: #E31E24;
+                            border-color: #E31E24;
+                        }
+                        .reminder-box {
+                            border: 2px solid #000;
+                            padding: 20px;
+                            margin: 25px 0;
+                            position: relative;
+                        }
+                        .reminder-box h3 {
+                            margin: 0 0 15px 0;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                            color: #000;
+                        }
+                        .reminder-box ul {
+                            margin: 0;
+                            padding-left: 20px;
+                        }
+                        .reminder-box li {
+                            margin: 10px 0;
+                            color: #333;
+                        }
+                        .geometric-corner {
+                            position: absolute;
+                            width: 20px;
+                            height: 20px;
+                            background: #FFD100;
+                        }
+                        .corner-tl { top: -10px; left: -10px; }
+                        .corner-tr { top: -10px; right: -10px; }
+                        .corner-bl { bottom: -10px; left: -10px; }
+                        .corner-br { bottom: -10px; right: -10px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>Booking Confirmed!</h1>
+                        </div>
+                        
+                        <div class="content">
+                            <p style="font-size: 18px; font-weight: 500;">Hey,</p>
+                            
+                            <p style="font-size: 16px;">Your booking has been successfully confirmed. We're excited to have you join us!</p>
+                            
+                            <div class="geometric-shape"></div>
+                            
+                            <div class="booking-details">
+                                <div class="detail-row">
+                                    <span class="detail-label">Booking ID</span>
+                                    <span class="detail-value"> ${createBooking.id}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Course</span>
+                                    <span class="detail-value"> ${chargeSucceeded.metadata.subjectName}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Date</span>
+                                    <span class="detail-value"> ${chargeSucceeded.metadata.date}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Time</span>
+                                    <span class="detail-value"> ${chargeSucceeded.metadata.time}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Amount Paid</span>
+                                    <span class="detail-value"> AED${(chargeSucceeded.amount / 100).toFixed(2)}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="reminder-box">
+                                <div class="geometric-corner corner-tl"></div>
+                                <div class="geometric-corner corner-tr"></div>
+                                <div class="geometric-corner corner-bl"></div>
+                                <div class="geometric-corner corner-br"></div>
+                                <h3>Important Reminders</h3>
+                                <ul>
+                                    <li>Join the class 5 minutes before the scheduled time</li>
+                                    <li>Have your materials ready</li>
+                                    <li>Test your audio and video before the session</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="text-align: center;">
+                                <a href=" ${createBooking.bookingZoomUrl}" class="button">Join the class during the scheduled time using the link below or on the app</a>
+                            </div>
+                        </div>
+                        
+                        <div class="footer">
+                            <p style="margin: 0; font-weight: 500;">Thank you for choosing our platform!</p>
+                            <p style="margin: 10px 0 0 0;">If you have any questions, please don't hesitate to contact us.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                `);     
+                
+                
+                sendEmailService(chargeSucceeded.metadata.teacherEmail, 'You have a new booking', `
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <style>
+                        body {
+                            font-family: 'Helvetica Neue', Arial, sans-serif;
+                            line-height: 1.6;
+                            margin: 0;
+                            padding: 0;
+                            background-color: #f5f5f5;
+                        }
+                        .container {
+                            max-width: 600px;
+                            margin: 0 auto;
+                            padding: 0;
+                            background-color: #ffffff;
+                            border: 2px solid #000;
+                        }
+                        .header {
+                            background-color: #1B4B9C;
+                            color: white;
+                            padding: 40px 20px;
+                            text-align: center;
+                            position: relative;
+                            overflow: hidden;
+                        }
+                        .header::before {
+                            content: '';
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            height: 20px;
+                            background: #FFD100;
+                        }
+                        .header::after {
+                            content: '';
+                            position: absolute;
+                            bottom: 0;
+                            left: 0;
+                            right: 0;
+                            height: 20px;
+                            background: #E31E24;
+                        }
+                        .header h1 {
+                            margin: 0;
+                            font-size: 32px;
+                            font-weight: 900;
+                            text-transform: uppercase;
+                            letter-spacing: 3px;
+                            position: relative;
+                            z-index: 1;
+                        }
+                        .content {
+                            padding: 30px;
+                            background-color: #ffffff;
+                        }
+                        .booking-details {
+                            background-color: #f8f8f8;
+                            padding: 25px;
+                            margin: 25px 0;
+                            border: 2px solid #000;
+                            position: relative;
+                        }
+                        .booking-details::before {
+                            content: '';
+                            position: absolute;
+                            top: -10px;
+                            left: -10px;
+                            width: 20px;
+                            height: 20px;
+                            background: #1B4B9C;
+                            z-index: 1;
+                        }
+                        .booking-details::after {
+                            content: '';
+                            position: absolute;
+                            bottom: -10px;
+                            right: -10px;
+                            width: 20px;
+                            height: 20px;
+                            background: #E31E24;
+                            z-index: 1;
+                        }
+                        .detail-row {
+                            margin: 15px 0;
+                            display: flex;
+                            justify-content: space-between;
+                            border-bottom: 1px solid #ddd;
+                            padding-bottom: 10px;
+                        }
+                        .detail-row:last-child {
+                            border-bottom: none;
+                        }
+                        .detail-label {
+                            font-weight: 800;
+                            color: #000;
+                            text-transform: uppercase;
+                            font-size: 14px;
+                            letter-spacing: 1px;
+                        }
+                        .detail-value {
+                            color: #333;
+                            font-weight: 500;
+                        }
+                        .footer {
+                            text-align: center;
+                            padding: 30px;
+                            background-color: #000;
+                            color: white;
+                            position: relative;
+                        }
+                        .footer::before {
+                            content: '';
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            height: 4px;
+                            background: linear-gradient(90deg, #1B4B9C 33%, #FFD100 33%, #FFD100 66%, #E31E24 66%);
+                        }
+                        .geometric-shape {
+                            width: 100%;
+                            height: 30px;
+                            background: 
+                                linear-gradient(45deg, #1B4B9C 25%, transparent 25%),
+                                linear-gradient(-45deg, #FFD100 25%, transparent 25%),
+                                linear-gradient(45deg, transparent 75%, #E31E24 75%),
+                                linear-gradient(-45deg, transparent 75%, #1B4B9C 75%);
+                            background-size: 30px 30px;
+                            background-position: 0 0, 0 15px, 15px -15px, -15px 0px;
+                            margin: 30px 0;
+                        }
+                        .button {
+                            display: inline-block;
+                            padding: 15px 40px;
+                            background-color: #000;
+                            color: white;
+                            text-decoration: none;
+                            text-transform: uppercase;
+                            font-weight: 800;
+                            letter-spacing: 2px;
+                            margin: 20px 0;
+                            border: 2px solid #000;
+                            transition: all 0.3s ease;
+                        }
+                        .button:hover {
+                            background-color: #1B4B9C;
+                            border-color: #1B4B9C;
+                        }
+                        .reminder-box {
+                            border: 2px solid #000;
+                            padding: 20px;
+                            margin: 25px 0;
+                            position: relative;
+                        }
+                        .reminder-box h3 {
+                            margin: 0 0 15px 0;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                            color: #000;
+                        }
+                        .reminder-box ul {
+                            margin: 0;
+                            padding-left: 20px;
+                        }
+                        .reminder-box li {
+                            margin: 10px 0;
+                            color: #333;
+                        }
+                        .geometric-corner {
+                            position: absolute;
+                            width: 20px;
+                            height: 20px;
+                            background: #FFD100;
+                        }
+                        .corner-tl { top: -10px; left: -10px; }
+                        .corner-tr { top: -10px; right: -10px; }
+                        .corner-bl { bottom: -10px; left: -10px; }
+                        .corner-br { bottom: -10px; right: -10px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>New Booking!</h1>
+                        </div>
+                        
+                        <div class="content">
+                            <p style="font-size: 18px; font-weight: 500;">Hey,</p>
+                            
+                            <p style="font-size: 16px;">You have received a new booking! A student has booked your class.</p>
+                            
+                            <div class="geometric-shape"></div>
+                            
+                            <div class="booking-details">
+                                <div class="detail-row">
+                                    <span class="detail-label">Booking ID</span>
+                                    <span class="detail-value"> ${createBooking.id}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Subject</span>
+                                    <span class="detail-value"> ${chargeSucceeded.metadata.subjectName}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Date & Time</span>
+                                    <span class="detail-value"> ${chargeSucceeded.metadata.date} ${chargeSucceeded.metadata.time}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Duration</span>
+                                    <span class="detail-value"> ${chargeSucceeded.metadata.subjectDuration} hours</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Amount</span>
+                                    <span class="detail-value"> AED${(chargeSucceeded.amount / 100).toFixed(2)}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="reminder-box">
+                                <div class="geometric-corner corner-tl"></div>
+                                <div class="geometric-corner corner-tr"></div>
+                                <div class="geometric-corner corner-bl"></div>
+                                <div class="geometric-corner corner-br"></div>
+                                <h3>Important Reminders</h3>
+                                <ul>
+                                    <li>Join the class 5 minutes before the scheduled time</li>
+                                    <li>Prepare your teaching materials in advance</li>
+                                    <li>Test your audio and video before the session</li>
+                                    <li>Ensure you have a stable internet connection</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="text-align: center;">
+                                <a href="${createBooking.bookingZoomUrl}" class="button">Join Class</a>
+                            </div>
+                        </div>
+                        
+                        <div class="footer">
+                            <p style="margin: 0; font-weight: 500;">Thank you for being part of our teaching community!</p>
+                            <p style="margin: 10px 0 0 0;">If you need any assistance, please don't hesitate to contact us.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                `);                
+                         
                 console.log('saveTransaction', saveTransaction);
                 console.log('createBooking', createBooking);
             }

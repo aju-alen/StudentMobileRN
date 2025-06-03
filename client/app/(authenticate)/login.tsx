@@ -17,7 +17,6 @@ import {
   Easing,
 } from 'react-native';
 import { COLORS } from '../../constants';
-import { welcomeCOLOR } from '../../constants/theme';
 import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
 import { ipURL } from '../utils/utils';
 
@@ -64,9 +63,23 @@ const LoginPage = () => {
         isAdmin: resp.data.isAdmin,
         userId: resp.data.userId,
         userProfileImage: resp.data.userProfileImage,
+        email: resp.data.email,
       }));
 
-      router.replace('/(tabs)/home');
+      if (resp.data.hasSeenOnboarding === false) {
+        // First time user - redirect to onboarding
+        router.replace({
+          pathname: '/onboarding',
+          params: { userType: resp.data.isTeacher ? 'teacher' : 'student' }
+        });
+        const userUpdate = await axios.put(`${ipURL}/api/auth/update-user-has-seen-onboarding`, {
+          userId: resp.data.userId,
+        });
+        console.log(userUpdate, 'User has seen onboarding');
+      } else {
+        // Returning user - redirect to home
+        router.replace('/(tabs)/home');
+      }
     } catch (err) {
       console.log(err);
       setError(err.response?.data?.message || 'Login failed');

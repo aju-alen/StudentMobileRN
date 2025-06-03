@@ -4,7 +4,6 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
-import axios from "axios";
 import { ipURL } from "../../utils/utils";
 import {
   Text,
@@ -23,6 +22,7 @@ import {
 import { socket } from "../../utils/socket";
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
 import { COLORS, FONT } from "../../../constants";
+import { axiosWithAuth } from "../../utils/customAxios";
 
 interface User {
   userId?: string;
@@ -31,7 +31,9 @@ interface User {
 }
 
 interface Community {
-  messages?: Message[];
+  messages: Message[];
+  communityName: string;
+  users?: User[];
 }
 
 interface SenderData {
@@ -50,7 +52,7 @@ interface Message {
 
 const CommunityId = () => {
   const chatName = useLocalSearchParams().communityId;
-  const [allMessages, setAllMessages] = useState<Community>({});
+  const [allMessages, setAllMessages] = useState<Community>({messages: [], communityName: ''});
   const [message, setMessage] = useState("");
   const [user, setUser] = useState<User>({});
   const [userImage, setUserImage] = useState<string>('');
@@ -110,12 +112,9 @@ const CommunityId = () => {
 
     const getMessages = async () => {
       try {
-        const token = await AsyncStorage.getItem('authToken');
         const userDetails = await AsyncStorage.getItem('userDetails');
         
-        const resp = await axios.get(`${ipURL}/api/community/${chatName}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const resp = await axiosWithAuth.get(`${ipURL}/api/community/${chatName}`);
         
         const parsedDetails = JSON.parse(userDetails);
         setUser(parsedDetails.userId);
@@ -219,8 +218,12 @@ const CommunityId = () => {
                 <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
               </TouchableOpacity>
               <View style={styles.headerTitleContainer}>
-                <Text style={styles.headerTitle}>Community Chats</Text>
-                <Text style={styles.headerSubtitle}></Text>
+                <Text style={styles.headerTitle} numberOfLines={1}>
+                  {allMessages.communityName}
+                </Text>
+                <Text style={styles.headerSubtitle} numberOfLines={1}>
+                  {allMessages.users?.length || 0} members
+                </Text>
               </View>
             </View>
           ),
@@ -314,18 +317,19 @@ const styles = StyleSheet.create({
     padding: moderateScale(8),
   },
   headerTitleContainer: {
-    marginLeft: horizontalScale(12),
+    flex: 1,
+    marginLeft: horizontalScale(20),
   },
   headerTitle: {
-    fontSize: moderateScale(18),
-    fontFamily: FONT.semiBold,
-    color: "#2C3E50",
+    fontSize: moderateScale(16),
+    fontFamily: FONT.bold,
+    color: COLORS.primary,
+    marginBottom: verticalScale(2),
   },
   headerSubtitle: {
-    fontSize: moderateScale(14),
+    fontSize: moderateScale(12),
     fontFamily: FONT.regular,
-    color: "#7F8C8D",
-    marginTop: verticalScale(2),
+    color: COLORS.gray,
   },
   loadingContainer: {
     flex: 1,

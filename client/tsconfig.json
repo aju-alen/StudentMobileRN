@@ -8,5 +8,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-, "app/utils/utils.js"  ]
+, "app/utils/utils.js", "app/utils/customAxios.js"  ]
 }

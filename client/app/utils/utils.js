@@ -1,9 +1,9 @@
-import { portConfig } from "./port";
 
-// export const ipURL = "https://studentmobilern-31oo.onrender.com";
+
+export const ipURL = "https://studentmobilern-31oo.onrender.com";
 // export const ipURL = "https://api-coach-academ.onrender.com";
-// export const ipURL = "http://10.65.1.237:3000";
-export const ipURL = portConfig;
+// export const ipURL = "http://10.65.3.52:3000";
+// export const ipURL = portConfig;
 
 //https://studentmobilern-31oo.onrender.com
 

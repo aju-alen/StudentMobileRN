@@ -7,11 +7,12 @@ import {
   RefreshControl,
   Animated,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { Image } from 'expo-image';
 import React, { useEffect, useState, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Stack, router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import axios from "axios";
 import { ipURL } from '../../utils/utils';
 import { Ionicons } from "@expo/vector-icons";
@@ -40,6 +41,7 @@ interface User {
   reccomendedSubjects?: [string];
   streakCount?: number;
   totalPoints?: number;
+  isTeacher?: boolean;
   completedCourses?: number;
   level?: number;
   nextLevelProgress?: number;
@@ -246,7 +248,7 @@ const HomePage = () => {
     }
   };
 
-  const DeadlineCard = ({ deadline }: { deadline: Deadline }) => {
+  const DeadlineCard = ({ deadline, isTeacher }: { deadline: Deadline, isTeacher: boolean }) => {
     const scale = useRef(new Animated.Value(1)).current;
     const priority = getPriority(deadline.bookingDate);
     
@@ -271,7 +273,11 @@ const HomePage = () => {
           <View style={styles.deadlineInfo}>
             <Text style={styles.deadlineTitle}>{deadline?.subject.subjectName}</Text>
             <Text style={styles.deadlineType}>Live Class</Text>
-            <Text style={styles.teacherName}>with {deadline?.teacher.name}</Text>
+            {isTeacher ? (
+              <Text style={styles.teacherName}>with {deadline?.student.name}</Text>
+            ) : (
+              <Text style={styles.teacherName}>with {deadline?.teacher.name}</Text>
+            )}
           </View>
           <View style={styles.deadlineTime}>
             <Text style={styles.deadlineLabel}>Due</Text>
@@ -290,6 +296,7 @@ const HomePage = () => {
         axiosWithAuth.get(`${ipURL}/api/auth/metadata`),
         axiosWithAuth.get(`${ipURL}/api/subjects/search?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`)
       ]);
+
 
       setUser(userResponse.data);
       setSubjectData(subjectsResponse.data);
@@ -382,13 +389,22 @@ const HomePage = () => {
         </View>
         
         <TouchableOpacity 
-          style={styles.notificationButton}
-          onPress={() => animateButton(buttonScale)}
+          style={[styles.notificationButton, { opacity: 0.7 }]}
+          onPress={() => {
+            // Show coming soon message
+            Alert.alert(
+              "Coming Soon",
+              "Notifications feature will be available soon!",
+              [{ text: "OK" }]
+            );
+          }}
           activeOpacity={0.7}
         >
           <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
             <Ionicons name="notifications-outline" size={24} color="white" />
-            <View style={styles.notificationBadge} />
+            <View style={[styles.notificationBadge, { backgroundColor: '#FFA500' }]}>
+              <Text style={{ color: 'white', fontSize: 8, fontWeight: 'bold' }}>SOON</Text>
+            </View>
           </Animated.View>
         </TouchableOpacity>
       </View>
@@ -424,23 +440,23 @@ const HomePage = () => {
           <QuickActionButton 
             icon="search-outline" 
             label="Find Courses"
-            onPress={() => router.push('/(tabs)/home/filter')}
+            onPress={() => router.push('/(tabs)/home/allSubject')}
           />
           <QuickActionButton 
             icon="calendar-outline" 
-            label="Schedule"
+            label="Your Bookings"
             onPress={() => router.push('/(tabs)/profile/schedule')}
           />
           <QuickActionButton 
             icon="bookmark-outline" 
-            label="Saved"
+            label="Saved Courses"
             onPress={() => router.push('/(tabs)/home/saved')}
           />
-          <QuickActionButton 
+          {/* <QuickActionButton 
             icon="trending-up-outline" 
             label="Progress"
             onPress={() => router.push('/(tabs)/home/progress')}
-          />
+          /> */}
         </View>
 
         {/* Continue Learning Section */}
@@ -461,14 +477,14 @@ const HomePage = () => {
         )}
 
         {/* Upcoming Deadlines */}
-        <View style={styles.section}>
+        {deadlines.length > 0 && <View style={styles.section}>
           <SectionHeader title="Upcoming Deadlines" />
           <View style={styles.deadlinesContainer}>
             {deadlines.map(deadline => (
-              <DeadlineCard key={deadline.id} deadline={deadline} />
+              <DeadlineCard key={deadline.id} deadline={deadline} isTeacher={user.isTeacher} />
             ))}
           </View>
-        </View>
+        </View>}
 
         {/* Recommended Courses Section */}
         {/* <View style={styles.section}>
@@ -484,7 +500,7 @@ const HomePage = () => {
         <View style={styles.section}>
           <SectionHeader title="Popular Courses" />
           <HorizontalSubjectCard 
-            subjectData={subjectData} 
+            subjectData={subjectData.slice(0, 7)} 
             handleItemPress={handleItemPress} 
             isHorizontal={true}
           />
@@ -494,7 +510,7 @@ const HomePage = () => {
         <View style={styles.section}>
           <SectionHeader title="Browse Courses" showSeeAll />
           <ColumnSubjectCards 
-            subjectData={subjectData} 
+            subjectData={subjectData.slice(0, 5)} 
             handleItemPress={handleItemPress} 
             isHorizontal={false}
           />

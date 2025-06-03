@@ -55,7 +55,7 @@ const HorizontalSubjectCard = ({ subjectData, handleItemPress, isHorizontal }) =
               <Text style={styles.subjectGradeText}>Grade {item?.subjectGrade}</Text>
             </View>
           </View>
-          <Text numberOfLines={2} style={styles.flatlistSubjectNameText}>
+          <Text numberOfLines={1} style={styles.flatlistSubjectNameText}>
             {item?.subjectName}
           </Text>
           <View style={styles.subjectDetailsContainer}>
@@ -174,6 +174,7 @@ const styles = StyleSheet.create({
   },
   flatlistSubjectNameText: {
     marginTop: verticalScale(12),
+    marginBottom: verticalScale(8),
     fontFamily: FONT.semiBold,
     fontSize: moderateScale(16),
     color: '#222',

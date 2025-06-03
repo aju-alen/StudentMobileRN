@@ -9,14 +9,25 @@ import { FONT } from '../../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
 import { axiosWithAuth } from '../../utils/customAxios';
 import { Linking } from 'react-native';
+import StatusBarComponent from '../../components/StatusBarComponent';
+
 const SchedulePage = () => {
   const [events, setEvents] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [userDetails, setUserDetails] = useState({});
   const [loading, setLoading] = useState(true);
+  const [userType, setUserType] = useState(null);
 
   console.log(events, 'this is the events');
   
+
+  useEffect(() => {
+    const loadUserType = async () => {
+      const type = await AsyncStorage.getItem('userType');
+      setUserType(type);
+    };
+    loadUserType();
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,12 +42,15 @@ const SchedulePage = () => {
         const formattedEvents = response.data.map((classData) => ({
           id: classData.id,
           title: `${classData.subject.subjectName} Class`,
-          instructor: classData.teacher.name,
+          instructor: userType === 'teacher' ? classData.student.name : classData.teacher.name,
           date: classData.bookingDate,
           time: classData.bookingTime,
           subject: classData.subject.subjectName,
           status: 'upcoming',
-          zoomUrl: classData.bookingZoomUrl
+          zoomUrl: classData.bookingZoomUrl,
+          subjectId: classData.subject?.id,
+          teacherId: classData.teacher?.id,
+          studentId: classData.student?.id
         }));
 
         setEvents(formattedEvents);
@@ -48,8 +62,10 @@ const SchedulePage = () => {
       }
     };
     
-    fetchData();
-  }, []);
+    if (userType) {
+      fetchData();
+    }
+  }, [userType]);
 
   // Group events by date
   const groupedEvents = events.reduce((acc, event) => {
@@ -106,6 +122,7 @@ const SchedulePage = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBarComponent />
       <Stack.Screen 
         options={{
           title: 'My Schedule',

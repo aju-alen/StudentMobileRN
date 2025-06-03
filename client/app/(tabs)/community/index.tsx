@@ -10,10 +10,12 @@ import {
   RefreshControl,
   Animated,
   Easing,
-  Dimensions
+  Dimensions,
+  TextInput,
+  Keyboard
 } from "react-native";
 import { Image } from 'expo-image';
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { FONT } from "../../../constants";
@@ -22,6 +24,7 @@ import axios from "axios";
 import { ipURL } from "../../utils/utils";
 import { socket } from "../../utils/socket";
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
+import { COLORS } from "../../../constants";
 
 const { width } = Dimensions.get('window');
 
@@ -119,11 +122,32 @@ const CommunityCard = ({ item, onPress, index }) => {
   );
 };
 
+// Add custom debounce hook at the top of the file
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
 const CommunityPage = () => {
   const [communities, setCommunities] = useState([]);
   const [token, setToken] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchAnimation] = useState(new Animated.Value(0));
+  const debouncedSearchQuery = useDebounce(searchQuery, 400); // 500ms delay
 
   // Animation values
   const headerOpacity = useRef(new Animated.Value(0)).current;
@@ -165,30 +189,42 @@ const CommunityPage = () => {
   }, []);
 
   const handleSearchPress = () => {
-    Animated.sequence([
-      Animated.timing(searchButtonScale, {
-        toValue: 0.95,
-        duration: 100,
-        easing: Easing.bezier(0.4, 0, 0.2, 1),
-        useNativeDriver: true,
-      }),
-      Animated.spring(searchButtonScale, {
-        toValue: 1,
-        friction: 3,
-        tension: 40,
-        useNativeDriver: true,
-      })
-    ]).start();
+    setIsSearchVisible(prev => !prev);
+    Animated.spring(searchAnimation, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 50,
+      friction: 7,
+    }).start();
+  };
+
+  const handleSearchClose = () => {
+    Animated.spring(searchAnimation, {
+      toValue: 0,
+      useNativeDriver: true,
+      tension: 50,
+      friction: 7,
+    }).start(() => {
+      setIsSearchVisible(false);
+      setSearchQuery('');
+      Keyboard.dismiss();
+    });
+  };
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
   };
 
   const getAllCommunities = async () => {
     try {
+      setIsLoading(true);
       const storedToken = await AsyncStorage.getItem("authToken");
-      const resp = await axios.get(`${ipURL}/api/community`, {
+      const resp = await axios.get(`${ipURL}/api/community?q=${searchQuery}`, {
         headers: { Authorization: `Bearer ${storedToken}` },
       });
       setCommunities(resp.data);
       setToken(storedToken);
+      setIsLoading(false);
     } catch (error) {
       console.error("Error fetching communities:", error);
     } finally {
@@ -199,7 +235,7 @@ const CommunityPage = () => {
 
   useEffect(() => {
     getAllCommunities();
-  }, []);
+  }, [debouncedSearchQuery]);
 
   const handlePress = async(item) => {
     try {
@@ -220,13 +256,13 @@ const CommunityPage = () => {
     getAllCommunities();
   }
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-      </SafeAreaView>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <SafeAreaView style={styles.loadingContainer}>
+  //       <ActivityIndicator size="large" color="#007AFF" />
+  //     </SafeAreaView>
+  //   );
+  // }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -250,6 +286,38 @@ const CommunityPage = () => {
         </TouchableOpacity>
       </Animated.View>
 
+      {isSearchVisible && (
+        <Animated.View 
+          style={[
+            styles.searchContainer,
+            {
+              transform: [{
+                translateY: searchAnimation.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-20, 0]
+                })
+              }],
+              opacity: searchAnimation
+            }
+          ]}
+        >
+          <View style={styles.searchInputContainer}>
+            <Ionicons name="search" size={20} color={COLORS.gray} style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search communities..."
+              value={searchQuery}
+              onChangeText={handleSearch}
+              autoFocus={true}
+              placeholderTextColor={COLORS.gray}
+            />
+            {/* <TouchableOpacity onPress={handleSearchClose}>
+              <Ionicons name="close-circle" size={20} color={COLORS.gray} />
+            </TouchableOpacity> */}
+          </View>
+        </Animated.View>
+      )}
+
       <Animated.View style={[
         styles.subHeader,
         {
@@ -262,7 +330,7 @@ const CommunityPage = () => {
         </Text>
       </Animated.View>
 
-      <FlatList
+      {isLoading ? <ActivityIndicator size="large" color="#007AFF" style={{margin: 'auto'}} /> : <FlatList
         data={communities}
         renderItem={({ item, index }) => (
           <CommunityCard 
@@ -286,7 +354,7 @@ const CommunityPage = () => {
             <Text style={styles.emptyText}>No communities found</Text>
           </View>
         }
-      />
+      />}
     </SafeAreaView>
   );
 };
@@ -418,5 +486,40 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(16),
     fontFamily: FONT.medium,
     color: '#666666',
+  },
+  searchContainer: {
+    paddingHorizontal: horizontalScale(20),
+    paddingVertical: verticalScale(8),
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(12),
+    paddingHorizontal: horizontalScale(15),
+    paddingVertical: verticalScale(10),
+    shadowColor: COLORS.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    borderBottomWidth: 1,
+    borderColor: COLORS.lightGray,
+  },
+  searchIcon: {
+    marginRight: horizontalScale(10),
+  },
+  searchInput: {
+    flex: 1,
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(16),
+    color: COLORS.primary,
+    paddingVertical: verticalScale(5),
   },
 });

@@ -78,8 +78,11 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
       if (!subjectData || !teacherData) return;
 
       try {
+        setLoading(true);
         const token = await AsyncStorage.getItem('authToken');
-        console.log(token, 'this is the token in stripe');
+        const user = JSON.parse(await AsyncStorage.getItem('userDetails'));
+
+        console.log(user, 'user in payment sheet');
         
         const response = await fetch(`${ipURL}/api/stripe/payment-sheet`, {
           method: 'POST',
@@ -93,12 +96,18 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
             subjectDuration: subjectData.subjectDuration,
             teacherEmail: teacherData.email,
             subjectName: subjectData.subjectName,
+            userEmail: user.email,
           }),
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
         });
+
+        if (!response.ok) {
+          throw new Error('Failed to initialize payment');
+        }
+
         const { paymentIntent, ephemeralKey, customer } = await response.json();
 
         const { error } = await initPaymentSheet({
@@ -112,19 +121,26 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
           },
           returnURL: 'coachacadem://home',
         });
-        console.log(error, 'error');
-        
 
-        if (!error) {
-          setPaymentInitialized(true);
+        if (error) {
+          console.error('Payment initialization error:', error);
+          Alert.alert('Error', 'Failed to initialize payment system. Please try again.');
+          return;
         }
+
+        setPaymentInitialized(true);
       } catch (error) {
         console.error('Error initializing payment:', error);
+        Alert.alert('Error', 'Failed to initialize payment system. Please try again.');
+      } finally {
+        setLoading(false);
       }
     };
 
-    initializePayment();
-  }, [subjectData, teacherData, initPaymentSheet]);
+    if (visible && subjectData && teacherData) {
+      initializePayment();
+    }
+  }, [visible, subjectData, teacherData, initPaymentSheet]);
 
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -216,7 +232,7 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
       const { error } = await presentPaymentSheet();
 
       if (error) {
-        Alert.alert(`Error code: ${error.code}`, error.message);
+        Alert.alert('Payment Error', error.message);
       } else {
         setShowSuccess(true);
         setIsClosing(false);
@@ -224,7 +240,7 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
       }
     } catch (error) {
       console.error('Payment error:', error);
-      Alert.alert('Error', 'Failed to process payment');
+      Alert.alert('Error', 'Failed to process payment. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -319,7 +335,7 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
                       </View>
                       <View style={styles.sessionDetail}>
                         <Ionicons name="hourglass-outline" size={20} color="#64748B" />
-                        <Text style={styles.detailText}>{subjectData.subjectDuration} months duration</Text>
+                        <Text style={styles.detailText}>{subjectData.subjectDuration} hours/session</Text>
                       </View>
                     </View>
                   </View>
@@ -337,7 +353,7 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
                       </View>
                       <View style={styles.priceRow}>
                         <Text style={styles.priceLabel}>Duration</Text>
-                        <Text style={styles.priceValue}>{subjectData.subjectDuration} months</Text>
+                        <Text style={styles.priceValue}>{subjectData.subjectDuration} hours</Text>
                       </View>
                       <View style={[styles.priceRow, styles.totalRow]}>
                         <Text style={styles.totalLabel}>Total Amount</Text>

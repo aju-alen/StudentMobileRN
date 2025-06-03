@@ -34,6 +34,7 @@ const CalendarSummary = ({isTeacher}:{isTeacher:boolean}) => {
   };
 
   const renderClassItem = ({ item }: { item: ClassItem }) => (
+    <TouchableOpacity onPress={handleViewAll}>
     <View style={styles.classItem}>
       <View style={styles.dateContainer}>
         <Text style={styles.dateText}>{formatDate(item.bookingDate)}</Text>
@@ -45,6 +46,7 @@ const CalendarSummary = ({isTeacher}:{isTeacher:boolean}) => {
       </View>
       <Ionicons name="chevron-forward" size={20} color="#64748B" />
     </View>
+    </TouchableOpacity>
   );
 
   useEffect(() => {

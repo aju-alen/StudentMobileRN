@@ -43,9 +43,15 @@ try {
 };
 
 export const getAllCommunity = async (req, res, next) => {
+  const { q } = req.query;
     try {
       console.log("inside get all community");
-  
+      const searchTerm = q?.toLowerCase();
+      const whereClause = searchTerm ? {
+        OR: [
+          { communityName: { contains: searchTerm } }
+        ]
+      } : {};
       // Fetch all communities
       const communities = await prisma.community.findMany({
         include: {
@@ -56,6 +62,7 @@ export const getAllCommunity = async (req, res, next) => {
           },
           messages: true, // Include messages if needed
         },
+        where: whereClause,
       });
   
       console.log("communities", communities);

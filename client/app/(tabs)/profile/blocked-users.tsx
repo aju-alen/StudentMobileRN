@@ -13,6 +13,7 @@ import {
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
 import { ipURL } from '../../utils/utils';
 import { axiosWithAuth } from '../../utils/customAxios';
+import StatusBarComponent from '../../components/StatusBarComponent';
 
 interface BlockedUser {
   id: string;
@@ -95,6 +96,7 @@ const BlockedUsersPage = () => {
 
   return (
     <View style={styles.container}>
+      <StatusBarComponent />
       {error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>

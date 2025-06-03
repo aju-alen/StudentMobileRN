@@ -21,7 +21,7 @@ import { ipURL } from "../utils/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { horizontalScale, verticalScale, moderateScale } from '../utils/metrics';
-import { FONT } from "../../constants";
+import { COLORS, FONT } from "../../constants";
 import { socket } from '../utils/socket';
 import BookingCalendar from './BookingCalendar';
 import { axiosWithAuth } from "../utils/customAxios";
@@ -61,6 +61,7 @@ interface User {
   name?: string;
   profileImage?: string;
   id?: string;
+  isTeacher?: boolean;
 }
 
 const { width } = Dimensions.get('window');
@@ -135,6 +136,7 @@ const SubjectPage = ({ subjectId }) => {
   const [isTeacher, setIsTeacher] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [purchaseStatus, setPurchaseStatus] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Animation values
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -147,6 +149,7 @@ const SubjectPage = ({ subjectId }) => {
   const menuScale = useRef(new Animated.Value(0)).current;
   const menuOpacity = useRef(new Animated.Value(0)).current;
 
+  console.log(singleSubjectData,'singleSubjectData in single subject page');
   const handleChatNow = async () => {
 
     if(!purchaseStatus){
@@ -268,6 +271,7 @@ const SubjectPage = ({ subjectId }) => {
     console.log(reportReason);
     
     try {
+      setIsLoading(true);
       const cleanedReportReason = reportReason.replace(/\s+/g, ' ').trim()
 
    //ToDo: Implement API call to report subject with reason
@@ -278,24 +282,29 @@ const SubjectPage = ({ subjectId }) => {
       setReportReason('');
       setShowReportModal(false);
       setShowMenu(false);
+      setIsLoading(false);
     } catch (error) {
       console.error('Error reporting subject:', error);
       alert('Failed to report subject. Please try again.');
+      setIsLoading(false);
     }
   };
 
   const handleBlockUser = async () => {
     try {
+      setIsLoading(true);
       // TODO: Implement API call to block user
       const blockUser = await axiosWithAuth.post(`${ipURL}/api/reports/block-user`,{subjectId})
       console.log(blockUser);
       
-      alert('User blocked successfully');
+      alert('User blocked successfully. You can unblock them from the blocked users page in your profile settings.');
       setShowMenu(false);
-      router.replace('/(tabs)/home');
+      router.back();
+      setIsLoading(false);
     } catch (error) {
       console.error('Error blocking user:', error);
       alert('Failed to block user. Please try again.');
+      setIsLoading(false);
     }
   };
 
@@ -309,6 +318,7 @@ const SubjectPage = ({ subjectId }) => {
         const resp = await axiosWithAuth.get(`${ipURL}/api/subjects/${subjectId}`);
         setTeacherId(resp.data.user.id);
         setSingleSubjectData(resp.data);
+        console.log(resp.data,'resp.data in subject page');
 
         const purchaseStatus = await axiosWithAuth.get(`${ipURL}/api/auth/metadata/verify-purchase/${subjectId}`);
         setPurchaseStatus(purchaseStatus.data.hasPurchased);
@@ -594,7 +604,7 @@ const SubjectPage = ({ subjectId }) => {
             source={{ uri: singleSubjectData?.subjectImage }}
             style={styles.headerImage}
             placeholder={blurhash}
-            contentFit="cover"
+            contentFit='fill'
             transition={300}
           />
           <TouchableOpacity 
@@ -622,7 +632,7 @@ const SubjectPage = ({ subjectId }) => {
               onPress={handleBlockUser}
             >
               <Ionicons name="ban-outline" size={20} color="#E74C3C" />
-              <Text style={styles.menuItemText}>Block User</Text>
+              {isLoading ? <ActivityIndicator size="small" color={COLORS.primary} /> : <Text style={styles.menuItemText}>Block User</Text>}
             </TouchableOpacity>
           </Animated.View>
         )}
@@ -691,8 +701,8 @@ const SubjectPage = ({ subjectId }) => {
               transition={100}
             />
             <View style={styles.teacherInfo}>
-              <Text style={styles.teacherName}>{singleSubjectData.user?.name}</Text>
-              <Text style={styles.teacherRole}>Sr. French Professor</Text>
+              <Text style={styles.teacherName}>{singleSubjectData.user?.name}</Text>  
+              <Text style={styles.teacherRole}>{singleSubjectData.user?.isTeacher ? "Instructor" : "Student"}</Text>
             </View>
             <Ionicons name="chevron-forward" size={24} color="#1A4C6E" />
           </TouchableOpacity>
@@ -830,7 +840,7 @@ const SubjectPage = ({ subjectId }) => {
                 style={[styles.modalButton, styles.modalSubmitButton]}
                 onPress={handleReportSubject}
               >
-                <Text style={styles.modalSubmitButtonText}>Submit Report</Text>
+                {isLoading ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.modalSubmitButtonText}>Submit Report</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -853,272 +863,272 @@ const styles = StyleSheet.create({
   },
   headerImage: {
     width: width,
-    height: 220,
+    height: verticalScale(400),
     backgroundColor: '#e0e0e0',
   },
   contentContainer: {
-    padding: 16,
-    marginTop: -30,
+    padding: moderateScale(16),
+    marginTop: verticalScale(-60),
     backgroundColor: 'white',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
   },
   statusBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-    paddingTop: 10,
+    marginBottom: verticalScale(20),
+    paddingTop: verticalScale(10),
   },
   statusIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: horizontalScale(6),
   },
   statusText: {
-    fontSize: 16,
+    fontSize: moderateScale(14),
     fontWeight: '600',
   },
   dateText: {
     color: '#666',
-    fontSize: 14,
+    fontSize: moderateScale(12),
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 24,
+    marginBottom: verticalScale(24),
   },
   titleContainer: {
     flex: 1,
-    marginRight: 16,
+    marginRight: horizontalScale(16),
   },
   subjectName: {
-    fontSize: 26,
-    fontWeight: '700',
+    fontSize: moderateScale(22),
+    fontWeight: '600',
     color: '#1a1a1a',
-    marginBottom: 12,
+    marginBottom: moderateScale(12),
   },
   badgeContainer: {
     flexDirection: 'row',
-    gap: 8,
+    gap: horizontalScale(8),
   },
   badge: {
     backgroundColor: '#f0f7ff',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingHorizontal: horizontalScale(12),
+    paddingVertical: verticalScale(6),
+    borderRadius: moderateScale(20),
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: moderateScale(6),
   },
   gradeBadge: {
     backgroundColor: '#fff3e0',
   },
   badgeText: {
     color: '#0066cc',
-    fontSize: 14,
+    fontSize: moderateScale(12),
     fontWeight: '600',
   },
   priceContainer: {
     alignItems: 'flex-end',
   },
   priceLabel: {
-    fontSize: 13,
+    fontSize: moderateScale(12),
     color: '#666',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   price: {
-    fontSize: 28,
+    fontSize: moderateScale(24),
     fontWeight: '700',
     color: '#2e7d32',
   },
   durationText: {
-    fontSize: 14,
+    fontSize: moderateScale(12),
     color: '#666',
-    marginTop: 4,
+    marginTop: verticalScale(4),
   },
   teacherCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8F9FA',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 24,
+    padding: moderateScale(16),
+    borderRadius: moderateScale(12),
+    marginBottom: verticalScale(24),
   },
   teacherImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: moderateScale(50),
+    height: moderateScale(50),
+    borderRadius: moderateScale(25),
   },
   teacherInfo: {
     flex: 1,
-    marginLeft: 15,
+    marginLeft: horizontalScale(15),
   },
   teacherName: {
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontWeight: '600',
     color: '#1a1a1a',
   },
   teacherRole: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     color: '#666',
-    marginTop: 4,
+    marginTop: verticalScale(4),
   },
   quickInfoContainer: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
+    gap: horizontalScale(12),
+    marginBottom: verticalScale(24),
   },
   quickInfoCard: {
     flex: 1,
     backgroundColor: '#f8f9fa',
-    padding: 16,
-    borderRadius: 12,
+    padding: moderateScale(16),
+    borderRadius: moderateScale(12),
     alignItems: 'center',
   },
   quickInfoLabel: {
-    fontSize: 14,
+    fontSize: moderateScale(12),
     color: '#666',
-    marginTop: 8,
+    marginTop: verticalScale(8),
   },
   quickInfoValue: {
-    fontSize: 16,
+    fontSize: moderateScale(14),
     fontWeight: '600',
     color: '#1a1a1a',
-    marginTop: 4,
+    marginTop: verticalScale(4),
   },
   section: {
-    marginBottom: 24,
+    marginBottom: verticalScale(24),
     backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 12,
+    padding: moderateScale(16),
+    borderRadius: moderateScale(12),
     borderWidth: 1,
     borderColor: '#f0f0f0',
     flex: 1,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: moderateScale(18),
     fontWeight: '600',
     color: '#1a1a1a',
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
   },
   description: {
-    fontSize: 16,
+    fontSize: moderateScale(14),
     color: '#666',
-    lineHeight: 24,
+    lineHeight: verticalScale(24),
   },
   pointRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
-    gap: 12,
+    marginBottom: verticalScale(12),
+    gap: horizontalScale(12),
   },
   bulletPoint: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: horizontalScale(24),
+    height: verticalScale(24),
+    borderRadius: moderateScale(12),
     backgroundColor: '#f0f7ff',
     alignItems: 'center',
     justifyContent: 'center',
   },
   bulletNumber: {
     color: '#0066cc',
-    fontSize: 14,
+    fontSize: moderateScale(12),
     fontWeight: '600',
   },
   pointText: {
     flex: 1,
-    fontSize: 16,
+    fontSize: moderateScale(16),
     color: '#666',
-    lineHeight: 24,
+    lineHeight: verticalScale(24),
   },
   reviewItem: {
     backgroundColor: '#f8f9fa',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
+    padding: moderateScale(16),
+    borderRadius: moderateScale(12),
+    marginBottom: verticalScale(16),
   },
   reviewHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: verticalScale(12),
   },
   reviewerImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: horizontalScale(40),
+    height: verticalScale(40),
+    borderRadius: moderateScale(20),
   },
   reviewerInfo: {
-    marginLeft: 12,
+    marginLeft: horizontalScale(12),
   },
   reviewerName: {
-    fontSize: 16,
+    fontSize: moderateScale(14),
     fontWeight: '600',
     color: '#1a1a1a',
   },
   reviewDate: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     color: '#666',
-    marginTop: 4,
+    marginTop: verticalScale(4),
   },
   reviewTitle: {
-    fontSize: 16,
+    fontSize: moderateScale(14),
     fontWeight: '600',
     color: '#1a1a1a',
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
   },
   reviewDescription: {
-    fontSize: 14,
+    fontSize: moderateScale(12),
     color: '#666',
-    lineHeight: 20,
+    lineHeight: verticalScale(20),
   },
   reviewForm: {
     flex: 1,
-    marginTop: 16,
-    paddingBottom: 104,
+    marginTop: verticalScale(16),
+    paddingBottom: verticalScale(104),
   },
   input: {
     backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    fontSize: 14,
+    borderRadius: moderateScale(8),
+    padding: moderateScale(12),
+    marginBottom: verticalScale(12),
+    fontSize: moderateScale(14),
   },
   textArea: {
-    height: 100,
+    height: verticalScale(100),
     textAlignVertical: 'top',
   },
   submitButton: {
     backgroundColor: '#2DCB63',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: moderateScale(8),
+    padding: moderateScale(12),
     alignItems: 'center',
-    minHeight: 44,
-    marginTop: 16,
-    marginBottom: 16,
+    minHeight: verticalScale(44),
+    marginTop: verticalScale(16),
+    marginBottom: verticalScale(16),
     justifyContent: 'center',
     width: '100%',
   },
   submitButtonText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: moderateScale(14),
     fontWeight: '600',
   },
   noReviewsText: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     color: '#666',
     textAlign: 'center',
-    marginTop: 12,
+    marginTop: verticalScale(12),
   },
   reviewsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
   },
   viewAllButton: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     color: '#2DCB63',
     textDecorationLine: 'underline',
   },
@@ -1128,7 +1138,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: 'row',
-    padding: 16,
+    padding: moderateScale(16),
     backgroundColor: 'white',
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
@@ -1136,36 +1146,36 @@ const styles = StyleSheet.create({
   primaryButton: {
     flex: 1,
     backgroundColor: '#2DCB63',
-    borderRadius: 12,
-    padding: 16,
-    marginRight: 12,
+    borderRadius: moderateScale(12),
+    padding: moderateScale(16),
+    marginRight: horizontalScale(12),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-  },
+    gap: horizontalScale(8),
+  }, 
   primaryButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontWeight: '600',
   },
   priceText: {
     color: 'white',
-    fontSize: 14,
-    marginLeft: 8,
+    fontSize: moderateScale(14),
+    marginLeft: horizontalScale(8),
   },
   secondaryButton: {
     backgroundColor: '#3498DB',
-    borderRadius: 12,
-    padding: 16,
-    width: 70,
+    borderRadius: moderateScale(12),
+    padding: moderateScale(16),
+    width: horizontalScale(70),
     alignItems: 'center',
     justifyContent: 'center',
   },
   secondaryButtonText: {
     color: 'white',
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: moderateScale(12),
+    marginTop: verticalScale(4),
   },
   saveButton: {
     flexDirection: 'row',
@@ -1174,7 +1184,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: horizontalScale(12),
     paddingVertical: verticalScale(6),
     borderRadius: moderateScale(20),
-    gap: horizontalScale(6),
+    gap: horizontalScale(8),
   },
   savedButton: {
     backgroundColor: '#2DCB63',
@@ -1187,22 +1197,22 @@ const styles = StyleSheet.create({
   voteContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
-    gap: 16,
+    marginTop: verticalScale(12),
+    gap: horizontalScale(16),
   },
   voteButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 8,
-    borderRadius: 8,
+    padding: moderateScale(8),
+    borderRadius: moderateScale(8),
     backgroundColor: '#f8f9fa',
-    gap: 4,
+    gap: horizontalScale(4),
   },
   activeVoteButton: {
     backgroundColor: '#f0f0f0',
   },
   voteCount: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     color: '#666',
   },
   activeVoteCount: {
@@ -1211,23 +1221,23 @@ const styles = StyleSheet.create({
   rightActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: horizontalScale(12),
   },
   menuButton: {
     position: 'absolute',
-    top: 16,
-    right: 16,
+    top: verticalScale(16),
+    right: horizontalScale(16),
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: 20,
-    padding: 8,
+    borderRadius: moderateScale(20),
+    padding: moderateScale(8),
   },
   menuContainer: {
     position: 'absolute',
-    top: 70,
-    right: 16,
+    top: verticalScale(70),
+    right: horizontalScale(16),
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 8,
+    borderRadius: moderateScale(12),
+    padding: moderateScale(8),
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -1241,11 +1251,11 @@ const styles = StyleSheet.create({
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    gap: 8,
+    padding: moderateScale(12),
+    gap: horizontalScale(8),
   },
   menuItemText: {
-    fontSize: 16,
+    fontSize: moderateScale(16),
     color: '#1A4C6E',
     fontWeight: '500',
   },
@@ -1257,35 +1267,35 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: moderateScale(12),
+    padding: moderateScale(20),
     width: '90%',
-    maxWidth: 400,
+    maxWidth: horizontalScale(400),
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: moderateScale(20),
     fontWeight: '600',
     color: '#1A4C6E',
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
   },
   reportInput: {
     backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-    fontSize: 14,
-    minHeight: 100,
+    borderRadius: moderateScale(8),
+    padding: moderateScale(12),
+    marginBottom: verticalScale(16),
+    fontSize: moderateScale(14),
+    minHeight: verticalScale(100),
     textAlignVertical: 'top',
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 12,
+    gap: horizontalScale(12),
   },
   modalButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
+    paddingVertical: verticalScale(8),
+    paddingHorizontal: horizontalScale(16),
+    borderRadius: moderateScale(8),
   },
   modalCancelButton: {
     backgroundColor: '#f8f9fa',
@@ -1295,12 +1305,12 @@ const styles = StyleSheet.create({
   },
   modalCancelButtonText: {
     color: '#1A4C6E',
-    fontSize: 14,
+    fontSize: moderateScale(14),
     fontWeight: '500',
   },
   modalSubmitButtonText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: moderateScale(14),
     fontWeight: '500',
   },
   disabledButton: {
@@ -1308,10 +1318,10 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   purchaseStatusText: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     color: '#666',
     textAlign: 'center',
-    marginTop: 12,
+    marginTop: verticalScale(12),
   },
 });
 

@@ -4,22 +4,24 @@ export const sendEmailService = async (
     receiverEmail,
     subjectText,
     messageText,
-    {name} = {}
+    {name} = {},
+    ...rest
 ) => {
-console.log(receiverEmail,subjectText,messageText,'emaiiil');
 
     const transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: 'mail.privateemail.com',
+      port: 587,
+      secure: false,
         auth: {
-            user: process.env.EMAIL,
-            pass: process.env.GMAIL_PASSWORD
+            user: process.env.NAMECHEAP_EMAIL,
+            pass: process.env.NAMECHEAP_EMAIL_PASSWORD
         }
     })
     const mailOptions = {
-        from: process.env.EMAIL,
+        from: process.env.NAMECHEAP_EMAIL,
         to: receiverEmail,
         subject: subjectText,
-        text: messageText
+        html: messageText
     }
     await transporter.sendMail(mailOptions);
 }

@@ -5,6 +5,8 @@ import jwt from "jsonwebtoken";
 import { PrismaClient } from '@prisma/client';
 import dotenv from "dotenv";
 dotenv.config();
+import { sendEmailService } from "../services/emailService.js";
+
 
 const prisma = new PrismaClient();
 
@@ -295,7 +297,8 @@ export const verifyEmail = async (req, res, next) => {
         { userId: user.id, isTeacher: user.isTeacher, isAdmin: user.isAdmin, email: user.email },
         process.env.SECRET_KEY
       );
-  
+      console.log(user, 'this is the user');
+      
       res.status(200).json({
         message: "Login successful",
         token,
@@ -304,6 +307,8 @@ export const verifyEmail = async (req, res, next) => {
         userId: user.id,
         recommendedSubjects: user.recommendedSubjects,
         userProfileImage: user.profileImage,
+        hasSeenOnboarding: user.hasSeenOnboarding,
+        email: user.email,
       });
     } catch (err) {
       console.error(err);
@@ -337,7 +342,10 @@ export const verifyEmail = async (req, res, next) => {
                 select: {
                   id: true,
                   subjectName: true,
-                  subjectImage: true
+                  subjectImage: true,
+                  subjectBoard: true,
+                  subjectGrade: true,
+                  subjectPrice: true,
                 }
               }
             }
@@ -453,8 +461,14 @@ export const changePassword = async (req, res, next) => {
     const { currentPassword, newPassword } = req.body;
     const userId = req.userId;
 
+  
+
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ message: "Please provide both current and new password" });
+    }
+
+    if(currentPassword === newPassword){
+      return res.status(400).json({ message: "New password cannot be the same as the current password" });
     }
 
     // Find the user
@@ -480,6 +494,65 @@ export const changePassword = async (req, res, next) => {
       where: { id: userId },
       data: { password: hash },
     });
+
+    await sendEmailService(
+        user.email,
+        "Password Changed Successfully",
+        `
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #ffffff;">
+          <!-- Bauhaus-style header with primary colors -->
+          <div style="display: flex; margin-bottom: 20px;">
+            <div style="width: 20%; background-color: #FF0000;"></div>
+            <div style="width: 60%; background-color: #000000; color: #ffffff; padding: 30px 20px; text-align: center;">
+              <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase;">Password Changed</h1>
+            </div>
+            <div style="width: 20%; background-color: #FFD700;"></div>
+          </div>
+          
+          <div style="padding: 30px; color: #000000;">
+            <p style="font-size: 20px; margin-bottom: 20px; font-weight: 700;">Hello <strong>${user.name}</strong>,</p>
+            
+            <!-- Geometric highlight box -->
+            <div style="background-color: #f5f5f5; padding: 25px; margin: 25px 0; border-left: 8px solid #FF0000;">
+              <p style="margin: 0; font-size: 16px; line-height: 1.8; font-weight: 500;">Your password has been successfully changed at ${new Date().toLocaleString()} (GMT+4).</p>
+            </div>
+            
+            <!-- Warning Box -->
+            <div style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 20px; margin: 25px 0; border-left: 8px solid #FFD700;">
+              <h3 style="margin: 0 0 15px 0; font-size: 18px; font-weight: 700;">⚠️ Important Security Notice</h3>
+              <p style="margin: 0; font-size: 16px; line-height: 1.6;">If you did not make this change, please contact our security team immediately at <a href="mailto:support@coachacadem.ae" style="color: #856404; text-decoration: underline;">support@coachacadem.ae</a></p>
+            </div>
+            
+            <p style="font-size: 16px; line-height: 1.6; font-weight: 500;">For your security, please note:</p>
+            <ul style="font-size: 16px; line-height: 1.6; font-weight: 500;">
+              <li>Your new password is now active</li>
+              <li>All existing sessions have been logged out</li>
+              <li>You will need to log in again with your new password</li>
+            </ul>
+            
+            <!-- Geometric separator -->
+            <div style="display: flex; margin: 30px 0;">
+              <div style="width: 30%; height: 3px; background-color: #FF0000;"></div>
+              <div style="width: 40%; height: 3px; background-color: #000000;"></div>
+              <div style="width: 30%; height: 3px; background-color: #FFD700;"></div>
+            </div>
+            
+            <p style="font-size: 16px; line-height: 1.6; font-weight: 500;">Security Best Practices:</p>
+            <ul style="font-size: 16px; line-height: 1.6; font-weight: 500;">
+              <li>Never share your password with anyone</li>
+              <li>Use a strong, unique password</li>
+              <li>Regularly update your password</li>
+            </ul>
+          </div>
+          
+          <!-- Bauhaus-style footer -->
+          <div style="background-color: #000000; color: #ffffff; padding: 20px; text-align: center;">
+            <p style="margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 1px;">This is an automated message, please do not reply to this email.</p>
+              <p style="margin: 10px 0 0 0; font-size: 14px; font-weight: 700; letter-spacing: 1px;">For support, contact: <a href="mailto:support@coachacadem.ae" style="color: #ffffff; text-decoration: underline;">support@coachacadem.ae</a></p>
+          </div>
+        </div>
+        `
+    );
 
     res.status(200).json({ message: "Password changed successfully" });
   } catch (err) {
@@ -572,4 +645,20 @@ catch(err){
   
   next(err);
 }
+}
+
+export const updateUserHasSeenOnboarding = async (req, res, next) => {
+  const userId = req.body.userId;
+
+  try{
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { hasSeenOnboarding: true },
+    });
+    res.status(200).json({ message: "User has seen onboarding", updatedUser });
+  }
+  catch(err){
+    console.log('error in update user has seen onboarding', err);
+    next(err);
+  }
 }

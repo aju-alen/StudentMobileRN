@@ -3,38 +3,77 @@ import { sendEmailService } from "../services/emailService.js";
 const prisma = new PrismaClient();
 
 
-export const reportSubject = async (req, res,next) => {
-    const {subjectId,reportReason} = req.body;
+export const reportSubject = async (req, res, next) => {
+    const {subjectId, reportReason} = req.body;
     const userId = req.userId;
     const userEmail = req.email;
     try {
-        const report = await prisma.$transaction(async (tx) => {
-            // Create the report record
-            const report = await tx.report.create({
-                data: {
-                    subjectId,
-                    reportDescription: reportReason,
-                    userId
-                }
-            });
-
-            // If we reach here, the database operation was successful
-            // Now send the emails
-            await Promise.all([
-                sendEmailService(
-                    process.env.EMAIL,
-                    "New Report",
-                    `A new report has been created by ${userId} for subject ${subjectId} with reason ${reportReason}`
-                ),
-                sendEmailService(
-                    userEmail,
-                    "Subject Report Submitted",
-                    `Your report has been submitted to the admin. We will review it and take action if necessary.`
-                )
-            ]);
+        // Create the report record
+        const report = await prisma.report.create({
+            data: {
+                subjectId,
+                reportDescription: reportReason,
+                userId
+            }
         });
 
-        return res.status(200).json({message:"Report created successfully"});
+        // Send emails after successful report creation
+        await Promise.all([
+            sendEmailService(
+                process.env.NAMECHEAP_EMAIL,
+                "⚠️ New Report Alert",
+                `
+                <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; border: 2px solid #000000;">
+                    <div style="background-color: #000000; color: #ffffff; padding: 20px; margin-bottom: 20px; text-align: center;">
+                        <h1 style="margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 2px;">NEW REPORT ALERT</h1>
+                    </div>
+                    
+                    <div style="padding: 20px; border: 1px solid #000000; margin-bottom: 20px;">
+                        <h2 style="color: #000000; font-size: 18px; margin-bottom: 15px; border-bottom: 2px solid #000000; padding-bottom: 10px;">Report Details</h2>
+                        <p style="margin: 10px 0; color: #333333;"><strong>User ID:</strong> ${userId}</p>
+                        <p style="margin: 10px 0; color: #333333;"><strong>Subject ID:</strong> ${subjectId}</p>
+                        <p style="margin: 10px 0; color: #333333;"><strong>Reason:</strong> ${reportReason}</p>
+                    </div>
+
+                    <div style="text-align: center; padding: 20px; background-color: #f5f5f5;">
+                        <p style="margin: 0; color: #666666; font-size: 14px;">Please review this report and take appropriate action.</p>
+                    </div>
+                </div>
+                `
+            ),
+            sendEmailService(
+                userEmail,
+                "Report Submission Confirmation",
+                `
+                <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; border: 2px solid #000000;">
+                    <div style="background-color: #000000; color: #ffffff; padding: 20px; margin-bottom: 20px; text-align: center;">
+                        <h1 style="margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 2px;">REPORT SUBMITTED</h1>
+                    </div>
+                    
+                    <div style="padding: 20px; border: 1px solid #000000; margin-bottom: 20px;">
+                        <p style="margin: 10px 0; color: #333333; font-size: 16px; line-height: 1.6;">
+                            Thank you for bringing this to our attention. Your report has been successfully submitted and will be reviewed by our team.
+                        </p>
+                        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-left: 4px solid #000000;">
+                            <p style="margin: 0; color: #333333; font-size: 14px;">
+                                <strong>Report Details:</strong><br>
+                                Subject ID: ${subjectId}<br>
+                                Reason: ${reportReason}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; padding: 20px; background-color: #f5f5f5;">
+                        <p style="margin: 0; color: #666666; font-size: 14px;">
+                            We take all reports seriously and will investigate this matter thoroughly.
+                        </p>
+                    </div>
+                </div>
+                `
+            )
+        ]);
+
+        return res.status(200).json({message: "Report created successfully"});
     }
     catch (err) {
         console.log(err);

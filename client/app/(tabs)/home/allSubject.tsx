@@ -1,18 +1,17 @@
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, TextInput, ActivityIndicator } from 'react-native'
+import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, TextInput, ActivityIndicator, StatusBar } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import SubjectCards from '../../components/SubjectCards'
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import { router, useLocalSearchParams } from 'expo-router';
-import { debounce } from "lodash";
 import { Ionicons } from "@expo/vector-icons";
 import { ipURL } from '../../utils/utils';
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
 import { FONT, COLORS } from '../../../constants';
 import { ScrollView, GestureHandlerRootView } from 'react-native-gesture-handler';
+import {axiosWithAuth}   from '../../utils/customAxios';
+import StatusBarComponent from '../../components/StatusBarComponent';
 
 interface Subject {
-  _id: string;
+  id: string;
   subjectName: string;
   subjectDescription: string;
   subjectGrade: string;
@@ -31,14 +30,11 @@ const allSubject = () => {
   const fetchSubjects = async (searchTerm?: string) => {
     try {
       setLoading(true);
-      const token = await AsyncStorage.getItem("authToken");
       const url = searchTerm && searchTerm.trim() !== ''
-        ? `${ipURL}/api/subjects?q=${encodeURIComponent(searchTerm.trim())}`
-        : `${ipURL}/api/subjects`;
+        ? `${ipURL}/api/subjects/advance-search?q=${searchTerm}`
+        : `${ipURL}/api/subjects/advance-search`;
       
-      const response = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axiosWithAuth.get(url);
       setSubjectData(response.data);
     } catch (err) {
       setError('Failed to fetch subjects. Please try again.');
@@ -96,8 +92,8 @@ const allSubject = () => {
     fetchSubjects();
   }, []);
 
-  const handleItemPress = (itemId: { _id: string }) => {
-    router.push(`/(tabs)/home/${itemId._id}`);
+  const handleItemPress = (itemId: { id: string }) => {
+    router.push(`/(tabs)/home/${itemId.id}`);
   };
 
   const handleFilterPress = () => {
@@ -107,18 +103,19 @@ const allSubject = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaView style={styles.mainContainer}>
+       <StatusBarComponent />
         <View style={styles.header}>
           <Text style={styles.headerTitle}>All Courses</Text>
-          <TouchableOpacity onPress={handleFilterPress} style={styles.filterButton}>
-            <Ionicons name="options-outline" size={24} color={COLORS.primary} />
-          </TouchableOpacity>
+          {/* <TouchableOpacity onPress={handleFilterPress} style={styles.filterButton}>
+            <Ionicons name="options-outline" size={moderateScale(24)} color={COLORS.primary} />
+          </TouchableOpacity> */}
         </View>
 
         <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color={COLORS.gray} style={styles.searchIcon} />
+          <Ionicons name="search" size={moderateScale(20)} color={COLORS.gray} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search courses, subjects, or tags..."
+            placeholder="Search courses by name"
             placeholderTextColor={COLORS.gray}
             value={search}
             onChangeText={handleSearch}
@@ -133,7 +130,7 @@ const allSubject = () => {
               }}
               style={styles.clearButton}
             >
-              <Ionicons name="close-circle" size={20} color={COLORS.gray} />
+              <Ionicons name="close-circle" size={moderateScale(20)} color={COLORS.gray} />
             </TouchableOpacity>
           )}
         </View>
@@ -151,9 +148,9 @@ const allSubject = () => {
           </View>
         ) : subjectData.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="search-outline" size={48} color={COLORS.gray} />
+            <Ionicons name="search-outline" size={moderateScale(48) } color={COLORS.gray} />
             <Text style={styles.emptyText}>No courses found</Text>
-            <Text style={styles.emptySubtext}>Try different search terms</Text>
+            <Text style={styles.emptySubtext}>We might not have the course you're looking for yet. Please leave us a feedback and we'll add it to our list.</Text>
           </View>
         ) : (
           <ScrollView 
