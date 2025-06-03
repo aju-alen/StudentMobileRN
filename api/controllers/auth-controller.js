@@ -269,6 +269,7 @@ export const verifyEmail = async (req, res, next) => {
   };
 
   export const login = async (req, res, next) => {
+    console.log(req.body, 'this is the login req body');
     try {
       const { email, password } = req.body;
   
