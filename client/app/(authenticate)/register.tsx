@@ -75,8 +75,32 @@ const UserTypeScreen = ({ onSelect }) => {
     );
 };
 
-const CustomDropdown = ({ label, value, options, onSelect, placeholder }) => {
+const CustomDropdown = ({ label, value, options, onSelect, placeholder, isMultiSelect = false, selectedValues = [] }) => {
     const [isOpen, setIsOpen] = useState(false);
+
+    const handleSelect = (optionValue) => {
+        if (isMultiSelect) {
+            const newValue = Number(optionValue);
+            if (selectedValues.includes(newValue)) {
+                onSelect(selectedValues.filter(v => v !== newValue));
+            } else {
+                onSelect([...selectedValues, newValue]);
+            }
+        } else {
+            onSelect(Number(optionValue));
+        }
+        if (!isMultiSelect) {
+            setIsOpen(false);
+        }
+    };
+
+    const getDisplayValue = () => {
+        if (isMultiSelect) {
+            if (selectedValues.length === 0) return placeholder;
+            return selectedValues.map(v => `Grade ${v}`).join(', ');
+        }
+        return value ? `Grade ${value}` : placeholder;
+    };
 
     return (
         <View style={styles.inputGroup}>
@@ -87,9 +111,9 @@ const CustomDropdown = ({ label, value, options, onSelect, placeholder }) => {
             >
                 <Text style={[
                     styles.dropdownButtonText,
-                    !value && styles.placeholderText
+                    (!value && !selectedValues.length) && styles.placeholderText
                 ]}>
-                    {value || placeholder}
+                    {getDisplayValue()}
                 </Text>
                 <Ionicons name="chevron-down" size={20} color="#666" />
             </TouchableOpacity>
@@ -118,20 +142,17 @@ const CustomDropdown = ({ label, value, options, onSelect, placeholder }) => {
                                     key={index}
                                     style={[
                                         styles.optionItem,
-                                        value === option.value && styles.selectedOption
+                                        (isMultiSelect ? selectedValues.includes(option.value) : value === option.value) && styles.selectedOption
                                     ]}
-                                    onPress={() => {
-                                        onSelect(option.value);
-                                        setIsOpen(false);
-                                    }}
+                                    onPress={() => handleSelect(option.value)}
                                 >
                                     <Text style={[
                                         styles.optionText,
-                                        value === option.value && styles.selectedOptionText
+                                        (isMultiSelect ? selectedValues.includes(option.value) : value === option.value) && styles.selectedOptionText
                                     ]}>
                                         {option.label}
                                     </Text>
-                                    {value === option.value && (
+                                    {(isMultiSelect ? selectedValues.includes(option.value) : value === option.value) && (
                                         <Ionicons name="checkmark" size={20} color={COLORS.primary} />
                                     )}
                                 </TouchableOpacity>
@@ -158,6 +179,7 @@ const RegisterPage = () => {
     const [isTeacher, setIsTeacher] = useState(false);
     const [recommendedBoard, setRecommendedBoard] = useState('');
     const [recommendedGrade, setRecommendedGrade] = useState(0);
+    const [selectedGrades, setSelectedGrades] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
 
 
@@ -193,7 +215,7 @@ const RegisterPage = () => {
             Alert.alert('Error', 'Passwords do not match');
             return;
         }
-        if (name.trim() === '' || email.trim() === '' || password.trim() === '' || confirmPassword.trim() === '' || userDescription.trim() === '' || reccomendedSubjects.length === 0 || recommendedBoard === '' || recommendedGrade === 0) {
+        if (name.trim() === '' || email.trim() === '' || password.trim() === '' || confirmPassword.trim() === '' || userDescription.trim() === '' || reccomendedSubjects.length === 0 || recommendedBoard === '' || (isTeacher ? selectedGrades.length === 0 : recommendedGrade === 0)) {
             Alert.alert('Error', 'Please fill all the fields');
             return;
         }
@@ -208,6 +230,7 @@ const RegisterPage = () => {
             reccomendedSubjects,
             recommendedBoard,
             recommendedGrade,
+            selectedGrades: isTeacher ? selectedGrades : [recommendedGrade],
         }
         console.log(user,'user details');
         
@@ -381,8 +404,17 @@ const RegisterPage = () => {
                         label="Grade"
                         value={recommendedGrade}
                         options={gradeOptions}
-                        onSelect={(value) => setRecommendedGrade(Number(value))}
+                        onSelect={(value) => {
+                            if (isTeacher) {
+                                setSelectedGrades(value);
+                                setRecommendedGrade(value[0] || 0);
+                            } else {
+                                setRecommendedGrade(value);
+                            }
+                        }}
                         placeholder="Select your grade"
+                        isMultiSelect={isTeacher}
+                        selectedValues={selectedGrades}
                     />
 
                     {/* <View style={styles.checkboxContainer}>

@@ -16,6 +16,7 @@ const ProfileLayout = () => {
     <Stack.Screen name="help-item" options={{ headerShown:false }} />
     <Stack.Screen name="contact-us" options={{ headerShown:false }} />
     <Stack.Screen name="dev-stats" options={{ headerShown:false }} />
+    <Stack.Screen name="settings" options={{ headerShown: false }}/>
     <Stack.Screen name="[subjectId]" options={{ headerShown:true, headerTitle:'Your Subject', headerLeft: () => (
       <Ionicons name="arrow-back" size={24} color="black" onPress={()=>router.back()} style={{ marginLeft: 0 }} />
     ),}} />
@@ -29,7 +30,7 @@ const ProfileLayout = () => {
     <Stack.Screen name="createSubject/[createSubjectId]" options={{presentation:'modal', headerShown:true, headerTitle:'Create Subject', headerLeft: () => (
       <Ionicons name="arrow-back" size={24} color="black" onPress={()=>router.back()} style={{ marginLeft: 0 }} />
     ),}}/>
-    <Stack.Screen name="settings" options={{ headerShown: false }}/>
+    
     
     
 </Stack>

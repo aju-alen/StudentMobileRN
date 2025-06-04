@@ -21,19 +21,17 @@ const SchedulePage = () => {
   console.log(events, 'this is the events');
   
 
-  useEffect(() => {
-    const loadUserType = async () => {
-      const type = await AsyncStorage.getItem('userType');
-      setUserType(type);
-    };
-    loadUserType();
-  }, []);
+  
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+
         const user = JSON.parse(await AsyncStorage.getItem("userDetails"));
         setUserDetails(user);
+
+        const userType = await AsyncStorage.getItem('userType');
+        setUserType(userType);
         
 
         const response = await axiosWithAuth.get(`${ipURL}/api/bookings/upcoming-classes`);
@@ -42,7 +40,7 @@ const SchedulePage = () => {
         const formattedEvents = response.data.map((classData) => ({
           id: classData.id,
           title: `${classData.subject.subjectName} Class`,
-          instructor: userType === 'teacher' ? classData.student.name : classData.teacher.name,
+          instructor: userType === 'teacher' ? classData.teacher.name : classData.student.name,
           date: classData.bookingDate,
           time: classData.bookingTime,
           subject: classData.subject.subjectName,
@@ -61,11 +59,8 @@ const SchedulePage = () => {
         setLoading(false);
       }
     };
-    
-    if (userType) {
-      fetchData();
-    }
-  }, [userType]);
+    fetchData();
+  }, []);
 
   // Group events by date
   const groupedEvents = events.reduce((acc, event) => {

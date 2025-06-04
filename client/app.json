@@ -3,9 +3,9 @@
     "name": "Coach Academ",
     "slug": "coach-academ",
     "scheme": "coachacadem",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
+    "icon": "./assets/images/ca-icon.png",
     "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/images/logo.png",
@@ -18,10 +18,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.rise.coachacadem",
-      // "buildNumber": "2",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "buildNumber": "6"
     },
     "android": {
       "adaptiveIcon": {

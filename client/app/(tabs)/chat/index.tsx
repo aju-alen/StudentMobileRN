@@ -171,12 +171,12 @@ const ChatPage = () => {
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Messages</Text>
-        <TouchableOpacity style={styles.newChatButton}>
+        {/* <TouchableOpacity style={styles.newChatButton}>
           <Ionicons name="add-circle-outline" size={moderateScale(24)} color="#1A4C6E" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
       
-      <View style={styles.searchContainer}>
+      {/* <View style={styles.searchContainer}>
         <Ionicons name="search" size={moderateScale(20)} color="#666" />
         <TextInput
           style={styles.searchInput}
@@ -192,7 +192,7 @@ const ChatPage = () => {
             <Ionicons name="close-circle" size={moderateScale(20)} color="#666" />
           </TouchableOpacity>
         )}
-      </View>
+      </View> */}
       
       <FlatList
         data={conversation}

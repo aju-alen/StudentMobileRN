@@ -91,6 +91,7 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
             currency: 'aed',
             teacherId: teacherId,
             subjectId: subjectId,
+            userId: user.userId,
             date: date,
             time: time,
             subjectDuration: subjectData.subjectDuration,

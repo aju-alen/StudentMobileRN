@@ -1,19 +1,21 @@
 import * as React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Dimensions } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
 import { useFocusEffect } from '@react-navigation/native'; // to detect focus/unfocus
 
-export default function VideoPlayer({ videoUrl }) {
+const { width } = Dimensions.get('window');
+
+interface VideoPlayerProps {
+  videoUrl: string;
+}
+
+export default function VideoPlayer({ videoUrl }: VideoPlayerProps) {
   const video = React.useRef(null);
   const [status, setStatus] = React.useState({});
   const [isPaused, setIsPaused] = React.useState(false);
 
   React.useEffect(() => {
-    console.log('mounting');
-    
     return () => {
-      // Stop video playback when the component unmounts
-      console.log('unmounting');
       if (video.current) {
         video.current.stopAsync();
       }
@@ -50,51 +52,25 @@ export default function VideoPlayer({ videoUrl }) {
           uri: videoUrl,
         }}
         useNativeControls
-        resizeMode={ResizeMode.CONTAIN}
+        resizeMode={ResizeMode.COVER}
         isLooping
         onPlaybackStatusUpdate={status => setStatus(status)}
       />
-      <View style={styles.controls}>
-        {/* <TouchableOpacity onPress={togglePlayPause} style={styles.playPauseButton}>
-          <Text style={styles.buttonText}>{isPaused ? 'Play' : 'Pause'}</Text>
-        </TouchableOpacity> */}
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: 'center',
-    backgroundColor: '#000',
-    position: 'relative',
-  },
-  video: {
-    alignSelf: 'center',
-    width: '100%',
-    height: 250,
+    width: width * 0.8,
+    height: 200,
+    marginRight: 12,
     borderRadius: 12,
     overflow: 'hidden',
+    backgroundColor: '#000',
   },
-  controls: {
-    position: 'absolute',
-    bottom: 20,
-    left: 0,
-    right: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  playPauseButton: {
-    backgroundColor: '#FF6347',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    opacity: 0.8,
-  },
-  buttonText: {
-    fontFamily: 'Roboto',
-    fontSize: 18,
-    color: '#fff',
+  video: {
+    width: '100%',
+    height: '100%',
   },
 });

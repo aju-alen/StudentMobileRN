@@ -180,7 +180,7 @@ const HomePage = () => {
             }
           ]}
         >
-          <Ionicons name={icon} size={24} color="#1A4C6E" />
+          <Ionicons name={icon} size={20} color="#1A4C6E" />
         </Animated.View>
         <Text style={styles.quickActionLabel}>{label}</Text>
       </TouchableOpacity>
@@ -500,7 +500,7 @@ const HomePage = () => {
         <View style={styles.section}>
           <SectionHeader title="Popular Courses" />
           <HorizontalSubjectCard 
-            subjectData={subjectData.slice(0, 7)} 
+            subjectData={subjectData.slice(0, 20)} 
             handleItemPress={handleItemPress} 
             isHorizontal={true}
           />
@@ -519,7 +519,27 @@ const HomePage = () => {
         {/* Video Section */}
         <View style={[styles.section, styles.lastSection]}>
           <SectionHeader title="Recommended Videos" />
-          <VideoPlayer videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4'} />
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.videoScrollContainer}
+          >
+            <VideoPlayer 
+              videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4'} 
+            />
+            <VideoPlayer 
+              videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/VIDEO-2025-06-04-12-53-18.mp4'} 
+            />
+            <VideoPlayer 
+              videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/VIDEO-2025-06-04-12-54-39.mp4'} 
+            />
+            <VideoPlayer 
+              videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/VIDEO-2025-06-04-12-51-14.mp4'} 
+            />
+            <VideoPlayer 
+              videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/VIDEO-2025-06-04-12-54-20.mp4'} 
+            />
+          </ScrollView>
         </View>
       </Animated.ScrollView>
     </View>
@@ -636,7 +656,7 @@ const styles = StyleSheet.create({
   
   quickActionLabel: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(12),
+    fontSize: moderateScale(10),
     color: COLORS.primary,
     marginTop: verticalScale(8),
   },
@@ -998,5 +1018,12 @@ const styles = StyleSheet.create({
   loadingContainer: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  videoScrollContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  videoPlayer: {
+    marginRight: 12,
   },
 });

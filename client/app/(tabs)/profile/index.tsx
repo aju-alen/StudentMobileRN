@@ -124,9 +124,11 @@ const ProfilePage = () => {
 
                 {user?.reccomendedSubjects?.map((subjectTag,idx) =>
 
-                (<View style={styles.badge} key={idx} >
+                (
+                <View style={styles.badge} key={idx} >
                   <Text style={styles.badgeText}>{subjectTag.toLocaleUpperCase()}</Text>
-                </View>)
+                </View>
+                )
                 )}
 
               </View>
@@ -287,10 +289,11 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(4),
     borderRadius: moderateScale(12),
     marginRight: horizontalScale(8),
+    marginBottom: verticalScale(4),
   },
   badgeText: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(12),
+    fontSize: moderateScale(8),
     color: '#4F46E5',
   },
   statsGrid: {

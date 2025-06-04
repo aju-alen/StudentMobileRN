@@ -47,19 +47,6 @@ const SettingsPage = () => {
   return (
     <ScrollView style={styles.container}>
       <StatusBarComponent />
-      <Stack.Screen 
-        options={{
-          title: 'Settings',
-          headerShown: true,
-          headerStyle: {
-            backgroundColor: '#FFFFFF',
-          },
-          headerTintColor: '#1A2B4B',
-          headerTitleStyle: {
-            fontFamily: FONT.bold,
-          },
-        }} 
-      />
 
       <View style={styles.header}>
         <TouchableOpacity 

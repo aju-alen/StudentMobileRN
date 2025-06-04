@@ -32,6 +32,12 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { axiosWithAuth } from "../../../utils/customAxios";
 
+// Add type definition for file object
+type FileObject = {
+  uri: string;
+  name: string;
+  type: string;
+};
 
 const CreateSubject = () => {
   const { createSubjectId } = useLocalSearchParams(); //userId
@@ -54,6 +60,7 @@ const CreateSubject = () => {
   const [isCreatingSubject, setIsCreatingSubject] = useState(false);
   const EULA_PDF_URL = `https://coachacademic.s3.ap-southeast-1.amazonaws.com/EULA+/COACHACADEM_TOU_(EULA).pdf`; // Replace with your actual EULA PDF URL
   const [isImageUploading, setIsImageUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   console.log(pdf1, 'pdf1');
   console.log(pdf2, 'pdf2');
@@ -69,7 +76,7 @@ const CreateSubject = () => {
         copyToCacheDirectory: true, // Store a copy in cache
       });
   
-      if (result.type === 'cancel') {
+      if (result.canceled) {
         // User canceled the picker
         return;
       }
@@ -106,17 +113,17 @@ const CreateSubject = () => {
   
     const formData = new FormData();
   
-    // Append both PDFs
+    // Append both PDFs with type assertion
     formData.append('pdf1', {
       uri: pdf1,
       name: `pdf1.${fileType1}`,
       type: 'application/pdf',
-    });
+    } as unknown as Blob);
     formData.append('pdf2', {
       uri: pdf2,
       name: `pdf2.${fileType2}`,
       type: 'application/pdf',
-    });
+    } as unknown as Blob);
   
     // Append additional data if needed
     formData.append('uploadKey', 'pdfId');
@@ -199,7 +206,7 @@ const CreateSubject = () => {
         uri: imageUri,
         name: `photo.${fileType}`,
         type: `image/${fileType}`,
-      });
+      } as unknown as Blob);
       formData.append('uploadKey', 'subjectImageId');
       formData.append('awsId', awsId);
 
@@ -238,6 +245,7 @@ const CreateSubject = () => {
   };
 
   const handleCreateSubject = async () => {
+    setIsLoading(true);
     if (!isDocumentsConfirmed) {
       Alert.alert('Please confirm your documents first.');
       return;
@@ -337,6 +345,7 @@ const CreateSubject = () => {
           ]
         );
       }
+      setIsLoading(false);
     } catch (err) {
       console.log("error", err);
       Alert.alert(
@@ -344,8 +353,10 @@ const CreateSubject = () => {
         err.response?.data?.message || "Failed to create subject. Please try again.",
         [{ text: "OK" }]
       );
+      setIsLoading(false);
     } finally {
       setIsCreatingSubject(false);
+      setIsLoading(false);
     }
   };
   console.log(
@@ -601,12 +612,12 @@ const CreateSubject = () => {
             </View>
 
             <Button
-              title={isCreatingSubject ? "Creating Subject..." : "Create Subject"}
+              title={isLoading ? "Creating Subject..." : "Create Subject"}
               filled
               color={COLORS.primary}
               style={styles.submitButton}
               onPress={handleCreateSubject}
-              disabled={!isEulaAccepted || !isDocumentsConfirmed || isCreatingSubject}
+              disabled={!isEulaAccepted || !isDocumentsConfirmed || isLoading}
             />
           </View>
         </ScrollView>

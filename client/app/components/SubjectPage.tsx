@@ -540,7 +540,7 @@ const SubjectPage = ({ subjectId }) => {
             source={{ uri: review.user.profileImage }}
             style={styles.reviewerImage}
             placeholder={blurhash}
-            contentFit="cover"
+            contentFit='fill'
             transition={100}
           />
           <View style={styles.reviewerInfo}>
