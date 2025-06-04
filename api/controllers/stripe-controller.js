@@ -21,7 +21,7 @@ export const getPublisherKey = async (req, res, next) => {
 export const paymentSheet = async (req, res, next) => {
     try {
         const { amount, currency = 'aed', customerId, teacherId, subjectId, date, time, subjectDuration, teacherEmail, subjectName, userEmail } = req.body;
-        const userId = req.userId;
+        const userId = req.body.userId;
         
         
         // Validate required parameters
