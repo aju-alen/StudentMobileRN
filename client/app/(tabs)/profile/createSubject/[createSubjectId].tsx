@@ -22,7 +22,7 @@ import { ipURL } from "../../../utils/utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { horizontalScale, moderateScale, verticalScale } from "../../../utils/metrics";
-import { COLORS } from "../../../../constants";
+import { COLORS, FONT } from "../../../../constants";
 import { welcomeCOLOR } from "../../../../constants/theme";
 import Button from "../../../components/Button";
 import { useLocalSearchParams } from 'expo-router';
@@ -337,6 +337,7 @@ const CreateSubject = () => {
     setIsLoading(true);
     if (!isDocumentsConfirmed) {
       Alert.alert('Please confirm your documents first.');
+      setIsLoading(false);
       return;
     }
 
@@ -348,39 +349,61 @@ const CreateSubject = () => {
       
       if (!subjectName.trim()) {
         validationErrors.push("Subject name is required");
+        setIsLoading(false);
+        return;
       }
       if (!subjectDescription.trim()) {
         validationErrors.push("Subject description is required");
+        setIsLoading(false);
+        return;
       }
       if (!image) {
         validationErrors.push("Subject image is required");
+        setIsLoading(false);
+        return;
       }
       if (!subjectPrice.trim()) {
         validationErrors.push("Subject price is required");
+        setIsLoading(false);
+        return;
       }
       if (!subjectBoard.trim()) {
         validationErrors.push("Educational board is required");
+        setIsLoading(false);
+        return;
       }
       if (!subjectGrade.trim()) {
         validationErrors.push("Grade level is required");
+        setIsLoading(false);
+        return;
       }
       if (!subjectDuration.trim()) {
         validationErrors.push("Course duration is required");
+        setIsLoading(false);
+        return;
       }
       if (!subjectLanguage.trim()) {
         validationErrors.push("Teaching language is required");
+        setIsLoading(false);
+        return;
       }
       // if (!subjectNameSubHeading.trim()) {
       //   validationErrors.push("Subject subheading is required");
       // }
       if (subjectPoints.length === 0) {
         validationErrors.push("At least one skill point is required");
+        setIsLoading(false);
+        return;
       }
       if (!pdf1 || !pdf2) {
         validationErrors.push("Both verification documents are required");
+        setIsLoading(false);
+        return;
       }
       if (!isEulaAccepted) {
         validationErrors.push("You must accept the EULA to continue");
+        setIsLoading(false);
+        return;
       }
 
       // If there are validation errors, show them and return
@@ -391,6 +414,7 @@ const CreateSubject = () => {
           [{ text: "OK" }]
         );
         setIsCreatingSubject(false);
+        setIsLoading(false);
         return;
       }
       
@@ -724,14 +748,21 @@ const CreateSubject = () => {
               </View>
             </View>
 
-            <Button
-              title={isLoading ? "Creating Subject..." : "Create Subject"}
-              filled
-              color={COLORS.primary}
-              style={styles.submitButton}
+            <TouchableOpacity
+              style={[
+                styles.submitButton,
+                {
+                  backgroundColor: COLORS.primary,
+                  opacity: (!isEulaAccepted || !isDocumentsConfirmed || isLoading) ? 0.5 : 1
+                }
+              ]}
               onPress={handleCreateSubject}
               disabled={!isEulaAccepted || !isDocumentsConfirmed || isLoading}
-            />
+            >
+              <Text style={styles.submitButtonText}>
+                {isLoading ? <ActivityIndicator size="large" color={COLORS.white} /> : "Create Subject"}
+              </Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -1039,7 +1070,7 @@ const styles = StyleSheet.create({
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
+    //shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
   uploadDocsButtonContent: {
@@ -1061,7 +1092,7 @@ const styles = StyleSheet.create({
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
+    //shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
   confirmButtonContent: {
@@ -1076,8 +1107,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   submitButton: {
-    marginTop: verticalScale(24),
+    width: '100%',
+    height: verticalScale(50),
+    borderRadius: moderateScale(25),
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: verticalScale(20),
     marginBottom: verticalScale(40),
+  },
+  submitButtonText: {
+    color: COLORS.white,
+    fontSize: moderateScale(16),
+    fontFamily: FONT.bold,
   },
   eulaContainer: {
     marginTop: verticalScale(20),

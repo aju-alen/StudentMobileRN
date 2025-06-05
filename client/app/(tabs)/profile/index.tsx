@@ -7,6 +7,7 @@ import {
   TouchableWithoutFeedback,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Image } from 'expo-image';
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -53,7 +54,9 @@ const ProfilePage = () => {
   const [userDetails, setUserDetails] = useState<User>({});
   const [showDropdown, setShowDropdown] = useState(false);
   const [activeCourses, setActiveCourses] = useState<SubjectItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   useEffect(() => {
+
     const getUser = async () => {
       const apiUser = await axiosWithAuth.get(`${ipURL}/api/auth/metadata`);
       console.log("apiUser", apiUser.data);
@@ -62,6 +65,7 @@ const ProfilePage = () => {
       const user = JSON.parse(await AsyncStorage.getItem("userDetails"));
       console.log(user,'user in profile');
       setUserDetails(user);
+      setLoading(false);
     };
     getUser();
   }, []);
@@ -129,6 +133,7 @@ const ProfilePage = () => {
   
 
   return (
+    loading ? <ActivityIndicator size="large" color={COLORS.primary} style={{flex:1, justifyContent:'center', alignItems:'center'}} /> :
     <TouchableWithoutFeedback onPress={closeDropdown}>
       <ScrollView style={styles.mainContainer}>
         {/* Header */}
