@@ -221,11 +221,11 @@ export const stripeWebhook = async (req, res, next) => {
                             max-width: 600px;
                             margin: 0 auto;
                             padding: 0;
-                            background-color: #ffffff;
+                            background-color: #1A4C6E;
                             border: 2px solid #000;
                         }
                         .header {
-                            background-color: #E31E24;
+                            background-color: #1A4C6E;
                             color: white;
                             padding: 40px 20px;
                             text-align: center;
@@ -239,7 +239,7 @@ export const stripeWebhook = async (req, res, next) => {
                             left: 0;
                             right: 0;
                             height: 20px;
-                            background: #FFD100;
+                            background: #1A4C6E;
                         }
                         .header::after {
                             content: '';
@@ -248,7 +248,7 @@ export const stripeWebhook = async (req, res, next) => {
                             left: 0;
                             right: 0;
                             height: 20px;
-                            background: #1B4B9C;
+                            background: #1A4C6E;
                         }
                         .header h1 {
                             margin: 0;
@@ -261,10 +261,10 @@ export const stripeWebhook = async (req, res, next) => {
                         }
                         .content {
                             padding: 30px;
-                            background-color: #ffffff;
+                            background-color: #1A4C6E;
                         }
                         .booking-details {
-                            background-color: #f8f8f8;
+                            background-color: #1A4C6E;
                             padding: 25px;
                             margin: 25px 0;
                             border: 2px solid #000;
@@ -277,7 +277,7 @@ export const stripeWebhook = async (req, res, next) => {
                             left: -10px;
                             width: 20px;
                             height: 20px;
-                            background: #E31E24;
+                            background: #1A4C6E;
                             z-index: 1;
                         }
                         .booking-details::after {
@@ -287,7 +287,7 @@ export const stripeWebhook = async (req, res, next) => {
                             right: -10px;
                             width: 20px;
                             height: 20px;
-                            background: #1B4B9C;
+                            background: #1A4C6E;
                             z-index: 1;
                         }
                         .detail-row {
@@ -314,7 +314,7 @@ export const stripeWebhook = async (req, res, next) => {
                         .footer {
                             text-align: center;
                             padding: 30px;
-                            background-color: #000;
+                            background-color: #1A4C6E;
                             color: white;
                             position: relative;
                         }
@@ -325,16 +325,16 @@ export const stripeWebhook = async (req, res, next) => {
                             left: 0;
                             right: 0;
                             height: 4px;
-                            background: linear-gradient(90deg, #E31E24 33%, #FFD100 33%, #FFD100 66%, #1B4B9C 66%);
+                            background: linear-gradient(90deg, #1A4C6E 33%, #1A4C6E 33%, #1A4C6E 66%, #1A4C6E 66%);
                         }
                         .geometric-shape {
                             width: 100%;
                             height: 30px;
                             background: 
-                                linear-gradient(45deg, #E31E24 25%, transparent 25%),
-                                linear-gradient(-45deg, #FFD100 25%, transparent 25%),
-                                linear-gradient(45deg, transparent 75%, #1B4B9C 75%),
-                                linear-gradient(-45deg, transparent 75%, #E31E24 75%);
+                                linear-gradient(45deg, #1A4C6E 25%, transparent 25%),
+                                linear-gradient(-45deg, #1A4C6E 25%, transparent 25%),
+                                linear-gradient(45deg, transparent 75%, #1A4C6E 75%),
+                                linear-gradient(-45deg, transparent 75%, #1A4C6E 75%);
                             background-size: 30px 30px;
                             background-position: 0 0, 0 15px, 15px -15px, -15px 0px;
                             margin: 30px 0;
@@ -353,8 +353,8 @@ export const stripeWebhook = async (req, res, next) => {
                             transition: all 0.3s ease;
                         }
                         .button:hover {
-                            background-color: #E31E24;
-                            border-color: #E31E24;
+                            background-color: #1A4C6E;
+                            border-color: #1A4C6E;
                         }
                         .reminder-box {
                             border: 2px solid #000;
@@ -380,7 +380,7 @@ export const stripeWebhook = async (req, res, next) => {
                             position: absolute;
                             width: 20px;
                             height: 20px;
-                            background: #FFD100;
+                            background: #1A4C6E;
                         }
                         .corner-tl { top: -10px; left: -10px; }
                         .corner-tr { top: -10px; right: -10px; }
@@ -469,11 +469,11 @@ export const stripeWebhook = async (req, res, next) => {
                             max-width: 600px;
                             margin: 0 auto;
                             padding: 0;
-                            background-color: #ffffff;
+                            background-color: #1A4C6E;
                             border: 2px solid #000;
                         }
                         .header {
-                            background-color: #1B4B9C;
+                            background-color: #1A4C6E;
                             color: white;
                             padding: 40px 20px;
                             text-align: center;
@@ -487,7 +487,7 @@ export const stripeWebhook = async (req, res, next) => {
                             left: 0;
                             right: 0;
                             height: 20px;
-                            background: #FFD100;
+                            background: #1A4C6E;
                         }
                         .header::after {
                             content: '';
@@ -496,7 +496,7 @@ export const stripeWebhook = async (req, res, next) => {
                             left: 0;
                             right: 0;
                             height: 20px;
-                            background: #E31E24;
+                            background: #1A4C6E;
                         }
                         .header h1 {
                             margin: 0;
@@ -509,10 +509,10 @@ export const stripeWebhook = async (req, res, next) => {
                         }
                         .content {
                             padding: 30px;
-                            background-color: #ffffff;
+                            background-color: #1A4C6E;
                         }
                         .booking-details {
-                            background-color: #f8f8f8;
+                            background-color: #1A4C6E;
                             padding: 25px;
                             margin: 25px 0;
                             border: 2px solid #000;
@@ -525,7 +525,7 @@ export const stripeWebhook = async (req, res, next) => {
                             left: -10px;
                             width: 20px;
                             height: 20px;
-                            background: #1B4B9C;
+                            background: #1A4C6E;
                             z-index: 1;
                         }
                         .booking-details::after {
@@ -535,7 +535,7 @@ export const stripeWebhook = async (req, res, next) => {
                             right: -10px;
                             width: 20px;
                             height: 20px;
-                            background: #E31E24;
+                            background: #1A4C6E;
                             z-index: 1;
                         }
                         .detail-row {
@@ -562,7 +562,7 @@ export const stripeWebhook = async (req, res, next) => {
                         .footer {
                             text-align: center;
                             padding: 30px;
-                            background-color: #000;
+                            background-color: #1A4C6E;
                             color: white;
                             position: relative;
                         }
@@ -573,16 +573,16 @@ export const stripeWebhook = async (req, res, next) => {
                             left: 0;
                             right: 0;
                             height: 4px;
-                            background: linear-gradient(90deg, #1B4B9C 33%, #FFD100 33%, #FFD100 66%, #E31E24 66%);
+                            background: linear-gradient(90deg, #1A4C6E 33%, #1A4C6E 33%, #1A4C6E 66%, #1A4C6E 66%);
                         }
                         .geometric-shape {
                             width: 100%;
                             height: 30px;
                             background: 
-                                linear-gradient(45deg, #1B4B9C 25%, transparent 25%),
-                                linear-gradient(-45deg, #FFD100 25%, transparent 25%),
-                                linear-gradient(45deg, transparent 75%, #E31E24 75%),
-                                linear-gradient(-45deg, transparent 75%, #1B4B9C 75%);
+                                linear-gradient(45deg, #1A4C6E 25%, transparent 25%),
+                                linear-gradient(-45deg, #1A4C6E 25%, transparent 25%),
+                                linear-gradient(45deg, transparent 75%, #1A4C6E 75%),
+                                linear-gradient(-45deg, transparent 75%, #1A4C6E 75%);
                             background-size: 30px 30px;
                             background-position: 0 0, 0 15px, 15px -15px, -15px 0px;
                             margin: 30px 0;
@@ -590,7 +590,7 @@ export const stripeWebhook = async (req, res, next) => {
                         .button {
                             display: inline-block;
                             padding: 15px 40px;
-                            background-color: #000;
+                            background-color: #1A4C6E;
                             color: white;
                             text-decoration: none;
                             text-transform: uppercase;
@@ -601,8 +601,8 @@ export const stripeWebhook = async (req, res, next) => {
                             transition: all 0.3s ease;
                         }
                         .button:hover {
-                            background-color: #1B4B9C;
-                            border-color: #1B4B9C;
+                            background-color: #1A4C6E;
+                            border-color: #1A4C6E;
                         }
                         .reminder-box {
                             border: 2px solid #000;
@@ -628,7 +628,7 @@ export const stripeWebhook = async (req, res, next) => {
                             position: absolute;
                             width: 20px;
                             height: 20px;
-                            background: #FFD100;
+                            background: #1A4C6E;
                         }
                         .corner-tl { top: -10px; left: -10px; }
                         .corner-tr { top: -10px; right: -10px; }

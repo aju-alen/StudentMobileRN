@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 import { PrismaClient } from "@prisma/client";
+import { sendEmailService } from "../services/emailService.js";
 const prisma = new PrismaClient();
 
 export const createSubject = async (req, res, next) => {
@@ -43,6 +44,49 @@ export const createSubject = async (req, res, next) => {
                     },
                 },
             });
+
+            const emailHtml = `
+                <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #ffffff;">
+                    <!-- Bauhaus Header -->
+                    <div style="background-color: #1A2B4B; padding: 40px 20px; text-align: center; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1;">
+                            <div style="position: absolute; top: 20px; left: 20px; width: 60px; height: 60px; border: 4px solid #ffffff; transform: rotate(45deg);"></div>
+                            <div style="position: absolute; bottom: 20px; right: 20px; width: 40px; height: 40px; border: 4px solid #ffffff; border-radius: 50%;"></div>
+                        </div>
+                        <h1 style="color: #ffffff; font-size: 32px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 2px;">Subject Created</h1>
+                    </div>
+
+                    <!-- Main Content -->
+                    <div style="padding: 40px 20px; background-color: #ffffff;">
+                        <div style="margin-bottom: 30px; text-align: center;">
+                            <div style="width: 80px; height: 80px; background-color: #1A2B4B; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; transform: rotate(45deg);">
+                                <span style="color: #ffffff; font-size: 40px; transform: rotate(-45deg);">✓</span>
+                            </div>
+                            <h2 style="color: #1A2B4B; font-size: 24px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1px;">${subjectName}</h2>
+                            <p style="color: #64748B; font-size: 16px; line-height: 1.6; margin: 0;">Your subject has been created and is now pending verification.</p>
+                        </div>
+
+                        <!-- Bauhaus Info Box -->
+                        <div style="background-color: #F8FAFC; padding: 30px; margin-bottom: 30px; position: relative; border-left: 4px solid #1A2B4B;">
+                            <h3 style="color: #1A2B4B; font-size: 18px; margin: 0 0 15px; text-transform: uppercase; letter-spacing: 1px;">What's Next?</h3>
+                            <p style="color: #64748B; font-size: 14px; line-height: 1.6; margin: 0 0 15px;">
+                                Our admin team will review your subject to ensure it meets our quality standards. This process typically takes 24-48 hours.
+                            </p>
+                            <p style="color: #64748B; font-size: 14px; line-height: 1.6; margin: 0;">
+                                You'll receive another email once your subject has been verified and is live on the platform.
+                            </p>
+                        </div>
+
+                        <!-- Bauhaus Footer -->
+                        <div style="text-align: center; padding-top: 30px; border-top: 2px solid #F8FAFC;">
+                            <p style="color: #64748B; font-size: 14px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1px;">Thank you for contributing</p>
+                            <p style="color: #1A2B4B; font-size: 16px; font-weight: 700; margin: 0;">The RISE Team</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            sendEmailService(req.email, "Subject Created", emailHtml);
 
             return res.status(202).json({ message: "Subject Created", newSubject });
         } else {
@@ -181,20 +225,19 @@ export const getAllSubjectsBySearch = async (req, res, next) => {
 };
 
 export const getAllSubjectsByAdvanceSearch = async (req, res, next) => {
-    const { q } = req.query; // q from query params will be a string or undefined
+    const { q, page = '1' } = req.query; // Add page parameter with default value of 1
+    const pageSize = 5; // Number of subjects per page
+    const pageNumber = parseInt(page);
 
     try {
-        // It's good practice to ensure 'q' is a non-empty string.
-        if (!q || typeof q !== 'string' || q.trim() === '') {
-            // Option: Return empty array, all verified subjects, or an error.
-            // For this example, returning an empty array for an invalid/empty search.
-            return res.status(200).json([]);
-        }
+        let whereCondition = {
+            subjectVerification: true
+        };
 
-        const searchTerm = q.toLowerCase();
-
-        const subjects = await prisma.subject.findMany({
-            where: {
+        // Only add search conditions if q is provided and not empty
+        if (q && typeof q === 'string' && q.trim() !== '') {
+            const searchTerm = q.toLowerCase();
+            whereCondition = {
                 AND: [
                     { subjectVerification: true },
                     {
@@ -206,22 +249,44 @@ export const getAllSubjectsByAdvanceSearch = async (req, res, next) => {
                         ]
                     }
                 ]
-            },
+            };
+        }
+
+        // Get total count for pagination
+        const totalSubjects = await prisma.subject.count({
+            where: whereCondition
+        });
+
+        const subjects = await prisma.subject.findMany({
+            where: whereCondition,
             include: {
-                user: { // Assuming 'user' is the correct relation name
+                user: {
                     select: {
                         name: true,
                         profileImage: true
                     }
                 }
+            },
+            skip: (pageNumber - 1) * pageSize,
+            take: pageSize,
+            orderBy: {
+                createdAt: 'desc' // Order by creation date, newest first
             }
         });
 
-        res.status(200).json(subjects);
+        res.status(200).json({
+            subjects,
+            pagination: {
+                currentPage: pageNumber,
+                totalPages: Math.ceil(totalSubjects / pageSize),
+                totalSubjects,
+                hasMore: pageNumber * pageSize < totalSubjects
+            }
+        });
     }
     catch (err) {
         console.error(err);
-        next(err); // Pass error to your Express error handler
+        next(err);
     }
 };
 

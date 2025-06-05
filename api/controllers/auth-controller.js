@@ -503,25 +503,25 @@ export const changePassword = async (req, res, next) => {
         <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #ffffff;">
           <!-- Bauhaus-style header with primary colors -->
           <div style="display: flex; margin-bottom: 20px;">
-            <div style="width: 20%; background-color: #FF0000;"></div>
-            <div style="width: 60%; background-color: #000000; color: #ffffff; padding: 30px 20px; text-align: center;">
+            <div style="width: 20%; background-color: #1A4C6E;"></div>
+            <div style="width: 60%; background-color: #1A4C6E; color: #ffffff; padding: 30px 20px; text-align: center;">
               <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase;">Password Changed</h1>
             </div>
-            <div style="width: 20%; background-color: #FFD700;"></div>
+            <div style="width: 20%; background-color: #1A4C6E;"></div>
           </div>
           
           <div style="padding: 30px; color: #000000;">
             <p style="font-size: 20px; margin-bottom: 20px; font-weight: 700;">Hello <strong>${user.name}</strong>,</p>
             
             <!-- Geometric highlight box -->
-            <div style="background-color: #f5f5f5; padding: 25px; margin: 25px 0; border-left: 8px solid #FF0000;">
+            <div style="background-color: #f5f5f5; padding: 25px; margin: 25px 0; border-left: 8px solid #1A4C6E;">
               <p style="margin: 0; font-size: 16px; line-height: 1.8; font-weight: 500;">Your password has been successfully changed at ${new Date().toLocaleString()} (GMT+4).</p>
             </div>
             
             <!-- Warning Box -->
-            <div style="background-color: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 20px; margin: 25px 0; border-left: 8px solid #FFD700;">
+            <div style="background-color: #1A4C6E; border: 1px solid #ffeeba; color: #fff; padding: 20px; margin: 25px 0; border-left: 8px solid #FFD700;">
               <h3 style="margin: 0 0 15px 0; font-size: 18px; font-weight: 700;">⚠️ Important Security Notice</h3>
-              <p style="margin: 0; font-size: 16px; line-height: 1.6;">If you did not make this change, please contact our security team immediately at <a href="mailto:support@coachacadem.ae" style="color: #856404; text-decoration: underline;">support@coachacadem.ae</a></p>
+              <p style="margin: 0; font-size: 16px; line-height: 1.6;">If you did not make this change, please contact our security team immediately at <a href="mailto:support@coachacadem.ae" style="color:rgb(255, 255, 255); text-decoration: underline;">support@coachacadem.ae</a></p>
             </div>
             
             <p style="font-size: 16px; line-height: 1.6; font-weight: 500;">For your security, please note:</p>
@@ -533,9 +533,9 @@ export const changePassword = async (req, res, next) => {
             
             <!-- Geometric separator -->
             <div style="display: flex; margin: 30px 0;">
-              <div style="width: 30%; height: 3px; background-color: #FF0000;"></div>
-              <div style="width: 40%; height: 3px; background-color: #000000;"></div>
-              <div style="width: 30%; height: 3px; background-color: #FFD700;"></div>
+              <div style="width: 30%; height: 3px; background-color: #1A4C6E;"></div>
+              <div style="width: 40%; height: 3px; background-color: #1A4C6E;"></div>
+              <div style="width: 30%; height: 3px; background-color: #1A4C6E;"></div>
             </div>
             
             <p style="font-size: 16px; line-height: 1.6; font-weight: 500;">Security Best Practices:</p>

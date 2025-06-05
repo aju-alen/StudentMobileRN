@@ -23,13 +23,13 @@ export const reportSubject = async (req, res, next) => {
                 process.env.NAMECHEAP_EMAIL,
                 "⚠️ New Report Alert",
                 `
-                <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; border: 2px solid #000000;">
-                    <div style="background-color: #000000; color: #ffffff; padding: 20px; margin-bottom: 20px; text-align: center;">
+                <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; border: 2px solid #1A4C6E;">
+                    <div style="background-color: #1A4C6E; color: #ffffff; padding: 20px; margin-bottom: 20px; text-align: center;">
                         <h1 style="margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 2px;">NEW REPORT ALERT</h1>
                     </div>
                     
-                    <div style="padding: 20px; border: 1px solid #000000; margin-bottom: 20px;">
-                        <h2 style="color: #000000; font-size: 18px; margin-bottom: 15px; border-bottom: 2px solid #000000; padding-bottom: 10px;">Report Details</h2>
+                    <div style="padding: 20px; border: 1px solid #1A4C6E; margin-bottom: 20px;">
+                        <h2 style="color: #1A4C6E; font-size: 18px; margin-bottom: 15px; border-bottom: 2px solid #1A4C6E; padding-bottom: 10px;">Report Details</h2>
                         <p style="margin: 10px 0; color: #333333;"><strong>User ID:</strong> ${userId}</p>
                         <p style="margin: 10px 0; color: #333333;"><strong>Subject ID:</strong> ${subjectId}</p>
                         <p style="margin: 10px 0; color: #333333;"><strong>Reason:</strong> ${reportReason}</p>
@@ -45,16 +45,16 @@ export const reportSubject = async (req, res, next) => {
                 userEmail,
                 "Report Submission Confirmation",
                 `
-                <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; border: 2px solid #000000;">
-                    <div style="background-color: #000000; color: #ffffff; padding: 20px; margin-bottom: 20px; text-align: center;">
+                <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; border: 2px solid #1A4C6E;">
+                    <div style="background-color: #1A4C6E; color: #ffffff; padding: 20px; margin-bottom: 20px; text-align: center;">
                         <h1 style="margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 2px;">REPORT SUBMITTED</h1>
                     </div>
                     
-                    <div style="padding: 20px; border: 1px solid #000000; margin-bottom: 20px;">
+                    <div style="padding: 20px; border: 1px solid #1A4C6E; margin-bottom: 20px;">
                         <p style="margin: 10px 0; color: #333333; font-size: 16px; line-height: 1.6;">
                             Thank you for bringing this to our attention. Your report has been successfully submitted and will be reviewed by our team.
                         </p>
-                        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-left: 4px solid #000000;">
+                        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-left: 4px solid #1A4C6E;">
                             <p style="margin: 0; color: #333333; font-size: 14px;">
                                 <strong>Report Details:</strong><br>
                                 Subject ID: ${subjectId}<br>
