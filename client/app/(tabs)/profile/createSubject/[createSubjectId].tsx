@@ -27,10 +27,11 @@ import { welcomeCOLOR } from "../../../../constants/theme";
 import Button from "../../../components/Button";
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from "@expo/vector-icons";
-import { nanoid } from 'nanoid';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { axiosWithAuth } from "../../../utils/customAxios";
+import * as Sentry from '@sentry/react-native';
+import * as Crypto from 'expo-crypto';
 
 // Add type definition for file object
 type FileObject = {
@@ -62,11 +63,57 @@ const CreateSubject = () => {
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Add initialization error tracking
+  useEffect(() => {
+    try {
+      console.log('Initializing CreateSubject with ID:', createSubjectId);
+      
+      if (!createSubjectId) {
+        throw new Error('createSubjectId is undefined');
+      }
+
+      Sentry.addBreadcrumb({
+        category: 'component',
+        message: 'CreateSubject component initialized',
+        level: 'info',
+        data: {
+          createSubjectId,
+          timestamp: new Date().toISOString()
+        }
+      });
+
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: {
+          location: 'CreateSubject_initialization',
+          component: 'CreateSubject'
+        },
+        extra: {
+          error: error.message,
+          stack: error.stack,
+          createSubjectId
+        }
+      });
+      
+      Alert.alert(
+        'Error',
+        'Failed to initialize course creation. Please try again.',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.back()
+          }
+        ]
+      );
+    }
+  }, [createSubjectId]);
+
   console.log(pdf1, 'pdf1');
   console.log(pdf2, 'pdf2');
   
   
-  const awsId = nanoid();
+  const awsId = Crypto.randomUUID();
+  console.log(awsId, 'awsId');
 
   const pickPdf = async (pdfName) => {
     try {
@@ -94,7 +141,17 @@ const CreateSubject = () => {
       console.log('File info:', fileInfo);
   
     } catch (error) {
-      console.log('Error while picking PDF:', error);
+      Sentry.captureException(error, {
+        tags: {
+          location: 'pickPdf',
+          pdfName: pdfName
+        },
+        extra: {
+          error: error.message,
+          stack: error.stack
+        }
+      });
+      Alert.alert('Error', 'Failed to pick PDF. Please try again.');
     }
   };
 
@@ -103,35 +160,36 @@ const CreateSubject = () => {
       Alert.alert('Please select both PDFs before uploading.');
       return;
     }
-    console.log(awsId, 'awsIdinUploadPdf');
     
-    const uriParts1 = pdf1.split('.');
-    const fileType1 = uriParts1[uriParts1.length - 1];
-  
-    const uriParts2 = pdf2.split('.');
-    const fileType2 = uriParts2[uriParts2.length - 1];
-  
-    const formData = new FormData();
-  
-    // Append both PDFs with type assertion
-    formData.append('pdf1', {
-      uri: pdf1,
-      name: `pdf1.${fileType1}`,
-      type: 'application/pdf',
-    } as unknown as Blob);
-    formData.append('pdf2', {
-      uri: pdf2,
-      name: `pdf2.${fileType2}`,
-      type: 'application/pdf',
-    } as unknown as Blob);
-  
-    // Append additional data if needed
-    formData.append('uploadKey', 'pdfId');
-    formData.append('awsId', awsId);
-  
     try {
+      console.log(awsId, 'awsIdinUploadPdf');
+      
+      const uriParts1 = pdf1.split('.');
+      const fileType1 = uriParts1[uriParts1.length - 1];
+    
+      const uriParts2 = pdf2.split('.');
+      const fileType2 = uriParts2[uriParts2.length - 1];
+    
+      const formData = new FormData();
+    
+      // Append both PDFs with type assertion
+      formData.append('pdf1', {
+        uri: pdf1,
+        name: `pdf1.${fileType1}`,
+        type: 'application/pdf',
+      } as unknown as Blob);
+      formData.append('pdf2', {
+        uri: pdf2,
+        name: `pdf2.${fileType2}`,
+        type: 'application/pdf',
+      } as unknown as Blob);
+    
+      // Append additional data if needed
+      formData.append('uploadKey', 'pdfId');
+      formData.append('awsId', awsId);
+    
       console.log('Form Data to be sent:', formData);
-  
+    
       const response = await axios.post(
         `${ipURL}/api/s3/upload-to-aws/pdf-verify/${createSubjectId}`,
         formData,
@@ -141,31 +199,42 @@ const CreateSubject = () => {
           },
         }
       );
-  
+    
       console.log('PDFs uploaded successfully:', response.data);
-  
+    
       // Handle response locations for both PDFs
       setPdf1(response['data']['data1']['Location']);
       setPdf2(response['data']['data2']['Location']);
       setIsDocumentsConfirmed(true);
-  
+    
       Alert.alert('PDFs uploaded successfully.');
-  
+    
     } catch (error) {
+      Sentry.captureException(error, {
+        tags: {
+          location: 'uploadPdfsToAws',
+          createSubjectId: createSubjectId
+        },
+        extra: {
+          error: error.message,
+          stack: error.stack,
+          awsId: awsId
+        }
+      });
       console.error('PDF upload failed:', error);
       Alert.alert('PDF upload failed', error.message);
       setIsDocumentsConfirmed(false);
     }
   };
   const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (permissionResult.granted === false) {
-      Alert.alert('Permission to access the gallery is required!');
-      return;
-    }
-
     try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (permissionResult.granted === false) {
+        Alert.alert('Permission to access the gallery is required!');
+        return;
+      }
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -188,6 +257,15 @@ const CreateSubject = () => {
         setIsImageUploading(false);
       }
     } catch (error) {
+      Sentry.captureException(error, {
+        tags: {
+          location: 'pickImage'
+        },
+        extra: {
+          error: error.message,
+          stack: error.stack
+        }
+      });
       setIsImageUploading(false);
       Alert.alert('Error', 'Failed to process image. Please try again.');
       setImage(null);
@@ -222,6 +300,17 @@ const CreateSubject = () => {
 
       setImage(response.data.data.Location);
     } catch (error) {
+      Sentry.captureException(error, {
+        tags: {
+          location: 'uploadImageToBe',
+          createSubjectId: createSubjectId
+        },
+        extra: {
+          error: error.message,
+          stack: error.stack,
+          awsId: awsId
+        }
+      });
       console.error('Image upload failed', error);
       Alert.alert('Error', 'Failed to upload image. Please try again.');
       setImage(null);
@@ -253,76 +342,76 @@ const CreateSubject = () => {
 
     setIsCreatingSubject(true);
     
-    // Validate all required fields
-    const validationErrors = [];
-    
-    if (!subjectName.trim()) {
-      validationErrors.push("Subject name is required");
-    }
-    if (!subjectDescription.trim()) {
-      validationErrors.push("Subject description is required");
-    }
-    if (!image) {
-      validationErrors.push("Subject image is required");
-    }
-    if (!subjectPrice.trim()) {
-      validationErrors.push("Subject price is required");
-    }
-    if (!subjectBoard.trim()) {
-      validationErrors.push("Educational board is required");
-    }
-    if (!subjectGrade.trim()) {
-      validationErrors.push("Grade level is required");
-    }
-    if (!subjectDuration.trim()) {
-      validationErrors.push("Course duration is required");
-    }
-    if (!subjectLanguage.trim()) {
-      validationErrors.push("Teaching language is required");
-    }
-    // if (!subjectNameSubHeading.trim()) {
-    //   validationErrors.push("Subject subheading is required");
-    // }
-    if (subjectPoints.length === 0) {
-      validationErrors.push("At least one skill point is required");
-    }
-    if (!pdf1 || !pdf2) {
-      validationErrors.push("Both verification documents are required");
-    }
-    if (!isEulaAccepted) {
-      validationErrors.push("You must accept the EULA to continue");
-    }
-
-    // If there are validation errors, show them and return
-    if (validationErrors.length > 0) {
-      Alert.alert(
-        "Missing Information",
-        validationErrors.join("\n\n"),
-        [{ text: "OK" }]
-      );
-      setIsCreatingSubject(false);
-      return;
-    }
-    
-    const subject = {
-      subjectName,
-      subjectDescription,
-      subjectImage: image,
-      subjectPrice,
-      subjectBoard,
-      subjectGrade,
-      subjectDuration,
-      subjectNameSubHeading,
-      subjectSearchHeading:'search',
-      subjectLanguage,
-      subjectPoints,
-      teacherVerification:[pdf1, pdf2],
-    };
-    
-    console.log("subject", subject);
-    const token = await AsyncStorage.getItem("authToken");
-    
     try {
+      // Validate all required fields
+      const validationErrors = [];
+      
+      if (!subjectName.trim()) {
+        validationErrors.push("Subject name is required");
+      }
+      if (!subjectDescription.trim()) {
+        validationErrors.push("Subject description is required");
+      }
+      if (!image) {
+        validationErrors.push("Subject image is required");
+      }
+      if (!subjectPrice.trim()) {
+        validationErrors.push("Subject price is required");
+      }
+      if (!subjectBoard.trim()) {
+        validationErrors.push("Educational board is required");
+      }
+      if (!subjectGrade.trim()) {
+        validationErrors.push("Grade level is required");
+      }
+      if (!subjectDuration.trim()) {
+        validationErrors.push("Course duration is required");
+      }
+      if (!subjectLanguage.trim()) {
+        validationErrors.push("Teaching language is required");
+      }
+      // if (!subjectNameSubHeading.trim()) {
+      //   validationErrors.push("Subject subheading is required");
+      // }
+      if (subjectPoints.length === 0) {
+        validationErrors.push("At least one skill point is required");
+      }
+      if (!pdf1 || !pdf2) {
+        validationErrors.push("Both verification documents are required");
+      }
+      if (!isEulaAccepted) {
+        validationErrors.push("You must accept the EULA to continue");
+      }
+
+      // If there are validation errors, show them and return
+      if (validationErrors.length > 0) {
+        Alert.alert(
+          "Missing Information",
+          validationErrors.join("\n\n"),
+          [{ text: "OK" }]
+        );
+        setIsCreatingSubject(false);
+        return;
+      }
+      
+      const subject = {
+        subjectName,
+        subjectDescription,
+        subjectImage: image,
+        subjectPrice,
+        subjectBoard,
+        subjectGrade,
+        subjectDuration,
+        subjectNameSubHeading,
+        subjectSearchHeading:'search',
+        subjectLanguage,
+        subjectPoints,
+        teacherVerification:[pdf1, pdf2],
+      };
+      
+      console.log("subject", subject);
+      const token = await AsyncStorage.getItem("authToken");
+      
       const response = await axiosWithAuth.post(
         `${ipURL}/api/subjects/create`, 
         subject,
@@ -333,20 +422,44 @@ const CreateSubject = () => {
         }
       );
       
-      if (response.status === 200 || response.status === 201) {
+      if (response.status === 200 || response.status === 202) {
         Alert.alert(
           "Success",
-          "Subject created successfully!",
+          "Subject created successfully! The subject will be verified by the admin and will be live soon.",
           [
             {
               text: "OK",
-              onPress: () => router.push(`/(tabs)/profile`)
+              onPress: () => router.back()
             }
           ]
         );
       }
       setIsLoading(false);
     } catch (err) {
+      Sentry.captureException(err, {
+        tags: {
+          location: 'handleCreateSubject',
+          createSubjectId: createSubjectId
+        },
+        extra: {
+          error: err.message,
+          stack: err.stack,
+          subjectData: {
+            subjectName,
+            subjectDescription,
+            subjectPrice,
+            subjectBoard,
+            subjectGrade,
+            subjectDuration,
+            subjectLanguage,
+            subjectPoints: subjectPoints.length,
+            hasImage: !!image,
+            hasPdf1: !!pdf1,
+            hasPdf2: !!pdf2,
+            isEulaAccepted
+          }
+        }
+      });
       console.log("error", err);
       Alert.alert(
         "Error",

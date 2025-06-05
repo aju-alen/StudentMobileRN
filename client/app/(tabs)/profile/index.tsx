@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { Image } from 'expo-image';
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -19,6 +20,7 @@ import CalendarSummary from "../../components/CalendarSummary";
 import { Ionicons } from '@expo/vector-icons';
 import { axiosWithAuth } from "../../utils/customAxios";
 import UserSubjectCards from "../../components/UserSubjectCards";
+import * as Sentry from '@sentry/react-native';
 
 interface User {
   id?: string;
@@ -73,8 +75,44 @@ const ProfilePage = () => {
     router.push(`/(tabs)/profile/${itemId.id}`);
   };
 
-  const handleCreateNewSubject = () => {
-    router.push(`/(tabs)/profile/createSubject/${user.id}`);
+  const handleCreateNewSubject = async () => {
+    try {
+      const userDetails = await AsyncStorage.getItem('userDetails');      
+      const parsedUserDetails = JSON.parse(userDetails);
+      
+      // Add detailed logging
+      console.log('Full user details:', parsedUserDetails);
+      console.log('User ID:', parsedUserDetails.userId);
+      
+      if (!parsedUserDetails.userId) {
+        throw new Error('User ID not found in user details');
+      }
+      
+      Sentry.addBreadcrumb({
+        category: 'navigation',
+        message: 'Attempting to create new subject',
+        level: 'info',
+        data: {
+          userId: parsedUserDetails.userId,
+          userType: parsedUserDetails.isTeacher ? 'teacher' : 'student'
+        }
+      });
+      
+      router.push(`/(tabs)/profile/createSubject/${parsedUserDetails.userId}`);
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: {
+          location: 'handleCreateNewSubject',
+          action: 'new_course_button_click'
+        },
+        extra: {
+          error: error.message,
+          stack: error.stack,
+          userDetails: await AsyncStorage.getItem('userDetails')
+        }
+      });
+      Alert.alert('Error', 'Failed to create new course. Please try again.');
+    }
   };
 
   const closeDropdown = () => {
@@ -237,7 +275,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: moderateScale(30),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
   },
@@ -312,7 +350,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
@@ -347,7 +385,7 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(15),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
@@ -365,7 +403,7 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(15),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },

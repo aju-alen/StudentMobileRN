@@ -12,6 +12,7 @@
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-picker/picker": "2.7.5",
+    "@sentry/react-native": "^6.15.0",
     "@stripe/stripe-react-native": "^0.43.0",
     "aws-amplify": "^6.0.27",
     "aws-sdk": "^2.1591.0",
@@ -23,6 +24,7 @@
     "expo-av": "~14.0.5",
     "expo-checkbox": "~3.0.0",
     "expo-constants": "~16.0.1",
+    "expo-crypto": "~13.0.2",
     "expo-dev-client": "~4.0.29",
     "expo-document-picker": "~12.0.2",
     "expo-file-system": "~17.0.1",

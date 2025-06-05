@@ -21,7 +21,7 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "9"
+      "buildNumber": "11"
     },
     "android": {
       "adaptiveIcon": {
@@ -59,7 +59,15 @@
           "iCloudContainerEnvironment": "Production"
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "ca_sentry",
+          "organization": "rise-ltd"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

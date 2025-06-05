@@ -8,6 +8,7 @@ import {
   Animated,
   ActivityIndicator,
   Alert,
+  Button,
 } from "react-native";
 import { Image } from 'expo-image';
 import React, { useEffect, useState, useRef } from "react";
@@ -18,7 +19,6 @@ import { ipURL } from '../../utils/utils';
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, FONT, SIZES } from '../../../constants';
 import { horizontalScale, verticalScale, moderateScale } from '../../utils/metrics';
-import { debounce } from "lodash";
 import { StatusBar } from "expo-status-bar";
 import SubjectCards from "../../components/SubjectCards";
 import HorizontalSubjectCard from "../../components/horizontalSubjectCard";
@@ -28,7 +28,6 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/en';
 import { axiosWithAuth } from "../../utils/customAxios";
-
 // Initialize dayjs plugins
 dayjs.extend(relativeTime);
 dayjs.locale('en');
@@ -500,7 +499,9 @@ const HomePage = () => {
         <View style={styles.section}>
           <SectionHeader title="Popular Courses" />
           <HorizontalSubjectCard 
-            subjectData={subjectData.slice(0, 20)} 
+            subjectData={subjectData
+              .sort(() => Math.random() - 0.5)
+              .slice(0, 7)} 
             handleItemPress={handleItemPress} 
             isHorizontal={true}
           />
@@ -510,7 +511,7 @@ const HomePage = () => {
         <View style={styles.section}>
           <SectionHeader title="Browse Courses" showSeeAll />
           <ColumnSubjectCards 
-            subjectData={subjectData.slice(0, 5)} 
+            subjectData={subjectData.slice(0, 14)} 
             handleItemPress={handleItemPress} 
             isHorizontal={false}
           />
@@ -564,7 +565,7 @@ const styles = StyleSheet.create({
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.15,
+    //shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
   },
@@ -739,7 +740,7 @@ const styles = StyleSheet.create({
     padding: moderateScale(20),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    //shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
@@ -801,7 +802,7 @@ const styles = StyleSheet.create({
     marginRight: horizontalScale(16),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    //shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
@@ -948,7 +949,7 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
   },
@@ -964,7 +965,7 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
@@ -978,7 +979,7 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(12),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
+    //shadowOpacity: 0.08,
     shadowRadius: 10,
     elevation: 4,
   },
