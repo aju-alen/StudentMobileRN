@@ -15,9 +15,9 @@ const AppPromotion = () => {
           {/* App mockup */}
           <div className="lg:w-1/2 order-2 lg:order-1">
             
-              <div className="relative h-[600px]">
+              <div className="relative md:h-[600px]">
             {/* Main device mockup */}
-            <div className="absolute  flex items-center justify-center">
+            <div className="absolute  flex items-center justify-center sm:hidden md:block ">
              <img src="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/iphone-community-portrait.png" alt="App Screenshot" className="w-full h-full object-contain" />
             </div>
               
