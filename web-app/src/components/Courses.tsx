@@ -60,6 +60,10 @@ const Courses = () => {
     );
   }
 
+  const handleClick = () => {
+    window.open('https://apps.apple.com/us/app/coach-academ/id6745173635', '_blank');
+  };
+
   return (
     <section id="courses" className="py-12 sm:py-16 md:py-20 bg-gray-50">
       <div className="container mx-auto px-4 md:px-6">
@@ -159,7 +163,7 @@ const Courses = () => {
               </div>
               
               <div className="p-3 sm:p-4 bg-gray-50">
-                <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm sm:text-base font-medium py-2 rounded-lg sm:rounded-xl transition-colors flex items-center justify-center gap-2" onClick={() => window.open('https://apps.apple.com/in/app/coach-academ/id6745173635', '_blank')}>
+                <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm sm:text-base font-medium py-2 rounded-lg sm:rounded-xl transition-colors flex items-center justify-center gap-2" onClick={handleClick}>
                   View more on Coach Academ
                   <ArrowRight size={14} className="sm:w-4 sm:h-4" />
                 </button>
