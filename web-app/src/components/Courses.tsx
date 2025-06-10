@@ -159,7 +159,7 @@ const Courses = () => {
               </div>
               
               <div className="p-3 sm:p-4 bg-gray-50">
-                <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm sm:text-base font-medium py-2 rounded-lg sm:rounded-xl transition-colors flex items-center justify-center gap-2">
+                <button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm sm:text-base font-medium py-2 rounded-lg sm:rounded-xl transition-colors flex items-center justify-center gap-2" onClick={() => window.open('https://apps.apple.com/in/app/coach-academ/id6745173635', '_blank')}>
                   View more on Coach Academ
                   <ArrowRight size={14} className="sm:w-4 sm:h-4" />
                 </button>
