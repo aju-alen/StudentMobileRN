@@ -10,6 +10,51 @@ import { sendEmailService } from "../services/emailService.js";
 
 const prisma = new PrismaClient();
 
+export const registerSuperAdmin = async (req, res, next) => {
+ 
+    try {
+        const { name, email, password, profileImage, userDescription, isTeacher,reccomendedSubjects,recommendedBoard,recommendedGrade } = req.body;
+        console.log(req.body, 'this is the req body');
+
+        // if (!name || !email || !password || !profileImage || !userDescription || !isTeacher || !reccomendedSubjects || !recommendedBoard || !recommendedGrade) {
+        //     return res.status(400).json({ message: "Please enter all fields" });
+        // }
+
+        const hash = bcrypt.hashSync(password, 5);
+
+        const existingSuperAdmin = await prisma.superAdmin.findUnique({
+            where: { email },
+        });
+
+        if (existingSuperAdmin) {
+            return res.status(400).json({ message: "Super Admin already exists" });
+        }
+
+        const newSuperAdmin = await prisma.superAdmin.create({
+            data: {
+                name,
+                email,
+                password: hash,
+                profileImage,
+                userDescription,
+                isTeacher,
+                reccomendedSubjects,
+                recommendedBoard,
+                recommendedGrade:Number(recommendedGrade),
+            },
+        });
+
+        res.status(202).json({
+            message: "Super Admin Registered",
+            savedSuperAdmin: newSuperAdmin,
+            superAdminId: newSuperAdmin.id,
+        });
+    }
+    catch(err){
+        next(err);
+    }
+}
+
 export const register = async (req, res,next) => {
     console.log('inside register route');
     try {
@@ -302,6 +347,55 @@ export const verifyEmail = async (req, res, next) => {
       
       res.status(200).json({
         message: "Login successful",
+        token,
+        isTeacher: user.isTeacher,
+        isAdmin: user.isAdmin,
+        userId: user.id,
+        recommendedSubjects: user.recommendedSubjects,
+        userProfileImage: user.profileImage,
+        hasSeenOnboarding: user.hasSeenOnboarding,
+        email: user.email,
+      });
+    } catch (err) {
+      console.error(err);
+      next(err);
+    } 
+  };
+
+  export const loginSuperAdmin = async (req, res, next) => {
+    console.log(req.body, 'this is the login req body');
+    try {
+      const { email, password } = req.body;
+  
+      // Find the user by email
+      const user = await prisma.superAdmin.findUnique({
+        where: { email },
+      });
+  
+      if (!user) {
+        return res.status(400).json({ message: "Invalid email or password" });
+      }
+  
+      if (!user.verified) {
+        return res.status(400).json({ message: "Please verify your email" });
+      }
+  
+      // Compare the provided password with the hashed password in the database
+      const isCorrect = bcrypt.compareSync(password, user.password);
+  
+      if (!isCorrect) {
+        return res.status(400).json({ message: "Invalid email or password" });
+      }
+  
+      // Generate a JWT token
+      const token = jwt.sign(
+        { userId: user.id, isTeacher: user.isTeacher, isAdmin: user.isAdmin, email: user.email },
+        process.env.SECRET_KEY
+      );
+      console.log(user, 'this is the user');
+      
+      res.status(200).json({
+        message: "Super Admin Login successful",
         token,
         isTeacher: user.isTeacher,
         isAdmin: user.isAdmin,

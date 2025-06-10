@@ -24,8 +24,7 @@
       }
     },
     "development": {
-      "developmentClient": true,
-      "distribution": "internal"
+      "developmentClient": true
     }
   },
   "submit": {

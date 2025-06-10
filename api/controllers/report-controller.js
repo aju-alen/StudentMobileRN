@@ -214,3 +214,13 @@ export const unblockUser = async (req, res, next) => {
         next(err);
     }
 }
+
+export const getAllReports = async (req, res, next) => {
+    try {
+        const reports = await prisma.report.findMany();
+        return res.status(200).json(reports);
+    } catch (err) {
+        console.log(err);
+        next(err);
+    }
+}
