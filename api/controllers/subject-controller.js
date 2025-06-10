@@ -80,7 +80,7 @@ export const createSubject = async (req, res, next) => {
                         <!-- Bauhaus Footer -->
                         <div style="text-align: center; padding-top: 30px; border-top: 2px solid #F8FAFC;">
                             <p style="color: #64748B; font-size: 14px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1px;">Thank you for contributing</p>
-                            <p style="color: #1A2B4B; font-size: 16px; font-weight: 700; margin: 0;">The RISE Team</p>
+                            <p style="color: #1A2B4B; font-size: 16px; font-weight: 700; margin: 0;">The Coach Academ Team</p>
                         </div>
                     </div>
                 </div>
