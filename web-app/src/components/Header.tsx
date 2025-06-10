@@ -19,7 +19,7 @@ const Header = () => {
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
         isScrolled 
           ? 'bg-white shadow-md py-3' 
-          : 'bg-transparent py-5'
+          : 'bg-white py-5'
       }`}
     >
       <div className="container mx-auto px-4 md:px-6">
@@ -42,7 +42,7 @@ const Header = () => {
           </nav>
           
           <div className="hidden md:block">
-            <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full font-medium transition-colors">
+            <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full font-medium transition-colors" onClick={() =>  window.open('https://apps.apple.com/us/app/coach-academ/id6745173635', '_blank')}>
               Get Started
             </button>
           </div>
@@ -60,7 +60,7 @@ const Header = () => {
         {isOpen && (
           <div className="md:hidden mt-4 py-4 border-t border-gray-100">
             <nav className="flex flex-col space-y-4">
-              {['Home', 'Features', 'Courses', 'Testimonials', 'FAQ'].map((item) => (
+              {['Home', 'Courses', 'FAQ'].map((item) => (
                 <a 
                   key={item} 
                   href={`#${item.toLowerCase()}`}
@@ -70,7 +70,7 @@ const Header = () => {
                   {item}
                 </a>
               ))}
-              <button className="bg-indigo-600 hover:bg-indigo-700 text-white w-full py-2 rounded-full font-medium transition-colors mt-2">
+              <button className="bg-indigo-600 hover:bg-indigo-700 text-white w-full py-2 rounded-full font-medium transition-colors mt-2" onClick={() =>  window.open('https://apps.apple.com/us/app/coach-academ/id6745173635', '_blank')}>
                 Get Started
               </button>
             </nav>
