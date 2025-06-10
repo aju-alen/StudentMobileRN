@@ -34,6 +34,8 @@ app.use(cors({
         "http://localhost:8081",
         "http://localhost:19000",
         "http://192.168.0.174:19006",
+        "https://coachacadem-webapp.onrender.com",
+        "https://coachacadem.ae/",
         "exp://", // Allow all Expo URLs
         "https://*.expo.dev", // Allow Expo development URLs
         "https://*.render.com", // Allow Render URLs
