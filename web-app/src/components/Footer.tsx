@@ -1,6 +1,7 @@
 
 import { Mail, MapPin } from 'lucide-react';
 import AppleLogo from "../assets/apple-black-logo-svgrepo-com.svg"
+import { frontendURL } from '../common/ipUrl';
 
 const Footer = () => {
   return (
@@ -58,10 +59,10 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold text-white mb-6">Quick Links</h3>
             <ul className="space-y-3">
-              {['About Us', 'Courses', 'Pricing', 'Careers', 'Blog', 'Contact'].map((item) => (
+              {['Home', 'Courses','FAQ'].map((item) => (
                 <li key={item}>
                   <a 
-                    href="#" 
+                    href={`${frontendURL}/#${item.toLowerCase()}`} 
                     className="text-gray-400 hover:text-white transition-colors hover:underline"
                   >
                     {item}
@@ -96,7 +97,7 @@ Dubai</span>
             <div className="mt-6">
               <h4 className="text-sm font-semibold text-white mb-3">Download Our App</h4>
               <div className="flex space-x-3">
-                <a href="#" className="bg-gray-800 hover:bg-gray-700 p-2 rounded transition-colors">
+                <a href="https://apps.apple.com/in/app/coach-academ/id6745173635" className="bg-gray-800 hover:bg-gray-700 p-2 rounded transition-colors">
                 <img src={AppleLogo} alt="Apple Logo" className="w-6 h-6" />
                 </a>
                 {/* <a href="#" className="bg-gray-800 hover:bg-gray-700 p-2 rounded transition-colors">
@@ -114,9 +115,8 @@ Dubai</span>
             © {new Date().getFullYear()} Coach Academ. All rights reserved.
           </p>
           <div className="mt-4 md:mt-0 flex space-x-6">
-            <a href="#" className="text-gray-500 hover:text-gray-300 text-sm">Privacy Policy</a>
-            <a href="#" className="text-gray-500 hover:text-gray-300 text-sm">Terms of Service</a>
-            <a href="#" className="text-gray-500 hover:text-gray-300 text-sm">EULA </a>
+            <a href="https://coachacademic.s3.ap-southeast-1.amazonaws.com/EULA+/Privacy+Policy+for+CoachAcadem1.pdf" className="text-gray-500 hover:text-gray-300 text-sm">Privacy Policy</a>
+            <a href="https://coachacademic.s3.ap-southeast-1.amazonaws.com/EULA+/COACHACADEM_TOU_(EULA).pdf" className="text-gray-500 hover:text-gray-300 text-sm">EULA </a>
           </div>
         </div>
       </div>

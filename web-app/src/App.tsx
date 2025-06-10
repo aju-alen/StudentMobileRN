@@ -18,7 +18,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const hideFooterPages = ['/user-survey'];
   const isDynamicRoute = (path: string) => /^\/user-survey\/.+$/.test(path);
   const shouldHideNavBar = hideNavBarPages.includes(location.pathname) || isDynamicRoute(location.pathname);
-  const shouldHideFooter = hideFooterPages.includes(location.pathname) || isDynamicRoute(location.pathname);
+
 
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", maxWidth: "100vw" }}>
@@ -26,7 +26,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <div style={{ flex: 1 }}>
         {children}
       </div>
-     {!shouldHideFooter && <Footer />}  
+     {  <Footer />}  
        </div>
   );
 };

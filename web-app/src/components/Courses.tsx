@@ -79,13 +79,13 @@ const Courses = () => {
               Explore our highest-rated courses taught by industry experts and transform your career.
             </p>
           </div>
-          <a 
+          {/* <a 
             href="#" 
             className="inline-flex items-center text-indigo-600 font-medium hover:text-indigo-800 group bg-white px-4 sm:px-6 py-2 sm:py-3 rounded-full shadow-sm hover:shadow-md transition-all text-sm md:text-base"
           >
             <span>Browse all courses</span>
             <ArrowRight size={16} className="ml-2 transition-transform group-hover:translate-x-1" />
-          </a>
+          </a> */}
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8">

@@ -19,7 +19,7 @@ function Home() {
       {/* <Testimonials /> */}
       <FAQ />
       <CallToAction />
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }

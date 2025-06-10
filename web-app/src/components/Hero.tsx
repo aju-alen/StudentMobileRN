@@ -60,7 +60,7 @@ const Hero = () => {
               Interactive courses, live Zoom sessions, and a community of learners - all in one powerful app designed to transform your educational journey.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-full font-medium transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+              <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-full font-medium transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1" onClick={() => window.open('https://apps.apple.com/in/app/coach-academ/id6745173635', '_blank')}>
                 Download App
               </button>
               {/* <button className="flex items-center justify-center bg-white hover:bg-gray-50 border border-gray-200 hover:border-indigo-300 text-gray-700 px-8 py-3 rounded-full font-medium transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">

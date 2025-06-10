@@ -54,7 +54,7 @@ const AppPromotion = () => {
             </div>
             
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
-              <a href="#" className="flex items-center justify-center bg-black text-white rounded-xl px-6 py-3 hover:bg-gray-900 transition-colors">
+              <a href="https://apps.apple.com/in/app/coach-academ/id6745173635" className="flex items-center justify-center bg-black text-white rounded-xl px-6 py-3 hover:bg-gray-900 transition-colors">
                 <img src={AppleLogo} alt="Apple Logo" className="w-8 h-8 mr-3" />
                 <div className="text-left">
                   <div className="text-xs">Download on the</div>
@@ -73,10 +73,10 @@ const AppPromotion = () => {
               </a> */}
             </div>
             
-            <a href="#" className="inline-flex items-center text-indigo-200 hover:text-white mt-6 group">
+            {/* <a href="#" className="inline-flex items-center text-indigo-200 hover:text-white mt-6 group">
               <span>Learn more about app features</span>
               <ArrowRight size={16} className="ml-2 transition-transform group-hover:translate-x-1" />
-            </a>
+            </a> */}
           </div>
         </div>
       </div>

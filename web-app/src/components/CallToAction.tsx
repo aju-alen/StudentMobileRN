@@ -14,12 +14,14 @@ const CallToAction = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row justify-center gap-4 mb-10">
-            <button className="bg-white text-indigo-600 hover:bg-gray-100 px-8 py-4 rounded-full font-medium transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center">
+            <button className="bg-white text-indigo-600 hover:bg-gray-100 px-8 py-4 rounded-full font-medium transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center" onClick={() => window.open('https://apps.apple.com/in/app/coach-academ/id6745173635', '_blank')}>
               Download the App
               <ArrowRight size={18} className="ml-2" />
             </button>
             <button className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-indigo-600 px-8 py-4 rounded-full font-medium transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+              <a href="#courses" className="flex items-center">
               Browse Courses
+              </a>
             </button>
           </div>
           

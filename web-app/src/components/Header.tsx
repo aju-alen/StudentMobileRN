@@ -30,7 +30,7 @@ const Header = () => {
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8">
-            {['Home', 'Features', 'Courses', 'Testimonials', 'FAQ'].map((item) => (
+            {['Home', 'Courses', 'FAQ'].map((item) => (
               <a 
                 key={item} 
                 href={`#${item.toLowerCase()}`}

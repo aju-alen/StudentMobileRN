@@ -85,17 +85,17 @@ const FAQ = () => {
           ))}
         </div>
         
-        <div className="text-center mt-12">
+        {/* <div className="text-center mt-12">
           <p className="text-gray-600 mb-4">
             Still have questions?
           </p>
           <a 
-            href="#" 
+            href="mailto:support@coachacadem.ae" 
             className="inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-full font-medium transition-colors"
           >
             Contact Support
           </a>
-        </div>
+        </div> */}
       </div>
     </section>
   );
