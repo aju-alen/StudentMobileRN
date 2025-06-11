@@ -14,15 +14,14 @@ import { lazy } from 'react';
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const hideNavBarPages = ['/', '/login','/super-admin/dashboard','/super-admin/verify-subject/:subjectId'];
-  const hideFooterPages = ['/user-survey'];
+  const hideNavBarPages = ['/'];
   const isDynamicRoute = (path: string) => /^\/user-survey\/.+$/.test(path);
   const shouldHideNavBar = hideNavBarPages.includes(location.pathname) || isDynamicRoute(location.pathname);
 
 
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", maxWidth: "100vw" }}>
-      {!shouldHideNavBar && <Header />}
+      {shouldHideNavBar && <Header />}
       <div style={{ flex: 1 }}>
         {children}
       </div>
@@ -36,6 +35,8 @@ const Login = lazy(() => import('./pages/login'));
 const NotFound = lazy(() => import('./pages/404'));
 const Dashboard = lazy(() => import('./pages/admin/Dashboard'));
 const VerifySubject = lazy(() => import('./pages/admin/VerifySubject'));
+const SingleReport = lazy(() => import('./pages/admin/SingleReport'));
+const DeleteAccount = lazy(() => import('./pages/DeleteAccount'));
 
 const App = () => {
 
@@ -77,12 +78,20 @@ const App = () => {
           element: <Login />,
         },
         {
+          path: "/delete-account-guide",
+          element: <DeleteAccount />,
+        },
+        {
           path: "/super-admin/dashboard",
           element: <SuperAdminProtectedRoute element={<Dashboard />} />, // Wrap Dashboard inside ProtectedRoute
         },
         {
           path: "/super-admin/verify-subject/:subjectId",
           element: <SuperAdminProtectedRoute element={<VerifySubject />} />, // Wrap Dashboard inside ProtectedRoute
+        },
+        {
+          path: "/super-admin/report/:reportId",
+          element: <SuperAdminProtectedRoute element={<SingleReport />} />, // Wrap Dashboard inside ProtectedRoute
         },
         {
           path: "/404",
