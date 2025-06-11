@@ -275,7 +275,7 @@ const Dashboard: React.FC = () => {
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-900 line-clamp-1">
-                              {report.reportDescription}
+                              {report.reportDescription.slice(0, 50)}{report.reportDescription.length > 50 ? '...' : ''}
                             </p>
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-xs text-gray-500">
