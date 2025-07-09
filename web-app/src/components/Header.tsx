@@ -30,7 +30,7 @@ const Header = () => {
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8">
-            {['Home', 'Courses', 'FAQ'].map((item) => (
+            {['Find tutors', 'Become a tutor', 'Courses', 'FAQ'].map((item) => (
               <a 
                 key={item} 
                 href={`#${item.toLowerCase()}`}
@@ -43,7 +43,7 @@ const Header = () => {
           
           <div className="hidden md:block">
             <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full font-medium transition-colors" onClick={() =>  window.open('https://apps.apple.com/us/app/coach-academ/id6745173635', '_blank')}>
-              Get Started
+              Get the App
             </button>
           </div>
           
@@ -60,7 +60,7 @@ const Header = () => {
         {isOpen && (
           <div className="md:hidden mt-4 py-4 border-t border-gray-100">
             <nav className="flex flex-col space-y-4">
-              {['Home', 'Courses', 'FAQ'].map((item) => (
+              {['Find tutors', 'Become a tutor', 'Courses', 'FAQ'].map((item) => (
                 <a 
                   key={item} 
                   href={`#${item.toLowerCase()}`}
@@ -71,7 +71,7 @@ const Header = () => {
                 </a>
               ))}
               <button className="bg-indigo-600 hover:bg-indigo-700 text-white w-full py-2 rounded-full font-medium transition-colors mt-2" onClick={() =>  window.open('https://apps.apple.com/us/app/coach-academ/id6745173635', '_blank')}>
-                Get Started
+                Get the App
               </button>
             </nav>
           </div>

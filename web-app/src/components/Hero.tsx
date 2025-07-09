@@ -50,18 +50,18 @@ const Hero = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2  gap-12 items-center">
           {/* Left Column - Content */}
           <div className="text-left">
-            <h1 className="text-4xl md:text-5xl lg:text-5xl font-bold mb-6 lg:leading-tight  ">
-             UAE's #1 Academic Coaching Platform
+            <h1 className="text-4xl md:text-5xl lg:text-5xl font-[900] mb-6 lg:leading-tight font  ">
+             How do you connect with the best private tutors in the UAE?
               {/* <div className="bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent"> 
                  Coach Academ
               </div> */}
             </h1>
             <p className="text-xl text-gray-600 mb-8">
-              Interactive courses, live Zoom sessions, and a community of learners - all in one powerful app designed to transform your educational journey.
+              Learn from the comfort of your home with our easy-to-use online tutoring platform that connects you with teachers and tutors in the UAE for personalized online classes.  
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-full font-medium transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1" onClick={() => window.open('https://apps.apple.com/in/app/coach-academ/id6745173635', '_blank')}>
-                Download App
+                Get the App
               </button>
               {/* <button className="flex items-center justify-center bg-white hover:bg-gray-50 border border-gray-200 hover:border-indigo-300 text-gray-700 px-8 py-3 rounded-full font-medium transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
                 <Play size={18} className="text-indigo-600 mr-2" />
