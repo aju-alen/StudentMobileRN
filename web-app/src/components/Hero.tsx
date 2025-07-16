@@ -1,5 +1,6 @@
 import  { useEffect, useRef } from 'react';
 import { Play, LampDesk, BookOpen, GraduationCap, Presentation, Video } from 'lucide-react';
+import AppDownloadQR from '../assets/app-download.svg';
 
 const FloatingElement = ({ children, className }: { children: React.ReactNode, className: string }) => {
   const elementRef = useRef(null);
@@ -59,14 +60,14 @@ const Hero = () => {
             <p className="text-[1.1rem] text-gray-600 mb-8 md:max-w-xl lg:leading-8">
               Coach Academ is an online tutoring platform that helps students find and connect with the best online tutors in the UAE.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-full font-medium transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1" onClick={() => window.open('https://apps.apple.com/in/app/coach-academ/id6745173635', '_blank')}>
-                Get the App
-              </button>
-              {/* <button className="flex items-center justify-center bg-white hover:bg-gray-50 border border-gray-200 hover:border-indigo-300 text-gray-700 px-8 py-3 rounded-full font-medium transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1">
-                <Play size={18} className="text-indigo-600 mr-2" />
-                Watch Demo
-              </button> */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-8 items-center">
+              {/* QR Code Download Section - Styled like reference */}
+              <div className="flex flex-col items-center bg-[#7B5CFA] rounded-3xl px-8 py-7 shadow-xl">
+                <span className="text-white text-2xl font-semibold mb-3">GET THE APP</span>
+                <div className="bg-white rounded-2xl p-2 flex items-center justify-center">
+                  <img src={AppDownloadQR} alt="Scan to download app" className="w-44 h-44" />
+                </div>
+              </div>
             </div>
             <div className="flex items-center">
               {/* <div className="flex space-x-1">
