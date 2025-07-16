@@ -12,17 +12,17 @@ function Home() {
     <div className="min-h-screen bg-white">
       <Header />
       <SEO
-        title="Online Tutoring Platform"
+        title="Online Tutoring Platform in the UAE"
         description="CoachAcadem is a leading online tutoring platform that provides personalized and effective learning solutions for students of all ages and levels. Find qualified tutors, schedule sessions, and achieve your academic goals."
-        name="CoachAcadem"
+        name="Coach Academ"
         type="website"
         keywords="online tutoring, UAE tutors, private tutors, academic coaching, math tutors, science tutors, English tutors, homework help, exam preparation"
-        author="CoachAcadem"
+        author="Coach Academ"
         tags={["online tutoring", "education", "UAE", "private tutors", "academic support"]}
         schema={{
           "@context": "https://schema.org",
           "@type": "Organization",
-          "name": "CoachAcadem",
+          "name": "Coach Academ",
           "url": "https://www.coachacadem.ae",
           "logo": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png",
           "description": "CoachAcadem is a leading online tutoring platform that provides personalized and effective learning solutions for students of all ages and levels.",

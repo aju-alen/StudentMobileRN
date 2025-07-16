@@ -48,7 +48,7 @@ export default function SEO({
   favicon
 }: SEOProps) {
   
-  const fullTitle = `${name}: ${title}`;
+  const fullTitle = `${title} - ${name}`;
   const imageUrl = surveyImage.startsWith('http') ? surveyImage : `${surveyUrl}${surveyImage}`;
   const canonical = canonicalUrl || surveyUrl;
 
