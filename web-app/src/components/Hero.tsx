@@ -56,7 +56,7 @@ const Hero = () => {
                  Coach Academ
               </div> */}
             </h1>
-            <p className="text-xl text-gray-600 mb-8">
+            <p className="text-xl text-gray-600 mb-8 md:max-w-xl">
               Coach Academ is an online tutoring platform that helps students find and connect the best online tutors in the UAE.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
