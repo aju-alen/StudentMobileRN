@@ -22,7 +22,7 @@ const Header = () => {
           : 'bg-white py-5'
       }`}
     >
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 md:px-0">
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <img src="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo.png" alt="Logo" className="h-20 w-20" />
