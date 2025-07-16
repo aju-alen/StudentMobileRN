@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AlertTriangle, User, Settings, Trash2, Eye, EyeOff, CheckCircle, ArrowRight, Shield } from 'lucide-react';
+import SEO from '../components/SEO';
 
 export default function DeleteAccountGuide() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -45,6 +46,60 @@ export default function DeleteAccountGuide() {
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white">
+      <SEO
+        title="Delete Account - Step by Step Guide"
+        description="Learn how to safely delete your CoachAcadem account with our step-by-step guide. Understand the process and consequences before proceeding with account deletion."
+        name="CoachAcadem"
+        type="HowTo"
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "HowTo",
+          "name": "How to Delete Your CoachAcadem Account",
+          "description": "Step-by-step guide to delete your CoachAcadem account safely",
+          "step": [
+            {
+              "@type": "HowToStep",
+              "name": "Navigate to Profile",
+              "text": "Click on your profile to access account settings"
+            },
+            {
+              "@type": "HowToStep", 
+              "name": "Open Settings",
+              "text": "Click the Settings icon in the top right corner"
+            },
+            {
+              "@type": "HowToStep",
+              "name": "Find Dangerous Zone", 
+              "text": "Scroll down to locate the 'Dangerous Zone' tab"
+            },
+            {
+              "@type": "HowToStep",
+              "name": "Click Delete Account",
+              "text": "Select the 'Delete Account' option"
+            },
+            {
+              "@type": "HowToStep",
+              "name": "Enter Password",
+              "text": "Type your current password to confirm deletion"
+            }
+          ],
+          "supply": [
+            {
+              "@type": "HowToSupply",
+              "name": "Current password"
+            }
+          ],
+          "tool": [
+            {
+              "@type": "HowToTool", 
+              "name": "CoachAcadem Mobile App"
+            }
+          ]
+        }}
+        surveyImage="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/iphone-community-portrait.png"
+        surveyUrl="https://www.coachacadem.ae/delete-account"
+        robotText="noindex, nofollow"
+      />
       {/* Header Warning */}
       <div className="bg-gradient-to-r from-red-50 to-red-100 border-2 border-red-200 rounded-xl p-6 mb-8">
         <div className="flex items-center gap-4 mb-4">

@@ -2,6 +2,8 @@ import { createBrowserRouter, RouterProvider, Outlet, Navigate, useLocation } fr
 import Header from './components/Header';
 import Footer from './components/Footer';
 import { lazy } from 'react';
+import { HelmetProvider } from 'react-helmet-async';
+import DefaultSEO from './components/DefaultSEO';
 
 // import TagManager from "react-gtm-module";
 // import GoogleAnalytics from './components/GoogleAnalytics';
@@ -21,6 +23,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", maxWidth: "100vw" }}>
+      <DefaultSEO />
       {shouldHideNavBar && <Header />}
       <div style={{ flex: 1 }}>
         {children}
@@ -105,7 +108,11 @@ const App = () => {
     }
   ]);
 
-  return <RouterProvider router={router} />;
+  return (
+    <HelmetProvider>
+      <RouterProvider router={router} />
+    </HelmetProvider>
+  );
 };
 
 export default App;
