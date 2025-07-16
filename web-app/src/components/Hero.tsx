@@ -50,13 +50,13 @@ const Hero = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2  gap-12 items-center">
           {/* Left Column - Content */}
           <div className="text-left">
-            <h1 className="text-4xl md:text-5xl lg:text-5xl font-[900] mb-6 lg:leading-tight  ">
+            <h1 className="text-4xl md:text-5xl lg:text-5xl font-[900] mb-2 lg:leading-tight  ">
              Learn from the comfort of your home with the best tutors in the UAE.
               {/* <div className="bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent"> 
                  Coach Academ
               </div> */}
             </h1>
-            <p className="text-[1.1rem] text-gray-600 mb-8 md:max-w-xl">
+            <p className="text-[1.1rem] text-gray-600 mb-8 md:max-w-xl lg:leading-8">
               Coach Academ is an online tutoring platform that helps students find and connect the best online tutors in the UAE.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
