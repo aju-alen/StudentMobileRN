@@ -50,7 +50,7 @@ const Hero = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2  gap-12 items-center">
           {/* Left Column - Content */}
           <div className="text-left">
-            <h1 className="text-4xl md:text-5xl lg:text-5xl font-[900] mb-6 lg:leading-tight md:max-w-4xl   ">
+            <h1 className="text-4xl md:text-5xl lg:text-5xl font-[900] mb-6 lg:leading-tight md:max-w-xl ">
              Learn from the comfort of your home with the best tutors in the UAE.
               {/* <div className="bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent"> 
                  Coach Academ
