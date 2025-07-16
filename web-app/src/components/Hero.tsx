@@ -44,7 +44,7 @@ const Hero = () => {
   return (
     <section 
       id="home" 
-      className="pt-32 pb-20 md:pt-40 md:pb-32 px-4 md:px-40 relative overflow-hidden bg-gradient-to-b from-indigo-50 to-white"
+      className="pt-32 pb-20 md:pt-40 md:pb-32 px-4 md:px-64 relative overflow-hidden bg-gradient-to-b from-indigo-50 to-white"
     >
       <div className="container mx-auto relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2  gap-12 items-center">
