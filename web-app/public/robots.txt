@@ -1,0 +1,91 @@
+# CoachAcadem Robots.txt
+# This file tells search engines which pages they can and cannot crawl
+
+User-agent: *
+Allow: /
+
+# Allow all major search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+# Block sensitive areas
+Disallow: /admin/
+Disallow: /super-admin/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /static/
+Disallow: /assets/
+Disallow: /private/
+Disallow: /temp/
+Disallow: /cache/
+Disallow: /logs/
+Disallow: /backup/
+Disallow: /config/
+Disallow: /database/
+Disallow: /includes/
+Disallow: /vendor/
+Disallow: /node_modules/
+Disallow: /.git/
+Disallow: /.env
+Disallow: /package.json
+Disallow: /package-lock.json
+Disallow: /yarn.lock
+Disallow: /composer.json
+Disallow: /composer.lock
+
+# Block specific file types
+Disallow: /*.json$
+Disallow: /*.xml$
+Disallow: /*.txt$
+Disallow: /*.log$
+Disallow: /*.sql$
+Disallow: /*.bak$
+Disallow: /*.old$
+Disallow: /*.tmp$
+
+# Block search and filter pages to prevent duplicate content
+Disallow: /search?
+Disallow: /*?sort=
+Disallow: /*?filter=
+Disallow: /*?page=
+Disallow: /*?utm_
+Disallow: /*?fbclid=
+Disallow: /*?gclid=
+
+# Allow important pages
+Allow: /sitemap.xml
+Allow: /sitemap-index.xml
+Allow: /robots.txt
+Allow: /manifest.json
+Allow: /favicon.ico
+Allow: /apple-touch-icon.png
+
+# Crawl delay (optional - helps with server load)
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://www.coachacadem.ae/sitemap.xml
+Sitemap: https://www.coachacadem.ae/sitemap-index.xml
+
+# Host (preferred domain)
+Host: https://www.coachacadem.ae
+
+# Additional sitemaps for different content types
+Sitemap: https://www.coachacadem.ae/sitemap-pages.xml
+Sitemap: https://www.coachacadem.ae/sitemap-courses.xml
+Sitemap: https://www.coachacadem.ae/sitemap-tutors.xml 
