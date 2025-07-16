@@ -26,20 +26,21 @@ const Header = () => {
         <div className="flex justify-between items-center">
           <div className="flex items-center">
             <img src="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo.png" alt="Logo" className="h-20 w-20" />
-          </div>
-          
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
+             {/* Desktop Navigation */}
+          <nav className="hidden md:flex space-x-8 md:ml-10">
             {['Find tutors', 'Become a tutor', 'Courses', 'FAQ'].map((item) => (
               <a 
                 key={item} 
                 href={`#${item.toLowerCase()}`}
-                className="text-gray-700 hover:text-indigo-600 font-medium transition-colors"
+                className="text-black-700 hover:text-indigo-600 font-medium transition-colors"
               >
                 {item}
               </a>
             ))}
           </nav>
+          </div>
+          
+         
           
           <div className="hidden md:block">
             <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full font-medium transition-colors" onClick={() =>  window.open('https://apps.apple.com/us/app/coach-academ/id6745173635', '_blank')}>
