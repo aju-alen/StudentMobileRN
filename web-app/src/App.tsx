@@ -38,6 +38,7 @@ const Dashboard = lazy(() => import('./pages/admin/Dashboard'));
 const VerifySubject = lazy(() => import('./pages/admin/VerifySubject'));
 const SingleReport = lazy(() => import('./pages/admin/SingleReport'));
 const DeleteAccount = lazy(() => import('./pages/DeleteAccount'));
+const FindTutorPage = lazy(() => import('./pages/FindTutorPage'));
 
 const App = () => {
 
@@ -93,6 +94,10 @@ const App = () => {
         {
           path: "/super-admin/report/:reportId",
           element: <SuperAdminProtectedRoute element={<SingleReport />} />, // Wrap Dashboard inside ProtectedRoute
+        },
+        {
+          path: "/online/:subject-tutor",
+          element: <FindTutorPage />, // Wrap Dashboard inside ProtectedRoute
         },
         {
           path: "/404",

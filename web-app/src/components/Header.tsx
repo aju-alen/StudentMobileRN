@@ -1,6 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, GraduationCap } from 'lucide-react';
 
+const navItems = [
+  {
+    label: 'Find Tutors',
+    href: '/#online/english-tutor'
+  },
+  {
+    label: 'Become a Tutor',
+    href: '/#teach'
+  },
+  {
+    label: 'Courses',
+    href: '/#courses',
+  },
+  {
+    label: 'FAQ',
+    href: '/#faq',
+  },
+]
+
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -28,13 +47,13 @@ const Header = () => {
             <img src="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo.png" alt="Logo" className="h-20 w-20" />
              {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8 md:ml-10">
-            {['Find tutors', 'Become a tutor', 'Courses', 'FAQ'].map((item) => (
+            {navItems.map((item) => (
               <a 
-                key={item} 
-                href={`#${item.toLowerCase()}`}
+                key={item.label} 
+                href={item.href}
                 className="text-black-700 hover:text-indigo-600 font-medium transition-colors"
               >
-                {item}
+                {item.label}
               </a>
             ))}
           </nav>
@@ -43,7 +62,7 @@ const Header = () => {
          
           
           <div className="hidden md:block">
-            <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full font-medium transition-colors" onClick={() =>  window.open('https://apps.apple.com/us/app/coach-academ/id6745173635', '_blank')}>
+            <button className="bg-[#205072] hover:bg-indigo-700 text-white px-5 py-2 rounded-full font-medium transition-colors" onClick={() =>  window.open('https://apps.apple.com/us/app/coach-academ/id6745173635', '_blank')}>
               Get the App
             </button>
           </div>
@@ -71,7 +90,7 @@ const Header = () => {
                   {item}
                 </a>
               ))}
-              <button className="bg-indigo-600 hover:bg-indigo-700 text-white w-full py-2 rounded-full font-medium transition-colors mt-2" onClick={() =>  window.open('https://apps.apple.com/us/app/coach-academ/id6745173635', '_blank')}>
+              <button className="bg-[#205072] hover:bg-indigo-700 text-white w-full py-2 rounded-full font-medium transition-colors mt-2" onClick={() =>  window.open('https://apps.apple.com/us/app/coach-academ/id6745173635', '_blank')}>
                 Get the App
               </button>
             </nav>
