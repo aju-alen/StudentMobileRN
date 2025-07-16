@@ -57,7 +57,7 @@ const Hero = () => {
               </div> */}
             </h1>
             <p className="text-[1.1rem] text-gray-600 mb-8 md:max-w-xl lg:leading-8">
-              Coach Academ is an online tutoring platform that helps students find and connect the best online tutors in the UAE.
+              Coach Academ is an online tutoring platform that helps students find and connect with the best online tutors in the UAE.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-full font-medium transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1" onClick={() => window.open('https://apps.apple.com/in/app/coach-academ/id6745173635', '_blank')}>
