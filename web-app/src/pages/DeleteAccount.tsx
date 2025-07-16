@@ -51,36 +51,51 @@ export default function DeleteAccountGuide() {
         description="Learn how to safely delete your CoachAcadem account with our step-by-step guide. Understand the process and consequences before proceeding with account deletion."
         name="CoachAcadem"
         type="HowTo"
+        keywords="delete account, account deletion, remove account, CoachAcadem account, account settings"
+        author="CoachAcadem"
+        tags={["account management", "help", "tutorial", "account deletion"]}
         schema={{
           "@context": "https://schema.org",
           "@type": "HowTo",
           "name": "How to Delete Your CoachAcadem Account",
           "description": "Step-by-step guide to delete your CoachAcadem account safely",
+          "image": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/iphone-community-portrait.png",
+          "totalTime": "PT5M",
+          "estimatedCost": {
+            "@type": "MonetaryAmount",
+            "currency": "USD",
+            "value": "0"
+          },
           "step": [
             {
               "@type": "HowToStep",
               "name": "Navigate to Profile",
-              "text": "Click on your profile to access account settings"
+              "text": "Click on your profile to access account settings",
+              "image": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/iphone-community-portrait.png"
             },
             {
               "@type": "HowToStep", 
               "name": "Open Settings",
-              "text": "Click the Settings icon in the top right corner"
+              "text": "Click the Settings icon in the top right corner",
+              "image": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/iphone-community-portrait.png"
             },
             {
               "@type": "HowToStep",
               "name": "Find Dangerous Zone", 
-              "text": "Scroll down to locate the 'Dangerous Zone' tab"
+              "text": "Scroll down to locate the 'Dangerous Zone' tab",
+              "image": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/iphone-community-portrait.png"
             },
             {
               "@type": "HowToStep",
               "name": "Click Delete Account",
-              "text": "Select the 'Delete Account' option"
+              "text": "Select the 'Delete Account' option",
+              "image": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/iphone-community-portrait.png"
             },
             {
               "@type": "HowToStep",
               "name": "Enter Password",
-              "text": "Type your current password to confirm deletion"
+              "text": "Type your current password to confirm deletion",
+              "image": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/iphone-community-portrait.png"
             }
           ],
           "supply": [
@@ -94,11 +109,21 @@ export default function DeleteAccountGuide() {
               "@type": "HowToTool", 
               "name": "CoachAcadem Mobile App"
             }
-          ]
+          ],
+          "publisher": {
+            "@type": "Organization",
+            "name": "CoachAcadem",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png"
+            }
+          }
         }}
         surveyImage="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/iphone-community-portrait.png"
         surveyUrl="https://www.coachacadem.ae/delete-account"
         robotText="noindex, nofollow"
+        favicon="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png"
+        themeColor="#EF4444"
       />
       {/* Header Warning */}
       <div className="bg-gradient-to-r from-red-50 to-red-100 border-2 border-red-200 rounded-xl p-6 mb-8">
