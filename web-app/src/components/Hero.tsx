@@ -44,13 +44,13 @@ const Hero = () => {
   return (
     <section 
       id="home" 
-      className="pt-32 pb-20 md:pt-40 md:pb-32 px-4 relative overflow-hidden bg-gradient-to-b from-indigo-50 to-white"
+      className="pt-32 pb-20 md:pt-40 md:pb-32 px-4 md:px-40 relative overflow-hidden bg-gradient-to-b from-indigo-50 to-white"
     >
       <div className="container mx-auto relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2  gap-12 items-center">
           {/* Left Column - Content */}
           <div className="text-left">
-            <h1 className="text-4xl md:text-5xl lg:text-5xl font-[900] mb-6 lg:leading-tight md:mt-60  ">
+            <h1 className="text-4xl md:text-5xl lg:text-5xl font-[900] mb-6 lg:leading-tight md:mt-28  ">
              Learn from the comfort of your home with the best tutors in the UAE.
               {/* <div className="bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent"> 
                  Coach Academ
