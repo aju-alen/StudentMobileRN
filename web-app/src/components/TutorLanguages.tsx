@@ -86,7 +86,7 @@ const TutorLanguages = () => {
                 </span>
               )}
             </span>
-            <span className="text-gray-500 text-sm text-center mt-1">{stat.label}</span>
+            <span className="text-gray-500  sm:text-sm md:text-2xl text-center mt-1">{stat.label}</span>
           </div>
         ))}
       </div>

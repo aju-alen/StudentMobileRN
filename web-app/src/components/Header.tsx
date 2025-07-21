@@ -62,7 +62,7 @@ const Header = () => {
          
           
           <div className="hidden md:block">
-            <button className="bg-[#205072] hover:bg-indigo-700 text-white px-5 py-2 rounded-full font-medium transition-colors" onClick={() =>  window.open('https://apps.apple.com/us/app/coach-academ/id6745173635', '_blank')}>
+            <button className="bg-[#205072] hover:bg-[#24bcc7] text-white text-lg px-5 py-2 rounded-full font-medium transition-colors" onClick={() =>  window.open('https://apps.apple.com/us/app/coach-academ/id6745173635', '_blank')}>
               Get the App
             </button>
           </div>
@@ -90,7 +90,7 @@ const Header = () => {
                   {item}
                 </a>
               ))}
-              <button className="bg-[#205072] hover:bg-indigo-700 text-white w-full py-2 rounded-full font-medium transition-colors mt-2" onClick={() =>  window.open('https://apps.apple.com/us/app/coach-academ/id6745173635', '_blank')}>
+              <button className="bg-[#205072] hover:bg-[#24bcc7] text text-white w-full py-2 rounded-full font-medium transition-colors mt-2" onClick={() =>  window.open('https://apps.apple.com/us/app/coach-academ/id6745173635', '_blank')}>
                 Get the App
               </button>
             </nav>
