@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+@layer base {
+    body {
+      @apply font-lora; /* This will use Inter for all body text by default */
+    }
+    h1, h2, h3, h4, h5, h6 {
+      @apply font-montserrat; /* This will use Montserrat for all headings */
+    }
+  }

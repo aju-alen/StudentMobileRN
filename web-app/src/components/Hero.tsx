@@ -65,7 +65,7 @@ const Hero = () => {
               <div className="flex flex-col items-center bg-[#205072] rounded-3xl px-8 py-7 shadow-xl">
                 <span className="text-white text-2xl font-semibold mb-3">GET THE APP</span>
                 <div className="bg-white rounded-2xl p-2 flex items-center justify-center">
-                  <img src={AppDownloadQR} alt="Scan to download app" className="w-38 h-38" />
+                  <img src={AppDownloadQR} alt="Scan to download app" className="w-28 h-28" />
                 </div>
               </div>
             </div>

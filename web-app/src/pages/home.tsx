@@ -6,6 +6,10 @@ import Courses from '../components/Courses';
 import FAQ from '../components/FAQ';
 import CallToAction from '../components/CallToAction';
 import SEO from '../components/SEO';
+import TutorLanguages from '../components/TutorLanguages';
+import HowItWorks from '../components/HowItWorks';
+import LoveLessonsBanner from '../components/LoveLessonsBanner';
+import BecomeTutor from '../components/BecomeTutor';
 
 function Home() {
   return (
@@ -76,9 +80,22 @@ function Home() {
         themeColor="#3B82F6"
       />
       <Hero />
-      <Features />
-      <AppPromotion />
-      <Courses />
+      <TutorLanguages />
+      <HowItWorks />
+      {/* <Features /> */}
+      <LoveLessonsBanner bgColor="pink">
+        <h2 className="text-4xl md:text-6xl font-extrabold text-black mb-4">You’ll love every tutor interaction and the lessons, too.</h2>
+        <p className="text-lg md:text-xl text-black/80">That’s a guarantee from us to you. If dissatisfied? Try another tutor for free.</p>
+      </LoveLessonsBanner>
+
+      <LoveLessonsBanner bgColor="blue">
+        <h2 className="text-4xl md:text-6xl font-extrabold text-black mb-4">Featured in</h2>
+        <p className="text-lg md:text-xl text-black/80">The National | Khaleej Times | BBC Middle East | Gulf News | Teach Middle East.</p>
+      </LoveLessonsBanner>
+
+      {/* <AppPromotion /> */}
+      <BecomeTutor />
+      {/* <Courses /> */}
       {/* <Testimonials /> */}
       <FAQ />
       <CallToAction />
