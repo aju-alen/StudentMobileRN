@@ -10,6 +10,7 @@ import TutorLanguages from '../components/TutorLanguages';
 import HowItWorks from '../components/HowItWorks';
 import LoveLessonsBanner from '../components/LoveLessonsBanner';
 import BecomeTutor from '../components/BecomeTutor';
+import QRCodeFloater from '../components/QRCodeFloater';
 
 function Home() {
   return (
@@ -100,6 +101,7 @@ function Home() {
       <FAQ />
       <CallToAction />
       {/* <Footer /> */}
+      <QRCodeFloater />
     </div>
   );
 }

@@ -71,7 +71,7 @@ const languages = [
 
 const TutorLanguages = () => {
   return (
-    <section className="max-w-6xl mx-auto py-12 px-4">
+    <section className="  py-12 px-4 md:px-32">
       {/* Stats Row */}
       <div className="flex flex-wrap justify-between items-center gap-6 mb-12">
         {stats.map((stat, i) => (
