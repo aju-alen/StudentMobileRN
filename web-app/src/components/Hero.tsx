@@ -62,9 +62,9 @@ const Hero = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-8 items-center">
               {/* QR Code Download Section - Styled like reference */}
-              <div className="flex flex-row items-center border border-gray-300 rounded-2xl px-6 py-4 bg-white shadow-md gap-6">
-                <span className="text-lg font-semibold text-gray-800 whitespace-nowrap">Get the Coach Academ app now.</span>
-                <div className="flex items-center justify-center">
+              <div className="flex flex-row items-center border border-gray-300 rounded-2xl px-6 py-4 bg-[#205072] shadow-md gap-6">
+                <span className="text-lg font-semibold text-white whitespace-nowrap">Get the app.</span>
+                <div className="flex items-center justify-center border border-gray-300 rounded-2xl p-2">
                   <img src={AppDownloadQR} alt="Scan to download app" className="w-24 h-24" />
                 </div>
               </div>

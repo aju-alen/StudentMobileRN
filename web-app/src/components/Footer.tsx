@@ -1,6 +1,7 @@
 
 import { Mail, MapPin } from 'lucide-react';
 import AppleLogo from "../assets/apple-black-logo-svgrepo-com.svg"
+import AndroidLogo from "../assets/android-logo-svgrepo-com.svg"
 import { frontendURL } from '../common/ipUrl';
 
 const Footer = () => {
@@ -100,11 +101,9 @@ Dubai</span>
                 <a href="https://apps.apple.com/in/app/coach-academ/id6745173635" className="bg-gray-800 hover:bg-gray-700 p-2 rounded transition-colors">
                 <img src={AppleLogo} alt="Apple Logo" className="w-6 h-6" />
                 </a>
-                {/* <a href="#" className="bg-gray-800 hover:bg-gray-700 p-2 rounded transition-colors">
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none">
-                    <path d="M3.60156 3.60156V20.3984H20.3984V3.60156H3.60156ZM15.9984 11.9984L12.9984 9.59844V14.3984L15.9984 11.9984Z" fill="white"/>
-                  </svg>
-                </a> */}
+                <a href="https://play.google.com/store/apps/details?id=com.rise.coachacadem&hl=en" className="bg-gray-800 hover:bg-gray-700 p-2 rounded transition-colors">
+                  <img src={AndroidLogo} alt="Android Logo" className="w-6 h-6" />
+                </a>
               </div>
             </div>
           </div>

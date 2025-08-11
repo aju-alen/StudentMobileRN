@@ -84,16 +84,8 @@ function Home() {
       <TutorLanguages />
       <HowItWorks />
       {/* <Features /> */}
-      <LoveLessonsBanner>
-        <h2 className="text-4xl md:text-6xl font-extrabold text-white mb-4 leading-10">You’ll love every tutor interaction and the lessons, too.</h2>
-        <p className="text-lg md:text-xl text-white/80">That’s a guarantee from us to you. If dissatisfied? Try another tutor for free.</p>
-      </LoveLessonsBanner>
-
-      <LoveLessonsBanner>
-        <h2 className="text-4xl md:text-6xl font-extrabold text-white mb-4">Featured in</h2>
-        <p className="text-lg md:text-xl text-white/80">The National | Khaleej Times | BBC Middle East | Gulf News | Teach Middle East.</p>
-      </LoveLessonsBanner>
-
+      <LoveLessonsBanner />
+      
       {/* <AppPromotion /> */}
       <BecomeTutor />
       {/* <Courses /> */}

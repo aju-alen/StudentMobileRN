@@ -14,7 +14,7 @@ const QRCodeFloater = () => {
         ×
       </button>
       <img src={AppDownloadQR} alt="Scan to download app" className="w-24 h-24 mb-2" />
-      <span className="text-xs text-gray-600">Scan to download our app</span>
+      <span className="text-xs text-gray-600">Get the app</span>
     </div>
   );
 };

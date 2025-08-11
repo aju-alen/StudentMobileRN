@@ -73,20 +73,20 @@ const TutorLanguages = () => {
   return (
     <section className="  py-12 px-4 md:px-32">
       {/* Stats Row */}
-      <div className="flex flex-wrap justify-between items-center gap-6 mb-12">
+      <div className="flex flex-wrap justify-between items-center gap-6 sm:gap-8 md:gap-12 mb-8 md:mb-16 min-h-[120px] sm:min-h-[160px] md:min-h-[200px] py-8 sm:py-10 md:py-12 lg:py-16">
         {stats.map((stat, i) => (
-          <div key={i} className="flex flex-col items-center min-w-[120px]">
-            <span className="text-2xl font-bold text-gray-900 flex items-center">
+          <div key={i} className="flex flex-col items-center min-w-[120px] sm:min-w-[140px] md:min-w-[160px]">
+            <span className=" sm:text-xl md:text-5xl font-extrabold text-gray-900 flex items-center">
               {stat.value}
               {stat.stars && (
-                <span className="ml-2 flex text-yellow-400">
+                <span className="ml-2 sm:ml-3 flex text-yellow-400">
                   {Array.from({ length: stat.stars }).map((_, idx) => (
-                    <svg key={idx} width="18" height="18" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.175c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.38-2.454a1 1 0 00-1.175 0l-3.38 2.454c-.784.57-1.838-.196-1.54-1.118l1.287-3.966a1 1 0 00-.364-1.118L2.05 9.394c-.783-.57-.38-1.81.588-1.81h4.175a1 1 0 00.95-.69l1.286-3.967z"/></svg>
+                    <svg key={idx} className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.175c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.287 3.966c.3.922-.755 1.688-1.54 1.118l-3.38-2.454a1 1 0 00-1.175 0l-3.38 2.454c-.784.57-1.838-.196-1.54-1.118l1.287-3.966a1 1 0 00-.364-1.118L2.05 9.394c-.783-.57-.38-1.81.588-1.81h4.175a1 1 0 00.95-.69l1.286-3.967z"/></svg>
                   ))}
                 </span>
               )}
             </span>
-            <span className="text-gray-500  sm:text-sm md:text-2xl text-center mt-1">{stat.label}</span>
+            <span className="text-gray-500 text-base sm:text-lg md:text-2xl text-center mt-2 sm:mt-3 font-semibold">{stat.label}</span>
           </div>
         ))}
       </div>
