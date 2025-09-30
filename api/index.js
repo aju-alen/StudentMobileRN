@@ -49,12 +49,6 @@ app.use(cors({
 app.use('/api/stripe-webhook', express.raw({type: 'application/json'}), stripeWebhook);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-
-
-app.get('/health', (req, res) => {
-    res.status(200).json({ message: "Server is healthy" });
-}
-);
 app.use('/api/auth', authRoute)
 app.use('/api/subjects', subjectRoute)
 app.use('/api/conversation', conversationRoute)
@@ -68,7 +62,10 @@ app.use("/api/reviews", reviewRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use(errorHandler)
-
+app.get('/health', (req, res) => {
+    res.status(200).json({ message: "Server is healthy" });
+}
+);
 const port = process.env.PORT || 3000;
 server.listen(port, () => {
     console.log(`Server is running on port ${port}`);
