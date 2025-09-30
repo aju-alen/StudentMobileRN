@@ -1,16 +1,172 @@
 import React, { useState } from 'react';
-import { View, TextInput, SafeAreaView, StyleSheet, KeyboardAvoidingView, TouchableOpacity, Text, Pressable, Alert, ScrollView } from 'react-native';
+import { View, TextInput, SafeAreaView, StyleSheet, TouchableOpacity, Text, Pressable, Alert, ScrollView, Modal, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import Checkbox from 'expo-checkbox';
 import axios from 'axios';
 import { ipURL } from '../utils/utils';
-import { COLORS, welcomeCOLOR } from '../../constants/theme';
-import { Picker } from '@react-native-picker/picker';
-import Button from '../components/Button';
+import { COLORS } from '../../constants/theme';
 import { verticalScale, horizontalScale, moderateScale } from '../utils/metrics';
 
+const UserTypeScreen = ({ onSelect }) => {
+    return (
+        <SafeAreaView style={styles.container}>
+        <ScrollView showsVerticalScrollIndicator={false}>
+            <View style={styles.content}>
+                <View style={styles.headerSection}>
+                    <Text style={styles.title}>Register to</Text>
+                    <Text style={styles.titleBold}>Coach Academ</Text>
+                    <Text style={styles.subtitle}>Choose how you want to join our learning community</Text>
+                </View>
+
+                <View style={styles.userTypeContainer}>
+                    <TouchableOpacity 
+                        style={styles.userTypeButton}
+                        onPress={() => onSelect(false)}
+                    >
+                        <View style={styles.userTypeIconContainer}>
+                            <Ionicons name="school-outline" size={50} color={COLORS.primary} />
+                        </View>
+                        <Text style={styles.userTypeTitle}>Student</Text>
+                        <Text style={styles.userTypeDescription}>Join as a student to learn and grow with personalized guidance and interactive lessons</Text>
+                        <View style={styles.userTypeFeatures}>
+                            <View style={styles.featureItem}>
+                                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
+                                <Text style={styles.featureText}>Personalized Learning</Text>
+                            </View>
+                            <View style={styles.featureItem}>
+                                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
+                                <Text style={styles.featureText}>Interactive Lessons</Text>
+                            </View>
+                            <View style={styles.featureItem}>
+                                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
+                                <Text style={styles.featureText}>Track Progress</Text>
+                            </View>
+                        </View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                        style={styles.userTypeButton}
+                        onPress={() => onSelect(true)}
+                    >
+                        <View style={styles.userTypeIconContainer}>
+                            <Ionicons name="person-outline" size={50} color={COLORS.primary} />
+                        </View>
+                        <Text style={styles.userTypeTitle}>Teacher</Text>
+                        <Text style={styles.userTypeDescription}>Join as a teacher to share your knowledge and help students achieve their goals</Text>
+                        <View style={styles.userTypeFeatures}>
+                            <View style={styles.featureItem}>
+                                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
+                                <Text style={styles.featureText}>Create Courses</Text>
+                            </View>
+                            <View style={styles.featureItem}>
+                                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
+                                <Text style={styles.featureText}>Engage Students</Text>
+                            </View>
+                            <View style={styles.featureItem}>
+                                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
+                                <Text style={styles.featureText}>Monitor Progress</Text>
+                            </View>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </ScrollView>
+        </SafeAreaView>
+    );
+};
+
+const CustomDropdown = ({ label, value, options, onSelect, placeholder, isMultiSelect = false, selectedValues = [] }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    const handleSelect = (optionValue) => {
+        if (isMultiSelect) {
+            const newValue = Number(optionValue);
+            if (selectedValues.includes(newValue)) {
+                onSelect(selectedValues.filter(v => v !== newValue));
+            } else {
+                onSelect([...selectedValues, newValue]);
+            }
+        } else {
+            onSelect(Number(optionValue));
+        }
+        if (!isMultiSelect) {
+            setIsOpen(false);
+        }
+    };
+
+    const getDisplayValue = () => {
+        if (isMultiSelect) {
+            if (selectedValues.length === 0) return placeholder;
+            return selectedValues.map(v => `Grade ${v}`).join(', ');
+        }
+        return value ? `Grade ${value}` : placeholder;
+    };
+
+    return (
+        <View style={styles.inputGroup}>
+            <Text style={styles.label}>{label}</Text>
+            <TouchableOpacity 
+                style={styles.dropdownButton}
+                onPress={() => setIsOpen(true)}
+            >
+                <Text style={[
+                    styles.dropdownButtonText,
+                    (!value && !selectedValues.length) && styles.placeholderText
+                ]}>
+                    {getDisplayValue()}
+                </Text>
+                <Ionicons name="chevron-down" size={20} color="#666" />
+            </TouchableOpacity>
+
+            <Modal
+                visible={isOpen}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setIsOpen(false)}
+            >
+                <TouchableOpacity 
+                    style={styles.modalOverlay}
+                    activeOpacity={1}
+                    onPress={() => setIsOpen(false)}
+                >
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>{label}</Text>
+                            <TouchableOpacity onPress={() => setIsOpen(false)}>
+                                <Ionicons name="close" size={24} color="#666" />
+                            </TouchableOpacity>
+                        </View>
+                        <ScrollView style={styles.optionsList}>
+                            {options.map((option, index) => (
+                                <TouchableOpacity
+                                    key={index}
+                                    style={[
+                                        styles.optionItem,
+                                        (isMultiSelect ? selectedValues.includes(option.value) : value === option.value) && styles.selectedOption
+                                    ]}
+                                    onPress={() => handleSelect(option.value)}
+                                >
+                                    <Text style={[
+                                        styles.optionText,
+                                        (isMultiSelect ? selectedValues.includes(option.value) : value === option.value) && styles.selectedOptionText
+                                    ]}>
+                                        {option.label}
+                                    </Text>
+                                    {(isMultiSelect ? selectedValues.includes(option.value) : value === option.value) && (
+                                        <Ionicons name="checkmark" size={20} color={COLORS.primary} />
+                                    )}
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+                </TouchableOpacity>
+            </Modal>
+        </View>
+    );
+};
+
 const RegisterPage = () => {
+    const [showUserType, setShowUserType] = useState(true);
     const [name, setName] = useState('');
     const [isPasswordShown, setIsPasswordShown] = useState(false);
     const [email, setEmail] = useState('');
@@ -23,8 +179,46 @@ const RegisterPage = () => {
     const [isTeacher, setIsTeacher] = useState(false);
     const [recommendedBoard, setRecommendedBoard] = useState('');
     const [recommendedGrade, setRecommendedGrade] = useState(0);
+    const [selectedGrades, setSelectedGrades] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+
+
+
+    const boardOptions = [
+        { label: 'Select your board', value: '' },
+        { label: 'CBSE', value: 'CBSE' },
+        { label: 'ICSE', value: 'ICSE' },
+        { label: 'AP', value: 'AP' },
+        { label: 'IGCSE-A Levels', value: 'IGCSE-A Levels' },
+        { label: 'IB', value: 'IB' },
+    ];
+
+    const gradeOptions = [
+        { label: 'Select your grade', value: 0 },
+        ...Array.from({ length: 13 }, (_, i) => ({
+            label: `Grade ${i + 1}`,
+            value: i + 1
+        }))
+    ];
+
+    const handleUserTypeSelect = (isTeacherSelected) => {
+        setIsTeacher(isTeacherSelected);
+        setShowUserType(false);
+    };
+
+    const handleGoBack = () => {
+        setShowUserType(true);
+    };
 
     const handleRegister = async () => {
+        if (password !== confirmPassword) {
+            Alert.alert('Error', 'Passwords do not match');
+            return;
+        }
+        if (name.trim() === '' || email.trim() === '' || password.trim() === '' || confirmPassword.trim() === '' || userDescription.trim() === '' || reccomendedSubjects.length === 0 || recommendedBoard === '' || (isTeacher ? selectedGrades.length === 0 : recommendedGrade === 0)) {
+            Alert.alert('Error', 'Please fill all the fields');
+            return;
+        }
         const user = {
             name,
             email,
@@ -36,9 +230,12 @@ const RegisterPage = () => {
             reccomendedSubjects,
             recommendedBoard,
             recommendedGrade,
+            selectedGrades: isTeacher ? selectedGrades : [recommendedGrade],
         }
+        console.log(user,'user details');
         
         try {
+            setIsLoading(true);
             if (password !== confirmPassword) {
                 Alert.alert('Error', 'Passwords do not match');
                 return;
@@ -46,8 +243,10 @@ const RegisterPage = () => {
             const resp = await axios.post(`${ipURL}/api/auth/register`, user)
             Alert.alert('Success', 'Registration successful! Please verify email to login');
             router.replace(`/(authenticate)/${resp.data.userId}`);
+            setIsLoading(false);
         }
         catch (err) {
+            setIsLoading(false);
             Alert.alert('Error', err.response.data.message);
         }
     }
@@ -63,12 +262,24 @@ const RegisterPage = () => {
         }
     };
 
+    if (showUserType) {
+        return <UserTypeScreen onSelect={handleUserTypeSelect} />;
+    }
+
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView showsVerticalScrollIndicator={false}>
                 <View style={styles.content}>
+                    <TouchableOpacity 
+                        style={styles.backButton}
+                        onPress={handleGoBack}
+                    >
+                        <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
+                        <Text style={styles.backButtonText}>Change User Type</Text>
+                    </TouchableOpacity>
+
                     <View style={styles.headerSection}>
-                        <Text style={styles.title}>Create Account</Text>
+                        <Text style={styles.title}>Create {isTeacher ? 'Teacher' : 'Student'} Account</Text>
                         <Text style={styles.subtitle}>Join our learning community</Text>
                     </View>
 
@@ -146,64 +357,67 @@ const RegisterPage = () => {
                     <View style={styles.inputGroup}>
                         <Text style={styles.label}>Add Subjects (Max 3)</Text>
                         <View style={styles.subjectContainer}>
-                            <TextInput
-                                style={styles.subjectInput}
-                                placeholder="Enter a subject"
-                                placeholderTextColor="#666"
-                                value={subjectInput}
-                                onChangeText={setSubjectInput}
-                            />
-                            <TouchableOpacity 
-                                style={styles.addButton}
-                                onPress={handleReccomendedSubject}
-                            >
-                                <Text style={styles.addButtonText}>+</Text>
-                            </TouchableOpacity>
+                            <View style={styles.subjectInputWrapper}>
+                                <TextInput
+                                    style={styles.subjectInput}
+                                    placeholder="Enter a subject"
+                                    placeholderTextColor="#666"
+                                    value={subjectInput}
+                                    onChangeText={setSubjectInput}
+                                />
+                              {reccomendedSubjects.length < 3 && <TouchableOpacity 
+                                    style={styles.addButton}
+                                    onPress={handleReccomendedSubject}
+                                >
+                                    <Ionicons name="add-circle" size={24} color={COLORS.primary} />
+                                </TouchableOpacity>}
+                            </View>
                         </View>
                         <View style={styles.chipContainer}>
                             {reccomendedSubjects.map((subject, index) => (
                                 <View key={index} style={styles.chip}>
-                                    <Text style={styles.chipText}>{subject}</Text>
+                                    <Text style={styles.chipText}>{subject.toUpperCase()}</Text>
+                                    <TouchableOpacity 
+                                        onPress={() => {
+                                            const newSubjects = [...reccomendedSubjects];
+                                            newSubjects.splice(index, 1);
+                                            setReccomendedSubjects(newSubjects);
+                                        }}
+                                        style={styles.chipDeleteButton}
+                                    >
+                                        <Ionicons name="close-circle" size={16} color={COLORS.primary} />
+                                    </TouchableOpacity>
                                 </View>
                             ))}
                         </View>
                     </View>
 
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Board</Text>
-                        <View style={styles.pickerContainer}>
-                            <Picker
-                                selectedValue={recommendedBoard}
+                    <CustomDropdown
+                        label="Board"
+                        value={recommendedBoard}
+                        options={boardOptions}
+                        onSelect={setRecommendedBoard}
+                        placeholder="Select your board"
+                    />
 
-                                onValueChange={setRecommendedBoard}
-                            >
-                                <Picker.Item label="Select your board" value="" />
-                                <Picker.Item label="CBSE" value="CBSE" />
-                                <Picker.Item label="ICSE" value="ICSE" />
-                                <Picker.Item label="AP" value="AP" />
-                                <Picker.Item label="IGCSE-A Levels" value="IGCSE-A Levels" />
-                                <Picker.Item label="IB" value="IB" />
-                            </Picker>
-                        </View>
-                    </View>
+                    <CustomDropdown
+                        label="Grade"
+                        value={recommendedGrade}
+                        options={gradeOptions}
+                        onSelect={(value) => {
+                            if (isTeacher) {
+                                setSelectedGrades(value);
+                                setRecommendedGrade(value[0] || 0);
+                            } else {
+                                setRecommendedGrade(value);
+                            }
+                        }}
+                        placeholder="Select your grade"
+                        isMultiSelect={isTeacher}
+                        selectedValues={selectedGrades}
+                    />
 
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.label}>Grade</Text>
-                        <View style={styles.pickerContainer}>
-                            <Picker
-                                selectedValue={recommendedGrade}
-
-                                onValueChange={(value) => setRecommendedGrade(Number(value))}
-                            >
-                                <Picker.Item label="Select your grade" value="0" />
-                                {[...Array(13)].map((_, i) => (
-                                    <Picker.Item key={i + 1} label={`Grade ${i + 1}`} value={i + 1} />
-                                ))}
-                            </Picker>
-                        </View>
-                    </View>
-
-                    <View style={styles.checkboxContainer}>
+                    {/* <View style={styles.checkboxContainer}>
                         <Checkbox
                             style={styles.checkbox}
                             value={isTeacher}
@@ -211,13 +425,13 @@ const RegisterPage = () => {
                             color={isTeacher ? COLORS.primary : undefined}
                         />
                         <Text style={styles.checkboxLabel}>I am a teacher</Text>
-                    </View>
+                    </View> */}
 
                     <TouchableOpacity
                         style={styles.registerButton}
                         onPress={handleRegister}
                     >
-                        <Text style={styles.registerButtonText}>Create Account</Text>
+                        {isLoading ? <ActivityIndicator size="small" color={COLORS.white} /> : <Text style={styles.registerButtonText}>Create Account</Text>}
                     </TouchableOpacity>
 
                     <View style={styles.loginContainer}>
@@ -248,6 +462,13 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: COLORS.primary,
         marginBottom: verticalScale(8),
+    },
+    titleBold: {
+        fontSize: moderateScale(35),
+        fontWeight: 'bold',
+        color: COLORS.primary,
+        marginBottom: verticalScale(8),
+        textAlign: 'center',
     },
     subtitle: {
         fontSize: moderateScale(16),
@@ -293,28 +514,25 @@ const styles = StyleSheet.create({
         padding: moderateScale(10),
     },
     subjectContainer: {
-        flexDirection: 'row',
-        gap: horizontalScale(10),
+        marginBottom: verticalScale(10),
     },
-    subjectInput: {
-        flex: 1,
+    subjectInputWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
         borderWidth: 1,
         borderColor: '#ddd',
         borderRadius: moderateScale(8),
+        backgroundColor: '#fff',
+        paddingRight: horizontalScale(8),
+    },
+    subjectInput: {
+        flex: 1,
         padding: moderateScale(12),
         fontSize: moderateScale(16),
+        color: '#333',
     },
     addButton: {
-        backgroundColor: COLORS.primary,
-        width: verticalScale(45),
-        borderRadius: moderateScale(8),
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    addButtonText: {
-        color: '#fff',
-        fontSize: moderateScale(24),
-        fontWeight: 'bold',
+        padding: moderateScale(8),
     },
     chipContainer: {
         flexDirection: 'row',
@@ -323,24 +541,92 @@ const styles = StyleSheet.create({
         gap: moderateScale(8),
     },
     chip: {
-        backgroundColor: COLORS.primary + '20',
+        backgroundColor: COLORS.primary + '15',
         paddingHorizontal: horizontalScale(12),
         paddingVertical: verticalScale(6),
-        borderRadius: moderateScale(16),
+        borderRadius: moderateScale(20),
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: horizontalScale(4),
+        borderWidth: 1,
+        borderColor: COLORS.primary + '30',
     },
     chipText: {
         color: COLORS.primary,
         fontSize: moderateScale(14),
+        fontWeight: '500',
     },
-    pickerContainer: {
+    chipDeleteButton: {
+        padding: moderateScale(2),
+    },
+    dropdownButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         borderWidth: 1,
-        borderColor: '#ddd',
+        borderColor: '#DDD',
         borderRadius: moderateScale(8),
-        backgroundColor: '#fff',
-        overflow: 'hidden',
+        paddingHorizontal: horizontalScale(16),
+        paddingVertical: verticalScale(12),
+        backgroundColor: '#FFF',
     },
-    picker: {
-        height: verticalScale(50),
+    dropdownButtonText: {
+        fontSize: moderateScale(16),
+        color: '#333',
+        fontFamily: 'System',
+    },
+    placeholderText: {
+        color: '#666',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        backgroundColor: '#FFF',
+        borderRadius: moderateScale(16),
+        width: '90%',
+        maxHeight: '80%',
+        padding: moderateScale(16),
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: verticalScale(16),
+        paddingBottom: verticalScale(12),
+        borderBottomWidth: 1,
+        borderBottomColor: '#EEE',
+    },
+    modalTitle: {
+        fontSize: moderateScale(18),
+        fontWeight: '600',
+        color: '#333',
+    },
+    optionsList: {
+        maxHeight: verticalScale(300),
+    },
+    optionItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: verticalScale(12),
+        paddingHorizontal: horizontalScale(16),
+        borderBottomWidth: 1,
+        borderBottomColor: '#EEE',
+    },
+    selectedOption: {
+        backgroundColor: '#F0F7FF',
+    },
+    optionText: {
+        fontSize: moderateScale(16),
+        color: '#333',
+    },
+    selectedOptionText: {
+        color: COLORS.primary,
+        fontWeight: '500',
     },
     checkboxContainer: {
         flexDirection: 'row',
@@ -380,6 +666,77 @@ const styles = StyleSheet.create({
         fontSize: moderateScale(16),
         color: COLORS.primary,
         fontWeight: '600',
+    },
+    userTypeContainer: {
+        flexDirection: 'column',
+        gap: moderateScale(20),
+        marginTop: verticalScale(20),
+        paddingHorizontal: horizontalScale(10),
+    },
+    userTypeButton: {
+        backgroundColor: '#fff',
+        borderRadius: moderateScale(20),
+        padding: moderateScale(24),
+        borderWidth: 1,
+        borderColor: '#ddd',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        //shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 5,
+    },
+    userTypeIconContainer: {
+        width: moderateScale(80),
+        height: moderateScale(80),
+        borderRadius: moderateScale(40),
+        backgroundColor: COLORS.primary + '15',
+        justifyContent: 'center',
+        alignItems: 'center',
+        alignSelf: 'center',
+        marginBottom: verticalScale(16),
+    },
+    userTypeTitle: {
+        fontSize: moderateScale(24),
+        fontWeight: '700',
+        color: COLORS.primary,
+        textAlign: 'center',
+        marginBottom: verticalScale(12),
+    },
+    userTypeDescription: {
+        fontSize: moderateScale(16),
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: verticalScale(20),
+        lineHeight: moderateScale(22),
+    },
+    userTypeFeatures: {
+        marginTop: verticalScale(10),
+    },
+    featureItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: verticalScale(12),
+        paddingHorizontal: horizontalScale(10),
+    },
+    featureText: {
+        fontSize: moderateScale(15),
+        color: '#444',
+        marginLeft: horizontalScale(10),
+    },
+    backButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: verticalScale(10),
+        marginBottom: verticalScale(10),
+    },
+    backButtonText: {
+        fontSize: moderateScale(16),
+        color: COLORS.primary,
+        marginLeft: horizontalScale(8),
+        fontWeight: '500',
     },
 });
 

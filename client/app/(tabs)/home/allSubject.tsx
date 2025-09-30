@@ -1,18 +1,18 @@
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, TextInput, ActivityIndicator } from 'react-native'
+import { RefreshControl } from 'react-native'
+import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, TextInput, ActivityIndicator, StatusBar } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import SubjectCards from '../../components/SubjectCards'
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import { router, useLocalSearchParams } from 'expo-router';
-import { debounce } from "lodash";
 import { Ionicons } from "@expo/vector-icons";
 import { ipURL } from '../../utils/utils';
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
 import { FONT, COLORS } from '../../../constants';
 import { ScrollView, GestureHandlerRootView } from 'react-native-gesture-handler';
+import {axiosWithAuth}   from '../../utils/customAxios';
+import StatusBarComponent from '../../components/StatusBarComponent';
 
 interface Subject {
-  _id: string;
+  id: string;
   subjectName: string;
   subjectDescription: string;
   subjectGrade: string;
@@ -21,42 +21,66 @@ interface Subject {
   thumbnail: string;
 }
 
+interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalSubjects: number;
+  hasMore: boolean;
+}
+
 const allSubject = () => {
   const [subjectData, setSubjectData] = useState<Subject[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    currentPage: 1,
+    totalPages: 1,
+    totalSubjects: 0,
+    hasMore: true
+  });
 
-  const fetchSubjects = async (searchTerm?: string) => {
+  const fetchSubjects = async (searchTerm?: string, page: number = 1, append: boolean = false) => {
     try {
-      setLoading(true);
-      const token = await AsyncStorage.getItem("authToken");
+      if (page === 1) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+
       const url = searchTerm && searchTerm.trim() !== ''
-        ? `${ipURL}/api/subjects?q=${encodeURIComponent(searchTerm.trim())}`
-        : `${ipURL}/api/subjects`;
+        ? `${ipURL}/api/subjects/advance-search?q=${searchTerm}&page=${page}`
+        : `${ipURL}/api/subjects/advance-search?page=${page}`;
       
-      const response = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setSubjectData(response.data);
+      const response = await axiosWithAuth.get(url);
+      
+      if (append) {
+        setSubjectData(prev => [...prev, ...response.data.subjects]);
+      } else {
+        setSubjectData(response.data.subjects);
+      }
+      
+      setPagination(response.data.pagination);
     } catch (err) {
       setError('Failed to fetch subjects. Please try again.');
       console.error('Error fetching subjects:', err);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+      setRefreshing(false);
     }
   };
 
   const handleSearch = (text: string) => {
     setSearch(text);
     
-    // Clear existing timeout
     if (searchTimeout) {
       clearTimeout(searchTimeout);
     }
 
-    // Set new timeout
     const timeout = setTimeout(() => {
       if (!text.trim()) {
         fetchSubjects();
@@ -70,11 +94,9 @@ const allSubject = () => {
 
   const handleKeyPress = (e: any) => {
     if (e.nativeEvent.key === 'Enter') {
-      // Clear existing timeout
       if (searchTimeout) {
         clearTimeout(searchTimeout);
       }
-      // Trigger search immediately
       if (!search.trim()) {
         fetchSubjects();
         return;
@@ -83,9 +105,30 @@ const allSubject = () => {
     }
   };
 
+  const handleLoadMore = () => {
+    if (!loadingMore && pagination.hasMore) {
+      const nextPage = pagination.currentPage + 1;
+      fetchSubjects(search, nextPage, true);
+    }
+  };
+
+  const handleScroll = (event: any) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const paddingToBottom = 20;
+    const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+
+    if (isCloseToBottom && !loadingMore && pagination.hasMore) {
+      handleLoadMore();
+    }
+  };
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    fetchSubjects(search);
+  }, [search]);
+
   useEffect(() => {
     return () => {
-      // Cleanup timeout on component unmount
       if (searchTimeout) {
         clearTimeout(searchTimeout);
       }
@@ -96,8 +139,8 @@ const allSubject = () => {
     fetchSubjects();
   }, []);
 
-  const handleItemPress = (itemId: { _id: string }) => {
-    router.push(`/(tabs)/home/${itemId._id}`);
+  const handleItemPress = (itemId: { id: string }) => {
+    router.push(`/(tabs)/home/${itemId.id}`);
   };
 
   const handleFilterPress = () => {
@@ -107,18 +150,19 @@ const allSubject = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaView style={styles.mainContainer}>
+       <StatusBarComponent />
         <View style={styles.header}>
           <Text style={styles.headerTitle}>All Courses</Text>
-          <TouchableOpacity onPress={handleFilterPress} style={styles.filterButton}>
-            <Ionicons name="options-outline" size={24} color={COLORS.primary} />
-          </TouchableOpacity>
+          {/* <TouchableOpacity onPress={handleFilterPress} style={styles.filterButton}>
+            <Ionicons name="options-outline" size={moderateScale(24)} color={COLORS.primary} />
+          </TouchableOpacity> */}
         </View>
 
         <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color={COLORS.gray} style={styles.searchIcon} />
+          <Ionicons name="search" size={moderateScale(20)} color={COLORS.gray} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search courses, subjects, or tags..."
+            placeholder="Search courses by name"
             placeholderTextColor={COLORS.gray}
             value={search}
             onChangeText={handleSearch}
@@ -133,7 +177,7 @@ const allSubject = () => {
               }}
               style={styles.clearButton}
             >
-              <Ionicons name="close-circle" size={20} color={COLORS.gray} />
+              <Ionicons name="close-circle" size={moderateScale(20)} color={COLORS.gray} />
             </TouchableOpacity>
           )}
         </View>
@@ -151,20 +195,35 @@ const allSubject = () => {
           </View>
         ) : subjectData.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="search-outline" size={48} color={COLORS.gray} />
+            <Ionicons name="search-outline" size={moderateScale(48) } color={COLORS.gray} />
             <Text style={styles.emptyText}>No courses found</Text>
-            <Text style={styles.emptySubtext}>Try different search terms</Text>
+            <Text style={styles.emptySubtext}>We might not have the course you're looking for yet. Please leave us a feedback and we'll add it to our list.</Text>
           </View>
         ) : (
           <ScrollView 
             style={styles.contentContainer}
             showsVerticalScrollIndicator={false}
+            onScroll={handleScroll}
+            scrollEventThrottle={400}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[COLORS.primary]}
+                tintColor={COLORS.primary}
+              />
+            }
           >
             <SubjectCards 
               subjectData={subjectData} 
               handleItemPress={handleItemPress} 
               isHorizontal={false} 
             />
+            {loadingMore && (
+              <View style={styles.loadingMoreContainer}>
+                <ActivityIndicator size="small" color={COLORS.primary} />
+              </View>
+            )}
           </ScrollView>
         )}
       </SafeAreaView>
@@ -267,5 +326,9 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
     color: COLORS.gray,
     marginTop: verticalScale(10),
+  },
+  loadingMoreContainer: {
+    paddingVertical: verticalScale(20),
+    alignItems: 'center',
   },
 });

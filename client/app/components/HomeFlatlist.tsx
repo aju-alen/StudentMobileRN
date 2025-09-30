@@ -46,7 +46,7 @@ const HomeFlatlist = ({ homeData, handleItemPress }) => {
     const getUser = async () => {
       try {
         const token = await AsyncStorage.getItem("authToken");
-        const apiUser = await axios.get(`${ipURL}/api/auth/me`, {
+        const apiUser = await axios.get(`${ipURL}/api/auth/metadata`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser(apiUser.data);
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     padding: CARD_PADDING,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
   },

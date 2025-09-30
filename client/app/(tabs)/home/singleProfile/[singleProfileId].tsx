@@ -7,16 +7,16 @@ import {
   TouchableWithoutFeedback,
   TouchableOpacity,
 } from "react-native";
-import { Alert } from "react-native";
 import { Image } from 'expo-image';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router,useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import axios from "axios";
 import { ipURL } from "../../../utils/utils";
-import KebabIcon from "../../../components/KebabIcon";
 import { FONT } from "../../../../constants";
 import { horizontalScale, moderateScale, verticalScale } from "../../../utils/metrics";
 import SubjectCards from "../../../components/SubjectCards";
+import { Ionicons } from '@expo/vector-icons';
+import StatusBarComponent from "../../../components/StatusBarComponent";
 
 interface User {
   id?: string;
@@ -83,15 +83,11 @@ const SingleProfilePage = () => {
 
 
   return (
-    <TouchableWithoutFeedback onPress={closeDropdown}>
-      <ScrollView style={styles.mainContainer}>
+    <View style={styles.mainContainer}>
+      <StatusBarComponent />
+      <ScrollView style={styles.scrollView}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.topBar}>
-            <Text style={styles.pageTitle}>My Profile</Text>
-           
-          </View>
-          
           <View style={styles.profileSection}>
             <Image
               source={{ uri: user.profileImage }}
@@ -106,42 +102,39 @@ const SingleProfilePage = () => {
                 {userDetails?.isTeacher ? 'Instructor' : 'Student'}
               </Text>
               <View style={styles.badgeContainer}>
-
-                {user?.reccomendedSubjects?.map((subjectTag,idx) =>
-
-                (<View style={styles.badge} key={idx} >
-                  <Text style={styles.badgeText}>{subjectTag.toLocaleUpperCase()}</Text>
-                </View>)
-                )}
-
+                {user?.reccomendedSubjects?.map((subjectTag, idx) => (
+                  <View style={styles.badge} key={idx}>
+                    <Text style={styles.badgeText}>{subjectTag.toLocaleUpperCase()}</Text>
+                  </View>
+                ))}
               </View>
             </View>
           </View>
         </View>
 
-        {/* Stats Grid */}
-        {userDetails?.isTeacher && <View style={styles.statsGrid}>
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>24</Text>
-              <Text style={styles.statLabel}>Hours Taught</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>156</Text>
-              <Text style={styles.statLabel}>Students</Text>
+        {/* Stats Section */}
+        {userDetails?.isTeacher && (
+          <View style={styles.statsSection}>
+            <View style={styles.statsGrid}>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>24</Text>
+                <Text style={styles.statLabel}>Hours Taught</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>156</Text>
+                <Text style={styles.statLabel}>Students</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>4.9</Text>
+                <Text style={styles.statLabel}>Rating</Text>
+              </View>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>89%</Text>
+                <Text style={styles.statLabel}>Completion</Text>
+              </View>
             </View>
           </View>
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>4.9</Text>
-              <Text style={styles.statLabel}>Rating</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>89%</Text>
-              <Text style={styles.statLabel}>Completion</Text>
-            </View>
-          </View>
-        </View>}
+        )}
 
         {/* About Section */}
         <View style={styles.section}>
@@ -154,27 +147,29 @@ const SingleProfilePage = () => {
         </View>
 
         {/* Teaching Stats */}
-       {userDetails?.isTeacher && <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Teaching Overview</Text>
-          <View style={styles.overviewGrid}>
-            <View style={styles.overviewItem}>
-              <Text style={styles.overviewValue}>98%</Text>
-              <Text style={styles.overviewLabel}>Response Rate</Text>
-            </View>
-            <View style={styles.overviewItem}>
-              <Text style={styles.overviewValue}>2hr</Text>
-              <Text style={styles.overviewLabel}>Avg. Response</Text>
-            </View>
-            <View style={styles.overviewItem}>
-              <Text style={styles.overviewValue}>95%</Text>
-              <Text style={styles.overviewLabel}>Satisfaction</Text>
+        {userDetails?.isTeacher && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Teaching Overview</Text>
+            <View style={styles.overviewGrid}>
+              <View style={styles.overviewItem}>
+                <Text style={styles.overviewValue}>98%</Text>
+                <Text style={styles.overviewLabel}>Response Rate</Text>
+              </View>
+              <View style={styles.overviewItem}>
+                <Text style={styles.overviewValue}>2hr</Text>
+                <Text style={styles.overviewLabel}>Avg. Response</Text>
+              </View>
+              <View style={styles.overviewItem}>
+                <Text style={styles.overviewValue}>95%</Text>
+                <Text style={styles.overviewLabel}>Satisfaction</Text>
+              </View>
             </View>
           </View>
-        </View>}
+        )}
 
         {/* Courses Section */}
         <View style={styles.section}>
-    
+          <Text style={styles.sectionTitle}>Courses</Text>
           <SubjectCards 
             subjectData={user.subjects} 
             handleItemPress={handleItemPress} 
@@ -182,7 +177,7 @@ const SingleProfilePage = () => {
           />
         </View>
       </ScrollView>
-    </TouchableWithoutFeedback>
+    </View>
   );
 };
 
@@ -190,6 +185,9 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
     backgroundColor: '#F4F6F8',
+  },
+  scrollView: {
+    flex: 1,
   },
   header: {
     backgroundColor: '#FFFFFF',
@@ -199,21 +197,9 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: moderateScale(30),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
-  },
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: horizontalScale(20),
-    marginBottom: verticalScale(20),
-  },
-  pageTitle: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(24),
-    color: '#1A2B4B',
   },
   profileSection: {
     flexDirection: 'row',
@@ -251,29 +237,31 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(4),
     borderRadius: moderateScale(12),
     marginRight: horizontalScale(8),
+    marginBottom: verticalScale(4),
   },
   badgeText: {
     fontFamily: FONT.medium,
     fontSize: moderateScale(12),
     color: '#4F46E5',
   },
-  statsGrid: {
+  statsSection: {
     padding: moderateScale(20),
   },
-  statsRow: {
+  statsGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: verticalScale(15),
   },
   statCard: {
-    backgroundColor: '#FFFFFF',
     width: '48%',
+    backgroundColor: '#FFFFFF',
     padding: moderateScale(15),
     borderRadius: moderateScale(15),
     alignItems: 'center',
+    marginBottom: verticalScale(15),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
@@ -291,16 +279,11 @@ const styles = StyleSheet.create({
   section: {
     padding: moderateScale(20),
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: verticalScale(15),
-  },
   sectionTitle: {
     fontFamily: FONT.bold,
     fontSize: moderateScale(20),
     color: '#1A2B4B',
+    marginBottom: verticalScale(15),
   },
   card: {
     backgroundColor: '#FFFFFF',
@@ -308,7 +291,7 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(15),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
@@ -326,7 +309,7 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(15),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
@@ -343,37 +326,6 @@ const styles = StyleSheet.create({
     fontFamily: FONT.medium,
     fontSize: moderateScale(12),
     color: '#64748B',
-  },
-  addButton: {
-    backgroundColor: '#4F46E5',
-    paddingHorizontal: horizontalScale(15),
-    paddingVertical: verticalScale(8),
-    borderRadius: moderateScale(20),
-  },
-  addButtonText: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(14),
-    color: '#FFFFFF',
-  },
-  logoutSection: {
-    padding: moderateScale(20),
-    alignItems: 'center',
-  },
-  logoutButton: {
-    backgroundColor: '#FEE2E2',
-    paddingHorizontal: horizontalScale(30),
-    paddingVertical: verticalScale(12),
-    borderRadius: moderateScale(20),
-    width: '100%',
-    alignItems: 'center',
-  },
-  logoutText: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(16),
-    color: '#DC2626',
-  },
-  bottomPadding: {
-    height: verticalScale(20),
   },
 });
 

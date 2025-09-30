@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: "#FFFFFF",
     elevation: 0,
-    shadowOpacity: 0,
+    //shadowOpacity: 0,
     borderBottomWidth: 1,
     borderBottomColor: "#F0F0F0",
   },
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
       width: 0,
       height: 1,
     },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
   },

@@ -34,6 +34,7 @@ const CalendarSummary = ({isTeacher}:{isTeacher:boolean}) => {
   };
 
   const renderClassItem = ({ item }: { item: ClassItem }) => (
+    <TouchableOpacity onPress={handleViewAll}>
     <View style={styles.classItem}>
       <View style={styles.dateContainer}>
         <Text style={styles.dateText}>{formatDate(item.bookingDate)}</Text>
@@ -45,6 +46,7 @@ const CalendarSummary = ({isTeacher}:{isTeacher:boolean}) => {
       </View>
       <Ionicons name="chevron-forward" size={20} color="#64748B" />
     </View>
+    </TouchableOpacity>
   );
 
   useEffect(() => {
@@ -67,7 +69,7 @@ const CalendarSummary = ({isTeacher}:{isTeacher:boolean}) => {
   console.log(upcomingClasses,'---upcomingClasses');
 
   const handleViewAll = () => {
-    router.push('/(tabs)/home/schedule');
+    router.push('/(tabs)/profile/schedule');
   };
 
   return (
@@ -105,7 +107,7 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(15),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },

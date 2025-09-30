@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { router } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
+import { router, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { FONT } from '../../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import StatusBarComponent from '../../components/StatusBarComponent';
 
 const SettingsPage = () => {
   const handleLogout = async () => {
@@ -29,8 +30,24 @@ const SettingsPage = () => {
     );
   };
 
+  const handlePrivacyPolicy = async () => {
+    const url = 'https://coachacademic.s3.ap-southeast-1.amazonaws.com/EULA+/Privacy+Policy+for+CoachAcadem1.pdf';
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        console.log("Cannot open URL: " + url);
+      }
+    } catch (error) {
+      console.error("Error opening URL:", error);
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
+      <StatusBarComponent />
+
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.backButton}
@@ -43,45 +60,86 @@ const SettingsPage = () => {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Account</Text>
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/(tabs)/profile/edit-profile')}
+        >
           <Text style={styles.settingText}>Edit Profile</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/(tabs)/profile/change-password')}
+        >
           <Text style={styles.settingText}>Change Password</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
+        {/* <TouchableOpacity style={styles.settingItem}>
           <Text style={styles.settingText}>Notification Settings</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Preferences</Text>
-        {/* <TouchableOpacity style={styles.settingItem}>
-          <Text style={styles.settingText}>Language</Text>
+        <Text style={styles.sectionTitle}>Actions</Text>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/(tabs)/profile/reports')}
+        >
+          <Text style={styles.settingText}>Your Reports</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
-        </TouchableOpacity> */}
-        {/* <TouchableOpacity style={styles.settingItem}>
-          <Text style={styles.settingText}>Theme</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/(tabs)/profile/blocked-users')}
+        >
+          <Text style={styles.settingText}>Blocked Users</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
-        </TouchableOpacity> */}
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.settingItem}>
+          <Text style={styles.settingText}>Your Reviews</Text>
+          <Ionicons name="chevron-forward" size={24} color="#64748B" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Support</Text>
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/(tabs)/profile/help-center')}
+        >
           <Text style={styles.settingText}>Help Center</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity style={styles.settingItem} onPress={() => router.push('/(tabs)/profile/contact-us')}>
           <Text style={styles.settingText}>Contact Us</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity style={styles.settingItem} onPress={handlePrivacyPolicy}>
           <Text style={styles.settingText}>Privacy Policy</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Developer</Text>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/(tabs)/profile/dev-stats')}
+        >
+          <Text style={styles.settingText}>Dev Stats</Text>
+          <Ionicons name="chevron-forward" size={24} color="#64748B" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Dangerous Zone</Text>
+        <TouchableOpacity 
+          style={styles.settingItem}
+          onPress={() => router.push('/(tabs)/profile/delete-account')}
+        >
+          <Text style={[styles.settingText, { color: '#DC2626' }]}>Delete Account</Text>
+          <Ionicons name="chevron-forward" size={24} color="#DC2626" />
         </TouchableOpacity>
       </View>
 
@@ -114,7 +172,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: moderateScale(30),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
   },
@@ -146,7 +204,7 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(10),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
@@ -169,7 +227,7 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(12),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },

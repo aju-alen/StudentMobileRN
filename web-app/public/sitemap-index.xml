@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+              http://www.sitemaps.org/schemas/sitemap/0.9/siteindex.xsd">
+
+  <!-- Main Sitemap -->
+  <sitemap>
+    <loc>https://www.coachacadem.ae/sitemap.xml</loc>
+    <lastmod>2024-01-15</lastmod>
+  </sitemap>
+
+  <!-- Pages Sitemap -->
+  <sitemap>
+    <loc>https://www.coachacadem.ae/sitemap-pages.xml</loc>
+    <lastmod>2024-01-15</lastmod>
+  </sitemap>
+
+  <!-- Courses Sitemap -->
+  <sitemap>
+    <loc>https://www.coachacadem.ae/sitemap-courses.xml</loc>
+    <lastmod>2024-01-15</lastmod>
+  </sitemap>
+
+  <!-- Tutors Sitemap -->
+  <sitemap>
+    <loc>https://www.coachacadem.ae/sitemap-tutors.xml</loc>
+    <lastmod>2024-01-15</lastmod>
+  </sitemap>
+
+  <!-- Blog Sitemap -->
+  <sitemap>
+    <loc>https://www.coachacadem.ae/sitemap-blog.xml</loc>
+    <lastmod>2024-01-15</lastmod>
+  </sitemap>
+
+  <!-- News Sitemap -->
+  <sitemap>
+    <loc>https://www.coachacadem.ae/sitemap-news.xml</loc>
+    <lastmod>2024-01-15</lastmod>
+  </sitemap>
+
+  <!-- Images Sitemap -->
+  <sitemap>
+    <loc>https://www.coachacadem.ae/sitemap-images.xml</loc>
+    <lastmod>2024-01-15</lastmod>
+  </sitemap>
+
+  <!-- Videos Sitemap -->
+  <sitemap>
+    <loc>https://www.coachacadem.ae/sitemap-videos.xml</loc>
+    <lastmod>2024-01-15</lastmod>
+  </sitemap>
+
+</sitemapindex> 

@@ -2,10 +2,10 @@
   "expo": {
     "name": "Coach Academ",
     "slug": "coach-academ",
-    "scheme": "coach-academ",
-    "version": "1.0.0",
+    "scheme": "coachacadem",
+    "version": "1.0.2",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.png",
+    "icon": "./assets/images/ca-icon.png",
     "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/images/logo.png",
@@ -20,7 +20,8 @@
       "bundleIdentifier": "com.rise.coachacadem",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "buildNumber": "12"
     },
     "android": {
       "adaptiveIcon": {
@@ -58,7 +59,15 @@
           "iCloudContainerEnvironment": "Production"
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "ca_sentry",
+          "organization": "rise-ltd"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

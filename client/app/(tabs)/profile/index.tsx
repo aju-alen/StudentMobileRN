@@ -6,19 +6,22 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
-import { Alert } from "react-native";
 import { Image } from 'expo-image';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import axios from "axios";
 import { ipURL } from "../../utils/utils";
-import KebabIcon from "../../components/KebabIcon";
-import { FONT } from "../../../constants";
+import { COLORS, FONT } from "../../../constants";
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
 import SubjectCards from "../../components/SubjectCards";
 import CalendarSummary from "../../components/CalendarSummary";
 import { Ionicons } from '@expo/vector-icons';
+import { axiosWithAuth } from "../../utils/customAxios";
+import UserSubjectCards from "../../components/UserSubjectCards";
+import * as Sentry from '@sentry/react-native';
 
 interface User {
   id?: string;
@@ -28,6 +31,8 @@ interface User {
   userDescription?: string;
   subjects?: SubjectItem[];
   reccomendedSubjects?: string[];
+  userSubjects?: SubjectItem[];
+  isTeacher?: boolean;
 }
 
 interface SubjectItem {
@@ -40,30 +45,27 @@ interface SubjectItem {
   subjectGrade?: number;
 }
 
-interface UserDetails {
-  isTeacher?: boolean;
-  isAdmin?: boolean;
-}
+
 
 const blurhash = '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
 const ProfilePage = () => {
   const [user, setUser] = useState<User>({});
-  const [userDetails, setUserDetails] = useState<UserDetails>({});
+  const [userDetails, setUserDetails] = useState<User>({});
   const [showDropdown, setShowDropdown] = useState(false);
-
+  const [activeCourses, setActiveCourses] = useState<SubjectItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   useEffect(() => {
+
     const getUser = async () => {
-      const apiUser = await axios.get(`${ipURL}/api/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem("authToken")}`,
-        },
-      });
+      const apiUser = await axiosWithAuth.get(`${ipURL}/api/auth/metadata`);
       console.log("apiUser", apiUser.data);
       
       setUser(apiUser.data);
       const user = JSON.parse(await AsyncStorage.getItem("userDetails"));
+      console.log(user,'user in profile');
       setUserDetails(user);
+      setLoading(false);
     };
     getUser();
   }, []);
@@ -71,47 +73,67 @@ const ProfilePage = () => {
   console.log("user in profile", user);
   
 
-  const handleLogout = async () => {
-    await AsyncStorage.removeItem("authToken");
-    await AsyncStorage.removeItem("isTeacher");
-    router.replace("/(authenticate)/login");
-  };
+
 
   const handleItemPress = (itemId: { id: any }) => {
     router.push(`/(tabs)/profile/${itemId.id}`);
   };
 
-  const handleCreateNewSubject = () => {
-    router.push(`/(tabs)/profile/createSubject/${user.id}`);
+  const handleCreateNewSubject = async () => {
+    try {
+      const userDetails = await AsyncStorage.getItem('userDetails');      
+      const parsedUserDetails = JSON.parse(userDetails);
+      
+      // Add detailed logging
+      console.log('Full user details:', parsedUserDetails);
+      console.log('User ID:', parsedUserDetails.userId);
+      
+      if (!parsedUserDetails.userId) {
+        throw new Error('User ID not found in user details');
+      }
+      
+      Sentry.addBreadcrumb({
+        category: 'navigation',
+        message: 'Attempting to create new subject',
+        level: 'info',
+        data: {
+          userId: parsedUserDetails.userId,
+          userType: parsedUserDetails.isTeacher ? 'teacher' : 'student'
+        }
+      });
+      
+      router.push(`/(tabs)/profile/createSubject/${parsedUserDetails.userId}`);
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: {
+          location: 'handleCreateNewSubject',
+          action: 'new_course_button_click'
+        },
+        extra: {
+          error: error.message,
+          stack: error.stack,
+          userDetails: await AsyncStorage.getItem('userDetails')
+        }
+      });
+      Alert.alert('Error', 'Failed to create new course. Please try again.');
+    }
   };
 
   const closeDropdown = () => {
     setShowDropdown(false);
   };
 
-  const confirmLogout = () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Logout",
-          onPress: handleLogout,
-          style: "destructive"
-        }
-      ]
-    );
-  };
+  
 
   const handleSettingsPress = () => {
     router.push('/(tabs)/profile/settings');
   };
 
+  console.log(user, 'this is the user');
+  
+
   return (
+    loading ? <ActivityIndicator size="large" color={COLORS.primary} style={{flex:1, justifyContent:'center', alignItems:'center'}} /> :
     <TouchableWithoutFeedback onPress={closeDropdown}>
       <ScrollView style={styles.mainContainer}>
         {/* Header */}
@@ -125,13 +147,6 @@ const ProfilePage = () => {
               >
                 <Ionicons name="settings-outline" size={24} color="#1A2B4B" />
               </TouchableOpacity>
-              <KebabIcon 
-                handleLogout={handleLogout} 
-                handleCreateNewSubject={handleCreateNewSubject} 
-                isTeacher={userDetails?.isTeacher} 
-                setShowDropdown={setShowDropdown} 
-                showDropdown={showDropdown} 
-              />
             </View>
           </View>
           
@@ -152,9 +167,11 @@ const ProfilePage = () => {
 
                 {user?.reccomendedSubjects?.map((subjectTag,idx) =>
 
-                (<View style={styles.badge} key={idx} >
+                (
+                <View style={styles.badge} key={idx} >
                   <Text style={styles.badgeText}>{subjectTag.toLocaleUpperCase()}</Text>
-                </View>)
+                </View>
+                )
                 )}
 
               </View>
@@ -163,7 +180,7 @@ const ProfilePage = () => {
         </View>
 
         {/* Stats Grid */}
-        {userDetails?.isTeacher && <View style={styles.statsGrid}>
+        {/* {userDetails?.isTeacher && <View style={styles.statsGrid}>
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>24</Text>
@@ -184,7 +201,7 @@ const ProfilePage = () => {
               <Text style={styles.statLabel}>Completion</Text>
             </View>
           </View>
-        </View>}
+        </View>} */}
 
         {/* About Section */}
         <View style={styles.section}>
@@ -202,7 +219,7 @@ const ProfilePage = () => {
         </View>
 
         {/* Teaching Stats */}
-       {userDetails?.isTeacher && <View style={styles.section}>
+       {/* {userDetails?.isTeacher && <View style={styles.section}>
           <Text style={styles.sectionTitle}>Teaching Overview</Text>
           <View style={styles.overviewGrid}>
             <View style={styles.overviewItem}>
@@ -218,7 +235,7 @@ const ProfilePage = () => {
               <Text style={styles.overviewLabel}>Satisfaction</Text>
             </View>
           </View>
-        </View>}
+        </View>} */}
 
         {/* Courses Section */}
         <View style={styles.section}>
@@ -232,21 +249,19 @@ const ProfilePage = () => {
               </TouchableWithoutFeedback>
             )}
           </View>
-          <SubjectCards 
+       {userDetails?.isTeacher && <SubjectCards 
             subjectData={user.subjects} 
             handleItemPress={handleItemPress} 
             isHorizontal={false} 
-          />
+          />}
+          {!userDetails?.isTeacher && <UserSubjectCards 
+            subjectData={user?.userSubjects} 
+            handleItemPress={handleItemPress} 
+            isHorizontal={false} 
+          />}
         </View>
          {/* Add Logout Section */}
-         <View style={styles.logoutSection}>
-          <TouchableOpacity 
-            style={styles.logoutButton}
-            onPress={confirmLogout}
-          >
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
+         
       </ScrollView>
     </TouchableWithoutFeedback>
   );
@@ -265,7 +280,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: moderateScale(30),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
   },
@@ -317,10 +332,11 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(4),
     borderRadius: moderateScale(12),
     marginRight: horizontalScale(8),
+    marginBottom: verticalScale(4),
   },
   badgeText: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(12),
+    fontSize: moderateScale(8),
     color: '#4F46E5',
   },
   statsGrid: {
@@ -339,7 +355,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
@@ -374,7 +390,7 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(15),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
@@ -392,7 +408,7 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(15),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
@@ -411,7 +427,7 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   addButton: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: COLORS.primary,
     paddingHorizontal: horizontalScale(15),
     paddingVertical: verticalScale(8),
     borderRadius: moderateScale(20),

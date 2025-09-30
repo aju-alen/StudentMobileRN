@@ -152,6 +152,9 @@ export const getUpcomingClasses = async (req, res) => {
     const userId = req.userId;
     const isTeacher = req.isTeacher;
     const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
+
+    console.log('reached 111');
+    
     
     const upcomingClasses = await prisma.booking.findMany({
       where: {
@@ -164,19 +167,23 @@ export const getUpcomingClasses = async (req, res) => {
         id: true,
         bookingDate: true,
         bookingTime: true,
+        bookingZoomUrl: true,
         subject: {
           select: {
-            subjectName: true
+            subjectName: true,
+            id: true
           }
         },
         teacher: {
           select: {
-            name: true
+            name: true,
+            id: true
           }
         },
         student: {
           select: {
-            name: true
+            name: true,
+            id: true
           }
         }
       },
@@ -185,6 +192,7 @@ export const getUpcomingClasses = async (req, res) => {
         bookingDate: 'asc'
       }
     })
+    console.log('reached 222');
     res.status(200).json(upcomingClasses);
   }
   catch(error){
@@ -192,3 +200,114 @@ export const getUpcomingClasses = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch upcoming classes' });
   }
 }
+
+export const getStudentTeacherAvailability = async (req, res) => {
+  try {
+    const { teacherId } = req.params;
+    const studentId = req.userId;
+    const { date } = req.query;
+    
+    if (!date) {
+      return res.status(400).json({ error: 'Date is required' });
+    }
+
+    // Convert date string to start and end of day
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    // Get all bookings for the teacher on the specified date
+    const teacherBookings = await prisma.booking.findMany({
+      where: {
+        teacherId,
+        bookingDate: {
+          gte: startDate,
+          lte: endDate
+        },
+        bookingStatus: {
+          in: [BookingStatus.CONFIRMED, BookingStatus.PENDING]
+        }
+      },
+      select: {
+        bookingTime: true,
+        bookingHours: true
+      }
+    });
+
+    // Get all bookings for the student on the specified date
+    const studentBookings = await prisma.booking.findMany({
+      where: {
+        studentId,
+        bookingDate: {
+          gte: startDate,
+          lte: endDate
+        },
+        bookingStatus: {
+          in: [BookingStatus.CONFIRMED, BookingStatus.PENDING]
+        }
+      },
+      select: {
+        bookingTime: true,
+        bookingHours: true
+      }
+    });
+
+    // Helper function to generate all time slots for a booking
+    const generateTimeSlots = (booking) => {
+      const slots = [];
+      const [startHour, startMinute] = booking.bookingTime.split(':').map(Number);
+      
+      // Include the end hour in the blocked slots
+      for (let i = 0; i <= booking.bookingHours; i++) {
+        const hour = (startHour + i) % 24;
+        const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+        slots.push(timeSlot);
+      }
+
+      // Also block slots that would overlap with this booking
+      // For example, if booking is 3 hours starting at 16:00, block 13:00, 14:00, 15:00
+      for (let i = 1; i < booking.bookingHours; i++) {
+        const hour = (startHour - i + 24) % 24; // Add 24 before modulo to handle negative numbers
+        const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
+        slots.push(timeSlot);
+      }
+      
+      return slots;
+    };
+
+    // Generate all booked slots for both teacher and student
+    const teacherBookedSlots = teacherBookings.flatMap(generateTimeSlots);
+    const studentBookedSlots = studentBookings.flatMap(generateTimeSlots);
+
+    // Combine both sets of booked slots and remove duplicates
+    const bookedSlots = [...new Set([...teacherBookedSlots, ...studentBookedSlots])];
+
+    // Get all dates where the teacher has bookings
+    const teacherBookedDates = await prisma.booking.findMany({
+      where: {
+        teacherId,
+        bookingStatus: {
+          in: [BookingStatus.CONFIRMED]
+        }
+      },
+      select: {
+        bookingDate: true
+      },
+      distinct: ['bookingDate']
+    });
+
+    // Format unavailable dates
+    const unavailableDates = teacherBookedDates.map(booking => 
+      booking.bookingDate.toISOString().split('T')[0]
+    );
+
+    res.status(200).json({
+      bookedSlots,
+    });
+  } catch (error) {
+    console.error('Error in getStudentTeacherAvailability:', error);
+    res.status(500).json({ error: 'Failed to fetch availability' });
+  }
+};

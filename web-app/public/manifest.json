@@ -1,0 +1,189 @@
+{
+  "name": "CoachAcadem - Online Tutoring Platform",
+  "short_name": "CoachAcadem",
+  "description": "Leading online tutoring platform that provides personalized and effective learning solutions for students of all ages and levels in UAE",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["education", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png",
+      "sizes": "72x72",
+      "type": "image/png"
+    },
+    {
+      "src": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    },
+    {
+      "src": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png",
+      "sizes": "384x384",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Find Tutors",
+      "short_name": "Tutors",
+      "description": "Find qualified tutors in your area",
+      "url": "/tutors",
+      "icons": [
+        {
+          "src": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Browse Courses",
+      "short_name": "Courses",
+      "description": "Explore available courses and subjects",
+      "url": "/courses",
+      "icons": [
+        {
+          "src": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Book Session",
+      "short_name": "Book",
+      "description": "Schedule a tutoring session",
+      "url": "/book-session",
+      "icons": [
+        {
+          "src": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "My Dashboard",
+      "short_name": "Dashboard",
+      "description": "Access your learning dashboard",
+      "url": "/dashboard",
+      "icons": [
+        {
+          "src": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/iphone-community-portrait.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "CoachAcadem Homepage"
+    },
+    {
+      "src": "https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/iphone-community-portrait.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "CoachAcadem Mobile View"
+    }
+  ],
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.coachacadem.app",
+      "id": "com.coachacadem.app"
+    },
+    {
+      "platform": "itunes",
+      "url": "https://apps.apple.com/app/coachacadem/id1234567890"
+    }
+  ],
+  "prefer_related_applications": false,
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "handle_links": "preferred",
+  "protocol_handlers": [
+    {
+      "protocol": "web+coachacadem",
+      "url": "/%s"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/upload",
+      "accept": {
+        "application/pdf": [".pdf"],
+        "image/*": [".png", ".jpg", ".jpeg", ".gif"]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": ["image/*", "application/pdf"]
+        }
+      ]
+    }
+  },
+  "permissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ],
+  "features": [
+    "Cross Platform",
+    "fast",
+    "simple",
+    "secure"
+  ],
+  "developer": {
+    "name": "CoachAcadem Team",
+    "url": "https://www.coachacadem.ae"
+  }
+} 

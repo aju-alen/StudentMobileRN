@@ -6,17 +6,19 @@ import {
   ScrollView,
   RefreshControl,
   Animated,
+  ActivityIndicator,
+  Alert,
+  Button,
 } from "react-native";
 import { Image } from 'expo-image';
 import React, { useEffect, useState, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Stack, router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import axios from "axios";
 import { ipURL } from '../../utils/utils';
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, FONT, SIZES } from '../../../constants';
 import { horizontalScale, verticalScale, moderateScale } from '../../utils/metrics';
-import { debounce } from "lodash";
 import { StatusBar } from "expo-status-bar";
 import SubjectCards from "../../components/SubjectCards";
 import HorizontalSubjectCard from "../../components/horizontalSubjectCard";
@@ -25,7 +27,7 @@ import VideoPlayer from "../../components/VideoPlayer";
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/en';
-
+import { axiosWithAuth } from "../../utils/customAxios";
 // Initialize dayjs plugins
 dayjs.extend(relativeTime);
 dayjs.locale('en');
@@ -38,12 +40,19 @@ interface User {
   reccomendedSubjects?: [string];
   streakCount?: number;
   totalPoints?: number;
+  isTeacher?: boolean;
   completedCourses?: number;
   level?: number;
   nextLevelProgress?: number;
   enrolledCourses?: number;
   certificatesEarned?: number;
   upcomingDeadlines?: Deadline[];
+}
+
+interface Stats {
+  icon: string;
+  label: string;
+  value: number;
 }
 
 interface Deadline {
@@ -86,6 +95,7 @@ const blurhash =
 
 const HomePage = () => {
   const scrollY = useRef(new Animated.Value(0)).current;
+  const buttonScale = useRef(new Animated.Value(1)).current;
   const [subjectData, setSubjectData] = React.useState([]);
   const [recommendedSubjects, setRecommendedSubjects] = React.useState([]);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -103,6 +113,7 @@ const HomePage = () => {
   });
 
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
   const videoData = [
     { id: '1', videoUrl: 'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4' },
@@ -126,38 +137,87 @@ const HomePage = () => {
 
   const StatsCard = ({ stats }: { stats: Stats }) => (
     <View style={styles.statsCard}>
-
       <Text style={styles.statsValue}>{stats.value}</Text>
       <Text style={styles.statsLabel}>{stats.label}</Text>
     </View>
   );
 
-  const QuickActionButton = ({ icon, label, onPress }) => (
-    <TouchableOpacity style={styles.quickActionButton} onPress={onPress}>
-      <View style={styles.quickActionIcon}>
-        <Ionicons name={icon} size={24} color="#1A4C6E" />
-      </View>
-      <Text style={styles.quickActionLabel}>{label}</Text>
-    </TouchableOpacity>
-  );
+  const animateButton = (scale: Animated.Value) => {
+    Animated.sequence([
+      Animated.timing(scale, {
+        toValue: 0.95,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
-  const SectionHeader = ({ title, showSeeAll = false }) => (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      {showSeeAll && (
-        <TouchableOpacity 
-          style={styles.seeAllButton} 
-          onPress={() => router.push('/(tabs)/home/allSubject')}
+  const QuickActionButton = ({ icon, label, onPress }) => {
+    const scale = useRef(new Animated.Value(1)).current;
+
+    const handlePress = () => {
+      animateButton(scale);
+      onPress();
+    };
+
+    return (
+      <TouchableOpacity 
+        style={styles.quickActionButton} 
+        onPress={handlePress}
+        activeOpacity={0.7}
+      >
+        <Animated.View 
+          style={[
+            styles.quickActionIcon,
+            {
+              transform: [{ scale }]
+            }
+          ]}
         >
-          <Text style={styles.seeAllText}>See All</Text>
-          <Ionicons name="chevron-forward" size={16} color="#F1A568" />
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+          <Ionicons name={icon} size={20} color="#1A4C6E" />
+        </Animated.View>
+        <Text style={styles.quickActionLabel}>{label}</Text>
+      </TouchableOpacity>
+    );
+  };
 
-  
+  const SectionHeader = ({ title, showSeeAll = false }) => {
+    const scale = useRef(new Animated.Value(1)).current;
 
+    const handleSeeAllPress = () => {
+      animateButton(scale);
+      router.push('/(tabs)/home/allSubject');
+    };
+
+    return (
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        {showSeeAll && (
+          <TouchableOpacity 
+            style={styles.seeAllButton} 
+            onPress={handleSeeAllPress}
+            activeOpacity={0.7}
+          >
+            <Animated.View 
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                transform: [{ scale }]
+              }}
+            >
+              <Text style={styles.seeAllText}>See All</Text>
+              <Ionicons name="chevron-forward" size={16} color="#F1A568" />
+            </Animated.View>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
 
   const getRelativeDate = (dateString: string) => {
     const bookingDate = dayjs(dateString);
@@ -187,49 +247,66 @@ const HomePage = () => {
     }
   };
 
-  const DeadlineCard = ({ deadline }: { deadline: Deadline }) => {
+  const DeadlineCard = ({ deadline, isTeacher }: { deadline: Deadline, isTeacher: boolean }) => {
+    const scale = useRef(new Animated.Value(1)).current;
     const priority = getPriority(deadline.bookingDate);
     
+    const handlePress = () => {
+      animateButton(scale);
+    };
+
     return (
-      <View style={styles.deadlineCard}>
-        <View style={[styles.priorityIndicator, styles[`priority${priority}`]]} />
-        <View style={styles.deadlineInfo}>
-          <Text style={styles.deadlineTitle}>{deadline?.subject.subjectName}</Text>
-          <Text style={styles.deadlineType}>Live Class</Text>
-          <Text style={styles.teacherName}>with {deadline?.teacher.name}</Text>
-        </View>
-        <View style={styles.deadlineTime}>
-          <Text style={styles.deadlineLabel}>Due</Text>
-          <Text style={styles.deadlineDate}>{getRelativeDate(deadline.bookingDate)}</Text>
-          <Text style={styles.classTime}>{deadline.bookingTime}</Text>
-        </View>
-      </View>
+      <TouchableOpacity 
+        onPress={handlePress}
+        activeOpacity={0.7}
+      >
+        <Animated.View 
+          style={[
+            styles.deadlineCard,
+            {
+              transform: [{ scale }]
+            }
+          ]}
+        >
+          <View style={[styles.priorityIndicator, styles[`priority${priority}`]]} />
+          <View style={styles.deadlineInfo}>
+            <Text style={styles.deadlineTitle}>{deadline?.subject.subjectName}</Text>
+            <Text style={styles.deadlineType}>Live Class</Text>
+            {isTeacher ? (
+              <Text style={styles.teacherName}>with {deadline?.student.name}</Text>
+            ) : (
+              <Text style={styles.teacherName}>with {deadline?.teacher.name}</Text>
+            )}
+          </View>
+          <View style={styles.deadlineTime}>
+            <Text style={styles.deadlineLabel}>Due</Text>
+            <Text style={styles.deadlineDate}>{getRelativeDate(deadline.bookingDate)}</Text>
+            <Text style={styles.classTime}>{deadline.bookingTime}</Text>
+          </View>
+        </Animated.View>
+      </TouchableOpacity>
     );
   };
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const token = await AsyncStorage.getItem("authToken");
       const [userResponse, subjectsResponse] = await Promise.all([
-        axios.get(`${ipURL}/api/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get(`${ipURL}/api/subjects/search?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        axiosWithAuth.get(`${ipURL}/api/auth/metadata`),
+        axiosWithAuth.get(`${ipURL}/api/subjects/search?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`)
       ]);
+
 
       setUser(userResponse.data);
       setSubjectData(subjectsResponse.data);
 
       const { reccomendedSubjects: recommendedSubjects, recommendedGrade, recommendedBoard } = userResponse.data;
-      const recommendedResponse = await axios.post(
-        `${ipURL}/api/subjects/get-recommended-subjects`,
-        { recommendedSubjects, recommendedBoard, recommendedGrade },
-        { headers: { Authorization: `Bearer ${token}` }}
-      );
-      setRecommendedSubjects(recommendedResponse.data);
+      // const recommendedResponse = await axios.post(
+      //   `${ipURL}/api/subjects/get-recommended-subjects`,
+      //   { recommendedSubjects, recommendedBoard, recommendedGrade },
+      //   { headers: { Authorization: `Bearer ${token}` }}
+      // );
+      // setRecommendedSubjects(recommendedResponse.data);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -250,8 +327,15 @@ const HomePage = () => {
   };
 
   useEffect(() => {
-    fetchData();
-    fetchDeadlines();
+    const loadAllData = async () => {
+      try {
+        await Promise.all([fetchData(), fetchDeadlines()]);
+        setIsDataLoaded(true);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
+    };
+    loadAllData();
   }, []);
 
   const onRefresh = React.useCallback(() => {
@@ -263,25 +347,39 @@ const HomePage = () => {
     router.push(`/(tabs)/home/${itemId.id}`);
   };
 
+  if (!isDataLoaded) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color="#1A4C6E" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
     <StatusBar style="light" />
     
     {/* Enhanced Animated Header */}
-    <Animated.View style={[styles.header, { height: headerHeight, opacity: headerOpacity }]}>
+    <Animated.View style={[styles.header, {  opacity: headerOpacity }]}>
       <View style={styles.userSection}>
         <TouchableOpacity 
           style={styles.profileButton}
-          onPress={() => router.replace('/(tabs)/profile')}
+          onPress={() => {
+            animateButton(buttonScale);
+            router.replace('/(tabs)/profile');
+          }}
+          activeOpacity={0.7}
         >
-          <Image
-            source={{ uri: user.profileImage }}
-            style={styles.profileImage}
-            placeholder={blurhash}
-            contentFit="cover"
-            transition={300}
-          />
-          <View style={styles.onlineIndicator} />
+          <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+            <Image
+              source={{ uri: user.profileImage }}
+              style={styles.profileImage}
+              placeholder={blurhash}
+              contentFit="cover"
+              transition={300}
+            />
+            <View style={styles.onlineIndicator} />
+          </Animated.View>
         </TouchableOpacity>
         
         <View style={styles.welcomeText}>
@@ -289,14 +387,29 @@ const HomePage = () => {
           <Text style={styles.userName}>{user.name.split(' ')[0]}</Text>
         </View>
         
-        <TouchableOpacity style={styles.notificationButton}>
-          <Ionicons name="notifications-outline" size={24} color="white" />
-          <View style={styles.notificationBadge} />
+        <TouchableOpacity 
+          style={[styles.notificationButton, { opacity: 0.7 }]}
+          onPress={() => {
+            // Show coming soon message
+            Alert.alert(
+              "Coming Soon",
+              "Notifications feature will be available soon!",
+              [{ text: "OK" }]
+            );
+          }}
+          activeOpacity={0.7}
+        >
+          <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+            <Ionicons name="notifications-outline" size={24} color="white" />
+            <View style={[styles.notificationBadge, { backgroundColor: '#FFA500' }]}>
+              <Text style={{ color: 'white', fontSize: 8, fontWeight: 'bold' }}>SOON</Text>
+            </View>
+          </Animated.View>
         </TouchableOpacity>
       </View>
 
         {/* Enhanced Stats Container */}
-        <ScrollView 
+        {/* <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false}
           style={styles.statsContainer}
@@ -305,7 +418,7 @@ const HomePage = () => {
           <StatsCard stats={{ icon: "flame-outline", label: "Day Streak", value: user.streakCount || 4 }} />
           <StatsCard stats={{ icon: "star-outline", label: "Total Points", value: user.totalPoints || 11 }} />
           <StatsCard stats={{ icon: "trophy-outline", label: "Completed", value: user.completedCourses || 81 }} />
-        </ScrollView>
+        </ScrollView> */}
       </Animated.View>
 
       {/* Main Content */}
@@ -326,23 +439,23 @@ const HomePage = () => {
           <QuickActionButton 
             icon="search-outline" 
             label="Find Courses"
-            onPress={() => router.push('/(tabs)/home/filter')}
+            onPress={() => router.push('/(tabs)/home/allSubject')}
           />
           <QuickActionButton 
             icon="calendar-outline" 
-            label="Schedule"
-            onPress={() => router.push('/(tabs)/home/schedule')}
+            label="Your Bookings"
+            onPress={() => router.push('/(tabs)/profile/schedule')}
           />
           <QuickActionButton 
             icon="bookmark-outline" 
-            label="Saved"
+            label="Saved Courses"
             onPress={() => router.push('/(tabs)/home/saved')}
           />
-          <QuickActionButton 
+          {/* <QuickActionButton 
             icon="trending-up-outline" 
             label="Progress"
             onPress={() => router.push('/(tabs)/home/progress')}
-          />
+          /> */}
         </View>
 
         {/* Continue Learning Section */}
@@ -362,35 +475,33 @@ const HomePage = () => {
           </View>
         )}
 
-
-
         {/* Upcoming Deadlines */}
-        <View style={styles.section}>
+        {deadlines.length > 0 && <View style={styles.section}>
           <SectionHeader title="Upcoming Deadlines" />
           <View style={styles.deadlinesContainer}>
             {deadlines.map(deadline => (
-              <DeadlineCard key={deadline.id} deadline={deadline} />
+              <DeadlineCard key={deadline.id} deadline={deadline} isTeacher={user.isTeacher} />
             ))}
           </View>
-        </View>
+        </View>}
 
         {/* Recommended Courses Section */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <SectionHeader title="Recommended for You" />
           <HorizontalSubjectCard 
             subjectData={recommendedSubjects} 
             handleItemPress={handleItemPress} 
             isHorizontal={true}
           />
-        </View>
-
-      
+        </View> */}
 
         {/* Popular Courses Section */}
         <View style={styles.section}>
           <SectionHeader title="Popular Courses" />
           <HorizontalSubjectCard 
-            subjectData={subjectData} 
+            subjectData={subjectData
+              .sort(() => Math.random() - 0.5)
+              .slice(0, 7)} 
             handleItemPress={handleItemPress} 
             isHorizontal={true}
           />
@@ -400,7 +511,7 @@ const HomePage = () => {
         <View style={styles.section}>
           <SectionHeader title="Browse Courses" showSeeAll />
           <ColumnSubjectCards 
-            subjectData={subjectData} 
+            subjectData={subjectData.slice(0, 14)} 
             handleItemPress={handleItemPress} 
             isHorizontal={false}
           />
@@ -409,7 +520,27 @@ const HomePage = () => {
         {/* Video Section */}
         <View style={[styles.section, styles.lastSection]}>
           <SectionHeader title="Recommended Videos" />
-          <VideoPlayer videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4'} />
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.videoScrollContainer}
+          >
+            <VideoPlayer 
+              videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4'} 
+            />
+            <VideoPlayer 
+              videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/VIDEO-2025-06-04-12-53-18.mp4'} 
+            />
+            <VideoPlayer 
+              videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/VIDEO-2025-06-04-12-54-39.mp4'} 
+            />
+            <VideoPlayer 
+              videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/VIDEO-2025-06-04-12-51-14.mp4'} 
+            />
+            <VideoPlayer 
+              videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/VIDEO-2025-06-04-12-54-20.mp4'} 
+            />
+          </ScrollView>
         </View>
       </Animated.ScrollView>
     </View>
@@ -434,7 +565,7 @@ const styles = StyleSheet.create({
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.15,
+    //shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
   },
@@ -526,7 +657,7 @@ const styles = StyleSheet.create({
   
   quickActionLabel: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(12),
+    fontSize: moderateScale(10),
     color: COLORS.primary,
     marginTop: verticalScale(8),
   },
@@ -609,7 +740,7 @@ const styles = StyleSheet.create({
     padding: moderateScale(20),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    //shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
@@ -671,7 +802,7 @@ const styles = StyleSheet.create({
     marginRight: horizontalScale(16),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    //shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
@@ -818,7 +949,7 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
   },
@@ -834,7 +965,7 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    //shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
@@ -848,7 +979,7 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(12),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
+    //shadowOpacity: 0.08,
     shadowRadius: 10,
     elevation: 4,
   },
@@ -885,5 +1016,15 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: -0.5,
   },
-
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  videoScrollContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  videoPlayer: {
+    marginRight: 12,
+  },
 });

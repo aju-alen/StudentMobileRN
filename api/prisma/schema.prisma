@@ -14,6 +14,24 @@ datasource db {
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
+
+model SuperAdmin {
+  id                  String        @id @default(cuid())
+  name                String
+  email               String        @unique
+  password            String
+  verified            Boolean       @default(false)
+  verificationToken   String?
+  profileImage        String?
+  userDescription     String        @default("No description provided")
+  isTeacher           Boolean       @default(false)
+  isAdmin             Boolean       @default(false)
+  recommendedBoard    String?
+  recommendedGrade    Int?
+  hasSeenOnboarding   Boolean       @default(false)
+  reccomendedSubjects Json @default("[]")     // Keeping original typo
+  createdAt           DateTime      @default(now())
+}
 model User {
   id                  String        @id @default(cuid())
   name                String
@@ -27,6 +45,7 @@ model User {
   isAdmin             Boolean       @default(false)
   recommendedBoard    String?
   recommendedGrade    Int?
+  hasSeenOnboarding   Boolean       @default(false)
   reccomendedSubjects Json @default("[]")     // Keeping original typo
   subjects            Subject[]
   teacherBookings     Booking[]     @relation("TeacherBookings")
@@ -40,6 +59,12 @@ model User {
   communityMemberships CommunityUser[]
   communityMessages    CommunityMessage[]
   savedSubjects       SavedSubject[]
+  reviewVotes         ReviewVote[]
+  blockedTeachers     BlockedTeacher[] @relation("BlockingUser")
+  blockedByTeachers   BlockedTeacher[] @relation("BlockedUser")
+  reports             Report[]
+  stripePurchases     StripePurchases[]
+  userSubjects        UserSubject[]
 }
 
 model Subject {
@@ -61,27 +86,33 @@ model Subject {
   createdAt            DateTime @default(now())
   
   // Relations
-  user                User     @relation(fields: [userId], references: [id])
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId              String
   reviews             Review[]
   conversations       Conversation[]
   bookings            Booking[]
   savedSubjects       SavedSubject[]
-
+  reports             Report[]
+  stripePurchases     StripePurchases[]
+  userSubjects        UserSubject[]
   @@unique([id, userId])
 }
 
 model Review {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   title       String
   description String
-  createdAt   DateTime @default(now())
-  
-  // Relations
-  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime      @default(now())
+  upvotes     Int          @default(0)
+  downvotes   Int          @default(0)
   userId      String
-  subject     Subject  @relation(fields: [subjectId], references: [id])
   subjectId   String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject     Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  votes       ReviewVote[]
+
+  @@index([userId])
+  @@index([subjectId])
 }
 
 model Message {
@@ -99,11 +130,11 @@ model Conversation {
   updatedAt DateTime @updatedAt
   
   // Relations
-  user      User     @relation("UserConversations", fields: [userId], references: [id])
+  user      User     @relation("UserConversations", fields: [userId], references: [id], onDelete: Cascade)
   userId    String
-  client    User     @relation("ClientConversations", fields: [clientId], references: [id])
+  client    User     @relation("ClientConversations", fields: [clientId], references: [id], onDelete: Cascade)
   clientId  String
-  subject   Subject  @relation(fields: [subjectId], references: [id])
+  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   subjectId String
   messages  ConversationMessage[]
 }
@@ -117,7 +148,7 @@ model ConversationMessage {
   updatedAt      DateTime     @updatedAt
   
   // Relations
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   conversationId String
 }
 
@@ -138,12 +169,10 @@ model CommunityUser {
   id          String    @id @default(cuid())
   
   // Relations
-  user        User      @relation(fields: [userId], references: [id])
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      String
-  community   Community @relation(fields: [communityId], references: [id])
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
   communityId String
-
-
 }
 
 model CommunityMessage {
@@ -154,9 +183,9 @@ model CommunityMessage {
   updatedAt   DateTime  @updatedAt
   
   // Relations
-  community   Community @relation(fields: [communityId], references: [id])
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
   communityId String
-  sender      User      @relation(fields: [senderId], references: [id])
+  sender      User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
   senderId    String
 }
 
@@ -166,17 +195,25 @@ model Booking {
   teacherId String
   studentId String
 
-  subject Subject @relation(fields: [subjectId], references: [id])
-  teacher User @relation("TeacherBookings", fields: [teacherId], references: [id])
-  student User @relation("StudentBookings", fields: [studentId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher User @relation("TeacherBookings", fields: [teacherId], references: [id], onDelete: Cascade)
+  student User @relation("StudentBookings", fields: [studentId], references: [id], onDelete: Cascade)
 
   bookingDate DateTime
   bookingTime String
   bookingStatus BookingStatus @default(PENDING)
   bookingPrice Float
   bookingPaymentCompleted Boolean @default(false)
+  bookingZoomUrl String? @default("")
+  bookingZoomPassword String? @default("")
+  bookingHours Int
+  bookingMinutes Int
+  bookingZoomId Int 
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  stripePurchase StripePurchases?
 }
 
 model SavedSubject {
@@ -184,8 +221,8 @@ model SavedSubject {
   subjectId String
   userId String
   
-  subject Subject @relation(fields: [subjectId], references: [id])
-  user User @relation(fields: [userId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([subjectId, userId])
 }
@@ -194,4 +231,76 @@ enum BookingStatus {
   PENDING
   CONFIRMED
   CANCELLED
+}
+
+model ReviewVote {
+  id        String   @id @default(cuid())
+  userId    String
+  reviewId  String
+  voteType  String   // 'up' or 'down'
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reviewId])
+}
+
+model BlockedTeacher {
+  id         String   @id @default(cuid())
+  userId     String
+  blockedTeacherId String
+  createdAt  DateTime @default(now())
+
+  user       User     @relation("BlockingUser", fields: [userId], references: [id], onDelete: Cascade)
+  blockedTeacher User @relation("BlockedUser", fields: [blockedTeacherId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, blockedTeacherId])
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+}
+
+model Report {
+  id String @id @default(cuid())
+  userId String
+  subjectId String
+  reportDescription String
+  reportStatus ReportStatus @default(PENDING)
+  reportResolution String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reportedSubject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+}
+
+model StripePurchases {
+  id String @id @default(cuid())
+  userId String
+  subjectId String
+  purchaseDate DateTime @default(now())
+  purchaseStatus BookingStatus @default(PENDING)
+  purchaseAmount Int
+  purchaseCurrency String
+  stripeCustomerId String
+  purchaseReceiptUrl String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  booking Booking @relation(fields: [bookingId], references: [id])
+  bookingId String @unique
+}
+
+model UserSubject{
+  id String @id @default(cuid())
+  userId String
+  subjectId String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, subjectId])
 }

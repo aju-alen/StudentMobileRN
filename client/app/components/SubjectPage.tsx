@@ -8,24 +8,32 @@ import {
   StatusBar,
   TextInput,
   Dimensions,
+  Modal,
+  ActivityIndicator,
+  Animated,
+  Easing
 } from "react-native";
 import { Image } from 'expo-image';
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ipURL } from "../utils/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { horizontalScale, verticalScale, moderateScale } from '../utils/metrics';
-import { FONT } from "../../constants";
+import { COLORS, FONT } from "../../constants";
 import { socket } from '../utils/socket';
 import BookingCalendar from './BookingCalendar';
+import { axiosWithAuth } from "../utils/customAxios";
 
 interface Review {
   id: string;
   title: string;
   description: string;
   createdAt: string;
+  upvotes: number;
+  downvotes: number;
+  userVote?: 'up' | 'down' | null;
   user: {
     name: string;
     profileImage: string;
@@ -53,6 +61,7 @@ interface User {
   name?: string;
   profileImage?: string;
   id?: string;
+  isTeacher?: boolean;
 }
 
 const { width } = Dimensions.get('window');
@@ -60,20 +69,94 @@ const { width } = Dimensions.get('window');
 const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
+interface ReviewFormProps {
+  onSubmit: (reviewData: { title: string; description: string }) => void;
+  isSubmitting: boolean;
+  purchaseStatus: boolean;
+}
+
+const ReviewForm = React.memo(({ onSubmit, isSubmitting, purchaseStatus }: ReviewFormProps) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+
+  const handleSubmit = useCallback(() => {
+    onSubmit({ title, description });
+    setTitle('');
+    setDescription('');
+  }, [title, description, onSubmit]);
+
+  return (
+    <View style={styles.reviewForm}>
+      <Text style={styles.sectionTitle}>Submit Your Review</Text>
+      {purchaseStatus ? <View>
+      <TextInput
+        style={styles.input}
+        placeholder="Review Title"
+        placeholderTextColor="#A0AEC0"
+        value={title}
+        onChangeText={setTitle}
+      />
+      <TextInput
+        style={[styles.input, styles.textArea]}
+        placeholder="Give a brief description of your experience."
+        placeholderTextColor="#A0AEC0"
+        value={description}
+        onChangeText={setDescription}
+        multiline
+        numberOfLines={4}
+      />
+      <TouchableOpacity
+        style={styles.submitButton}
+        onPress={handleSubmit}
+        disabled={isSubmitting}
+      >
+        <Text style={styles.submitButtonText}>
+          {isSubmitting ? 'Submitting...' : 'Submit Review'}
+        </Text>
+      </TouchableOpacity>
+      </View> : <Text style={styles.purchaseStatusText}>Please purchase the course to submit a review</Text>}
+    </View>
+  );
+});
+
 const SubjectPage = ({ subjectId }) => {
   const [singleSubjectData, setSingleSubjectData] = React.useState<SubjectData>({});
   const [userData, setUserData] = React.useState<User>({});
   const [teacherId, setTeacherId] = React.useState<string>("");
   const [isBookingModalVisible, setIsBookingModalVisible] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [newReview, setNewReview] = useState({ title: '', description: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   const [usertoken, setUserToken] = useState<string>("");
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [isTeacher, setIsTeacher] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  const [purchaseStatus, setPurchaseStatus] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
+  // Animation values
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const headerTranslateY = useRef(new Animated.Value(50)).current;
+  const contentOpacity = useRef(new Animated.Value(0)).current;
+  const contentTranslateY = useRef(new Animated.Value(30)).current;
+  const buttonScale = useRef(new Animated.Value(1)).current;
+  const buttonOpacity = useRef(new Animated.Value(0)).current;
+  const menuScale = useRef(new Animated.Value(0)).current;
+  const menuOpacity = useRef(new Animated.Value(0)).current;
+
+  console.log(singleSubjectData,'singleSubjectData in single subject page');
   const handleChatNow = async () => {
+
+    if(!purchaseStatus){
+      alert('Please purchase the course to chat with the teacher');
+      return;
+    }
+
     const token = await AsyncStorage.getItem('authToken');
     const userDetails = await AsyncStorage.getItem('userDetails');
     const userId = JSON.parse(userDetails).userId;
@@ -180,16 +263,66 @@ const SubjectPage = ({ subjectId }) => {
     }
   };
 
+  const handleReportSubject = async () => {
+    if (!reportReason.trim()) {
+      alert('Please provide a reason for reporting');
+      return;
+    }
+    console.log(reportReason);
+    
+    try {
+      setIsLoading(true);
+      const cleanedReportReason = reportReason.replace(/\s+/g, ' ').trim()
+
+   //ToDo: Implement API call to report subject with reason
+   const sendReport = await axiosWithAuth.post(`${ipURL}/api/reports/create-report`,{subjectId,reportReason:cleanedReportReason})
+   console.log(sendReport);
+
+      alert('Subject reported successfully');
+      setReportReason('');
+      setShowReportModal(false);
+      setShowMenu(false);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error reporting subject:', error);
+      alert('Failed to report subject. Please try again.');
+      setIsLoading(false);
+    }
+  };
+
+  const handleBlockUser = async () => {
+    try {
+      setIsLoading(true);
+      // TODO: Implement API call to block user
+      const blockUser = await axiosWithAuth.post(`${ipURL}/api/reports/block-user`,{subjectId})
+      console.log(blockUser);
+      
+      alert('User blocked successfully. You can unblock them from the blocked users page in your profile settings.');
+      setShowMenu(false);
+      router.back();
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error blocking user:', error);
+      alert('Failed to block user. Please try again.');
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const getSubjects = async () => {
       try {
         const token = await AsyncStorage.getItem("authToken");
+        const userDetails = await AsyncStorage.getItem('userDetails');
+        setIsTeacher(JSON.parse(userDetails).isTeacher);
         setUserToken(token);
-        const resp = await axios.get(`${ipURL}/api/subjects/${subjectId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const resp = await axiosWithAuth.get(`${ipURL}/api/subjects/${subjectId}`);
         setTeacherId(resp.data.user.id);
         setSingleSubjectData(resp.data);
+        console.log(resp.data,'resp.data in subject page');
+
+        const purchaseStatus = await axiosWithAuth.get(`${ipURL}/api/auth/metadata/verify-purchase/${subjectId}`);
+        setPurchaseStatus(purchaseStatus.data.hasPurchased);
+        setIsPageLoading(false);
       } catch (error) {
         console.error("Error fetching subject data:", error);
       }
@@ -230,8 +363,119 @@ const SubjectPage = ({ subjectId }) => {
     checkIfSaved();
   }, [subjectId]);
 
-  const handleSubmitReview = async () => {
-    if (!newReview.title || !newReview.description) {
+  useEffect(() => {
+    // Entrance animations
+    Animated.parallel([
+      Animated.timing(headerOpacity, {
+        toValue: 1,
+        duration: 800,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+      Animated.timing(headerTranslateY, {
+        toValue: 0,
+        duration: 800,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+      Animated.timing(contentOpacity, {
+        toValue: 1,
+        duration: 800,
+        delay: 200,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+      Animated.timing(contentTranslateY, {
+        toValue: 0,
+        duration: 800,
+        delay: 200,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+      Animated.timing(buttonOpacity, {
+        toValue: 1,
+        duration: 800,
+        delay: 400,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      })
+    ]).start();
+  }, []);
+
+  const handleMenuPress = () => {
+    if (showMenu) {
+      Animated.parallel([
+        Animated.timing(menuScale, {
+          toValue: 0,
+          duration: 200,
+          easing: Easing.bezier(0.4, 0, 0.2, 1),
+          useNativeDriver: true,
+        }),
+        Animated.timing(menuOpacity, {
+          toValue: 0,
+          duration: 200,
+          easing: Easing.bezier(0.4, 0, 0.2, 1),
+          useNativeDriver: true,
+        })
+      ]).start(() => setShowMenu(false));
+    } else {
+      setShowMenu(true);
+      Animated.parallel([
+        Animated.spring(menuScale, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(menuOpacity, {
+          toValue: 1,
+          duration: 200,
+          easing: Easing.bezier(0.4, 0, 0.2, 1),
+          useNativeDriver: true,
+        })
+      ]).start();
+    }
+  };
+
+  const handleButtonPress = () => {
+    Animated.sequence([
+      Animated.timing(buttonScale, {
+        toValue: 0.95,
+        duration: 100,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      }),
+      Animated.spring(buttonScale, {
+        toValue: 1,
+        friction: 3,
+        tension: 40,
+        useNativeDriver: true,
+      })
+    ]).start();
+  };
+
+  const headerStyle = {
+    opacity: headerOpacity,
+    transform: [{ translateY: headerTranslateY }]
+  };
+
+  const contentStyle = {
+    opacity: contentOpacity,
+    transform: [{ translateY: contentTranslateY }]
+  };
+
+  const buttonStyle = {
+    opacity: buttonOpacity,
+    transform: [{ scale: buttonScale }]
+  };
+
+  const menuStyle = {
+    opacity: menuOpacity,
+    transform: [{ scale: menuScale }]
+  };
+
+  const handleSubmitReview = useCallback(async (reviewData) => {
+    if (!reviewData.title || !reviewData.description) {
       alert('Please fill in all fields');
       return;
     }
@@ -241,8 +485,8 @@ const SubjectPage = ({ subjectId }) => {
       const response = await axios.post(
         `${ipURL}/api/reviews`,
         {
-          title: newReview.title,
-          description: newReview.description,
+          title: reviewData.title,
+          description: reviewData.description,
           subjectId: subjectId,
         },
         {
@@ -250,54 +494,150 @@ const SubjectPage = ({ subjectId }) => {
         }
       );
       
-      setReviews([response.data, ...reviews]);
-      setNewReview({ title: '', description: '' });
+      setReviews(prevReviews => [response.data, ...prevReviews]);
     } catch (error) {
       console.error("Error submitting review:", error);
       alert('Failed to submit review. Please try again.');
     }
     setIsSubmitting(false);
-  };
+  }, [subjectId, usertoken]);
 
   const handleViewAllReviews = () => {
     router.push(`/(tabs)/home/subjectReviews/${subjectId}`);
   };
 
-  const ReviewItem = ({ review }) => (
-    <View style={styles.reviewItem}>
-      <View style={styles.reviewHeader}>
-        <Image
-          source={{ uri: review.user.profileImage }}
-          style={styles.reviewerImage}
-          placeholder={blurhash}
-          contentFit="cover"
-          transition={100}
-        />
-        <View style={styles.reviewerInfo}>
-          <Text style={styles.reviewerName}>{review.user.name}</Text>
-          <Text style={styles.reviewDate}>
-            {new Date(review.createdAt).toLocaleDateString()}
-          </Text>
+  const ReviewItem = ({ review }) => {
+    const [voteState, setVoteState] = useState({
+      upvotes: review.upvotes,
+      downvotes: review.downvotes,
+      userVote: review.userVote
+    });
+
+    const handleVote = async (voteType: 'up' | 'down') => {
+      try {
+        const token = await AsyncStorage.getItem("authToken");
+        const response = await axios.post(
+          `${ipURL}/api/reviews/${review.id}/vote`,
+          { voteType },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        setVoteState({
+          upvotes: response.data.upvotes,
+          downvotes: response.data.downvotes,
+          userVote: response.data.userVote
+        });
+      } catch (error) {
+        console.error("Error voting:", error);
+        alert('Failed to vote. Please try again.');
+      }
+    };
+
+    return (
+      <View style={styles.reviewItem}>
+        <View style={styles.reviewHeader}>
+          <Image
+            source={{ uri: review.user.profileImage }}
+            style={styles.reviewerImage}
+            placeholder={blurhash}
+            contentFit='fill'
+            transition={100}
+          />
+          <View style={styles.reviewerInfo}>
+            <Text style={styles.reviewerName}>{review.user.name}</Text>
+            <Text style={styles.reviewDate}>
+              {new Date(review.createdAt).toLocaleDateString()}
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.reviewTitle}>{review.title}</Text>
+        <Text style={styles.reviewDescription}>{review.description}</Text>
+        
+        <View style={styles.voteContainer}>
+          <TouchableOpacity 
+            style={[styles.voteButton, voteState.userVote === 'up' && styles.activeVoteButton]}
+            onPress={() => handleVote('up')}
+          >
+            <Ionicons 
+              name="thumbs-up" 
+              size={16} 
+              color={voteState.userVote === 'up' ? '#2DCB63' : '#666'} 
+            />
+            <Text style={[styles.voteCount, voteState.userVote === 'up' && styles.activeVoteCount]}>
+              {voteState.upvotes}
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.voteButton, voteState.userVote === 'down' && styles.activeVoteButton]}
+            onPress={() => handleVote('down')}
+          >
+            <Ionicons 
+              name="thumbs-down" 
+              size={16} 
+              color={voteState.userVote === 'down' ? '#E74C3C' : '#666'} 
+            />
+            <Text style={[styles.voteCount, voteState.userVote === 'down' && styles.activeVoteCount]}>
+              {voteState.downvotes}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
-      <Text style={styles.reviewTitle}>{review.title}</Text>
-      <Text style={styles.reviewDescription}>{review.description}</Text>
-    </View>
-  );
+    );
+  };
 
   return (
+   isPageLoading ? <ActivityIndicator size="large" color="#0000ff" style={{flex: 1, justifyContent: 'center', alignItems: 'center'}} /> : 
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <ScrollView style={styles.scrollView} bounces={false}>
-        <Image
-          source={{ uri: singleSubjectData?.subjectImage }}
-          style={styles.headerImage}
-          placeholder={blurhash}
-          contentFit="cover"
-          transition={300}
-        />
+      <Animated.ScrollView 
+        style={styles.scrollView} 
+        bounces={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+      >
+        <Animated.View style={[styles.headerImageContainer, headerStyle]}>
+          <Image
+            source={{ uri: singleSubjectData?.subjectImage }}
+            style={styles.headerImage}
+            placeholder={blurhash}
+            contentFit='fill'
+            transition={300}
+          />
+          <TouchableOpacity 
+            style={styles.menuButton}
+            onPress={handleMenuPress}
+          >
+            <Ionicons name="ellipsis-vertical" size={24} color="white" />
+          </TouchableOpacity>
+        </Animated.View>
 
-        <View style={styles.contentContainer}>
+        {showMenu && (
+          <Animated.View style={[styles.menuContainer, menuStyle]}>
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => {
+                setShowMenu(false);
+                setShowReportModal(true);
+              }}
+            >
+              <Ionicons name="flag-outline" size={20} color="#E74C3C" />
+              <Text style={styles.menuItemText}>Report Subject</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={handleBlockUser}
+            >
+              <Ionicons name="ban-outline" size={20} color="#E74C3C" />
+              {isLoading ? <ActivityIndicator size="small" color={COLORS.primary} /> : <Text style={styles.menuItemText}>Block User</Text>}
+            </TouchableOpacity>
+          </Animated.View>
+        )}
+
+        <Animated.View style={[styles.contentContainer, contentStyle]}>
           {/* Status Bar */}
           <View style={styles.statusBar}>
             <View style={styles.statusIndicator}>
@@ -317,7 +657,7 @@ const SubjectPage = ({ subjectId }) => {
                 color={isSaved ? "#FFFFFF" : "#FFFFFF"} 
               />
               <Text style={styles.saveButtonText}>
-                {  (isSaved ? "Saved" : "Save")}
+                {isSaved ? "Saved" : "Save"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -341,7 +681,7 @@ const SubjectPage = ({ subjectId }) => {
             </View>
             <View style={styles.priceContainer}>
               <Text style={styles.priceLabel}>Course Fee</Text>
-              <Text style={styles.price}>AED {singleSubjectData.subjectPrice}</Text>
+              <Text style={styles.price}>AED {(singleSubjectData.subjectPrice) / 100}</Text>
               <Text style={styles.durationText}>
                 {singleSubjectData.subjectDuration} hours
               </Text>
@@ -361,8 +701,8 @@ const SubjectPage = ({ subjectId }) => {
               transition={100}
             />
             <View style={styles.teacherInfo}>
-              <Text style={styles.teacherName}>{singleSubjectData.user?.name}</Text>
-              <Text style={styles.teacherRole}>Sr. French Professor</Text>
+              <Text style={styles.teacherName}>{singleSubjectData.user?.name}</Text>  
+              <Text style={styles.teacherRole}>{singleSubjectData.user?.isTeacher ? "Instructor" : "Student"}</Text>
             </View>
             <Ionicons name="chevron-forward" size={24} color="#1A4C6E" />
           </TouchableOpacity>
@@ -418,25 +758,7 @@ const SubjectPage = ({ subjectId }) => {
             {reviews.length > 0 ? (
               <>
                 {reviews.slice(0, 3).map((review) => (
-                  <View key={review.id} style={styles.reviewItem}>
-                    <View style={styles.reviewHeader}>
-                      <Image
-                        source={{ uri: review.user.profileImage }}
-                        style={styles.reviewerImage}
-                        placeholder={blurhash}
-                        contentFit="cover"
-                        transition={100}
-                      />
-                      <View style={styles.reviewerInfo}>
-                        <Text style={styles.reviewerName}>{review.user.name}</Text>
-                        <Text style={styles.reviewDate}>
-                          {new Date(review.createdAt).toLocaleDateString()}
-                        </Text>
-                      </View>
-                    </View>
-                    <Text style={styles.reviewTitle}>{review.title}</Text>
-                    <Text style={styles.reviewDescription}>{review.description}</Text>
-                  </View>
+                  <ReviewItem key={review.id} review={review} />
                 ))}
               </>
             ) : (
@@ -444,52 +766,40 @@ const SubjectPage = ({ subjectId }) => {
             )}
             
             {/* Review Form */}
-            <View style={styles.reviewForm}>
-              <Text style={styles.sectionTitle}>Submit Your Review</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Review Title"
-                placeholderTextColor="#A0AEC0"
-                value={newReview.title} 
-                onChangeText={(text) => setNewReview({ ...newReview, title: text })}
-              />
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Give a brief description of your experience."
-                placeholderTextColor="#A0AEC0"
-                value={newReview.description}
-                onChangeText={(text) => setNewReview({ ...newReview, description: text })}
-                multiline
-                numberOfLines={4}
-              />
-              <TouchableOpacity
-                style={styles.submitButton}
-                onPress={handleSubmitReview}
-                disabled={isSubmitting}
-              >
-                <Text style={styles.submitButtonText}>
-                  {isSubmitting ? 'Submitting...' : 'Submit Review'}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <ReviewForm purchaseStatus={purchaseStatus} onSubmit={handleSubmitReview} isSubmitting={isSubmitting} />
           </View>
-        </View>
-      </ScrollView>
+        </Animated.View>
+      </Animated.ScrollView>
 
-      <View style={styles.footer}>
+      <Animated.View style={[styles.footer, buttonStyle]}>
         <TouchableOpacity 
-          style={styles.primaryButton} 
-          onPress={handleEnrollPress}
+          style={[
+            styles.primaryButton,
+            isTeacher && styles.disabledButton
+          ]} 
+          onPress={() => {
+            handleButtonPress();
+            handleEnrollPress();
+          }}
+          disabled={isTeacher}
         >
           <Ionicons name="cart" size={24} color="white" />
-          <Text style={styles.primaryButtonText}>Enroll Now</Text>
-          <Text style={styles.priceText}>AED {singleSubjectData.subjectPrice}</Text>
+          <Text style={styles.primaryButtonText}>
+            {isTeacher ? "Please login as student to purchase" : "Enroll Now"}
+          </Text>
+          {!isTeacher && <Text style={styles.priceText}>AED {(singleSubjectData.subjectPrice) / 100}</Text>}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.secondaryButton} onPress={handleChatNow}>
+        <TouchableOpacity 
+          style={styles.secondaryButton} 
+          onPress={() => {
+            handleButtonPress();
+            handleChatNow();
+          }}
+        >
           <Ionicons name="chatbubbles-outline" size={24} color="#FFFFFF" />
           <Text style={styles.secondaryButtonText}>Chat</Text>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
 
       <BookingCalendar
         teacherId={teacherId}
@@ -497,6 +807,45 @@ const SubjectPage = ({ subjectId }) => {
         visible={isBookingModalVisible}
         onClose={() => setIsBookingModalVisible(false)}
       />
+
+      <Modal
+        visible={showReportModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowReportModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Report Subject</Text>
+            <TextInput
+              style={styles.reportInput}
+              placeholder="Please provide a reason for reporting..."
+              placeholderTextColor="#A0AEC0"
+              value={reportReason}
+              onChangeText={setReportReason}
+              multiline
+              numberOfLines={4}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalCancelButton]}
+                onPress={() => {
+                  setShowReportModal(false);
+                  setReportReason('');
+                }}
+              >
+                <Text style={styles.modalCancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalSubmitButton]}
+                onPress={handleReportSubject}
+              >
+                {isLoading ? <ActivityIndicator size="small" color="#FFFFFF" /> : <Text style={styles.modalSubmitButtonText}>Submit Report</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -509,273 +858,277 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  headerImageContainer: {
+    position: 'relative',
+  },
   headerImage: {
     width: width,
-    height: 220,
+    height: verticalScale(400),
     backgroundColor: '#e0e0e0',
   },
   contentContainer: {
-    padding: 16,
-    marginTop: -30,
+    padding: moderateScale(16),
+    marginTop: verticalScale(-60),
     backgroundColor: 'white',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
   },
   statusBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-    paddingTop: 10,
+    marginBottom: verticalScale(20),
+    paddingTop: verticalScale(10),
   },
   statusIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: horizontalScale(6),
   },
   statusText: {
-    fontSize: 16,
+    fontSize: moderateScale(14),
     fontWeight: '600',
   },
   dateText: {
     color: '#666',
-    fontSize: 14,
+    fontSize: moderateScale(12),
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 24,
+    marginBottom: verticalScale(24),
   },
   titleContainer: {
     flex: 1,
-    marginRight: 16,
+    marginRight: horizontalScale(16),
   },
   subjectName: {
-    fontSize: 26,
-    fontWeight: '700',
+    fontSize: moderateScale(22),
+    fontWeight: '600',
     color: '#1a1a1a',
-    marginBottom: 12,
+    marginBottom: moderateScale(12),
   },
   badgeContainer: {
     flexDirection: 'row',
-    gap: 8,
+    gap: horizontalScale(8),
   },
   badge: {
     backgroundColor: '#f0f7ff',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingHorizontal: horizontalScale(12),
+    paddingVertical: verticalScale(6),
+    borderRadius: moderateScale(20),
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: moderateScale(6),
   },
   gradeBadge: {
     backgroundColor: '#fff3e0',
   },
   badgeText: {
     color: '#0066cc',
-    fontSize: 14,
+    fontSize: moderateScale(12),
     fontWeight: '600',
   },
   priceContainer: {
     alignItems: 'flex-end',
   },
   priceLabel: {
-    fontSize: 13,
+    fontSize: moderateScale(12),
     color: '#666',
-    marginBottom: 4,
+    marginBottom: verticalScale(4),
   },
   price: {
-    fontSize: 28,
+    fontSize: moderateScale(24),
     fontWeight: '700',
     color: '#2e7d32',
   },
   durationText: {
-    fontSize: 14,
+    fontSize: moderateScale(12),
     color: '#666',
-    marginTop: 4,
+    marginTop: verticalScale(4),
   },
   teacherCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8F9FA',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 24,
+    padding: moderateScale(16),
+    borderRadius: moderateScale(12),
+    marginBottom: verticalScale(24),
   },
   teacherImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: moderateScale(50),
+    height: moderateScale(50),
+    borderRadius: moderateScale(25),
   },
   teacherInfo: {
     flex: 1,
-    marginLeft: 15,
+    marginLeft: horizontalScale(15),
   },
   teacherName: {
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontWeight: '600',
     color: '#1a1a1a',
   },
   teacherRole: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     color: '#666',
-    marginTop: 4,
+    marginTop: verticalScale(4),
   },
   quickInfoContainer: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
+    gap: horizontalScale(12),
+    marginBottom: verticalScale(24),
   },
   quickInfoCard: {
     flex: 1,
     backgroundColor: '#f8f9fa',
-    padding: 16,
-    borderRadius: 12,
+    padding: moderateScale(16),
+    borderRadius: moderateScale(12),
     alignItems: 'center',
   },
   quickInfoLabel: {
-    fontSize: 14,
+    fontSize: moderateScale(12),
     color: '#666',
-    marginTop: 8,
+    marginTop: verticalScale(8),
   },
   quickInfoValue: {
-    fontSize: 16,
+    fontSize: moderateScale(14),
     fontWeight: '600',
     color: '#1a1a1a',
-    marginTop: 4,
+    marginTop: verticalScale(4),
   },
   section: {
-    marginBottom: 24,
+    marginBottom: verticalScale(24),
     backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 12,
+    padding: moderateScale(16),
+    borderRadius: moderateScale(12),
     borderWidth: 1,
     borderColor: '#f0f0f0',
     flex: 1,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: moderateScale(18),
     fontWeight: '600',
     color: '#1a1a1a',
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
   },
   description: {
-    fontSize: 16,
+    fontSize: moderateScale(14),
     color: '#666',
-    lineHeight: 24,
+    lineHeight: verticalScale(24),
   },
   pointRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
-    gap: 12,
+    marginBottom: verticalScale(12),
+    gap: horizontalScale(12),
   },
   bulletPoint: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: horizontalScale(24),
+    height: verticalScale(24),
+    borderRadius: moderateScale(12),
     backgroundColor: '#f0f7ff',
     alignItems: 'center',
     justifyContent: 'center',
   },
   bulletNumber: {
     color: '#0066cc',
-    fontSize: 14,
+    fontSize: moderateScale(12),
     fontWeight: '600',
   },
   pointText: {
     flex: 1,
-    fontSize: 16,
+    fontSize: moderateScale(16),
     color: '#666',
-    lineHeight: 24,
+    lineHeight: verticalScale(24),
   },
   reviewItem: {
     backgroundColor: '#f8f9fa',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 16,
+    padding: moderateScale(16),
+    borderRadius: moderateScale(12),
+    marginBottom: verticalScale(16),
   },
   reviewHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: verticalScale(12),
   },
   reviewerImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: horizontalScale(40),
+    height: verticalScale(40),
+    borderRadius: moderateScale(20),
   },
   reviewerInfo: {
-    marginLeft: 12,
+    marginLeft: horizontalScale(12),
   },
   reviewerName: {
-    fontSize: 16,
+    fontSize: moderateScale(14),
     fontWeight: '600',
     color: '#1a1a1a',
   },
   reviewDate: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     color: '#666',
-    marginTop: 4,
+    marginTop: verticalScale(4),
   },
   reviewTitle: {
-    fontSize: 16,
+    fontSize: moderateScale(14),
     fontWeight: '600',
     color: '#1a1a1a',
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
   },
   reviewDescription: {
-    fontSize: 14,
+    fontSize: moderateScale(12),
     color: '#666',
-    lineHeight: 20,
+    lineHeight: verticalScale(20),
   },
   reviewForm: {
-    marginTop: 16,
-    paddingBottom: 24,
+    flex: 1,
+    marginTop: verticalScale(16),
+    paddingBottom: verticalScale(104),
   },
   input: {
     backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    fontSize: 14,
+    borderRadius: moderateScale(8),
+    padding: moderateScale(12),
+    marginBottom: verticalScale(12),
+    fontSize: moderateScale(14),
   },
   textArea: {
-    height: 100,
+    height: verticalScale(100),
     textAlignVertical: 'top',
   },
   submitButton: {
     backgroundColor: '#2DCB63',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: moderateScale(8),
+    padding: moderateScale(12),
     alignItems: 'center',
-    minHeight: 44,
-    marginTop: 16,
-    marginBottom: 16,
+    minHeight: verticalScale(44),
+    marginTop: verticalScale(16),
+    marginBottom: verticalScale(16),
     justifyContent: 'center',
     width: '100%',
   },
   submitButtonText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: moderateScale(14),
     fontWeight: '600',
   },
   noReviewsText: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     color: '#666',
     textAlign: 'center',
-    marginTop: 12,
+    marginTop: verticalScale(12),
   },
   reviewsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: verticalScale(16),
   },
   viewAllButton: {
-    fontSize: 14,
+    fontSize: moderateScale(14),
     color: '#2DCB63',
     textDecorationLine: 'underline',
   },
@@ -785,7 +1138,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: 'row',
-    padding: 16,
+    padding: moderateScale(16),
     backgroundColor: 'white',
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
@@ -793,36 +1146,36 @@ const styles = StyleSheet.create({
   primaryButton: {
     flex: 1,
     backgroundColor: '#2DCB63',
-    borderRadius: 12,
-    padding: 16,
-    marginRight: 12,
+    borderRadius: moderateScale(12),
+    padding: moderateScale(16),
+    marginRight: horizontalScale(12),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-  },
+    gap: horizontalScale(8),
+  }, 
   primaryButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: moderateScale(16),
     fontWeight: '600',
   },
   priceText: {
     color: 'white',
-    fontSize: 14,
-    marginLeft: 8,
+    fontSize: moderateScale(14),
+    marginLeft: horizontalScale(8),
   },
   secondaryButton: {
     backgroundColor: '#3498DB',
-    borderRadius: 12,
-    padding: 16,
-    width: 70,
+    borderRadius: moderateScale(12),
+    padding: moderateScale(16),
+    width: horizontalScale(70),
     alignItems: 'center',
     justifyContent: 'center',
   },
   secondaryButtonText: {
     color: 'white',
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: moderateScale(12),
+    marginTop: verticalScale(4),
   },
   saveButton: {
     flexDirection: 'row',
@@ -831,7 +1184,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: horizontalScale(12),
     paddingVertical: verticalScale(6),
     borderRadius: moderateScale(20),
-    gap: horizontalScale(6),
+    gap: horizontalScale(8),
   },
   savedButton: {
     backgroundColor: '#2DCB63',
@@ -840,6 +1193,135 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: moderateScale(14),
     fontFamily: FONT.medium,
+  },
+  voteContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: verticalScale(12),
+    gap: horizontalScale(16),
+  },
+  voteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: moderateScale(8),
+    borderRadius: moderateScale(8),
+    backgroundColor: '#f8f9fa',
+    gap: horizontalScale(4),
+  },
+  activeVoteButton: {
+    backgroundColor: '#f0f0f0',
+  },
+  voteCount: {
+    fontSize: moderateScale(14),
+    color: '#666',
+  },
+  activeVoteCount: {
+    color: '#2DCB63',
+  },
+  rightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: horizontalScale(12),
+  },
+  menuButton: {
+    position: 'absolute',
+    top: verticalScale(16),
+    right: horizontalScale(16),
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: moderateScale(20),
+    padding: moderateScale(8),
+  },
+  menuContainer: {
+    position: 'absolute',
+    top: verticalScale(70),
+    right: horizontalScale(16),
+    backgroundColor: 'white',
+    borderRadius: moderateScale(12),
+    padding: moderateScale(8),
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    //shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: moderateScale(12),
+    gap: horizontalScale(8),
+  },
+  menuItemText: {
+    fontSize: moderateScale(16),
+    color: '#1A4C6E',
+    fontWeight: '500',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: moderateScale(12),
+    padding: moderateScale(20),
+    width: '90%',
+    maxWidth: horizontalScale(400),
+  },
+  modalTitle: {
+    fontSize: moderateScale(20),
+    fontWeight: '600',
+    color: '#1A4C6E',
+    marginBottom: verticalScale(16),
+  },
+  reportInput: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: moderateScale(8),
+    padding: moderateScale(12),
+    marginBottom: verticalScale(16),
+    fontSize: moderateScale(14),
+    minHeight: verticalScale(100),
+    textAlignVertical: 'top',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: horizontalScale(12),
+  },
+  modalButton: {
+    paddingVertical: verticalScale(8),
+    paddingHorizontal: horizontalScale(16),
+    borderRadius: moderateScale(8),
+  },
+  modalCancelButton: {
+    backgroundColor: '#f8f9fa',
+  },
+  modalSubmitButton: {
+    backgroundColor: '#E74C3C',
+  },
+  modalCancelButtonText: {
+    color: '#1A4C6E',
+    fontSize: moderateScale(14),
+    fontWeight: '500',
+  },
+  modalSubmitButtonText: {
+    color: 'white',
+    fontSize: moderateScale(14),
+    fontWeight: '500',
+  },
+  disabledButton: {
+    backgroundColor: '#cccccc',
+    opacity: 0.7,
+  },
+  purchaseStatusText: {
+    fontSize: moderateScale(14),
+    color: '#666',
+    textAlign: 'center',
+    marginTop: verticalScale(12),
   },
 });
 

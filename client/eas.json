@@ -16,7 +16,16 @@
     "preview4": {
       "distribution": "internal"
     },
-    "production": {}
+    "production": {
+      "ios": {
+        "image": "macos-sequoia-15.3-xcode-16.2",
+        "autoIncrement": true
+        
+      }
+    },
+    "development": {
+      "developmentClient": true
+    }
   },
   "submit": {
     "production": {
@@ -26,5 +35,8 @@
         "appleTeamId": "46LHZT8BN9"
       }
     }
+  },
+  "cli": {
+    "appVersionSource": "local"
   }
 }
