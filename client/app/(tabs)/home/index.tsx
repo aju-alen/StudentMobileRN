@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   Button,
+  Dimensions,
 } from "react-native";
 import { Image } from 'expo-image';
 import React, { useEffect, useState, useRef } from "react";
@@ -28,6 +29,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/en';
 import { axiosWithAuth } from "../../utils/customAxios";
+import { LinearGradient } from 'expo-linear-gradient';
 // Initialize dayjs plugins
 dayjs.extend(relativeTime);
 dayjs.locale('en');
@@ -47,12 +49,18 @@ interface User {
   enrolledCourses?: number;
   certificatesEarned?: number;
   upcomingDeadlines?: Deadline[];
+  studyTime?: number;
+  weeklyGoal?: number;
+  rank?: number;
+  totalStudents?: number;
 }
 
 interface Stats {
   icon: string;
   label: string;
   value: number;
+  color?: string;
+  progress?: number;
 }
 
 interface Deadline {
@@ -93,6 +101,8 @@ interface CourseProgress {
 const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
+const { width: screenWidth } = Dimensions.get('window');
+
 const HomePage = () => {
   const scrollY = useRef(new Animated.Value(0)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
@@ -110,10 +120,15 @@ const HomePage = () => {
     streakCount: 0,
     totalPoints: 0,
     completedCourses: 0,
+    studyTime: 0,
+    weeklyGoal: 20,
+    rank: 0,
+    totalStudents: 0,
   });
 
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const videoData = [
     { id: '1', videoUrl: 'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4' },
@@ -136,9 +151,68 @@ const HomePage = () => {
   });
 
   const StatsCard = ({ stats }: { stats: Stats }) => (
-    <View style={styles.statsCard}>
-      <Text style={styles.statsValue}>{stats.value}</Text>
-      <Text style={styles.statsLabel}>{stats.label}</Text>
+    <View style={[styles.statsCard, { backgroundColor: stats.color || '#FFFFFF' }]}>
+      <View style={styles.statsIconContainer}>
+        <Ionicons name={stats.icon as any} size={24} color={stats.color ? '#FFFFFF' : '#1A4C6E'} />
+      </View>
+      <Text style={[styles.statsValue, { color: stats.color ? '#FFFFFF' : '#1A4C6E' }]}>{stats.value}</Text>
+      <Text style={[styles.statsLabel, { color: stats.color ? 'rgba(255,255,255,0.8)' : '#666' }]}>{stats.label}</Text>
+      {stats.progress && (
+        <View style={styles.progressBarContainer}>
+          <View style={[styles.progressBarFill, { width: `${stats.progress}%` }]} />
+        </View>
+      )}
+    </View>
+  );
+
+  const StudyStreakCard = () => (
+    <LinearGradient
+      colors={['#FF6B6B', '#FF8E8E']}
+      style={styles.streakCard}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
+      <View style={styles.streakContent}>
+        <View style={styles.streakIcon}>
+          <Ionicons name="flame" size={32} color="#FFFFFF" />
+        </View>
+        <View style={styles.streakInfo}>
+          <Text style={styles.streakNumber}>{user.streakCount || 0}</Text>
+          <Text style={styles.streakLabel}>Day Streak</Text>
+          <Text style={styles.streakSubtext}>Keep it up!</Text>
+        </View>
+      </View>
+    </LinearGradient>
+  );
+
+  const StudyProgressCard = () => (
+    <View style={styles.progressCard}>
+      <View style={styles.progressHeaderNew}>
+        <Text style={styles.progressTitleNew}>Weekly Goal</Text>
+        <Text style={styles.progressPercentage}>
+          {Math.round((user.studyTime || 0) / (user.weeklyGoal || 20) * 100)}%
+        </Text>
+      </View>
+      <View style={styles.progressBarContainer}>
+        <View style={[styles.progressBarFill, { 
+          width: `${Math.min((user.studyTime || 0) / (user.weeklyGoal || 20) * 100, 100)}%`,
+          backgroundColor: '#4ECDC4'
+        }]} />
+      </View>
+      <Text style={styles.progressTextNew}>
+        {user.studyTime || 0}h / {user.weeklyGoal || 20}h this week
+      </Text>
+    </View>
+  );
+
+  const LeaderboardCard = () => (
+    <View style={styles.leaderboardCard}>
+      <View style={styles.leaderboardHeader}>
+        <Ionicons name="trophy" size={20} color="#FFD700" />
+        <Text style={styles.leaderboardTitle}>Your Rank</Text>
+      </View>
+      <Text style={styles.rankNumber}>#{user.rank || 0}</Text>
+      <Text style={styles.rankSubtext}>out of {user.totalStudents || 0} students</Text>
     </View>
   );
 
@@ -157,7 +231,7 @@ const HomePage = () => {
     ]).start();
   };
 
-  const QuickActionButton = ({ icon, label, onPress }) => {
+  const QuickActionButton = ({ icon, label, onPress, color = "#1A4C6E", badge = null }) => {
     const scale = useRef(new Animated.Value(1)).current;
 
     const handlePress = () => {
@@ -175,13 +249,19 @@ const HomePage = () => {
           style={[
             styles.quickActionIcon,
             {
-              transform: [{ scale }]
+              transform: [{ scale }],
+              backgroundColor: color === "#1A4C6E" ? 'rgba(26,76,110,0.08)' : `${color}20`
             }
           ]}
         >
-          <Ionicons name={icon} size={20} color="#1A4C6E" />
+          <Ionicons name={icon} size={20} color={color} />
+          {badge && (
+            <View style={styles.quickActionBadge}>
+              <Text style={styles.badgeText}>{badge}</Text>
+            </View>
+          )}
         </Animated.View>
-        <Text style={styles.quickActionLabel}>{label}</Text>
+        <Text style={[styles.quickActionLabel, { color }]}>{label}</Text>
       </TouchableOpacity>
     );
   };
@@ -336,6 +416,13 @@ const HomePage = () => {
       }
     };
     loadAllData();
+
+    // Update time every minute for greeting
+    const timeInterval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
+    return () => clearInterval(timeInterval);
   }, []);
 
   const onRefresh = React.useCallback(() => {
@@ -355,12 +442,25 @@ const HomePage = () => {
     );
   }
 
+  const getGreeting = () => {
+    const hour = currentTime.getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
+  };
+
   return (
     <View style={styles.container}>
-    <StatusBar style="light" />
+    <StatusBar style="dark" />
     
     {/* Enhanced Animated Header */}
-    <Animated.View style={[styles.header, {  opacity: headerOpacity }]}>
+    <Animated.View style={[styles.header]}>
+      <LinearGradient
+        colors={['#1A4C6E', '#2A5C7E']}
+        style={styles.headerGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
       <View style={styles.userSection}>
         <TouchableOpacity 
           style={styles.profileButton}
@@ -383,14 +483,14 @@ const HomePage = () => {
         </TouchableOpacity>
         
         <View style={styles.welcomeText}>
-          <Text style={styles.greeting}>Welcome back,</Text>
+            <Text style={styles.greeting}>{getGreeting()},</Text>
           <Text style={styles.userName}>{user.name.split(' ')[0]}</Text>
+            <Text style={styles.userLevel}>Level {user.level || 1} Student</Text>
         </View>
         
         <TouchableOpacity 
-          style={[styles.notificationButton, { opacity: 0.7 }]}
+            style={styles.notificationButton}
           onPress={() => {
-            // Show coming soon message
             Alert.alert(
               "Coming Soon",
               "Notifications feature will be available soon!",
@@ -401,24 +501,26 @@ const HomePage = () => {
         >
           <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
             <Ionicons name="notifications-outline" size={24} color="white" />
-            <View style={[styles.notificationBadge, { backgroundColor: '#FFA500' }]}>
-              <Text style={{ color: 'white', fontSize: 8, fontWeight: 'bold' }}>SOON</Text>
+              <View style={styles.notificationBadge}>
+                <Text style={styles.badgeText}>3</Text>
             </View>
           </Animated.View>
         </TouchableOpacity>
       </View>
 
         {/* Enhanced Stats Container */}
-        {/* <ScrollView 
+        <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false}
           style={styles.statsContainer}
           contentContainerStyle={styles.statsContent}
         >
-          <StatsCard stats={{ icon: "flame-outline", label: "Day Streak", value: user.streakCount || 4 }} />
-          <StatsCard stats={{ icon: "star-outline", label: "Total Points", value: user.totalPoints || 11 }} />
-          <StatsCard stats={{ icon: "trophy-outline", label: "Completed", value: user.completedCourses || 81 }} />
-        </ScrollView> */}
+          {/*<StudyStreakCard />
+          <StudyProgressCard />
+          <LeaderboardCard />
+          */}
+        </ScrollView>
+      </LinearGradient>
       </Animated.View>
 
       {/* Main Content */}
@@ -434,29 +536,89 @@ const HomePage = () => {
           <RefreshControl refreshing={refreshing}  />
         }
       >
-        {/* Quick Actions */}
+        {/* Enhanced Quick Actions */}
         <View style={styles.quickActions}>
           <QuickActionButton 
             icon="search-outline" 
             label="Find Courses"
             onPress={() => router.push('/(tabs)/home/allSubject')}
+            color="#1A4C6E"
           />
           <QuickActionButton 
             icon="calendar-outline" 
-            label="Your Bookings"
+            label="Schedule"
             onPress={() => router.push('/(tabs)/profile/schedule')}
+
+            badge={deadlines.length > 0 ? deadlines.length.toString() : null}
           />
           <QuickActionButton 
             icon="bookmark-outline" 
-            label="Saved Courses"
+            label="Saved"
             onPress={() => router.push('/(tabs)/home/saved')}
+
           />
-          {/* <QuickActionButton 
-            icon="trending-up-outline" 
-            label="Progress"
-            onPress={() => router.push('/(tabs)/home/progress')}
-          /> */}
+          <QuickActionButton 
+            icon="trophy-outline" 
+            label="Achievements"
+            onPress={() => {
+              Alert.alert("Coming Soon", "Achievements feature will be available soon!");
+            }}
+          />
         </View>
+
+        {/* Study Tools Section */}
+        {/* <View style={styles.studyToolsSection}>
+          <SectionHeader title="Study Tools" />
+          <View style={styles.studyToolsGrid}>
+            <TouchableOpacity 
+              style={styles.studyToolCard}
+              onPress={() => {
+                Alert.alert("Coming Soon", "Study Timer feature will be available soon!");
+              }}
+            >
+              <View style={[styles.studyToolIcon, { backgroundColor: '#4ECDC420' }]}>
+                <Ionicons name="timer-outline" size={24} color="#4ECDC4" />
+              </View>
+              <Text style={styles.studyToolLabel}>Study Timer</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.studyToolCard}
+              onPress={() => {
+                Alert.alert("Coming Soon", "Flashcards feature will be available soon!");
+              }}
+            >
+              <View style={[styles.studyToolIcon, { backgroundColor: '#FF6B6B20' }]}>
+                <Ionicons name="library-outline" size={24} color="#FF6B6B" />
+              </View>
+              <Text style={styles.studyToolLabel}>Flashcards</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.studyToolCard}
+              onPress={() => {
+                Alert.alert("Coming Soon", "Study Groups feature will be available soon!");
+              }}
+            >
+              <View style={[styles.studyToolIcon, { backgroundColor: '#FFD70020' }]}>
+                <Ionicons name="people-outline" size={24} color="#FFD700" />
+              </View>
+              <Text style={styles.studyToolLabel}>Study Groups</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.studyToolCard}
+              onPress={() => {
+                Alert.alert("Coming Soon", "AI Tutor feature will be available soon!");
+              }}
+            >
+              <View style={[styles.studyToolIcon, { backgroundColor: '#9B59B620' }]}>
+                <Ionicons name="chatbubble-outline" size={24} color="#9B59B6" />
+              </View>
+              <Text style={styles.studyToolLabel}>AI Tutor</Text>
+            </TouchableOpacity>
+          </View>
+        </View> */}
 
         {/* Continue Learning Section */}
         {currentLearning.length > 0 && (
@@ -552,28 +714,31 @@ export default HomePage;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F9FA',
   },
   header: {
-    backgroundColor: '#1A4C6E',
-    paddingTop: verticalScale(60),
-    paddingBottom: verticalScale(25),
+
+    paddingBottom: verticalScale(0),
+
     borderBottomLeftRadius: moderateScale(35),
     borderBottomRightRadius: moderateScale(35),
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    //shadowOpacity: 0.15,
+    shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
+  },
+  headerGradient: {
+    paddingTop: verticalScale(20),
+    paddingBottom: verticalScale(25),
+    borderBottomLeftRadius: moderateScale(35),
+    borderBottomRightRadius: moderateScale(35),
   },
   userSection: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: horizontalScale(20),
+    marginTop: verticalScale(40),
   },
   profileButton: {
     position: 'relative',
@@ -605,16 +770,27 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
     color: '#E0E0E0',
   },
-  
-  
+  userLevel: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(12),
+    color: '#B0C4DE',
+    marginTop: verticalScale(2),
+  },
   notificationBadge: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#F1A568',
+    top: -2,
+    right: -2,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#FF4A4A',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   content: {
     flex: 1,
@@ -940,18 +1116,146 @@ const styles = StyleSheet.create({
   statsCard: {
     backgroundColor: 'rgba(255,255,255,0.95)',
     borderRadius: moderateScale(20),
-    padding: moderateScale(4),
-    marginHorizontal: horizontalScale(4),
+    padding: moderateScale(16),
+    marginHorizontal: horizontalScale(8),
     alignItems: 'center',
-    minWidth: horizontalScale(110),
+    minWidth: horizontalScale(120),
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    //shadowOpacity: 0.1,
+    shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
+  },
+  statsIconContainer: {
+    marginBottom: verticalScale(8),
+  },
+  streakCard: {
+    borderRadius: moderateScale(20),
+    padding: moderateScale(16),
+    marginHorizontal: horizontalScale(8),
+    minWidth: horizontalScale(140),
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  streakContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  streakIcon: {
+    marginRight: horizontalScale(12),
+  },
+  streakInfo: {
+    flex: 1,
+  },
+  streakNumber: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(24),
+    color: '#FFFFFF',
+  },
+  streakLabel: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(12),
+    color: 'rgba(255,255,255,0.9)',
+  },
+  streakSubtext: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(10),
+    color: 'rgba(255,255,255,0.7)',
+  },
+  progressCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(20),
+    padding: moderateScale(16),
+    marginHorizontal: horizontalScale(8),
+    minWidth: horizontalScale(140),
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  progressHeaderNew: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: verticalScale(8),
+  },
+  progressTitleNew: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(12),
+    color: '#666',
+  },
+  progressPercentage: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(16),
+    color: '#1A4C6E',
+  },
+  progressBarContainer: {
+    height: verticalScale(6),
+    backgroundColor: 'rgba(26,76,110,0.1)',
+    borderRadius: moderateScale(3),
+    marginBottom: verticalScale(8),
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#4ECDC4',
+    borderRadius: moderateScale(3),
+  },
+  progressTextNew: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(10),
+    color: '#666',
+  },
+  leaderboardCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(20),
+    padding: moderateScale(16),
+    marginHorizontal: horizontalScale(8),
+    minWidth: horizontalScale(120),
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  leaderboardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: verticalScale(8),
+  },
+  leaderboardTitle: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(12),
+    color: '#666',
+    marginLeft: horizontalScale(4),
+  },
+  rankNumber: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(20),
+    color: '#1A4C6E',
+    marginBottom: verticalScale(4),
+  },
+  rankSubtext: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(10),
+    color: '#666',
+    textAlign: 'center',
   },
   quickActionIcon: {
     width: horizontalScale(56),
@@ -965,9 +1269,60 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    //shadowOpacity: 0.1,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+    position: 'relative',
+  },
+  quickActionBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#FF4A4A',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  studyToolsSection: {
+    marginTop: verticalScale(24),
+  },
+  studyToolsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: horizontalScale(20),
+  },
+  studyToolCard: {
+    width: (screenWidth - horizontalScale(60)) / 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(16),
+    padding: moderateScale(16),
+    marginBottom: verticalScale(12),
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  studyToolIcon: {
+    width: horizontalScale(48),
+    height: verticalScale(48),
+    borderRadius: moderateScale(24),
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: verticalScale(8),
+  },
+  studyToolLabel: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(12),
+    color: '#1A4C6E',
+    textAlign: 'center',
   },
 
   deadlineCard: {
