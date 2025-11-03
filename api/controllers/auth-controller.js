@@ -4,8 +4,10 @@ import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from '@prisma/client';
 import dotenv from "dotenv";
+import { Resend } from 'resend';
 dotenv.config();
 import { sendEmailService } from "../services/emailService.js";
+const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
 
 
 const prisma = new PrismaClient();
@@ -196,7 +198,13 @@ const sendVerificationEmail = async (email, verificationToken, name, isTeacher) 
 
     //send the mail
     try {
-        const response = await transporter.sendMail(mailOptions);
+        // const response = await transporter.sendMail(mailOptions);
+        const response = await resend.emails.send({
+            from: process.env.COACH_ACADEM_RESEND_EMAIL,
+            to: email,
+            subject: mailOptions.subject,
+            html: mailOptions.html,
+        });
         console.log("Verification email sent", response);
     }
     catch (err) {
