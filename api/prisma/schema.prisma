@@ -200,16 +200,16 @@ model Booking {
   teacher User @relation("TeacherBookings", fields: [teacherId], references: [id], onDelete: Cascade)
   student User @relation("StudentBookings", fields: [studentId], references: [id], onDelete: Cascade)
 
-  bookingDate DateTime
-  bookingTime String
+  bookingDate DateTime?
+  bookingTime String?
   bookingStatus BookingStatus @default(PENDING)
-  bookingPrice Float
-  bookingPaymentCompleted Boolean @default(false)
+  bookingPrice Float?
+  bookingPaymentCompleted Boolean? @default(false)
   bookingZoomUrl String? @default("")
   bookingZoomPassword String? @default("")
-  bookingHours Int
-  bookingMinutes Int
-  bookingZoomId Int 
+  bookingHours Int?
+  bookingMinutes Int?
+  bookingZoomId Int?
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
