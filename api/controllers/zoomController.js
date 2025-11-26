@@ -83,7 +83,7 @@ export const zoomWebhook = async (req, res) => {
     // Verify Zoom webhook signature using x-zm-signature and x-zm-request-timestamp
     const zoomSignature = req.headers['x-zm-signature'];
     const zoomTimestamp = req.headers['x-zm-request-timestamp'];
-    const secretToken = process.env.ZOOM_WEBHOOK_SECRET_TOKEN || '';
+    const secretToken = process.env.ZOOM_SECRET_TOKEN || '';
 
     if (!zoomSignature || !zoomTimestamp || !secretToken) {
       console.error('Missing Zoom signature, timestamp, or secret token');
@@ -116,7 +116,7 @@ export const zoomWebhook = async (req, res) => {
 
     if (event.event === 'endpoint.url_validation') {
       const plainToken = event.payload?.plainToken;
-      const secretToken = process.env.ZOOM_WEBHOOK_SECRET_TOKEN || '';
+      const secretToken = process.env.ZOOM_SECRET_TOKEN || '';
 
       const hashForValidate = crypto
         .createHmac('sha256', secretToken)
