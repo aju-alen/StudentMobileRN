@@ -1,6 +1,6 @@
 import { BookingStatus, PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
-import { createZoomMeeting, createZoomAccountForTeacher } from "../services/zoomService.js";
+import { createZoomAccountForTeacher } from "../services/zoomService.js";
 dotenv.config();
 import Stripe from 'stripe';
 import { sendEmailService } from "../services/emailService.js";
@@ -321,10 +321,6 @@ export const stripeWebhook = async (req, res, next) => {
                             }
                         }
                     }
-                    
-                const zoomCreateMeetingResponse = await createZoomMeeting(chargeSucceeded.metadata.teacherEmail, chargeSucceeded.metadata.subjectName, uaeDate, (chargeSucceeded.metadata.subjectDuration) * 60 )
-                console.log('zoomCreateMeetingResponse', zoomCreateMeetingResponse);
-
               
                 
                 const { saveTransaction, createBooking } = await prisma.$transaction(async (tx) => {
@@ -339,11 +335,8 @@ export const stripeWebhook = async (req, res, next) => {
                             bookingStatus: BookingStatus.CONFIRMED,
                             bookingPrice: chargeSucceeded.amount,
                             bookingPaymentCompleted: true,
-                            bookingZoomUrl: zoomCreateMeetingResponse.join_url,
-                            bookingZoomPassword: zoomCreateMeetingResponse.password,
                             bookingHours: parseInt(chargeSucceeded.metadata.subjectDuration),
-                            bookingMinutes: (chargeSucceeded.metadata.subjectDuration) * 60,
-                            bookingZoomId: zoomCreateMeetingResponse.id
+                            bookingMinutes: (chargeSucceeded.metadata.subjectDuration) * 60
                         }
                     });
 
@@ -617,7 +610,7 @@ export const stripeWebhook = async (req, res, next) => {
                             </div>
                             
                             <div style="text-align: center;">
-                                <a href=" ${createBooking.bookingZoomUrl}" class="button">Join the class during the scheduled time using the link below or on the app</a>
+                                <a href="coachacadem://bookings" class="button">Open the app to view your class details and join link</a>
                             </div>
                         </div>
                         
@@ -866,7 +859,7 @@ export const stripeWebhook = async (req, res, next) => {
                             </div>
                             
                             <div style="text-align: center;">
-                                <a href="${createBooking.bookingZoomUrl}" class="button">Join Class</a>
+                                <a href="coachacadem://bookings" class="button">Open the app to view this booking and Zoom link</a>
                             </div>
                         </div>
                         

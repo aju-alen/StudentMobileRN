@@ -106,18 +106,20 @@ const retryWithBackoff = async (fn, maxRetries = 3, baseDelay = 1000) => {
 // Create a Zoom user account
 export const createZoomUser = async (teacherEmail, teacherName) => {
   const token = await getZoomAccessToken();
-  
   try {
     const res = await axios.post(
       'https://api.zoom.us/v2/users',
       {
-        action: 'custCreate', // Create user without sending activation email
+        action: 'create', // Standard user creation (Zoom sends activation email)
         user_info: {
+          // Basic fields required by Zoom for user creation
           email: teacherEmail,
-          type: 2, // Licensed user (Pro)
-          first_name: teacherName.split(' ')[0] || teacherName,
-          last_name: teacherName.split(' ').slice(1).join(' ') || '',
-        }
+          type: 2, // 1 = Basic user (safer for create; license can be upgraded separately)
+          first_name: (teacherName && teacherName.split(' ')[0]) || '',
+          last_name: (teacherName && teacherName.split(' ').slice(1).join(' ')) || '',
+          display_name: teacherName || 'Test',
+          password: '1234',
+        },
       },
       {
         headers: {

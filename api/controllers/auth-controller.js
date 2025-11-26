@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import { Resend } from 'resend';
 dotenv.config();
 import { sendEmailService } from "../services/emailService.js";
+import { createZoomAccountForTeacher } from "../services/zoomService.js";
 const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
 
 
@@ -755,6 +756,19 @@ export const updateUserHasSeenOnboarding = async (req, res, next) => {
   }
   catch(err){
     console.log('error in update user has seen onboarding', err);
+    next(err);
+  }
+}
+
+export const zoomTest = async (req, res, next) => {
+  try{
+    const { email, name } = req.body;
+    console.log(email, name, 'this is the email and name');
+    const token = await createZoomAccountForTeacher(email, name);
+    console.log(token, 'this is the token');
+    res.status(200).json({ message: "Zoom test successful", token });
+  }
+  catch(err){
     next(err);
   }
 }

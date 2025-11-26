@@ -18,6 +18,7 @@ import { createServer } from 'http';
 import s3route from './routes/s3route.js';
 import { initializeSocket } from './socket/socketHandler.js';
 import { stripeWebhook } from './controllers/stripe-controller.js';
+import { zoomWebhook } from './controllers/zoomController.js';
 
 dotenv.config();
 
@@ -47,6 +48,7 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use('/api/stripe-webhook', express.raw({type: 'application/json'}), stripeWebhook);
+app.post('/api/zoom/webhook', express.raw({ type: 'application/json' }), zoomWebhook);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use('/api/auth', authRoute)
