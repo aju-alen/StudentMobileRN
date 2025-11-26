@@ -35,7 +35,7 @@ export const createZoomMeeting = async (hostEmail, topic, startTime, bookingTime
       `https://api.zoom.us/v2/users/${hostEmail}/meetings`,
       {
         topic: topic,
-        type: 2,
+        type: 1,
         start_time: startTime,
         duration: bookingTimeInMinutes,
         timezone: 'Asia/Dubai',
@@ -114,7 +114,7 @@ export const createZoomUser = async (teacherEmail, teacherName) => {
         user_info: {
           // Basic fields required by Zoom for user creation
           email: teacherEmail,
-          type: 2, // 1 = Basic user (safer for create; license can be upgraded separately)
+          type: 1, // 1 = Basic user (safer for create; license can be upgraded separately)
           first_name: (teacherName && teacherName.split(' ')[0]) || '',
           last_name: (teacherName && teacherName.split(' ').slice(1).join(' ')) || '',
           display_name: teacherName || 'Test',
@@ -151,7 +151,7 @@ export const assignZoomLicense = async (userId) => {
     const res = await axios.patch(
       `https://api.zoom.us/v2/users/${userId}`,
       {
-        type: 2 // Licensed user (Pro)
+        type: 1 // Licensed user (Pro)
       },
       {
         headers: {
