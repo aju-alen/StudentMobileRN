@@ -1,6 +1,6 @@
 import { BookingStatus, PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
-import { createZoomMeeting } from "../services/zoomService.js";
+import { createZoomMeeting, createZoomAccountForTeacher } from "../services/zoomService.js";
 dotenv.config();
 import Stripe from 'stripe';
 import { sendEmailService } from "../services/emailService.js";
@@ -142,6 +142,185 @@ export const stripeWebhook = async (req, res, next) => {
                     const dateTimeString = `${bookingTime}T${bookingHour}:00+04:00`;
                     console.log('dateTimeString', dateTimeString);
                     const uaeDate = new Date(dateTimeString);
+                    
+                    // Check if this is the first purchase for this subject
+                    const existingPurchases = await prisma.stripePurchases.findMany({
+                        where: {
+                            subjectId: chargeSucceeded.metadata.subjectId,
+                            purchaseStatus: BookingStatus.CONFIRMED
+                        }
+                    });
+
+                    const isFirstPurchase = existingPurchases.length === 0;
+
+                    // If this is the first purchase, check if teacher needs Zoom account
+                    if (isFirstPurchase) {
+                        const teacher = await prisma.user.findUnique({
+                            where: { id: chargeSucceeded.metadata.teacherId },
+                            select: { 
+                                id: true, 
+                                email: true, 
+                                name: true, 
+                                zoomAccountCreated: true 
+                            }
+                        });
+
+                        if (teacher && !teacher.zoomAccountCreated) {
+                            console.log('First purchase detected. Creating Zoom account for teacher:', teacher.email);
+                            
+                            try {
+                                await createZoomAccountForTeacher(teacher.email, teacher.name);
+                                
+                                // Update teacher's zoomAccountCreated flag
+                                await prisma.user.update({
+                                    where: { id: teacher.id },
+                                    data: { zoomAccountCreated: true }
+                                });
+                                
+                                console.log('Zoom account created successfully for teacher:', teacher.email);
+                            } catch (zoomError) {
+                                console.error('Failed to create Zoom account after retries:', zoomError);
+                                
+                                // Send error email to admin
+                                const errorEmailHtml = `
+                                    <html>
+                                    <head>
+                                        <meta charset="UTF-8">
+                                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                        <style>
+                                            body {
+                                                font-family: 'Helvetica Neue', Arial, sans-serif;
+                                                line-height: 1.6;
+                                                margin: 0;
+                                                padding: 0;
+                                                background-color: #f5f5f5;
+                                            }
+                                            .container {
+                                                max-width: 600px;
+                                                margin: 0 auto;
+                                                padding: 0;
+                                                background-color: #ffffff;
+                                                border: 2px solid #000;
+                                            }
+                                            .header {
+                                                background-color: #FF0000;
+                                                color: white;
+                                                padding: 40px 20px;
+                                                text-align: center;
+                                            }
+                                            .header h1 {
+                                                margin: 0;
+                                                font-size: 32px;
+                                                font-weight: 900;
+                                                text-transform: uppercase;
+                                                letter-spacing: 3px;
+                                            }
+                                            .content {
+                                                padding: 30px;
+                                                background-color: #ffffff;
+                                            }
+                                            .error-box {
+                                                background-color: #fff3cd;
+                                                border: 2px solid #ffc107;
+                                                padding: 20px;
+                                                margin: 20px 0;
+                                            }
+                                            .error-box h3 {
+                                                margin: 0 0 15px 0;
+                                                color: #856404;
+                                                text-transform: uppercase;
+                                            }
+                                            .detail-row {
+                                                margin: 10px 0;
+                                                padding: 10px 0;
+                                                border-bottom: 1px solid #ddd;
+                                            }
+                                            .detail-label {
+                                                font-weight: 700;
+                                                color: #000;
+                                                text-transform: uppercase;
+                                                font-size: 12px;
+                                                letter-spacing: 1px;
+                                            }
+                                            .detail-value {
+                                                color: #333;
+                                                margin-top: 5px;
+                                            }
+                                            .footer {
+                                                text-align: center;
+                                                padding: 30px;
+                                                background-color: #000;
+                                                color: white;
+                                            }
+                                        </style>
+                                    </head>
+                                    <body>
+                                        <div class="container">
+                                            <div class="header">
+                                                <h1>Zoom Account Creation Failed</h1>
+                                            </div>
+                                            <div class="content">
+                                                <p style="font-size: 18px; font-weight: 500;">Admin Alert,</p>
+                                                <p style="font-size: 16px;">A Zoom account creation failed for a teacher after automatic retries.</p>
+                                                
+                                                <div class="error-box">
+                                                    <h3>⚠️ Error Details</h3>
+                                                    <div class="detail-row">
+                                                        <div class="detail-label">Teacher Name</div>
+                                                        <div class="detail-value">${teacher.name}</div>
+                                                    </div>
+                                                    <div class="detail-row">
+                                                        <div class="detail-label">Teacher Email</div>
+                                                        <div class="detail-value">${teacher.email}</div>
+                                                    </div>
+                                                    <div class="detail-row">
+                                                        <div class="detail-label">Subject ID</div>
+                                                        <div class="detail-value">${chargeSucceeded.metadata.subjectId}</div>
+                                                    </div>
+                                                    <div class="detail-row">
+                                                        <div class="detail-label">Subject Name</div>
+                                                        <div class="detail-value">${chargeSucceeded.metadata.subjectName}</div>
+                                                    </div>
+                                                    <div class="detail-row">
+                                                        <div class="detail-label">Error Message</div>
+                                                        <div class="detail-value">${zoomError.message || zoomError.response?.data?.message || 'Unknown error'}</div>
+                                                    </div>
+                                                    <div class="detail-row" style="border-bottom: none;">
+                                                        <div class="detail-label">Error Details</div>
+                                                        <div class="detail-value">${JSON.stringify(zoomError.response?.data || zoomError.stack || 'No additional details')}</div>
+                                                    </div>
+                                                    <div class="detail-row" style="border-bottom: none;">
+                                                        <div class="detail-label">Timestamp</div>
+                                                        <div class="detail-value">${new Date().toLocaleString()}</div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <p style="font-size: 16px; margin-top: 20px;">
+                                                    <strong>Action Required:</strong> Please manually create a Zoom account for this teacher and assign a Pro license. 
+                                                    The booking has been created successfully, but the teacher will need a Zoom account to host meetings.
+                                                </p>
+                                            </div>
+                                            <div class="footer">
+                                                <p style="margin: 0; font-weight: 500;">Coach Academ System</p>
+                                            </div>
+                                        </div>
+                                    </body>
+                                    </html>
+                                `;
+
+                                try {
+                                    await sendEmailService(
+                                        process.env.COACH_ACADEM_RESEND_EMAIL,
+                                        'Zoom Account Creation Failed - Action Required',
+                                        errorEmailHtml
+                                    );
+                                    console.log('Admin notification email sent successfully');
+                                } catch (emailError) {
+                                    console.error('Failed to send admin notification email:', emailError);
+                                }
+                            }
+                        }
+                    }
                     
                 const zoomCreateMeetingResponse = await createZoomMeeting(chargeSucceeded.metadata.teacherEmail, chargeSucceeded.metadata.subjectName, uaeDate, (chargeSucceeded.metadata.subjectDuration) * 60 )
                 console.log('zoomCreateMeetingResponse', zoomCreateMeetingResponse);

@@ -45,6 +45,7 @@ model User {
   isAdmin             Boolean       @default(false)
   recommendedBoard    String?
   recommendedGrade    Int?
+  zoomAccountCreated  Boolean       @default(false)
   hasSeenOnboarding   Boolean       @default(false)
   reccomendedSubjects Json @default("[]")     // Keeping original typo
   subjects            Subject[]

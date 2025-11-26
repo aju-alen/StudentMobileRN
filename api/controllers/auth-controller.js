@@ -99,6 +99,8 @@ export const register = async (req, res,next) => {
         });
 
         // Send the verification email
+        console.log(newUser.email, verificationToken, name, isTeacher, 'this is the new user');
+        
         sendVerificationEmail(newUser.email, verificationToken, name, isTeacher);
 
         res.status(202).json({
@@ -116,15 +118,6 @@ export const register = async (req, res,next) => {
 // not a route controller, function to send verification email
 const sendVerificationEmail = async (email, verificationToken, name, isTeacher) => {
 
-    const transporter = nodemailer.createTransport({
-      host: 'mail.privateemail.com',
-      port: 587,
-      secure: false,
-        auth: {
-            user: process.env.NAMECHEAP_EMAIL,
-            pass: process.env.NAMECHEAP_EMAIL_PASSWORD
-        }
-    })
 
     const welcomeMessage = isTeacher 
         ? "Welcome to Coach Academ! We're excited to have you join our community of educators. As a teacher, you'll be able to share your expertise and help students achieve their academic goals."

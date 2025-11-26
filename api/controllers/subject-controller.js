@@ -86,7 +86,7 @@ export const createSubject = async (req, res, next) => {
                 </div>
             `;
 
-            sendEmailService(req.email, "Subject Created", emailHtml);
+            // sendEmailService(req.email, "Subject Created", emailHtml);
 
             return res.status(202).json({ message: "Subject Created", newSubject });
         } else {
