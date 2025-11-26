@@ -80,10 +80,35 @@ export const zoomWebhook = async (req, res) => {
   try {
     const rawBody = req.body;
 
-    // Zoom sends endpoint.url_validation when setting up the webhook
+    // Verify Zoom webhook signature using x-zm-signature and x-zm-request-timestamp
+    const zoomSignature = req.headers['x-zm-signature'];
+    const zoomTimestamp = req.headers['x-zm-request-timestamp'];
+    const secretToken = process.env.ZOOM_WEBHOOK_SECRET_TOKEN || '';
+
+    if (!zoomSignature || !zoomTimestamp || !secretToken) {
+      console.error('Missing Zoom signature, timestamp, or secret token');
+      return res.status(400).json({ message: 'Invalid Zoom webhook headers' });
+    }
+
+    const bodyString = rawBody.toString();
+    const message = `v0:${zoomTimestamp}:${bodyString}`;
+
+    const hashForVerify = crypto
+      .createHmac('sha256', secretToken)
+      .update(message)
+      .digest('hex');
+
+    const expectedSignature = `v0=${hashForVerify}`;
+
+    if (zoomSignature !== expectedSignature) {
+      console.error('Invalid Zoom webhook signature');
+      return res.status(401).json({ message: 'Invalid signature' });
+    }
+
+    // Zoom sends endpoint.url_validation when setting up / validating the webhook
     let event;
     try {
-      event = JSON.parse(rawBody.toString());
+      event = JSON.parse(bodyString);
     } catch (parseErr) {
       console.error('Failed to parse Zoom webhook body as JSON', parseErr);
       return res.status(400).json({ message: 'Invalid JSON' });
