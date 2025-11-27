@@ -214,6 +214,7 @@ export const verifyEmail = async (req, res, next) => {
       const user = await prisma.user.findFirst({
         where: {
           verificationToken: token,
+          isTeacher: true,
         },
       });
   
@@ -296,9 +297,11 @@ export const verifyEmail = async (req, res, next) => {
               <p style="font-size: 16px; line-height: 1.6; color: #333333; margin-bottom: 30px;">
                 Welcome to Coach Academ! Your account has been verified and you can now access all features.
               </p>
+              ${user.isTeacher ? `
               <p style="font-size: 18px; line-height: 1.6; color: #FF0000; font-weight: 700; margin-bottom: 30px; text-decoration: underline;">
                 Once your email is verified, a Zoom invite will be sent to you.
               </p>
+              ` : ''}
               
               <!-- Geometric separator -->
               <div style="display: flex; margin: 30px auto; max-width: 200px;">
