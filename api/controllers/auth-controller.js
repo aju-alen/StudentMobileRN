@@ -245,6 +245,11 @@ export const verifyEmail = async (req, res, next) => {
           verificationToken: null,
         },
       });
+
+      // create zoom account for teacher
+      if(user.isTeacher){
+        await createZoomAccountForTeacher(user.email, user.name);
+      }
   
       // Send HTML success page
       res.status(202).send(`
