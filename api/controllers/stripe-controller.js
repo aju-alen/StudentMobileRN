@@ -1,6 +1,6 @@
 import { BookingStatus, PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
-import { createZoomAccountForTeacher } from "../services/zoomService.js";
+import { createZoomAccountForTeacher, createZoomMeeting } from "../services/zoomService.js";
 dotenv.config();
 import Stripe from 'stripe';
 import { sendEmailService } from "../services/emailService.js";
@@ -323,7 +323,10 @@ export const stripeWebhook = async (req, res, next) => {
                         //     }
                         // }
                     }
-              
+
+                    // create meeting for teacher
+                    const meeting = await createZoomMeeting(chargeSucceeded.metadata.teacherEmail, chargeSucceeded.metadata.subjectName, new Date(chargeSucceeded.metadata.date), parseInt(chargeSucceeded.metadata.subjectDuration) * 60);
+                    
                 
                 const { saveTransaction, createBooking } = await prisma.$transaction(async (tx) => {
                     // Create booking first
@@ -337,6 +340,9 @@ export const stripeWebhook = async (req, res, next) => {
                             bookingStatus: BookingStatus.CONFIRMED,
                             bookingPrice: chargeSucceeded.amount,
                             bookingPaymentCompleted: true,
+                            bookingZoomUrl: meeting.join_url,
+                            bookingZoomPassword: meeting.password,
+                            bookingZoomId: meeting.id,
                             bookingHours: parseInt(chargeSucceeded.metadata.subjectDuration),
                             bookingMinutes: (chargeSucceeded.metadata.subjectDuration) * 60
                         }
