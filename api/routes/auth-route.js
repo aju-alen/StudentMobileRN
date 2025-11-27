@@ -14,7 +14,7 @@ router.post('/login', login);
 router.post('/super-admin/login', loginSuperAdmin);
 router.get('/metadata',verifyToken, singleUser);
 router.get('/metadata/verify-purchase/:subjectId',verifyToken, verifyPurchase);
-router.put(`/update-profile/:uploadImage`,updateProfileImage)
+router.put(`/update-profile/:uploadImage`,verifyToken,updateProfileImage)
 router.get('/student/active-courses',verifyToken, getActiveStudentCourses )
 router.put('/update-user-has-seen-onboarding', updateUserHasSeenOnboarding)
 

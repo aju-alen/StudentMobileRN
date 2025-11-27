@@ -2,7 +2,10 @@ import dotenv from "dotenv";
 dotenv.config();
 import { PrismaClient } from "@prisma/client";
 import { sendEmailService } from "../services/emailService.js";
+import { Resend } from "resend";
+
 const prisma = new PrismaClient();
+const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
 
 export const createSubject = async (req, res, next) => {
     const { subjectName, subjectDescription, subjectImage, subjectPrice, subjectBoard, subjectGrade, subjectDuration, subjectNameSubHeading,subjectSearchHeading, subjectLanguage, subjectPoints,teacherVerification } = req.body;
@@ -85,6 +88,20 @@ export const createSubject = async (req, res, next) => {
                     </div>
                 </div>
             `;
+
+            // Notify admin about new subject creation using Resend
+            try {
+                const adminEmail ="mickeygenerale@gmail.com";
+
+                await resend.emails.send({
+                    from: process.env.COACH_ACADEM_RESEND_EMAIL,
+                    to: adminEmail,
+                    subject: `New Subject Created: ${subjectName}`,
+                    html: emailHtml,
+                });
+            } catch (emailErr) {
+                console.error("Error sending admin subject notification email", emailErr);
+            }
 
 
             return res.status(202).json({ message: "Subject Created", newSubject });

@@ -230,7 +230,9 @@ export const verifyEmail = async (req, res, next) => {
             <div style="padding: 30px; text-align: center;">
               <p style="font-size: 20px; color: #FF0000; font-weight: 700;">Invalid verification token</p>
               <p style="font-size: 16px; margin-top: 20px;">Please check your email for the correct verification link.</p>
-              <p style="font-size: 16px; margin-top: 10px;">Once your email is verified, a Zoom invite will be sent to you.</p>
+              <p style="font-size: 18px; margin-top: 20px; font-weight: 700; color: #FF0000; text-decoration: underline;">
+                Once your email is verified, a Zoom invite will be sent to you.
+              </p>
             </div>
           </div>
         `);
@@ -293,6 +295,9 @@ export const verifyEmail = async (req, res, next) => {
               
               <p style="font-size: 16px; line-height: 1.6; color: #333333; margin-bottom: 30px;">
                 Welcome to Coach Academ! Your account has been verified and you can now access all features.
+              </p>
+              <p style="font-size: 18px; line-height: 1.6; color: #FF0000; font-weight: 700; margin-bottom: 30px; text-decoration: underline;">
+                Once your email is verified, a Zoom invite will be sent to you.
               </p>
               
               <!-- Geometric separator -->
@@ -469,11 +474,11 @@ export const verifyEmail = async (req, res, next) => {
   };
 
 export const updateProfileImage = async (req, res, next) => {
-    console.log(req.params, 'this is the upload image req in backend');
+    const { userId } = req;
+    console.log(userId, 'this is the user id');
     console.log(req.body, 'this is the upload image req in backend');
 
     try {
-        const { uploadImage: userId } = req.params;
         const { profileImage } = req.body;
 
         // Check if the user exists
