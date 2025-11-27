@@ -482,6 +482,7 @@ export const updateProfileImage = async (req, res, next) => {
     console.log(req.body, 'this is the upload image req in backend');
 
     try {
+        const { uploadImage: userId } = req.params;
         const { profileImage } = req.body;
 
         // Check if the user exists
