@@ -230,6 +230,7 @@ export const verifyEmail = async (req, res, next) => {
             <div style="padding: 30px; text-align: center;">
               <p style="font-size: 20px; color: #FF0000; font-weight: 700;">Invalid verification token</p>
               <p style="font-size: 16px; margin-top: 20px;">Please check your email for the correct verification link.</p>
+              <p style="font-size: 16px; margin-top: 10px;">Once your email is verified, a Zoom invite will be sent to you.</p>
             </div>
           </div>
         `);
