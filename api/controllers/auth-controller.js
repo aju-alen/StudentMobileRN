@@ -214,9 +214,9 @@ export const verifyEmail = async (req, res, next) => {
       const user = await prisma.user.findFirst({
         where: {
           verificationToken: token,
-          isTeacher: true,
         },
       });
+      console.log(user, 'this is the user in email check');
   
       if (!user) {
         return res.status(400).send(`
