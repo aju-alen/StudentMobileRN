@@ -149,6 +149,30 @@ export const zoomWebhook = async (req, res) => {
       }
     }
 
+    // Handle user invitation accepted event
+    if (event.event === 'user.invitation_accepted') {
+      const userObject = event.payload?.object || {};
+      const email = userObject.email || userObject.login || null;
+
+      if (email) {
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email },
+          });
+
+          if (user) {
+            await prisma.user.update({
+              where: { email },
+              data: { zoomUserAcceptedInvite: true },
+            });
+            console.log('Updated zoomUserAcceptedInvite for user:', email);
+          }
+        } catch (err) {
+          console.error('Error updating zoomUserAcceptedInvite for email:', email, err);
+        }
+      }
+    }
+
     return res.status(200).json({ received: true });
   } catch (err) {
     console.error('Error in zoomWebhook handler:', err);
