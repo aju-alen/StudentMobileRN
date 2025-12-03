@@ -9,10 +9,6 @@ interface ProgressData {
   completedSubjects: number;
   averageScore: number;
   totalHoursStudied: number;
-  weeklyProgress: {
-    date: string;
-    hours: number;
-  }[];
   subjectProgress: {
     subjectId: string;
     subjectName: string;
@@ -26,15 +22,6 @@ const staticProgressData: ProgressData = {
   completedSubjects: 4,
   averageScore: 85,
   totalHoursStudied: 156,
-  weeklyProgress: [
-    { date: 'Mon', hours: 3 },
-    { date: 'Tue', hours: 5 },
-    { date: 'Wed', hours: 2 },
-    { date: 'Thu', hours: 4 },
-    { date: 'Fri', hours: 6 },
-    { date: 'Sat', hours: 8 },
-    { date: 'Sun', hours: 4 },
-  ],
   subjectProgress: [
     {
       subjectId: '1',
@@ -86,36 +73,35 @@ const ProgressPage = () => {
         <Text style={styles.subjectName}>{subject.subjectName}</Text>
         <Text style={styles.progressPercentage}>{subject.progress}%</Text>
       </View>
+      <Text style={styles.lastStudied}>Last studied: {subject.lastStudied}</Text>
       <View style={styles.progressBarContainer}>
         <View style={[styles.progressBar, { width: `${subject.progress}%` }]} />
       </View>
-      <Text style={styles.lastStudied}>Last studied: {subject.lastStudied}</Text>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Your Progress</Text>
-        </View>
-
-        <View style={styles.statsContainer}>
-          <ProgressCard 
-            title="Subjects Completed" 
-            value={`${staticProgressData.completedSubjects}/${staticProgressData.totalSubjects}`}
-            icon="book-outline"
-          />
-          <ProgressCard 
-            title="Average Score" 
-            value={`${staticProgressData.averageScore}%`}
-            icon="trophy-outline"
-          />
-          <ProgressCard 
-            title="Total Hours" 
-            value={staticProgressData.totalHoursStudied}
-            icon="time-outline"
-          />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Your Progress</Text>
+          <View style={styles.statsContainer}>
+            <ProgressCard 
+              title="Subjects Completed" 
+              value={`${staticProgressData.completedSubjects}/${staticProgressData.totalSubjects}`}
+              icon="book"
+            />
+            <ProgressCard 
+              title="Average Score" 
+              value={`${staticProgressData.averageScore}%`}
+              icon="trophy"
+            />
+            <ProgressCard 
+              title="Total Hours" 
+              value={staticProgressData.totalHoursStudied}
+              icon="time"
+            />
+          </View>
         </View>
 
         <View style={styles.section}>
@@ -123,18 +109,6 @@ const ProgressPage = () => {
           {staticProgressData.subjectProgress.map((subject) => (
             <SubjectProgressItem key={subject.subjectId} subject={subject} />
           ))}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Weekly Study Hours</Text>
-          <View style={styles.weeklyProgressContainer}>
-            {staticProgressData.weeklyProgress.map((week, index) => (
-              <View key={index} style={styles.weekBarContainer}>
-                <View style={[styles.weekBar, { height: `${(week.hours / 8) * 100}%` }]} />
-                <Text style={styles.weekLabel}>{week.date}</Text>
-              </View>
-            ))}
-          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -146,36 +120,39 @@ export default ProgressPage;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: '#FFFFFF',
   },
-  header: {
+  scrollContent: {
+    paddingBottom: verticalScale(24),
+  },
+  section: {
     paddingHorizontal: horizontalScale(16),
-    paddingTop: verticalScale(12),
-    paddingBottom: verticalScale(8),
+    marginTop: verticalScale(24),
+    marginBottom: verticalScale(24),
   },
-  headerTitle: {
+  sectionTitle: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(24),
-    color: COLORS.black,
+    fontSize: moderateScale(20),
+    color: '#222222',
+    marginBottom: verticalScale(16),
   },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: horizontalScale(16),
-    marginBottom: verticalScale(24),
+    marginBottom: verticalScale(8),
   },
   progressCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: '#FFFFFF',
     borderRadius: moderateScale(12),
     padding: verticalScale(16),
     width: '30%',
     alignItems: 'center',
-    shadowColor: COLORS.black,
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    //shadowOpacity: 0.1,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -191,7 +168,7 @@ const styles = StyleSheet.create({
   cardValue: {
     fontFamily: FONT.bold,
     fontSize: moderateScale(18),
-    color: COLORS.black,
+    color: '#222222',
     marginBottom: verticalScale(4),
   },
   cardTitle: {
@@ -200,27 +177,17 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
     textAlign: 'center',
   },
-  section: {
-    paddingHorizontal: horizontalScale(16),
-    marginBottom: verticalScale(24),
-  },
-  sectionTitle: {
-    fontFamily: FONT.semiBold,
-    fontSize: moderateScale(18),
-    color: COLORS.black,
-    marginBottom: verticalScale(16),
-  },
   subjectProgressItem: {
-    backgroundColor: COLORS.white,
+    backgroundColor: '#FFFFFF',
     borderRadius: moderateScale(12),
     padding: verticalScale(16),
     marginBottom: verticalScale(12),
-    shadowColor: COLORS.black,
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    //shadowOpacity: 0.1,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -228,54 +195,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: verticalScale(8),
+    marginBottom: verticalScale(4),
   },
   subjectName: {
     fontFamily: FONT.medium,
     fontSize: moderateScale(14),
-    color: COLORS.black,
+    color: '#222222',
   },
   progressPercentage: {
     fontFamily: FONT.semiBold,
     fontSize: moderateScale(14),
     color: COLORS.primary,
   },
+  lastStudied: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(12),
+    color: COLORS.gray,
+    marginBottom: verticalScale(8),
+  },
   progressBarContainer: {
     height: verticalScale(8),
-    backgroundColor: COLORS.lightGray,
+    backgroundColor: '#E5E5E5',
     borderRadius: moderateScale(4),
-    marginBottom: verticalScale(8),
+    overflow: 'hidden',
   },
   progressBar: {
     height: '100%',
     backgroundColor: COLORS.primary,
     borderRadius: moderateScale(4),
-  },
-  lastStudied: {
-    fontFamily: FONT.regular,
-    fontSize: moderateScale(12),
-    color: COLORS.gray,
-  },
-  weeklyProgressContainer: {
-    flexDirection: 'row',
-    height: verticalScale(200),
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    paddingBottom: verticalScale(24),
-  },
-  weekBarContainer: {
-    alignItems: 'center',
-    width: '12%',
-  },
-  weekBar: {
-    width: '100%',
-    backgroundColor: COLORS.primary,
-    borderRadius: moderateScale(4),
-    marginBottom: verticalScale(4),
-  },
-  weekLabel: {
-    fontFamily: FONT.regular,
-    fontSize: moderateScale(10),
-    color: COLORS.gray,
   },
 }); 

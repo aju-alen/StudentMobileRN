@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { FONT } from '../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
@@ -94,7 +94,6 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, subjectId,
 
   const handleTimeSlotSelect = async (time: string) => {
     setSelectedTime(time);
-    onClose();
     setShowSummary(true);
   };
 
@@ -144,55 +143,67 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, subjectId,
               </TouchableOpacity>
             </View>
 
-            <Calendar
-              onDayPress={handleDateSelect}
-              markedDates={{
-                ...markedDates,
-                [selectedDate]: {
-                  selected: true,
-                  selectedColor: '#2DCB63',
-                  fullBooked: false,
-                },
-              }}
-              minDate={new Date().toISOString().split('T')[0]}
-              theme={{
-                todayTextColor: '#2DCB63',
-                selectedDayBackgroundColor: '#2DCB63',
-                selectedDayTextColor: '#ffffff',
-                textDayFontFamily: FONT.regular,
-                textMonthFontFamily: FONT.bold,
-                textDayHeaderFontFamily: FONT.medium,
-                textDayFontSize: moderateScale(14),
-                textMonthFontSize: moderateScale(16),
-                textDayHeaderFontSize: moderateScale(14),
-              }}
-            />
+            <ScrollView 
+              style={styles.scrollView}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <Calendar
+                onDayPress={handleDateSelect}
+                markedDates={{
+                  ...markedDates,
+                  [selectedDate]: {
+                    selected: true,
+                    selectedColor: '#2DCB63',
+                    fullBooked: false,
+                  },
+                }}
+                minDate={new Date().toISOString().split('T')[0]}
+                theme={{
+                  todayTextColor: '#2DCB63',
+                  selectedDayBackgroundColor: '#2DCB63',
+                  selectedDayTextColor: '#ffffff',
+                  textDayFontFamily: FONT.regular,
+                  textMonthFontFamily: FONT.bold,
+                  textDayHeaderFontFamily: FONT.medium,
+                  textDayFontSize: moderateScale(14),
+                  textMonthFontSize: moderateScale(16),
+                  textDayHeaderFontSize: moderateScale(14),
+                }}
+              />
 
-            {selectedDate && (
-              <View style={styles.timeSlotsContainer}>
-                <Text style={styles.timeSlotsTitle}>Available Time Slots</Text>
-               {loading ? <ActivityIndicator size="large" color="#0000ff" style={{flex: 1, justifyContent: 'center', alignItems: 'center'}} /> : <View style={styles.timeSlotsGrid}>
-                  {timeSlots.map((slot, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={[
-                        styles.timeSlot,
-                        !slot.available && styles.unavailableSlot
-                      ]}
-                      onPress={() => slot.available && handleTimeSlotSelect(slot.time)}
-                      disabled={!slot.available || loading}
-                    >
-                      <Text style={[
-                        styles.timeSlotText,
-                        !slot.available && styles.unavailableSlotText
-                      ]}>
-                        {slot.time}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>}
-              </View>
-            )}
+              {selectedDate && (
+                <View style={styles.timeSlotsContainer}>
+                  <Text style={styles.timeSlotsTitle}>Available Time Slots</Text>
+                  {loading ? (
+                    <View style={styles.loadingContainer}>
+                      <ActivityIndicator size="large" color="#2DCB63" />
+                    </View>
+                  ) : (
+                    <View style={styles.timeSlotsGrid}>
+                      {timeSlots.map((slot, index) => (
+                        <TouchableOpacity
+                          key={index}
+                          style={[
+                            styles.timeSlot,
+                            !slot.available && styles.unavailableSlot
+                          ]}
+                          onPress={() => slot.available && handleTimeSlotSelect(slot.time)}
+                          disabled={!slot.available || loading}
+                        >
+                          <Text style={[
+                            styles.timeSlotText,
+                            !slot.available && styles.unavailableSlotText
+                          ]}>
+                            {slot.time}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              )}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -220,22 +231,38 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: moderateScale(20),
     borderTopRightRadius: moderateScale(20),
-    padding: moderateScale(20),
-    maxHeight: '80%',
+    maxHeight: '85%',
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: verticalScale(20),
+    paddingHorizontal: moderateScale(20),
+    paddingTop: moderateScale(20),
+    paddingBottom: verticalScale(15),
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
   title: {
     fontFamily: FONT.bold,
     fontSize: moderateScale(20),
     color: '#1A4C6E',
   },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: moderateScale(20),
+    paddingBottom: verticalScale(20),
+  },
   timeSlotsContainer: {
-    marginTop: verticalScale(20),
+    marginTop: verticalScale(25),
+  },
+  loadingContainer: {
+    paddingVertical: verticalScale(40),
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   timeSlotsTitle: {
     fontFamily: FONT.bold,
@@ -250,14 +277,21 @@ const styles = StyleSheet.create({
   },
   timeSlot: {
     width: '30%',
-    padding: moderateScale(10),
-    borderRadius: moderateScale(8),
+    paddingVertical: verticalScale(12),
+    paddingHorizontal: horizontalScale(8),
+    borderRadius: moderateScale(10),
     backgroundColor: '#F8F9FA',
-    marginBottom: verticalScale(10),
+    marginBottom: verticalScale(12),
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: moderateScale(44),
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   unavailableSlot: {
     backgroundColor: '#E8E8E8',
+    borderColor: '#D1D5DB',
+    opacity: 0.6,
   },
   timeSlotText: {
     fontFamily: FONT.medium,

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Dimensions } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Dimensions, DeviceEventEmitter } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
 import { useFocusEffect } from '@react-navigation/native'; // to detect focus/unfocus
 
@@ -13,14 +13,24 @@ export default function VideoPlayer({ videoUrl }: VideoPlayerProps) {
   const video = React.useRef(null);
   const [status, setStatus] = React.useState({});
   const [isPaused, setIsPaused] = React.useState(false);
+  const id = React.useMemo(() => videoUrl, [videoUrl]);
 
   React.useEffect(() => {
+    // Listen for other videos starting playback so we can pause this one
+    const subscription = DeviceEventEmitter.addListener('VIDEO_PLAY', (payload) => {
+      if (payload?.id !== id && video.current) {
+        // Pause this video if another one started playing
+        video.current.pauseAsync();
+      }
+    });
+
     return () => {
       if (video.current) {
         video.current.stopAsync();
       }
+      subscription.remove();
     };
-  }, []);
+  }, [id]);
 
   // Stop video playback when screen is unfocused
   useFocusEffect(
@@ -54,7 +64,13 @@ export default function VideoPlayer({ videoUrl }: VideoPlayerProps) {
         useNativeControls
         resizeMode={ResizeMode.COVER}
         isLooping
-        onPlaybackStatusUpdate={status => setStatus(status)}
+        onPlaybackStatusUpdate={playbackStatus => {
+          setStatus(playbackStatus);
+          // When this video starts playing, notify others to pause
+          if (playbackStatus.isLoaded && playbackStatus.isPlaying) {
+            DeviceEventEmitter.emit('VIDEO_PLAY', { id });
+          }
+        }}
       />
     </View>
   );

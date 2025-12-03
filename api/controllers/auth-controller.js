@@ -787,3 +787,32 @@ export const zoomTest = async (req, res, next) => {
     next(err);
   }
 }
+
+export const verificationCheck = async (req, res, next) => {
+  const userId = req.userId;
+  try{
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        isTeacher: true,
+        zoomAccountCreated: true,
+        zoomUserAcceptedInvite: true,
+      },
+    });
+    if(!user){
+      return res.status(400).json({ message: "User not found" });
+    }
+    return res.status(200).json({ message: "User found", userDetail:{
+      isTeacher: user.isTeacher,
+      email: user.email,
+      id: user.id,
+      zoomAccountCreated: user.zoomAccountCreated,
+      zoomUserAcceptedInvite: user.zoomUserAcceptedInvite,
+    } });
+  }
+  catch(err){
+    next(err);
+  }
+}

@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { Image } from 'expo-image';
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -55,9 +56,10 @@ const ProfilePage = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [activeCourses, setActiveCourses] = useState<SubjectItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  useEffect(() => {
-
-    const getUser = async () => {
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  
+  const getUser = async () => {
+    try {
       const apiUser = await axiosWithAuth.get(`${ipURL}/api/auth/metadata`);
       console.log("apiUser", apiUser.data);
       
@@ -65,8 +67,15 @@ const ProfilePage = () => {
       const user = JSON.parse(await AsyncStorage.getItem("userDetails"));
       console.log(user,'user in profile');
       setUserDetails(user);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    } finally {
       setLoading(false);
-    };
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     getUser();
   }, []);
 
@@ -81,14 +90,17 @@ const ProfilePage = () => {
 
   const handleCreateNewSubject = async () => {
     try {
-      const userDetails = await AsyncStorage.getItem('userDetails');      
-      const parsedUserDetails = JSON.parse(userDetails);
+
+      const userverificationCheck = await axiosWithAuth.get(`${ipURL}/api/auth/verification-check`);
+
+      const {isTeacher, id, zoomAccountCreated, zoomUserAcceptedInvite} = userverificationCheck.data.userDetail;
+      console.log(zoomAccountCreated, zoomUserAcceptedInvite, isTeacher, 'this is the user verification check');
+      if( !zoomUserAcceptedInvite || !isTeacher ){
+        Alert.alert('Incomplete Profile', 'Please complete your profile to create a new subject. You need to be a teacher and have accepted the Zoom invite which was sent to your email to create a new subject.');
+        return;
+      }
       
-      // Add detailed logging
-      console.log('Full user details:', parsedUserDetails);
-      console.log('User ID:', parsedUserDetails.userId);
-      
-      if (!parsedUserDetails.userId) {
+      if (!id) {
         throw new Error('User ID not found in user details');
       }
       
@@ -97,12 +109,12 @@ const ProfilePage = () => {
         message: 'Attempting to create new subject',
         level: 'info',
         data: {
-          userId: parsedUserDetails.userId,
-          userType: parsedUserDetails.isTeacher ? 'teacher' : 'student'
+          userId: userverificationCheck.data.userDetail.id,
+          userType: userverificationCheck.data.userDetail.isTeacher ? 'teacher' : 'student'
         }
       });
       
-      router.push(`/(tabs)/profile/createSubject/${parsedUserDetails.userId}`);
+      router.push(`/(tabs)/profile/createSubject/${userverificationCheck.data.userDetail.id}`);
     } catch (error) {
       Sentry.captureException(error, {
         tags: {
@@ -129,13 +141,26 @@ const ProfilePage = () => {
     router.push('/(tabs)/profile/settings');
   };
 
+  const onRefresh = () => {
+    // Show the same ActivityIndicator as initial load and refetch all data
+    setLoading(true);
+    setRefreshing(true);
+    getUser();
+  };
+
   console.log(user, 'this is the user');
   
 
   return (
-    loading ? <ActivityIndicator size="large" color={COLORS.primary} style={{flex:1, justifyContent:'center', alignItems:'center'}} /> :
-    <TouchableWithoutFeedback onPress={closeDropdown}>
-      <ScrollView style={styles.mainContainer}>
+    <View style={styles.screen}>
+      {/* Main content remains visible */}
+      <TouchableWithoutFeedback onPress={closeDropdown}>
+        <ScrollView
+          style={styles.mainContainer}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.topBar}>
@@ -161,7 +186,7 @@ const ProfilePage = () => {
             <View style={styles.profileInfo}>
               <Text style={styles.name}>{user.name}</Text>
               <Text style={styles.role}>
-                {userDetails?.isTeacher ? 'Instructor' : 'Student'}
+                {userDetails?.isTeacher ? 'Teacher' : 'Student'}
               </Text>
               <View style={styles.badgeContainer}>
 
@@ -240,7 +265,7 @@ const ProfilePage = () => {
         {/* Courses Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Active Courses</Text>
+            <Text style={styles.sectionTitle}>Your Courses</Text>
             {userDetails?.isTeacher && (
               <TouchableWithoutFeedback onPress={handleCreateNewSubject}>
                 <View style={styles.addButton}>
@@ -262,15 +287,32 @@ const ProfilePage = () => {
         </View>
          {/* Add Logout Section */}
          
-      </ScrollView>
-    </TouchableWithoutFeedback>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+
+      {/* Loading overlay on top of content */}
+      {(loading || refreshing) && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
   mainContainer: {
     flex: 1,
     backgroundColor: '#F4F6F8',
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(244,246,248,0.4)',
   },
   header: {
     backgroundColor: '#FFFFFF',

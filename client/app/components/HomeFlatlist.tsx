@@ -136,7 +136,7 @@ const HomeFlatlist = ({ homeData, handleItemPress }) => {
                     </Text>
                   </TouchableOpacity>
                   <View style={styles.detailsContainer}>
-                    <Text style={styles.price}>{item.subjectPrice}</Text>
+                    <Text style={styles.price}>AED {item.subjectPrice / 100}</Text>
                     <Text style={styles.grade}>Grade {item.subjectGrade}</Text>
                   </View>
                 </View>

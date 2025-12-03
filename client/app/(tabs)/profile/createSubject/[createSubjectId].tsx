@@ -690,7 +690,7 @@ const CreateSubject = () => {
                     color={pdf1 ? COLORS.primary : "#666"}
                   />
                   <Text style={[styles.documentText, pdf1 && styles.documentUploadedText]}>
-                    {pdf1 ? "Document 1 Uploaded" : "Upload Document 1"}
+                    {pdf1 ? "Subject License Uploaded" : "Upload Subject License"}
                   </Text>
                 </TouchableOpacity>
 
@@ -704,8 +704,8 @@ const CreateSubject = () => {
                     color={pdf2 ? COLORS.primary : "#666"}
                   />
                   <Text style={[styles.documentText, pdf2 && styles.documentUploadedText]}>
-                    {pdf2 ? "Document 2 Uploaded" : "Upload Document 2"}
-                  </Text>
+                    {pdf2 ? "Emirates ID Uploaded" : "Upload Emirates ID"}
+                    </Text>
                 </TouchableOpacity>
 
                 {(pdf1 || pdf2) && (

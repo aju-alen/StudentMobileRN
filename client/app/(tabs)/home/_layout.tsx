@@ -16,7 +16,13 @@ const HomeLayout = () => {
             <Ionicons name="arrow-back" size={24} color="black" onPress={()=>router.back()} style={{ marginLeft: 0 }} />
           )
          }}/>
-        <Stack.Screen name='progress' options={{ headerShown:true, headerTitle:'Progress' }}/>
+        <Stack.Screen name='progress' options={{ 
+          headerShown: true, 
+          headerTitle: 'Progress',
+          headerLeft: () => (
+            <Ionicons name="arrow-back" size={24} color="black" onPress={() => router.back()} style={{ marginLeft: 0 }} />
+          )
+        }}/>
         
         <Stack.Screen name= 'singleProfile/[singleProfileId]' options={{presentation:'modal',
          headerShown:true, headerTitle:'Profile',

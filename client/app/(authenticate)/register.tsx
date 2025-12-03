@@ -75,7 +75,7 @@ const UserTypeScreen = ({ onSelect }) => {
     );
 };
 
-const CustomDropdown = ({ label, value, options, onSelect, placeholder, isMultiSelect = false, selectedValues = [] }) => {
+const CustomDropdown = ({ label, value, options, onSelect, placeholder, isMultiSelect = false, selectedValues = [], hasError = false, errorMessage = '' }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     const handleSelect = (optionValue) => {
@@ -87,7 +87,9 @@ const CustomDropdown = ({ label, value, options, onSelect, placeholder, isMultiS
                 onSelect([...selectedValues, newValue]);
             }
         } else {
-            onSelect(Number(optionValue));
+            // Pass the value as-is (preserve type: string for boards, number for grades)
+            // The optionValue from options array is already the correct type
+            onSelect(optionValue);
         }
         if (!isMultiSelect) {
             setIsOpen(false);
@@ -99,14 +101,17 @@ const CustomDropdown = ({ label, value, options, onSelect, placeholder, isMultiS
             if (selectedValues.length === 0) return placeholder;
             return selectedValues.map(v => `Grade ${v}`).join(', ');
         }
-        return value ? `Grade ${value}` : placeholder;
+        // Find the selected option and display its label
+        if (!value && value !== 0) return placeholder;
+        const selectedOption = options.find(opt => opt.value === value);
+        return selectedOption ? selectedOption.label : placeholder;
     };
 
     return (
         <View style={styles.inputGroup}>
             <Text style={styles.label}>{label}</Text>
             <TouchableOpacity 
-                style={styles.dropdownButton}
+                style={[styles.dropdownButton, hasError && styles.dropdownButtonError]}
                 onPress={() => setIsOpen(true)}
             >
                 <Text style={[
@@ -117,6 +122,7 @@ const CustomDropdown = ({ label, value, options, onSelect, placeholder, isMultiS
                 </Text>
                 <Ionicons name="chevron-down" size={20} color="#666" />
             </TouchableOpacity>
+            {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
 
             <Modal
                 visible={isOpen}
@@ -181,6 +187,7 @@ const RegisterPage = () => {
     const [recommendedGrade, setRecommendedGrade] = useState(0);
     const [selectedGrades, setSelectedGrades] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
 
 
@@ -210,15 +217,73 @@ const RegisterPage = () => {
         setShowUserType(true);
     };
 
+    const clearFieldError = (fieldName) => {
+        if (errors[fieldName]) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[fieldName];
+                return newErrors;
+            });
+        }
+    };
+
+    const validateForm = () => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const newErrors: Record<string, string> = {};
+
+        if (name.trim() === '') {
+            newErrors.name = 'Name is required';
+        }
+
+        if (email.trim() === '') {
+            newErrors.email = 'Email is required';
+        } else if (!emailRegex.test(email.trim())) {
+            newErrors.email = 'Please enter a valid email address';
+        }
+
+        if (password.trim() === '') {
+            newErrors.password = 'Password is required';
+        }
+
+        if (confirmPassword.trim() === '') {
+            newErrors.confirmPassword = 'Please confirm your password';
+        } else if (password !== confirmPassword) {
+            newErrors.confirmPassword = 'Passwords do not match';
+        }
+
+        if (userDescription.trim() === '') {
+            newErrors.userDescription = 'About you is required';
+        }
+
+        if (reccomendedSubjects.length === 0) {
+            newErrors.reccomendedSubjects = 'Please add at least one subject';
+        }
+
+        if (recommendedBoard === '') {
+            newErrors.recommendedBoard = 'Please select a board';
+        }
+
+        if (isTeacher) {
+            if (selectedGrades.length === 0) {
+                newErrors.selectedGrades = 'Please select at least one grade';
+            }
+        } else {
+            if (recommendedGrade === 0) {
+                newErrors.recommendedGrade = 'Please select your grade';
+            }
+        }
+
+        return newErrors;
+    };
+
     const handleRegister = async () => {
-        if (password !== confirmPassword) {
-            Alert.alert('Error', 'Passwords do not match');
+        const validationErrors = validateForm();
+        
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
             return;
         }
-        if (name.trim() === '' || email.trim() === '' || password.trim() === '' || confirmPassword.trim() === '' || userDescription.trim() === '' || reccomendedSubjects.length === 0 || recommendedBoard === '' || (isTeacher ? selectedGrades.length === 0 : recommendedGrade === 0)) {
-            Alert.alert('Error', 'Please fill all the fields');
-            return;
-        }
+
         const user = {
             name,
             email,
@@ -236,10 +301,6 @@ const RegisterPage = () => {
         
         try {
             setIsLoading(true);
-            if (password !== confirmPassword) {
-                Alert.alert('Error', 'Passwords do not match');
-                return;
-            }
             const resp = await axios.post(`${ipURL}/api/auth/register`, user)
             Alert.alert('Success', 'Registration successful! Please verify email to login');
             router.replace(`/(authenticate)/${resp.data.userId}`);
@@ -286,36 +347,47 @@ const RegisterPage = () => {
                     <View style={styles.inputGroup}>
                         <Text style={styles.label}>Name</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, errors.name && styles.inputError]}
                             placeholder="Enter your name"
                             placeholderTextColor="#666"
                             value={name}
-                            onChangeText={setName}
+                            onChangeText={(text) => {
+                                setName(text);
+                                clearFieldError('name');
+                            }}
                         />
+                        {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
                     </View>
 
                     <View style={styles.inputGroup}>
                         <Text style={styles.label}>Email</Text>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, errors.email && styles.inputError]}
                             placeholder="Enter your email"
                             placeholderTextColor="#666"
                             autoCapitalize="none"
                             value={email}
-                            onChangeText={setEmail}
+                            onChangeText={(text) => {
+                                setEmail(text);
+                                clearFieldError('email');
+                            }}
                             keyboardType="email-address"
                         />
+                        {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
                     </View>
 
                     <View style={styles.inputGroup}>
                         <Text style={styles.label}>Password</Text>
-                        <View style={styles.passwordContainer}>
+                        <View style={[styles.passwordContainer, errors.password && styles.passwordContainerError]}>
                             <TextInput
                                 style={styles.passwordInput}
                                 placeholder="Create password"
                                 placeholderTextColor="#666"
                                 value={password}
-                                onChangeText={setPassword}
+                                onChangeText={(text) => {
+                                    setPassword(text);
+                                    clearFieldError('password');
+                                }}
                                 secureTextEntry={!isPasswordShown}
                             />
                             <TouchableOpacity 
@@ -325,45 +397,59 @@ const RegisterPage = () => {
                                 <Ionicons name={isPasswordShown ? "eye-off" : "eye"} size={24} color="#666" />
                             </TouchableOpacity>
                         </View>
+                        {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
                     </View>
 
                     <View style={styles.inputGroup}>
                         <Text style={styles.label}>Confirm Password</Text>
-                        <View style={styles.passwordContainer}>
+                        <View style={[styles.passwordContainer, errors.confirmPassword && styles.passwordContainerError]}>
                             <TextInput
                                 style={styles.passwordInput}
                                 placeholder="Re-enter password"
                                 placeholderTextColor="#666"
                                 value={confirmPassword}
-                                onChangeText={setConfirmPassword}
+                                onChangeText={(text) => {
+                                    setConfirmPassword(text);
+                                    clearFieldError('confirmPassword');
+                                }}
                                 secureTextEntry={!isPasswordShown}
                             />
                         </View>
+                        {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
                     </View>
 
                     <View style={styles.inputGroup}>
                         <Text style={styles.label}>About You</Text>
                         <TextInput
-                            style={[styles.input, styles.textArea]}
+                            style={[styles.input, styles.textArea, errors.userDescription && styles.inputError]}
                             placeholder="Write a short description about yourself"
                             placeholderTextColor="#666"
                             value={userDescription}
-                            onChangeText={setUserDescription}
+                            onChangeText={(text) => {
+                                setUserDescription(text);
+                                clearFieldError('userDescription');
+                            }}
                             multiline
                             numberOfLines={3}
                         />
+                        {errors.userDescription && <Text style={styles.errorText}>{errors.userDescription}</Text>}
                     </View>
 
                     <View style={styles.inputGroup}>
                         <Text style={styles.label}>Add Subjects (Max 3)</Text>
                         <View style={styles.subjectContainer}>
-                            <View style={styles.subjectInputWrapper}>
+                            <View style={[styles.subjectInputWrapper, errors.reccomendedSubjects && styles.subjectInputWrapperError]}>
                                 <TextInput
                                     style={styles.subjectInput}
                                     placeholder="Enter a subject"
                                     placeholderTextColor="#666"
                                     value={subjectInput}
-                                    onChangeText={setSubjectInput}
+                                    onChangeText={(text) => {
+                                        setSubjectInput(text);
+                                        if (reccomendedSubjects.length > 0) {
+                                            clearFieldError('reccomendedSubjects');
+                                        }
+                                    }}
                                 />
                               {reccomendedSubjects.length < 3 && <TouchableOpacity 
                                     style={styles.addButton}
@@ -382,6 +468,9 @@ const RegisterPage = () => {
                                             const newSubjects = [...reccomendedSubjects];
                                             newSubjects.splice(index, 1);
                                             setReccomendedSubjects(newSubjects);
+                                            if (newSubjects.length > 0) {
+                                                clearFieldError('reccomendedSubjects');
+                                            }
                                         }}
                                         style={styles.chipDeleteButton}
                                     >
@@ -390,14 +479,20 @@ const RegisterPage = () => {
                                 </View>
                             ))}
                         </View>
+                        {errors.reccomendedSubjects && <Text style={styles.errorText}>{errors.reccomendedSubjects}</Text>}
                     </View>
 
                     <CustomDropdown
                         label="Board"
                         value={recommendedBoard}
                         options={boardOptions}
-                        onSelect={setRecommendedBoard}
+                        onSelect={(value) => {
+                            setRecommendedBoard(value);
+                            clearFieldError('recommendedBoard');
+                        }}
                         placeholder="Select your board"
+                        hasError={!!errors.recommendedBoard}
+                        errorMessage={errors.recommendedBoard || ''}
                     />
 
                     <CustomDropdown
@@ -408,13 +503,21 @@ const RegisterPage = () => {
                             if (isTeacher) {
                                 setSelectedGrades(value);
                                 setRecommendedGrade(value[0] || 0);
+                                if (value.length > 0) {
+                                    clearFieldError('selectedGrades');
+                                }
                             } else {
                                 setRecommendedGrade(value);
+                                if (value !== 0) {
+                                    clearFieldError('recommendedGrade');
+                                }
                             }
                         }}
                         placeholder="Select your grade"
                         isMultiSelect={isTeacher}
                         selectedValues={selectedGrades}
+                        hasError={!!(errors.recommendedGrade || errors.selectedGrades)}
+                        errorMessage={errors.recommendedGrade || errors.selectedGrades || ''}
                     />
 
                     {/* <View style={styles.checkboxContainer}>
@@ -462,6 +565,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: COLORS.primary,
         marginBottom: verticalScale(8),
+        marginTop: verticalScale(20),
     },
     titleBold: {
         fontSize: moderateScale(35),
@@ -737,6 +841,23 @@ const styles = StyleSheet.create({
         color: COLORS.primary,
         marginLeft: horizontalScale(8),
         fontWeight: '500',
+    },
+    inputError: {
+        borderColor: '#DC2626',
+    },
+    passwordContainerError: {
+        borderColor: '#DC2626',
+    },
+    subjectInputWrapperError: {
+        borderColor: '#DC2626',
+    },
+    dropdownButtonError: {
+        borderColor: '#DC2626',
+    },
+    errorText: {
+        fontSize: moderateScale(12),
+        color: '#DC2626',
+        marginTop: verticalScale(4),
     },
 });
 

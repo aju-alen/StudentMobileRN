@@ -11,7 +11,7 @@ interface UserDetails {
 }
 
 const TabsLayout = () => {
-  const segments = useSegments();
+  const segments = useSegments() as string[];
   const [userDetails, setUserDetails] = useState<UserDetails>({});
   
   useEffect(() => {

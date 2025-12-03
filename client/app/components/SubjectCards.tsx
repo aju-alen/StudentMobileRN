@@ -36,6 +36,12 @@ const SubjectCards = ({ subjectData, handleItemPress, isHorizontal }) => {
           </View>
         </View>
 
+        {!item?.subjectVerification && (
+          <View style={styles.verificationBadge}>
+            <Text style={styles.verificationText}>Pending Verification</Text>
+          </View>
+        )}
+
         <View style={styles.priceTag}>
           <Text style={styles.priceValue}>AED {(item?.subjectPrice) / 100}</Text>
         </View>
@@ -158,6 +164,28 @@ const styles = StyleSheet.create({
     fontFamily: FONT.bold,
     fontSize: moderateScale(14),
     color: COLORS.primary,
+  },
+  verificationBadge: {
+    position: 'absolute',
+    top: verticalScale(60),
+    left: horizontalScale(16),
+    backgroundColor: '#FFA000',
+    paddingVertical: verticalScale(8),
+    paddingHorizontal: horizontalScale(16),
+    borderRadius: moderateScale(20),
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 2,
+  },
+  verificationText: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(14),
+    color: 'white',
   },
   priceTag: {
     position: 'absolute',

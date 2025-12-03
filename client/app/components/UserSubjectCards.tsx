@@ -36,7 +36,7 @@ const UserSubjectCards = ({ subjectData, handleItemPress, isHorizontal }) => {
         </View>
 
         <View style={styles.priceTag}>
-          <Text style={styles.priceValue}>AED {item.subject?.subjectPrice}</Text>
+          <Text style={styles.priceValue}>AED {item.subject?.subjectPrice / 100}</Text>
         </View>
       </View>
 

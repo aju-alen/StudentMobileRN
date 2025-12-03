@@ -327,12 +327,21 @@ const HomePage = () => {
     }
   };
 
-  const DeadlineCard = ({ deadline, isTeacher }: { deadline: Deadline, isTeacher: boolean }) => {
+  const DeadlineCard = ({
+    deadline,
+    isTeacher,
+    onPress,
+  }: {
+    deadline: Deadline;
+    isTeacher: boolean;
+    onPress: () => void;
+  }) => {
     const scale = useRef(new Animated.Value(1)).current;
     const priority = getPriority(deadline.bookingDate);
     
     const handlePress = () => {
       animateButton(scale);
+      onPress && onPress();
     };
 
     return (
@@ -485,27 +494,10 @@ const HomePage = () => {
         <View style={styles.welcomeText}>
             <Text style={styles.greeting}>{getGreeting()},</Text>
           <Text style={styles.userName}>{user.name.split(' ')[0]}</Text>
-            <Text style={styles.userLevel}>Level {user.level || 1} Student</Text>
+            <Text style={styles.userLevel}> {user.isTeacher ? 'Teacher' : 'Student'}</Text>
         </View>
         
-        <TouchableOpacity 
-            style={styles.notificationButton}
-          onPress={() => {
-            Alert.alert(
-              "Coming Soon",
-              "Notifications feature will be available soon!",
-              [{ text: "OK" }]
-            );
-          }}
-          activeOpacity={0.7}
-        >
-          <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-            <Ionicons name="notifications-outline" size={24} color="white" />
-              <View style={styles.notificationBadge}>
-                <Text style={styles.badgeText}>3</Text>
-            </View>
-          </Animated.View>
-        </TouchableOpacity>
+     
       </View>
 
         {/* Enhanced Stats Container */}
@@ -533,7 +525,7 @@ const HomePage = () => {
         )}
         scrollEventThrottle={16}
         refreshControl={
-          <RefreshControl refreshing={refreshing}  />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
         {/* Enhanced Quick Actions */}
@@ -561,7 +553,8 @@ const HomePage = () => {
             icon="trophy-outline" 
             label="Achievements"
             onPress={() => {
-              Alert.alert("Coming Soon", "Achievements feature will be available soon!");
+              // Alert.alert("Coming Soon", "Achievements feature will be available soon!");
+              router.push('/(tabs)/home/progress');
             }}
           />
         </View>
@@ -642,7 +635,12 @@ const HomePage = () => {
           <SectionHeader title="Upcoming Deadlines" />
           <View style={styles.deadlinesContainer}>
             {deadlines.map(deadline => (
-              <DeadlineCard key={deadline.id} deadline={deadline} isTeacher={user.isTeacher} />
+              <DeadlineCard
+                key={deadline.id}
+                deadline={deadline}
+                isTeacher={user.isTeacher}
+                onPress={() => router.push('/profile/schedule')}
+              />
             ))}
           </View>
         </View>}

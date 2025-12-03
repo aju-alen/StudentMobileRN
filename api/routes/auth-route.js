@@ -1,5 +1,5 @@
 import express from "express";
-import {  register, verifyEmail,login,singleUser,updateMetadata,getTeacherProfile,changePassword,deleteAccount,updateProfileImage,verifyPurchase,getActiveStudentCourses,updateUserHasSeenOnboarding,registerSuperAdmin,loginSuperAdmin,zoomTest } from "../controllers/auth-controller.js";
+import {  register, verifyEmail,login,singleUser,updateMetadata,getTeacherProfile,changePassword,deleteAccount,updateProfileImage,verifyPurchase,getActiveStudentCourses,updateUserHasSeenOnboarding,registerSuperAdmin,loginSuperAdmin,zoomTest,verificationCheck } from "../controllers/auth-controller.js";
 import { verifyToken } from "../middlewares/jwt.js";
 const router = express.Router()
 
@@ -17,6 +17,7 @@ router.get('/metadata/verify-purchase/:subjectId',verifyToken, verifyPurchase);
 router.put(`/update-profile/:uploadImage`,updateProfileImage)
 router.get('/student/active-courses',verifyToken, getActiveStudentCourses )
 router.put('/update-user-has-seen-onboarding', updateUserHasSeenOnboarding)
+router.get('/verification-check', verifyToken, verificationCheck);
 
 router.post('/zoom-test', verifyToken, zoomTest);
 

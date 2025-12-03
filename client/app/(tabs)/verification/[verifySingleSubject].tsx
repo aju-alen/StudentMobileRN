@@ -138,10 +138,11 @@ const VerifySingleSubject = () => {
               {subjectData.subjectVerification ? "Verified" : "Pending Verification"}
             </Text>
           </View>
-          <Text style={styles.dateText}>
+          
+        </View>
+        <Text style={styles.dateText}>
             Submitted on {formatDate(subjectData.createdAt || '')}
           </Text>
-        </View>
 
         {/* Subject Header */}
         <View style={styles.headerContainer}>
@@ -162,7 +163,7 @@ const VerifySingleSubject = () => {
           </View>
           <View style={styles.priceContainer}>
             <Text style={styles.priceLabel}>Course Fee</Text>
-            <Text style={styles.price}>{subjectData.subjectPrice}</Text>
+            <Text style={styles.price}>AED {subjectData.subjectPrice / 100}</Text>
             <Text style={styles.durationText}>
               {subjectData.subjectDuration} months
             </Text>
