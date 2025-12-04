@@ -30,11 +30,10 @@ export default function Page() {
       try {
         const storedToken = await AsyncStorage.getItem('authToken');
         const user = await AsyncStorage.getItem('userDetails');
-        console.log('Token:', storedToken);
-        console.log('User Details:', JSON.parse(user));
+
         setToken(storedToken);
       } catch (err) {
-        console.error('Error checking login:', err);
+  throw new Error('Error checking login');
       }
     }
     checkLogin();

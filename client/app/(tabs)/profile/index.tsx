@@ -61,12 +61,9 @@ const ProfilePage = () => {
   const getUser = async () => {
     try {
       const apiUser = await axiosWithAuth.get(`${ipURL}/api/auth/metadata`);
-      console.log("apiUser", apiUser.data);
       
       setUser(apiUser.data);
-      const user = JSON.parse(await AsyncStorage.getItem("userDetails"));
-      console.log(user,'user in profile');
-      setUserDetails(user);
+      setUserDetails(apiUser.data);
     } catch (error) {
       console.error("Error fetching user profile:", error);
     } finally {

@@ -18,35 +18,45 @@ export const createSubject = async (req, res, next) => {
     }
 
     try {
-        if (req.isTeacher === true) {
-            // Create a new subject
-            const newSubject = await prisma.subject.create({
-                data: {
-                    subjectName,
-                    subjectDescription,
-                    subjectImage,
-                    subjectPrice: parseInt(subjectPrice) * 100,
-                    subjectBoard,
-                    subjectGrade: parseInt(subjectGrade),
-                    subjectDuration: parseInt(subjectDuration),
-                    subjectNameSubHeading,
-                    subjectSearchHeading,
-                    subjectLanguage,
-                    subjectPoints,
-                    teacherVerification,
-                    userId: req.userId, // Assuming `userId` matches the Prisma model
-                },
-            });
+        // Check if user is a teacher
+        if (req.userType !== 'TEACHER') {
+            return res.status(400).json({ message: "Only teachers can create subjects" });
+        }
 
-            // Update the user's subjects list
-            await prisma.user.update({
-                where: { id: req.userId },
-                data: {
-                    subjects: {
-                        connect: { id: newSubject.id },
-                    },
-                },
-            });
+        // Get TeacherProfile.id from User.id
+        const user = await prisma.user.findUnique({
+            where: { id: req.userId },
+            include: {
+                teacherProfile: {
+                    select: { id: true }
+                }
+            }
+        });
+
+        if (!user || !user.teacherProfile) {
+            return res.status(400).json({ message: "Teacher profile not found" });
+        }
+
+        const teacherProfileId = user.teacherProfile.id;
+
+        // Create a new subject with teacherId (TeacherProfile.id)
+        const newSubject = await prisma.subject.create({
+            data: {
+                subjectName,
+                subjectDescription,
+                subjectImage,
+                subjectPrice: parseInt(subjectPrice) * 100,
+                subjectBoard,
+                subjectGrade: parseInt(subjectGrade),
+                subjectDuration: parseInt(subjectDuration),
+                subjectNameSubHeading,
+                subjectSearchHeading,
+                subjectLanguage,
+                subjectPoints,
+                teacherVerification,
+                teacherId: teacherProfileId, // Use TeacherProfile.id instead of User.id
+            },
+        });
 
             const emailHtml = `
                 <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #ffffff;">
@@ -105,9 +115,6 @@ export const createSubject = async (req, res, next) => {
 
 
             return res.status(202).json({ message: "Subject Created", newSubject });
-        } else {
-            return res.status(400).json({ message: "Only teachers can create subjects" });
-        }
     } catch (err) {
         console.error(err, "Error in createSubject API");
         next(err);
@@ -121,28 +128,32 @@ export const getAllSubjects = async (req, res, next) => {
         if (!q || q === '') {
             const subjects = await prisma.subject.findMany({
                 where: {
-                    AND: [
-                        { subjectVerification: true },
-                        {
-                            OR: [
-                                { subjectName: { contains: searchTerm, mode: 'insensitive' } },
-                                { subjectDescription: { contains: searchTerm, mode: 'insensitive' } },
-                                { subjectTags: { has: searchTerm } } // <-- corrected here
-                            ]
-                        }
-                    ]
+                    subjectVerification: true
                 },
                 include: {
-                    user: {
-                        select: {
-                            name: true,
-                            profileImage: true
+                    teacherProfile: {
+                        include: {
+                            user: {
+                                select: {
+                                    name: true,
+                                    profileImage: true
+                                }
+                            }
                         }
                     }
                 }
             });
             
-            return res.status(200).json(subjects);
+            // Transform response to match expected format
+            const transformedSubjects = subjects.map(subject => ({
+                ...subject,
+                user: {
+                    name: subject.teacherProfile?.user?.name,
+                    profileImage: subject.teacherProfile?.user?.profileImage
+                }
+            }));
+            
+            return res.status(200).json(transformedSubjects);
         }
 
         const searchTerm = q.toString().toLowerCase();
@@ -161,16 +172,29 @@ export const getAllSubjects = async (req, res, next) => {
                 ]
             },
             include: {
-                user: {
-                    select: {
-                        name: true,
-                        profileImage: true
+                teacherProfile: {
+                    include: {
+                        user: {
+                            select: {
+                                name: true,
+                                profileImage: true
+                            }
+                        }
                     }
                 }
             }
         });
 
-        res.status(200).json(subjects);
+        // Transform response to match expected format
+        const transformedSubjects = subjects.map(subject => ({
+            ...subject,
+            user: {
+                name: subject.teacherProfile?.user?.name,
+                profileImage: subject.teacherProfile?.user?.profileImage
+            }
+        }));
+
+        res.status(200).json(transformedSubjects);
     } catch (err) {
         console.log(err);
         next(err);
@@ -183,19 +207,35 @@ export const getAllSubjectsBySearch = async (req, res, next) => {
     const currentUserId = req.userId;
 
     try {
-        // Step 1: Get all blocked teacher IDs for this user
-        const blocked = await prisma.blockedTeacher.findMany({
-            where: {
-                userId: currentUserId,
-            },
-            select: {
-                blockedTeacherId: true,
-            },
-        });
+        // Step 1: Get user's StudentProfile if they are a student
+        let studentProfileId = null;
+        if (currentUserId) {
+            const user = await prisma.user.findUnique({
+                where: { id: currentUserId },
+                include: {
+                    studentProfile: {
+                        select: { id: true }
+                    }
+                }
+            });
+            studentProfileId = user?.studentProfile?.id;
+        }
 
-        const blockedTeacherIds = blocked.map(b => b.blockedTeacherId);
+        // Step 2: Get all blocked teacher profile IDs for this student
+        let blockedTeacherProfileIds = [];
+        if (studentProfileId) {
+            const blocked = await prisma.blockedTeacher.findMany({
+                where: {
+                    studentId: studentProfileId,
+                },
+                select: {
+                    teacherId: true, // This is TeacherProfile.id
+                },
+            });
+            blockedTeacherProfileIds = blocked.map(b => b.teacherId);
+        }
 
-        // Step 2: Construct the filter with exclusions
+        // Step 3: Construct the filter with exclusions
         const filter = {
             subjectVerification: true,
             ...(grade && !isNaN(grade) && { subjectGrade: grade }),
@@ -211,29 +251,42 @@ export const getAllSubjectsBySearch = async (req, res, next) => {
                     mode: "insensitive",
                 },
             }),
-            ...(blockedTeacherIds.length > 0 && {
+            ...(blockedTeacherProfileIds.length > 0 && {
                 NOT: {
-                    userId: {
-                        in: blockedTeacherIds,
+                    teacherId: {
+                        in: blockedTeacherProfileIds,
                     },
                 },
             }),
         };
 
-        // Step 3: Fetch filtered subjects
+        // Step 4: Fetch filtered subjects
         const subjects = await prisma.subject.findMany({
             where: filter,
             include: {
-                user: {
-                    select: {
-                        name: true,
-                        profileImage: true,
+                teacherProfile: {
+                    include: {
+                        user: {
+                            select: {
+                                name: true,
+                                profileImage: true,
+                            },
+                        },
                     },
                 },
             },
         });
 
-        res.status(200).json(subjects);
+        // Transform response to match expected format
+        const transformedSubjects = subjects.map(subject => ({
+            ...subject,
+            user: {
+                name: subject.teacherProfile?.user?.name,
+                profileImage: subject.teacherProfile?.user?.profileImage
+            }
+        }));
+
+        res.status(200).json(transformedSubjects);
     } catch (err) {
         console.error(err);
         next(err);
@@ -276,10 +329,14 @@ export const getAllSubjectsByAdvanceSearch = async (req, res, next) => {
         const subjects = await prisma.subject.findMany({
             where: whereCondition,
             include: {
-                user: {
-                    select: {
-                        name: true,
-                        profileImage: true
+                teacherProfile: {
+                    include: {
+                        user: {
+                            select: {
+                                name: true,
+                                profileImage: true
+                            }
+                        }
                     }
                 }
             },
@@ -290,8 +347,17 @@ export const getAllSubjectsByAdvanceSearch = async (req, res, next) => {
             }
         });
 
+        // Transform response to match expected format
+        const transformedSubjects = subjects.map(subject => ({
+            ...subject,
+            user: {
+                name: subject.teacherProfile?.user?.name,
+                profileImage: subject.teacherProfile?.user?.profileImage
+            }
+        }));
+
         res.status(200).json({
-            subjects,
+            subjects: transformedSubjects,
             pagination: {
                 currentPage: pageNumber,
                 totalPages: Math.ceil(totalSubjects / pageSize),
@@ -310,20 +376,20 @@ export const getOneSubject = async (req, res, next) => {
     try {
         const { subjectId } = req.params;
 
-        // Fetch the subject by ID and include the related user data
+        // Fetch the subject by ID and include the related teacher profile data
         const subject = await prisma.subject.findUnique({
             where: { id: subjectId },
             include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                        // Exclude sensitive fields like password and userDescription
-                        password: false,
-                        userDescription: false,
-                        subjects: false,
-                        profileImage: true,
+                teacherProfile: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                name: true,
+                                email: true,
+                                profileImage: true,
+                            },
+                        },
                     },
                 },
             },
@@ -332,15 +398,20 @@ export const getOneSubject = async (req, res, next) => {
         if (!subject) {
             return res.status(400).json({ message: "Subject not found" });
         }
-        const addUserAdmin = {
+
+        // Transform response to match expected format
+        const response = {
             ...subject,
             user: {
-                ...subject.user,
-                isTeacher: req.isTeacher,
+                id: subject.teacherProfile?.user?.id,
+                name: subject.teacherProfile?.user?.name,
+                email: subject.teacherProfile?.user?.email,
+                profileImage: subject.teacherProfile?.user?.profileImage,
+                isTeacher: req.isTeacher || req.userType === 'TEACHER',
             },
-        }
+        };
 
-        res.status(200).json(addUserAdmin);
+        res.status(200).json(response);
     } catch (err) {
         console.error(err);
         next(err);
@@ -349,19 +420,45 @@ export const getOneSubject = async (req, res, next) => {
 
 export const updateSubject = async (req, res, next) => {
     try {
-        if(!req.isTeacher){
-            return res.status(400).json({message:"Only teachers can view subjects"});
+        if(req.userType !== 'TEACHER'){
+            return res.status(400).json({message:"Only teachers can update subjects"});
         }
-        const user = await User.findById(req.userId);
-        if (!(user.subjects.includes(req.params.subjectId))) {
-            return res.status(400).json({ message: "You are not authorized to Edit11 this subject" });
 
+        const { subjectId } = req.params;
+
+        // Get TeacherProfile.id from User.id
+        const user = await prisma.user.findUnique({
+            where: { id: req.userId },
+            include: {
+                teacherProfile: {
+                    include: {
+                        subjects: {
+                            select: { id: true }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!user || !user.teacherProfile) {
+            return res.status(400).json({ message: "Teacher profile not found" });
         }
-        const subject = await Subject.findById(req.params.subjectId);
-        if (!subject) {
-            return res.status(400).json({ message: "Subject not found" });
+
+        // Check if subject belongs to this teacher
+        const subjectBelongsToTeacher = user.teacherProfile.subjects.some(s => s.id === subjectId);
+        if (!subjectBelongsToTeacher) {
+            return res.status(400).json({ message: "You are not authorized to edit this subject" });
         }
-        const updatedSubject = await Subject.findByIdAndUpdate(req.params.subjectId, {...req.body,subjectVerification:false}, { new: true });
+
+        // Update subject
+        const updatedSubject = await prisma.subject.update({
+            where: { id: subjectId },
+            data: {
+                ...req.body,
+                subjectVerification: false // Reset verification when updated
+            }
+        });
+
         return res.status(200).json({ message: "Subject Updated", updatedSubject });
     }
     catch (err) {
@@ -372,19 +469,50 @@ export const updateSubject = async (req, res, next) => {
 
 export const deleteSubject = async (req, res, next) => {
     try {
-        if(!req.isTeacher){
-            return res.status(400).json({message:"Only teachers can view subjects"});
+        if(req.userType !== 'TEACHER'){
+            return res.status(400).json({message:"Only teachers can delete subjects"});
         }
-        const user = await User.findById(req.userId);
-        if (!(user.subjects.includes(req.params.subjectId))) {
-            return res.status(400).json({ message: "You are not authorized to Delete this subject" });
 
+        const { subjectId } = req.params;
+
+        // Get TeacherProfile.id from User.id
+        const user = await prisma.user.findUnique({
+            where: { id: req.userId },
+            include: {
+                teacherProfile: {
+                    include: {
+                        subjects: {
+                            select: { id: true }
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!user || !user.teacherProfile) {
+            return res.status(400).json({ message: "Teacher profile not found" });
         }
-        const subject = await Subject.findById(req.params.subjectId);
+
+        // Check if subject belongs to this teacher
+        const subjectBelongsToTeacher = user.teacherProfile.subjects.some(s => s.id === subjectId);
+        if (!subjectBelongsToTeacher) {
+            return res.status(400).json({ message: "You are not authorized to delete this subject" });
+        }
+
+        // Check if subject exists
+        const subject = await prisma.subject.findUnique({
+            where: { id: subjectId }
+        });
+
         if (!subject) {
             return res.status(400).json({ message: "Subject not found" });
         }
-        await Subject.findByIdAndDelete(req.params.subjectId);
+
+        // Delete subject
+        await prisma.subject.delete({
+            where: { id: subjectId }
+        });
+
         return res.status(200).json({ message: "Subject Deleted" });
     }
     catch (err) {
@@ -458,42 +586,118 @@ export const getRecommendedSubjects = async (req, res, next) => {
     
     
     try {
-        const filteredSubjects = await Subject.find({
-            subjectSearchHeading: { $in: recommendedSubjects },
-            subjectBoard: recommendedBoard ,
-            subjectGrade:  recommendedGrade 
-        }).populate('user', 'name profileImage');
-        console.log(filteredSubjects,'filteredSubjects');
+        // Build where condition
+        const whereCondition = {
+            subjectVerification: true,
+            subjectBoard: recommendedBoard,
+            subjectGrade: parseInt(recommendedGrade)
+        };
+
+        // Add subjectSearchHeading filter if recommendedSubjects is provided
+        if (recommendedSubjects && Array.isArray(recommendedSubjects) && recommendedSubjects.length > 0) {
+            whereCondition.subjectSearchHeading = {
+                in: recommendedSubjects
+            };
+        }
+
+        const filteredSubjects = await prisma.subject.findMany({
+            where: whereCondition,
+            include: {
+                teacherProfile: {
+                    include: {
+                        user: {
+                            select: {
+                                name: true,
+                                profileImage: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Transform response to match expected format
+        const transformedSubjects = filteredSubjects.map(subject => ({
+            ...subject,
+            user: {
+                name: subject.teacherProfile?.user?.name,
+                profileImage: subject.teacherProfile?.user?.profileImage
+            }
+        }));
+
+        console.log(transformedSubjects,'filteredSubjects');
         
-        res.status(200).json(filteredSubjects);
+        res.status(200).json(transformedSubjects);
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: error.message });
     }
 }
 
 export const getSavedSubjects = async (req, res, next) => {
     try {
-        const savedSubjects = await prisma.savedSubject.findMany({
-            where: { userId: req.userId },
+        // Get StudentProfile.id from User.id
+        const user = await prisma.user.findUnique({
+            where: { id: req.userId },
             include: {
-                subject: true
+                studentProfile: {
+                    select: { id: true }
+                }
+            }
+        });
+
+        if (!user || !user.studentProfile) {
+            return res.status(400).json({ message: "Student profile not found" });
+        }
+
+        const savedSubjects = await prisma.savedSubject.findMany({
+            where: { studentId: user.studentProfile.id },
+            include: {
+                subject: {
+                    include: {
+                        teacherProfile: {
+                            include: {
+                                user: {
+                                    select: {
+                                        name: true,
+                                        profileImage: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         });
         res.status(200).json(savedSubjects);
     } catch (err) {
         console.error(err);
-}
+        next(err);
+    }
 }
 
 export const saveSubject = async (req, res, next) => {
     try {
         const { subjectId } = req.params;
-        const userId = req.userId;
+        
+        // Get StudentProfile.id from User.id
+        const user = await prisma.user.findUnique({
+            where: { id: req.userId },
+            include: {
+                studentProfile: {
+                    select: { id: true }
+                }
+            }
+        });
+
+        if (!user || !user.studentProfile) {
+            return res.status(400).json({ message: "Student profile not found" });
+        }
 
         const savedSubject = await prisma.savedSubject.create({
             data: {
                 subjectId,
-                userId,
+                studentId: user.studentProfile.id,
             },
         }); 
         res.status(200).json({ message: "Subject saved", savedSubject });
@@ -506,13 +710,26 @@ export const saveSubject = async (req, res, next) => {
 export const unsaveSubject = async (req, res, next) => {
     try {
         const { subjectId } = req.params;
-        const userId = req.userId;
+        
+        // Get StudentProfile.id from User.id
+        const user = await prisma.user.findUnique({
+            where: { id: req.userId },
+            include: {
+                studentProfile: {
+                    select: { id: true }
+                }
+            }
+        });
+
+        if (!user || !user.studentProfile) {
+            return res.status(400).json({ message: "Student profile not found" });
+        }
 
         const savedSubject = await prisma.savedSubject.delete({
             where: { 
-                subjectId_userId: {
+                subjectId_studentId: {
                     subjectId: subjectId,
-                    userId: userId
+                    studentId: user.studentProfile.id
                 }
             },
         });

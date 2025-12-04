@@ -95,3 +95,42 @@ export const subjectPDFVerifyeS3 = async (req, res) => {
   }
 }
 
+export const organizationTradeLicenseS3 = async (req, res) => {
+  const { userId } = req.params;
+  const file = req.file;
+  
+  if (!file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  try {
+    const fileContent = file.buffer;
+
+    // Set up S3 upload parameters
+    const params = {
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: `users/${userId}/organization/${file.originalname}`,
+      Body: fileContent,
+      ContentType: file.mimetype,
+    };
+
+    console.log(params, 'S3 upload params for trade license');
+
+    // Uploading file to the bucket
+    const data = await new Upload({
+      client: s3,
+      params,
+    }).done();
+
+    console.log(`Trade license uploaded successfully. ${data.Location}`);
+    res.status(200).json({ 
+      message: 'Trade license uploaded successfully', 
+      data,
+      location: data.Location 
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error uploading trade license' });
+  }
+}
+

@@ -156,16 +156,16 @@ export const zoomWebhook = async (req, res) => {
 
       if (email) {
         try {
-          const user = await prisma.user.findUnique({
-            where: { email },
+          const teacherProfile = await prisma.teacherProfile.findUnique({
+            where: { userId: email },
           });
 
-          if (user) {
-            await prisma.user.update({
-              where: { email },
+          if (teacherProfile) {
+            await prisma.teacherProfile.update({
+              where: { id: teacherProfile.id },
               data: { zoomUserAcceptedInvite: true },
             });
-            console.log('Updated zoomUserAcceptedInvite for user:', email);
+            console.log('Updated zoomUserAcceptedInvite for user:', teacherProfile.userId);
           }
         } catch (err) {
           console.error('Error updating zoomUserAcceptedInvite for email:', email, err);

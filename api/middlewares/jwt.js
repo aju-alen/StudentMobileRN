@@ -9,10 +9,12 @@ export const verifyToken = (req,res,next)=>{
 
     jwt.verify(token,process.env.SECRET_KEY,async(err,payload)=>{
        
-        if(err) return ResizeObserverSize.status(403).send("Token is not valid");
+        if(err) return res.status(403).send("Token is not valid");
         req.userId = payload.userId;
-        req.isTeacher = payload.isTeacher;
-        req.isAdmin = payload.isAdmin;
+        req.userType = payload.userType;
+        // Derive isTeacher and isAdmin from userType for backward compatibility
+        req.isTeacher = payload.userType === 'TEACHER';
+        req.isAdmin = payload.userType === 'ADMIN';
         req.email = payload.email;
         next()
     });

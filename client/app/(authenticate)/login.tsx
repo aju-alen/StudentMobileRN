@@ -63,7 +63,9 @@ const LoginPage = () => {
         isAdmin: resp.data.isAdmin,
         userId: resp.data.userId,
         userProfileImage: resp.data.userProfileImage,
+        userName: resp.data.userName,
         email: resp.data.email,
+        userType: resp.data.userType,
       }));
 
       if (resp.data.hasSeenOnboarding === false) {

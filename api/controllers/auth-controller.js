@@ -58,16 +58,38 @@ export const registerSuperAdmin = async (req, res, next) => {
     }
 }
 
-export const register = async (req, res,next) => {
+export const register = async (req, res, next) => {
     console.log('inside register route');
     try {
-      
-        const { name, email, password, profileImage, userDescription, isTeacher,reccomendedSubjects,recommendedBoard,recommendedGrade } = req.body;
-        console.log(req.body, 'this is the req body');
+        const { 
+            name, 
+            email, 
+            password, 
+            profileImage, 
+            userDescription, 
+            userType,
+            reccomendedSubjects,
+            recommendedBoard,
+            recommendedGrade,
+            selectedGrades,
+            // Organization fields
+            organizationName,
+            organizationEmail,
+            organizationWebsite,
+            tradeLicensePdf,
+            teacherCount
+        } = req.body;
         
+        console.log(req.body, 'this is the req body');
 
-        if (!name || !email || !password) {
-            return res.status(400).json({ message: "Please enter all fields" });
+        if (!name || !email || !password || !userType) {
+            return res.status(400).json({ message: "Please enter all required fields" });
+        }
+
+        // Validate userType
+        const validUserTypes = ['STUDENT', 'TEACHER', 'ADMIN', 'ORGANIZATION'];
+        if (!validUserTypes.includes(userType.toUpperCase())) {
+            return res.status(400).json({ message: "Invalid user type" });
         }
 
         const hash = bcrypt.hashSync(password, 5);
@@ -83,23 +105,138 @@ export const register = async (req, res,next) => {
         // Generate the verification token
         const verificationToken = crypto.randomBytes(20).toString('hex');
 
-        // Create the new user
-        const newUser = await prisma.user.create({
-            data: {
-                name,
-                email,
-                password: hash,
-                profileImage,
-                userDescription,
-                isTeacher,
-                verificationToken,
-                reccomendedSubjects: reccomendedSubjects,
-                recommendedBoard,
-                recommendedGrade
-            },
-        });
+        // Map frontend userType to backend enum
+        // 'student' -> 'STUDENT', 'teacher' -> 'TEACHER', 'organization' -> 'TEACHER' (organizations are teachers)
+        let userTypeEnum;
+        const isOrganization = userType === 'organization';
+        
+        if (userType === 'student') {
+            userTypeEnum = 'STUDENT';
+        } else if (userType === 'teacher' || userType === 'organization') {
+            userTypeEnum = 'TEACHER'; // Organizations are teachers with special setup
+        } else {
+            return res.status(400).json({ message: "Invalid user type" });
+        }
+
+        // Create the new user with profile based on userType
+        let newUser;
+        let profile;
+
+        if (userTypeEnum === 'STUDENT') {
+            // Create User with StudentProfile
+            newUser = await prisma.user.create({
+                data: {
+                    name,
+                    email,
+                    password: hash,
+                    profileImage,
+                    userDescription,
+                    userType: 'STUDENT',
+                    verificationToken,
+                    hasSeenOnboarding: false,
+                    studentProfile: {
+                        create: {
+                            recommendedBoard: recommendedBoard || null,
+                            recommendedGrade: recommendedGrade ? parseInt(recommendedGrade) : null,
+                            reccomendedSubjects: reccomendedSubjects || [],
+                        }
+                    }
+                },
+                include: {
+                    studentProfile: true
+                }
+            });
+            profile = newUser.studentProfile;
+        } 
+        else if (userTypeEnum === 'TEACHER') {
+            // Create User with TeacherProfile
+            newUser = await prisma.user.create({
+                data: {
+                    name,
+                    email,
+                    password: hash,
+                    profileImage,
+                    userDescription,
+                    userType: 'TEACHER',
+                    verificationToken,
+                    hasSeenOnboarding: false,
+                    teacherProfile: {
+                        create: {
+                            zoomAccountCreated: false,
+                            zoomUserAcceptedInvite: false,
+                            isTeamLead: false,
+                        }
+                    }
+                },
+                include: {
+                    teacherProfile: true
+                }
+            });
+            profile = newUser.teacherProfile;
+        }
+        else if (userTypeEnum === 'ADMIN') {
+            // Create User with AdminProfile
+            newUser = await prisma.user.create({
+                data: {
+                    name,
+                    email,
+                    password: hash,
+                    profileImage,
+                    userDescription,
+                    userType: 'ADMIN',
+                    verificationToken,
+                    hasSeenOnboarding: false,
+                    adminProfile: {
+                        create: {
+                            role: 'SUPERADMIN',
+                            permissions: [],
+                        }
+                    }
+                },
+                include: {
+                    adminProfile: true
+                }
+            });
+            profile = newUser.adminProfile;
+        }
+
+        // Handle Organization registration
+        let organization = null;
+        if (isOrganization) {
+            // Validate organization fields
+            if (!organizationName || !organizationEmail || !organizationWebsite) {
+                // Rollback user creation if organization data is incomplete
+                await prisma.user.delete({ where: { id: newUser.id } });
+                return res.status(400).json({ message: "Organization fields are required for organization registration" });
+            }
+
+            // Update teacher profile to be team lead
+            await prisma.teacherProfile.update({
+                where: { id: profile.id },
+                data: { isTeamLead: true }
+            });
+
+            // Create Organization with teacher as team lead
+            // Note: tradeLicensePdf will be uploaded after registration, so it's null initially
+            organization = await prisma.organization.create({
+                data: {
+                    orgName: organizationName,
+                    orgWebsite: organizationWebsite,
+                    orgLicense: tradeLicensePdf || null, // Will be updated after PDF upload
+                    orgCapacity: teacherCount ? parseInt(teacherCount) : 3,
+                    teamLeadId: profile.id,
+                }
+            });
+
+            // Update teacher profile to link to organization
+            await prisma.teacherProfile.update({
+                where: { id: profile.id },
+                data: { organizationId: organization.id }
+            });
+        }
 
         // Send the verification email
+        const isTeacher = userTypeEnum === 'TEACHER' || userTypeEnum === 'ADMIN';
         console.log(newUser.email, verificationToken, name, isTeacher, 'this is the new user');
         
         sendVerificationEmail(newUser.email, verificationToken, name, isTeacher);
@@ -109,10 +246,13 @@ export const register = async (req, res,next) => {
             verification_message: "Email has been sent, please verify",
             savedUser: newUser,
             userId: newUser.id,
+            userType: userTypeEnum,
+            ...(organization && { organization })
         });
     }
     catch (err) {
-       next(err);
+        console.error('Registration error:', err);
+        next(err);
     }
 }
 
@@ -251,7 +391,7 @@ export const verifyEmail = async (req, res, next) => {
       });
 
       // create zoom account for teacher
-      if(user.isTeacher){
+      if(user.userType === 'TEACHER'){
         await createZoomAccountForTeacher(user.email, user.name);
       }
   
@@ -297,7 +437,7 @@ export const verifyEmail = async (req, res, next) => {
               <p style="font-size: 16px; line-height: 1.6; color: #333333; margin-bottom: 30px;">
                 Welcome to Coach Academ! Your account has been verified and you can now access all features.
               </p>
-              ${user.isTeacher ? `
+              ${user.userType === 'TEACHER' ? `
               <p style="font-size: 18px; line-height: 1.6; color: #FF0000; font-weight: 700; margin-bottom: 30px; text-decoration: underline;">
                 Once your email is verified, a Zoom invite will be sent to you.
               </p>
@@ -334,9 +474,19 @@ export const verifyEmail = async (req, res, next) => {
     try {
       const { email, password } = req.body;
   
-      // Find the user by email
+      // Find the user by email with profile
       const user = await prisma.user.findUnique({
         where: { email },
+        include: {
+          studentProfile: true,
+          teacherProfile: {
+            include: {
+              ledOrganization: true,
+              organization: true
+            }
+          },
+          adminProfile: true
+        }
       });
   
       if (!user) {
@@ -353,10 +503,24 @@ export const verifyEmail = async (req, res, next) => {
       if (!isCorrect) {
         return res.status(400).json({ message: "Invalid email or password" });
       }
+
+      // Determine user type and get profile-specific data
+      const isTeacher = user.userType === 'TEACHER';
+      const isAdmin = user.userType === 'ADMIN';
+      const isStudent = user.userType === 'STUDENT';
+      
+      let recommendedSubjects = [];
+      if (isStudent && user.studentProfile) {
+        recommendedSubjects = user.studentProfile.reccomendedSubjects || [];
+      }
   
       // Generate a JWT token
       const token = jwt.sign(
-        { userId: user.id, isTeacher: user.isTeacher, isAdmin: user.isAdmin, email: user.email },
+        { 
+          userId: user.id, 
+          userType: user.userType,
+          email: user.email,
+        },
         process.env.SECRET_KEY
       );
       console.log(user, 'this is the user');
@@ -364,13 +528,19 @@ export const verifyEmail = async (req, res, next) => {
       res.status(200).json({
         message: "Login successful",
         token,
-        isTeacher: user.isTeacher,
-        isAdmin: user.isAdmin,
+        userType: user.userType,
         userId: user.id,
-        recommendedSubjects: user.recommendedSubjects,
+        userName: user.name,
+        recommendedSubjects: recommendedSubjects,
         userProfileImage: user.profileImage,
+        isTeacher: isTeacher,
+        isAdmin: isAdmin,
         hasSeenOnboarding: user.hasSeenOnboarding,
         email: user.email,
+        ...(isTeacher && user.teacherProfile && {
+          isTeamLead: user.teacherProfile.isTeamLead,
+          organization: user.teacherProfile.ledOrganization || user.teacherProfile.organization
+        })
       });
     } catch (err) {
       console.error(err);
@@ -432,45 +602,76 @@ export const verifyEmail = async (req, res, next) => {
       const { userId } = req;
       console.log('first phase ');
       
-      // Find the user by ID and include related subjects
+      // Find the user by ID with profile and related data
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          verified: true,
-          isTeacher: true,
-          isAdmin: true,
-          reccomendedSubjects: true,
-          profileImage: true,
-          userDescription: true,
-          // Populate related subjects
-          subjects: true,
-          userSubjects: {
+        include: {
+          studentProfile: {
             include: {
-              subject: {
-                select: {
-                  id: true,
-                  subjectName: true,
-                  subjectImage: true,
-                  subjectBoard: true,
-                  subjectGrade: true,
-                  subjectPrice: true,
+              userSubjects: {
+                include: {
+                  subject: {
+                    select: {
+                      id: true,
+                      subjectName: true,
+                      subjectImage: true,
+                      subjectBoard: true,
+                      subjectGrade: true,
+                      subjectPrice: true,
+                    }
+                  }
                 }
               }
             }
-          }
+          },
+          teacherProfile: {
+            include: {
+              subjects: true,
+              ledOrganization: true,
+              organization: true
+            }
+          },
+          adminProfile: true
         },
       });
   
       if (!user) {
         return res.status(400).json({ message: "User not found" });
       }
-      console.log(user, 'this is the user');
+
+      // Format response based on user type
+      const isTeacher = user.userType === 'TEACHER';
+      const isStudent = user.userType === 'STUDENT';
       
+      let responseData = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        verified: user.verified,
+        userType: user.userType,
+        isTeacher: isTeacher,
+        isAdmin: user.userType === 'ADMIN',
+        profileImage: user.profileImage,
+        userDescription: user.userDescription,
+        hasSeenOnboarding: user.hasSeenOnboarding,
+      };
+
+      if (isStudent && user.studentProfile) {
+        responseData.reccomendedSubjects = user.studentProfile.reccomendedSubjects || [];
+        responseData.recommendedBoard = user.studentProfile.recommendedBoard;
+        responseData.recommendedGrade = user.studentProfile.recommendedGrade;
+        responseData.userSubjects = user.studentProfile.userSubjects || [];
+      }
+
+      if (isTeacher && user.teacherProfile) {
+        responseData.subjects = user.teacherProfile.subjects || [];
+        responseData.isTeamLead = user.teacherProfile.isTeamLead;
+        responseData.organization = user.teacherProfile.ledOrganization || user.teacherProfile.organization;
+      }
+      
+      console.log(responseData, 'this is the user');
       console.log('second phase ');
-      res.status(200).json(user);
+      res.status(200).json(responseData);
     } catch (err) {
       next(err);
     } 
@@ -793,26 +994,95 @@ export const verificationCheck = async (req, res, next) => {
   try{
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        isTeacher: true,
-        zoomAccountCreated: true,
-        zoomUserAcceptedInvite: true,
+      include: {
+        teacherProfile: {
+          select: {
+            zoomAccountCreated: true,
+            zoomUserAcceptedInvite: true,
+          }
+        }
       },
     });
     if(!user){
       return res.status(400).json({ message: "User not found" });
     }
-    return res.status(200).json({ message: "User found", userDetail:{
-      isTeacher: user.isTeacher,
-      email: user.email,
-      id: user.id,
-      zoomAccountCreated: user.zoomAccountCreated,
-      zoomUserAcceptedInvite: user.zoomUserAcceptedInvite,
-    } });
+    
+    const isTeacher = user.userType === 'TEACHER';
+    const zoomAccountCreated = user.teacherProfile?.zoomAccountCreated || false;
+    const zoomUserAcceptedInvite = user.teacherProfile?.zoomUserAcceptedInvite || false;
+    
+    return res.status(200).json({ 
+      message: "User found", 
+      userDetail: {
+        isTeacher: isTeacher,
+        email: user.email,
+        id: user.id,
+        zoomAccountCreated: zoomAccountCreated,
+        zoomUserAcceptedInvite: zoomUserAcceptedInvite,
+      } 
+    });
   }
   catch(err){
+    next(err);
+  }
+}
+
+// Update organization trade license after PDF upload
+// Can be called with userId from registration (no auth required) or with token (auth required)
+export const updateOrganizationTradeLicense = async (req, res, next) => {
+  // Support both authenticated (req.userId) and unauthenticated (req.body.userId) requests
+  const userId = req.userId || req.body.userId;
+  const { tradeLicenseLocation } = req.body;
+  
+  if (!userId) {
+    return res.status(400).json({ message: "User ID is required" });
+  }
+
+  if (!tradeLicenseLocation) {
+    return res.status(400).json({ message: "Trade license location is required" });
+  }
+  
+  try {
+    // Find user with teacher profile
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        teacherProfile: {
+          include: {
+            ledOrganization: true
+          }
+        }
+      }
+    });
+
+    if (!user || user.userType !== 'TEACHER') {
+      return res.status(400).json({ message: "User not found or not a teacher" });
+    }
+
+    if (!user.teacherProfile) {
+      return res.status(400).json({ message: "Teacher profile not found" });
+    }
+
+    // Check if user is a team lead with an organization
+    const organization = user.teacherProfile.ledOrganization;
+    if (!organization) {
+      return res.status(400).json({ message: "User is not a team lead of an organization" });
+    }
+
+    // Update organization trade license
+    const updatedOrganization = await prisma.organization.update({
+      where: { id: organization.id },
+      data: {
+        orgLicense: tradeLicenseLocation
+      }
+    });
+
+    res.status(200).json({ 
+      message: "Trade license updated successfully", 
+      organization: updatedOrganization 
+    });
+  } catch (err) {
+    console.error('Error updating trade license:', err);
     next(err);
   }
 }

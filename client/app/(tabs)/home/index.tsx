@@ -125,6 +125,20 @@ const HomePage = () => {
     rank: 0,
     totalStudents: 0,
   });
+  const [userDetails, setUserDetails] = useState({
+    userName: '',
+    userProfileImage: '',
+
+  });
+
+  useEffect(() => {
+    async function getUserDetails() {
+      const userDetails = JSON.parse(await AsyncStorage.getItem('userDetails'));
+      console.log(userDetails, 'this is the user details');
+      setUserDetails(userDetails);
+    }
+    getUserDetails();
+  }, []);
 
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
@@ -387,6 +401,7 @@ const HomePage = () => {
 
 
       setUser(userResponse.data);
+      console.log(userResponse.data, 'this is the user response');
       setSubjectData(subjectsResponse.data);
 
       const { reccomendedSubjects: recommendedSubjects, recommendedGrade, recommendedBoard } = userResponse.data;
@@ -481,7 +496,7 @@ const HomePage = () => {
         >
           <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
             <Image
-              source={{ uri: user.profileImage }}
+              source={{ uri: userDetails.userProfileImage }}
               style={styles.profileImage}
               placeholder={blurhash}
               contentFit="cover"
@@ -493,7 +508,7 @@ const HomePage = () => {
         
         <View style={styles.welcomeText}>
             <Text style={styles.greeting}>{getGreeting()},</Text>
-          <Text style={styles.userName}>{user.name.split(' ')[0]}</Text>
+          <Text style={styles.userName}>{userDetails.userName.split(' ')[0]}</Text>
             <Text style={styles.userLevel}> {user.isTeacher ? 'Teacher' : 'Student'}</Text>
         </View>
         

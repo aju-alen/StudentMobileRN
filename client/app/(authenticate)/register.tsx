@@ -6,8 +6,17 @@ import axios from 'axios';
 import { ipURL } from '../utils/utils';
 import { COLORS } from '../../constants/theme';
 import { verticalScale, horizontalScale, moderateScale } from '../utils/metrics';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const UserTypeScreen = ({ onSelect }) => {
+    const [expandedCard, setExpandedCard] = useState<string | null>(null);
+
+    const toggleExpand = (cardType: string) => {
+        setExpandedCard(expandedCard === cardType ? null : cardType);
+    };
+
     return (
         <SafeAreaView style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -21,52 +30,122 @@ const UserTypeScreen = ({ onSelect }) => {
                 <View style={styles.userTypeContainer}>
                     <TouchableOpacity 
                         style={styles.userTypeButton}
-                        onPress={() => onSelect(false)}
+                        onPress={() => onSelect('student')}
                     >
                         <View style={styles.userTypeIconContainer}>
-                            <Ionicons name="school-outline" size={50} color={COLORS.primary} />
+                            <Ionicons name="school-outline" size={40} color={COLORS.primary} />
                         </View>
                         <Text style={styles.userTypeTitle}>Student</Text>
-                        <Text style={styles.userTypeDescription}>Join as a student to learn and grow with personalized guidance and interactive lessons</Text>
-                        <View style={styles.userTypeFeatures}>
-                            <View style={styles.featureItem}>
-                                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
-                                <Text style={styles.featureText}>Personalized Learning</Text>
+                        <Text style={styles.userTypeDescription}>Join as a student to learn and grow with personalized guidance</Text>
+                        <TouchableOpacity 
+                            style={styles.knowMoreButton}
+                            onPress={() => toggleExpand('student')}
+                        >
+                            <Text style={styles.knowMoreText}>Know More</Text>
+                            <Ionicons 
+                                name={expandedCard === 'student' ? 'chevron-up' : 'chevron-down'} 
+                                size={20} 
+                                color={COLORS.primary} 
+                            />
+                        </TouchableOpacity>
+                        {expandedCard === 'student' && (
+                            <View style={styles.expandedContent}>
+                                <View style={styles.userTypeFeatures}>
+                                    <View style={styles.featureItem}>
+                                        <Ionicons name="checkmark-circle" size={18} color={COLORS.primary} />
+                                        <Text style={styles.featureText}>Personalized Learning</Text>
+                                    </View>
+                                    <View style={styles.featureItem}>
+                                        <Ionicons name="checkmark-circle" size={18} color={COLORS.primary} />
+                                        <Text style={styles.featureText}>Interactive Lessons</Text>
+                                    </View>
+                                    <View style={styles.featureItem}>
+                                        <Ionicons name="checkmark-circle" size={18} color={COLORS.primary} />
+                                        <Text style={styles.featureText}>Track Progress</Text>
+                                    </View>
+                                </View>
                             </View>
-                            <View style={styles.featureItem}>
-                                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
-                                <Text style={styles.featureText}>Interactive Lessons</Text>
-                            </View>
-                            <View style={styles.featureItem}>
-                                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
-                                <Text style={styles.featureText}>Track Progress</Text>
-                            </View>
-                        </View>
+                        )}
                     </TouchableOpacity>
 
                     <TouchableOpacity 
                         style={styles.userTypeButton}
-                        onPress={() => onSelect(true)}
+                        onPress={() => onSelect('teacher')}
                     >
                         <View style={styles.userTypeIconContainer}>
-                            <Ionicons name="person-outline" size={50} color={COLORS.primary} />
+                            <Ionicons name="person-outline" size={40} color={COLORS.primary} />
                         </View>
                         <Text style={styles.userTypeTitle}>Teacher</Text>
-                        <Text style={styles.userTypeDescription}>Join as a teacher to share your knowledge and help students achieve their goals</Text>
-                        <View style={styles.userTypeFeatures}>
-                            <View style={styles.featureItem}>
-                                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
-                                <Text style={styles.featureText}>Create Courses</Text>
+                        <Text style={styles.userTypeDescription}>Join as a teacher to share your knowledge and help students</Text>
+                        <TouchableOpacity 
+                            style={styles.knowMoreButton}
+                            onPress={() => toggleExpand('teacher')}
+                        >
+                            <Text style={styles.knowMoreText}>Know More</Text>
+                            <Ionicons 
+                                name={expandedCard === 'teacher' ? 'chevron-up' : 'chevron-down'} 
+                                size={20} 
+                                color={COLORS.primary} 
+                            />
+                        </TouchableOpacity>
+                        {expandedCard === 'teacher' && (
+                            <View style={styles.expandedContent}>
+                                <View style={styles.userTypeFeatures}>
+                                    <View style={styles.featureItem}>
+                                        <Ionicons name="checkmark-circle" size={18} color={COLORS.primary} />
+                                        <Text style={styles.featureText}>Create Courses</Text>
+                                    </View>
+                                    <View style={styles.featureItem}>
+                                        <Ionicons name="checkmark-circle" size={18} color={COLORS.primary} />
+                                        <Text style={styles.featureText}>Engage Students</Text>
+                                    </View>
+                                    <View style={styles.featureItem}>
+                                        <Ionicons name="checkmark-circle" size={18} color={COLORS.primary} />
+                                        <Text style={styles.featureText}>Monitor Progress</Text>
+                                    </View>
+                                </View>
                             </View>
-                            <View style={styles.featureItem}>
-                                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
-                                <Text style={styles.featureText}>Engage Students</Text>
-                            </View>
-                            <View style={styles.featureItem}>
-                                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
-                                <Text style={styles.featureText}>Monitor Progress</Text>
-                            </View>
+                        )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                        style={styles.userTypeButton}
+                        onPress={() => onSelect('organization')}
+                    >
+                        <View style={styles.userTypeIconContainer}>
+                            <Ionicons name="business-outline" size={40} color={COLORS.primary} />
                         </View>
+                        <Text style={styles.userTypeTitle}>Organization</Text>
+                        <Text style={styles.userTypeDescription}>Register your organization to manage multiple teachers and students</Text>
+                        <TouchableOpacity 
+                            style={styles.knowMoreButton}
+                            onPress={() => toggleExpand('organization')}
+                        >
+                            <Text style={styles.knowMoreText}>Know More</Text>
+                            <Ionicons 
+                                name={expandedCard === 'organization' ? 'chevron-up' : 'chevron-down'} 
+                                size={20} 
+                                color={COLORS.primary} 
+                            />
+                        </TouchableOpacity>
+                        {expandedCard === 'organization' && (
+                            <View style={styles.expandedContent}>
+                                <View style={styles.userTypeFeatures}>
+                                    <View style={styles.featureItem}>
+                                        <Ionicons name="checkmark-circle" size={18} color={COLORS.primary} />
+                                        <Text style={styles.featureText}>Manage Multiple Teachers</Text>
+                                    </View>
+                                    <View style={styles.featureItem}>
+                                        <Ionicons name="checkmark-circle" size={18} color={COLORS.primary} />
+                                        <Text style={styles.featureText}>Centralized Administration</Text>
+                                    </View>
+                                    <View style={styles.featureItem}>
+                                        <Ionicons name="checkmark-circle" size={18} color={COLORS.primary} />
+                                        <Text style={styles.featureText}>3 Users Free, Premium Available</Text>
+                                    </View>
+                                </View>
+                            </View>
+                        )}
                     </TouchableOpacity>
                 </View>
             </View>
@@ -182,12 +261,21 @@ const RegisterPage = () => {
     const [userDescription, setUserDescription] = useState('');
     const [reccomendedSubjects, setReccomendedSubjects] = useState([]);
     const [subjectInput, setSubjectInput] = useState('');
-    const [isTeacher, setIsTeacher] = useState(false);
+    const [userType, setUserType] = useState<'student' | 'teacher' | 'organization' | null>(null);
     const [recommendedBoard, setRecommendedBoard] = useState('');
     const [recommendedGrade, setRecommendedGrade] = useState(0);
     const [selectedGrades, setSelectedGrades] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    
+    // Organization-specific fields
+    const [organizationName, setOrganizationName] = useState('');
+    const [organizationEmail, setOrganizationEmail] = useState('');
+    const [organizationWebsite, setOrganizationWebsite] = useState('');
+    const [tradeLicensePdf, setTradeLicensePdf] = useState<string | null>(null);
+    const [tradeLicensePdfUri, setTradeLicensePdfUri] = useState<string | null>(null);
+    const [isUploadingTradeLicense, setIsUploadingTradeLicense] = useState(false);
+    const [teacherCount, setTeacherCount] = useState('');
 
 
 
@@ -208,8 +296,8 @@ const RegisterPage = () => {
         }))
     ];
 
-    const handleUserTypeSelect = (isTeacherSelected) => {
-        setIsTeacher(isTeacherSelected);
+    const handleUserTypeSelect = (selectedType: 'student' | 'teacher' | 'organization') => {
+        setUserType(selectedType);
         setShowUserType(false);
     };
 
@@ -263,13 +351,34 @@ const RegisterPage = () => {
             newErrors.recommendedBoard = 'Please select a board';
         }
 
-        if (isTeacher) {
+        if (userType === 'teacher' || userType === 'organization') {
             if (selectedGrades.length === 0) {
                 newErrors.selectedGrades = 'Please select at least one grade';
             }
-        } else {
+        } else if (userType === 'student') {
             if (recommendedGrade === 0) {
                 newErrors.recommendedGrade = 'Please select your grade';
+            }
+        }
+
+        // Organization-specific validation
+        if (userType === 'organization') {
+            if (organizationName.trim() === '') {
+                newErrors.organizationName = 'Organization name is required';
+            }
+            if (organizationEmail.trim() === '') {
+                newErrors.organizationEmail = 'Organization email is required';
+            } else if (!emailRegex.test(organizationEmail.trim())) {
+                newErrors.organizationEmail = 'Please enter a valid organization email address';
+            }
+            if (organizationWebsite.trim() === '') {
+                newErrors.organizationWebsite = 'Website is required';
+            }
+            if (!tradeLicensePdfUri) {
+                newErrors.tradeLicensePdf = 'Trade license PDF is required';
+            }
+            if (teacherCount.trim() === '' || parseInt(teacherCount) < 1) {
+                newErrors.teacherCount = 'Please enter the number of teachers';
             }
         }
 
@@ -284,31 +393,91 @@ const RegisterPage = () => {
             return;
         }
 
+        // For organizations, validate PDF is selected (but not uploaded yet)
+        if (userType === 'organization' && !tradeLicensePdfUri) {
+            setErrors({ ...validationErrors, tradeLicensePdf: 'Trade license PDF is required' });
+            return;
+        }
+
         const user = {
             name,
+            userType,
             email,
             password: password.trim(),
             profileImage,
             userDescription,
-            isTeacher,
+            isTeacher: userType === 'teacher' || userType === 'organization',
+            isOrganization: userType === 'organization',
             confirmPassword,
             reccomendedSubjects,
             recommendedBoard,
             recommendedGrade,
-            selectedGrades: isTeacher ? selectedGrades : [recommendedGrade],
+            selectedGrades: (userType === 'teacher' || userType === 'organization') ? selectedGrades : [recommendedGrade],
+            ...(userType === 'organization' && {
+                organizationName,
+                organizationEmail,
+                organizationWebsite,
+                // Don't send tradeLicensePdf here - we'll upload it after registration
+                teacherCount: parseInt(teacherCount),
+            }),
         }
         console.log(user,'user details');
         
         try {
             setIsLoading(true);
-            const resp = await axios.post(`${ipURL}/api/auth/register`, user)
+            const resp = await axios.post(`${ipURL}/api/auth/register`, user);
+            const userId = resp.data.userId;
+            
+            // Upload PDF after registration with actual userId
+            if (userType === 'organization' && tradeLicensePdfUri) {
+                try {
+                    const s3Location = await uploadTradeLicenseToAws(tradeLicensePdfUri, userId);
+                    console.log('Trade license uploaded to:', s3Location);
+                    
+                    // Update the organization record with the trade license location
+                    // Using userId from registration response (no auth token needed)
+                    try {
+                        await axios.put(
+                            `${ipURL}/api/auth/organization/trade-license`,
+                            { 
+                                userId: userId,
+                                tradeLicenseLocation: s3Location 
+                            },
+                            {
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            }
+                        );
+                        console.log('Organization trade license updated successfully');
+                    } catch (updateError) {
+                        console.error('Failed to update organization trade license:', updateError);
+                        // Non-critical error - registration succeeded, just log it
+                        Alert.alert(
+                            'Note', 
+                            'Registration successful, but trade license update failed. You can update it later from your profile.'
+                        );
+                    }
+                } catch (uploadError) {
+                    console.error('PDF upload failed:', uploadError);
+                    // Registration succeeded but PDF upload failed
+                    Alert.alert(
+                        'Registration Successful', 
+                        'Your account has been created, but the trade license upload failed. Please upload it later from your profile settings.'
+                    );
+                    router.replace(`/(authenticate)/${userId}`);
+                    setIsLoading(false);
+                    return;
+                }
+            }
+            
             Alert.alert('Success', 'Registration successful! Please verify email to login');
-            router.replace(`/(authenticate)/${resp.data.userId}`);
+            router.replace(`/(authenticate)/${userId}`);
             setIsLoading(false);
         }
         catch (err) {
             setIsLoading(false);
-            Alert.alert('Error', err.response.data.message);
+            Alert.alert('Error', err.response?.data?.message || 'Registration failed');
         }
     }
 
@@ -320,6 +489,83 @@ const RegisterPage = () => {
             Alert.alert('Limit Reached', 'You can only add up to 3 subjects');
         } else {
             Alert.alert('Invalid Input', 'Please enter a valid subject');
+        }
+    };
+
+    const pickTradeLicensePDF = async () => {
+        try {
+            const result = await DocumentPicker.getDocumentAsync({
+                type: 'application/pdf',
+                copyToCacheDirectory: true,
+            });
+
+            if (result.canceled) {
+                return;
+            }
+
+            const pdfUri = result.assets[0].uri;
+            setTradeLicensePdfUri(pdfUri);
+            clearFieldError('tradeLicensePdf');
+            // Don't upload here - will upload after registration with actual userId
+        } catch (error) {
+            console.error('Error picking PDF:', error);
+            Alert.alert('Error', 'Failed to pick PDF file');
+        }
+    };
+
+    const uploadTradeLicenseToAws = async (pdfUri: string, userId: string) => {
+        if (!pdfUri) {
+            throw new Error('PDF URI is required');
+        }
+
+        try {
+            setIsUploadingTradeLicense(true);
+
+            const uriParts = pdfUri.split('.');
+            const fileType = uriParts[uriParts.length - 1];
+            
+            // Verify file exists
+            const fileInfo = await FileSystem.getInfoAsync(pdfUri);
+            if (!fileInfo.exists) {
+                throw new Error('File does not exist');
+            }
+
+            const fileName = `trade-license-${Date.now()}.${fileType}`;
+
+            const formData = new FormData();
+            formData.append('tradeLicense', {
+                uri: pdfUri,
+                name: fileName,
+                type: 'application/pdf',
+            } as any);
+
+            console.log('Uploading trade license to S3 with userId:', userId);
+
+            const response = await axios.post(
+                `${ipURL}/api/s3/upload-to-aws/organization-trade-license/${userId}`,
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
+
+            console.log('Trade license uploaded successfully:', response.data);
+            
+            // Store the S3 location
+            const s3Location = response.data.location || response.data.data?.Location;
+            if (s3Location) {
+                setTradeLicensePdf(s3Location);
+                return s3Location;
+            } else {
+                throw new Error('No location returned from upload');
+            }
+        } catch (error) {
+            console.error('Trade license upload failed:', error);
+            throw error; // Re-throw to handle in handleRegister
+        } finally {
+            setIsUploadingTradeLicense(false);
         }
     };
 
@@ -340,7 +586,13 @@ const RegisterPage = () => {
                     </TouchableOpacity>
 
                     <View style={styles.headerSection}>
-                        <Text style={styles.title}>Create {isTeacher ? 'Teacher' : 'Student'} Account</Text>
+                        <Text style={styles.title}>
+                            Create {
+                                userType === 'organization' ? 'Organization' : 
+                                userType === 'teacher' ? 'Teacher' : 
+                                'Student'
+                            } Account
+                        </Text>
                         <Text style={styles.subtitle}>Join our learning community</Text>
                     </View>
 
@@ -495,12 +747,109 @@ const RegisterPage = () => {
                         errorMessage={errors.recommendedBoard || ''}
                     />
 
+                    {userType === 'organization' && (
+                        <>
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Organization Name</Text>
+                                <TextInput
+                                    style={[styles.input, errors.organizationName && styles.inputError]}
+                                    placeholder="Enter organization name"
+                                    placeholderTextColor="#666"
+                                    value={organizationName}
+                                    onChangeText={(text) => {
+                                        setOrganizationName(text);
+                                        clearFieldError('organizationName');
+                                    }}
+                                />
+                                {errors.organizationName && <Text style={styles.errorText}>{errors.organizationName}</Text>}
+                            </View>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Organization Email</Text>
+                                <TextInput
+                                    style={[styles.input, errors.organizationEmail && styles.inputError]}
+                                    placeholder="Enter organization email"
+                                    placeholderTextColor="#666"
+                                    autoCapitalize="none"
+                                    value={organizationEmail}
+                                    onChangeText={(text) => {
+                                        setOrganizationEmail(text);
+                                        clearFieldError('organizationEmail');
+                                    }}
+                                    keyboardType="email-address"
+                                />
+                                {errors.organizationEmail && <Text style={styles.errorText}>{errors.organizationEmail}</Text>}
+                            </View>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Website</Text>
+                                <TextInput
+                                    style={[styles.input, errors.organizationWebsite && styles.inputError]}
+                                    placeholder="Enter website URL"
+                                    placeholderTextColor="#666"
+                                    autoCapitalize="none"
+                                    value={organizationWebsite}
+                                    onChangeText={(text) => {
+                                        setOrganizationWebsite(text);
+                                        clearFieldError('organizationWebsite');
+                                    }}
+                                    keyboardType="url"
+                                />
+                                {errors.organizationWebsite && <Text style={styles.errorText}>{errors.organizationWebsite}</Text>}
+                            </View>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Trade License PDF</Text>
+                                <TouchableOpacity 
+                                    style={[styles.pdfUploadButton, errors.tradeLicensePdf && styles.inputError]}
+                                    onPress={pickTradeLicensePDF}
+                                    disabled={isUploadingTradeLicense}
+                                >
+                                    {isUploadingTradeLicense ? (
+                                        <>
+                                            <ActivityIndicator size="small" color={COLORS.primary} />
+                                            <Text style={styles.pdfUploadText}>Uploading...</Text>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Ionicons name="document-attach-outline" size={24} color={COLORS.primary} />
+                                            <Text style={styles.pdfUploadText}>
+                                                {tradeLicensePdfUri ? 'PDF Selected ✓' : 'Select Trade License PDF'}
+                                            </Text>
+                                        </>
+                                    )}
+                                </TouchableOpacity>
+                                {errors.tradeLicensePdf && <Text style={styles.errorText}>{errors.tradeLicensePdf}</Text>}
+                            </View>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.label}>Number of Teachers</Text>
+                                <TextInput
+                                    style={[styles.input, errors.teacherCount && styles.inputError]}
+                                    placeholder="Enter number of teachers"
+                                    placeholderTextColor="#666"
+                                    value={teacherCount}
+                                    onChangeText={(text) => {
+                                        const numericValue = text.replace(/[^0-9]/g, '');
+                                        setTeacherCount(numericValue);
+                                        clearFieldError('teacherCount');
+                                    }}
+                                    keyboardType="numeric"
+                                />
+                                <Text style={styles.infoText}>
+                                    3 users are free. Additional users require premium subscription (can be purchased in settings after approval).
+                                </Text>
+                                {errors.teacherCount && <Text style={styles.errorText}>{errors.teacherCount}</Text>}
+                            </View>
+                        </>
+                    )}
+
                     <CustomDropdown
                         label="Grade"
                         value={recommendedGrade}
                         options={gradeOptions}
                         onSelect={(value) => {
-                            if (isTeacher) {
+                            if (userType === 'teacher' || userType === 'organization') {
                                 setSelectedGrades(value);
                                 setRecommendedGrade(value[0] || 0);
                                 if (value.length > 0) {
@@ -514,7 +863,7 @@ const RegisterPage = () => {
                             }
                         }}
                         placeholder="Select your grade"
-                        isMultiSelect={isTeacher}
+                        isMultiSelect={userType === 'teacher' || userType === 'organization'}
                         selectedValues={selectedGrades}
                         hasError={!!(errors.recommendedGrade || errors.selectedGrades)}
                         errorMessage={errors.recommendedGrade || errors.selectedGrades || ''}
@@ -773,14 +1122,14 @@ const styles = StyleSheet.create({
     },
     userTypeContainer: {
         flexDirection: 'column',
-        gap: moderateScale(20),
+        gap: moderateScale(12),
         marginTop: verticalScale(20),
         paddingHorizontal: horizontalScale(10),
     },
     userTypeButton: {
         backgroundColor: '#fff',
         borderRadius: moderateScale(20),
-        padding: moderateScale(24),
+        padding: moderateScale(16),
         borderWidth: 1,
         borderColor: '#ddd',
         shadowColor: '#000',
@@ -793,42 +1142,84 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     userTypeIconContainer: {
-        width: moderateScale(80),
-        height: moderateScale(80),
-        borderRadius: moderateScale(40),
+        width: moderateScale(60),
+        height: moderateScale(60),
+        borderRadius: moderateScale(30),
         backgroundColor: COLORS.primary + '15',
         justifyContent: 'center',
         alignItems: 'center',
         alignSelf: 'center',
-        marginBottom: verticalScale(16),
+        marginBottom: verticalScale(10),
     },
     userTypeTitle: {
-        fontSize: moderateScale(24),
+        fontSize: moderateScale(20),
         fontWeight: '700',
         color: COLORS.primary,
         textAlign: 'center',
-        marginBottom: verticalScale(12),
+        marginBottom: verticalScale(8),
     },
     userTypeDescription: {
-        fontSize: moderateScale(16),
+        fontSize: moderateScale(14),
         color: '#666',
         textAlign: 'center',
-        marginBottom: verticalScale(20),
-        lineHeight: moderateScale(22),
+        marginBottom: verticalScale(10),
+        lineHeight: moderateScale(18),
+    },
+    knowMoreButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: verticalScale(8),
+        marginBottom: verticalScale(8),
+    },
+    knowMoreText: {
+        fontSize: moderateScale(14),
+        color: COLORS.primary,
+        fontWeight: '600',
+        marginRight: horizontalScale(4),
+    },
+    expandedContent: {
+        marginTop: verticalScale(8),
+        paddingTop: verticalScale(8),
+        borderTopWidth: 1,
+        borderTopColor: '#eee',
     },
     userTypeFeatures: {
-        marginTop: verticalScale(10),
+        marginTop: verticalScale(5),
     },
     featureItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: verticalScale(12),
-        paddingHorizontal: horizontalScale(10),
+        marginBottom: verticalScale(8),
+        paddingHorizontal: horizontalScale(5),
     },
     featureText: {
-        fontSize: moderateScale(15),
+        fontSize: moderateScale(13),
         color: '#444',
-        marginLeft: horizontalScale(10),
+        marginLeft: horizontalScale(8),
+    },
+    pdfUploadButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: moderateScale(8),
+        padding: moderateScale(16),
+        backgroundColor: '#fff',
+        borderStyle: 'dashed',
+    },
+    pdfUploadText: {
+        fontSize: moderateScale(16),
+        color: COLORS.primary,
+        marginLeft: horizontalScale(8),
+        fontWeight: '500',
+    },
+    infoText: {
+        fontSize: moderateScale(12),
+        color: '#666',
+        marginTop: verticalScale(4),
+        fontStyle: 'italic',
     },
     backButton: {
         flexDirection: 'row',

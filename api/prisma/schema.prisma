@@ -14,59 +14,116 @@ datasource db {
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
-
-model SuperAdmin {
-  id                  String        @id @default(cuid())
-  name                String
-  email               String        @unique
-  password            String
-  verified            Boolean       @default(false)
-  verificationToken   String?
-  profileImage        String?
-  userDescription     String        @default("No description provided")
-  isTeacher           Boolean       @default(false)
-  isAdmin             Boolean       @default(false)
-  recommendedBoard    String?
-  recommendedGrade    Int?
-  hasSeenOnboarding   Boolean       @default(false)
-  reccomendedSubjects Json @default("[]")     // Keeping original typo
-  createdAt           DateTime      @default(now())
+// Enums
+enum UserType {
+  STUDENT
+  TEACHER
+  ADMIN
 }
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED
+}
+
+enum MessageSenderType {
+  STUDENT
+  TEACHER
+}
+
+// Core authentication and shared fields
 model User {
-  id                  String        @id @default(cuid())
-  name                String
-  email               String        @unique
+  id                  String   @id @default(cuid())
+  email               String   @unique
   password            String
-  verified            Boolean       @default(false)
+  name                String
+  verified            Boolean  @default(false)
   verificationToken   String?
   profileImage        String?
-  userDescription     String        @default("No description provided")
-  isTeacher           Boolean       @default(false)
-  isAdmin             Boolean       @default(false)
+  userDescription     String   @default("No description provided")
+  hasSeenOnboarding   Boolean  @default(false)
+  userType            UserType
+  createdAt           DateTime @default(now())
+  
+  // Relations - one of these will be populated based on userType
+  studentProfile      StudentProfile?
+  teacherProfile      TeacherProfile?
+  adminProfile        AdminProfile?
+}
+
+// Student-specific data
+model StudentProfile {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
   recommendedBoard    String?
   recommendedGrade    Int?
-  zoomAccountCreated  Boolean       @default(false)
-  zoomUserAcceptedInvite  Boolean       @default(false)
-  hasSeenOnboarding   Boolean       @default(false)
-  reccomendedSubjects Json @default("[]")     // Keeping original typo
-  subjects            Subject[]
-  teacherBookings     Booking[]     @relation("TeacherBookings")
-  studentBookings     Booking[]     @relation("StudentBookings")
-  createdAt           DateTime      @default(now())
+  reccomendedSubjects Json     @default("[]")
   
   // Relations
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   reviews             Review[]
-  sentConversations   Conversation[] @relation("UserConversations")
-  clientConversations Conversation[] @relation("ClientConversations")
+  sentConversations   Conversation[] @relation("StudentConversations")
   communityMemberships CommunityUser[]
-  communityMessages    CommunityMessage[]
+  communityMessages   CommunityMessage[]
   savedSubjects       SavedSubject[]
   reviewVotes         ReviewVote[]
-  blockedTeachers     BlockedTeacher[] @relation("BlockingUser")
-  blockedByTeachers   BlockedTeacher[] @relation("BlockedUser")
+  blockedTeachers     BlockedTeacher[] @relation("BlockingStudent")
   reports             Report[]
   stripePurchases     StripePurchases[]
+  bookings            Booking[] @relation("StudentBookings")
   userSubjects        UserSubject[]
+}
+
+// Teacher-specific data
+model TeacherProfile {
+  id                     String        @id @default(cuid())
+  userId                 String        @unique
+  zoomAccountCreated     Boolean       @default(false)
+  zoomUserAcceptedInvite Boolean       @default(false)
+  isTeamLead             Boolean       @default(false)
+  organizationId         String?
+  
+  // Relations
+  user                   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjects               Subject[]
+  clientConversations    Conversation[] @relation("TeacherConversations")
+  blockedByStudents      BlockedTeacher[] @relation("BlockedTeacher")
+  bookings               Booking[]     @relation("TeacherBookings")
+  organization           Organization? @relation("OrganizationMembers", fields: [organizationId], references: [id])
+  ledOrganization        Organization? @relation("OrganizationLead")
+}
+
+// Admin-specific data
+model AdminProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  role        String   @default("SUPERADMIN")
+  permissions Json     @default("[]")
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Organization model
+model Organization {
+  id              String    @id @default(cuid())
+  orgName         String
+  orgWebsite      String?
+  orgLicense      String?
+  orgCapacity     Int       @default(3)
+  teamLeadId      String    @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  teamLead        TeacherProfile   @relation("OrganizationLead", fields: [teamLeadId], references: [id], onDelete: Restrict)
+  members         TeacherProfile[] @relation("OrganizationMembers")
 }
 
 model Subject {
@@ -76,20 +133,20 @@ model Subject {
   subjectDuration      Int
   subjectSearchHeading String
   subjectDescription   String
-  subjectPoints        Json @default("[]") 
+  subjectPoints        Json     @default("[]") 
   subjectImage         String
   subjectPrice         Float
   subjectBoard         String
   subjectLanguage      String
-  subjectTags          Json @default("[]") 
+  subjectTags          Json     @default("[]") 
   subjectGrade         Int      @default(10)
   subjectVerification  Boolean  @default(false)
-  teacherVerification  Json @default("[]") 
+  teacherVerification  Json     @default("[]") 
   createdAt            DateTime @default(now())
   
   // Relations
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId              String
+  teacherProfile      TeacherProfile  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  teacherId           String
   reviews             Review[]
   conversations       Conversation[]
   bookings            Booking[]
@@ -97,7 +154,8 @@ model Subject {
   reports             Report[]
   stripePurchases     StripePurchases[]
   userSubjects        UserSubject[]
-  @@unique([id, userId])
+  
+  @@unique([id, teacherId])
 }
 
 model Review {
@@ -105,25 +163,16 @@ model Review {
   title       String
   description String
   createdAt   DateTime      @default(now())
-  upvotes     Int          @default(0)
-  downvotes   Int          @default(0)
-  userId      String
+  upvotes     Int           @default(0)
+  downvotes   Int           @default(0)
+  studentId   String
   subjectId   String
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subject     Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  student     StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject     Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   votes       ReviewVote[]
 
-  @@index([userId])
+  @@index([studentId])
   @@index([subjectId])
-}
-
-model Message {
-  id             String   @id @default(cuid())
-  conversationId String
-  senderId       String
-  text           String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
 }
 
 model Conversation {
@@ -132,10 +181,10 @@ model Conversation {
   updatedAt DateTime @updatedAt
   
   // Relations
-  user      User     @relation("UserConversations", fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  client    User     @relation("ClientConversations", fields: [clientId], references: [id], onDelete: Cascade)
-  clientId  String
+  student   StudentProfile  @relation("StudentConversations", fields: [studentId], references: [id], onDelete: Cascade)
+  studentId String
+  teacher   TeacherProfile  @relation("TeacherConversations", fields: [teacherId], references: [id], onDelete: Cascade)
+  teacherId String
   subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   subjectId String
   messages  ConversationMessage[]
@@ -143,7 +192,8 @@ model Conversation {
 
 model ConversationMessage {
   id             String       @id @default(cuid())
-  senderId       String
+  senderId       String       // References User.id (can be student or teacher)
+  senderType     MessageSenderType
   text           String
   messageId      String
   createdAt      DateTime     @default(now())
@@ -166,13 +216,13 @@ model Community {
   messages           CommunityMessage[]
 }
 
-// Junction table for many-to-many relationship between User and Community
+// Junction table for many-to-many relationship between StudentProfile and Community
 model CommunityUser {
   id          String    @id @default(cuid())
   
   // Relations
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId      String
+  student     StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId   String
   community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
   communityId String
 }
@@ -187,122 +237,108 @@ model CommunityMessage {
   // Relations
   community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
   communityId String
-  sender      User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  senderId    String
+  student     StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId   String
 }
 
 model Booking {
-  id String @id @default(cuid())
-  subjectId String
-  teacherId String
-  studentId String
+  id                      String        @id @default(cuid())
+  subjectId               String
+  teacherId               String
+  studentId               String
+  bookingDate             DateTime?
+  bookingTime             String?
+  bookingStatus           BookingStatus @default(PENDING)
+  bookingPrice            Float?
+  bookingPaymentCompleted Boolean?      @default(false)
+  bookingZoomUrl          String?       @default("")
+  bookingZoomPassword     String?       @default("")
+  bookingHours            Int?
+  bookingMinutes          Int?
+  bookingZoomId           Int?
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
 
-  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  teacher User @relation("TeacherBookings", fields: [teacherId], references: [id], onDelete: Cascade)
-  student User @relation("StudentBookings", fields: [studentId], references: [id], onDelete: Cascade)
-
-  bookingDate DateTime?
-  bookingTime String?
-  bookingStatus BookingStatus @default(PENDING)
-  bookingPrice Float?
-  bookingPaymentCompleted Boolean? @default(false)
-  bookingZoomUrl String? @default("")
-  bookingZoomPassword String? @default("")
-  bookingHours Int?
-  bookingMinutes Int?
-  bookingZoomId Int?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  stripePurchase StripePurchases?
+  subject                 Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher                 TeacherProfile @relation("TeacherBookings", fields: [teacherId], references: [id], onDelete: Cascade)
+  student                 StudentProfile @relation("StudentBookings", fields: [studentId], references: [id], onDelete: Cascade)
+  stripePurchase          StripePurchases?
 }
 
 model SavedSubject {
-  id String @id @default(cuid())
+  id        String  @id @default(cuid())
   subjectId String
-  userId String
+  studentId String
   
-  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  @@unique([subjectId, userId])
-}
-
-enum BookingStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
+  @@unique([subjectId, studentId])
 }
 
 model ReviewVote {
   id        String   @id @default(cuid())
-  userId    String
+  studentId String
   reviewId  String
   voteType  String   // 'up' or 'down'
   createdAt DateTime @default(now())
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  student   StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, reviewId])
+  @@unique([studentId, reviewId])
 }
 
 model BlockedTeacher {
   id         String   @id @default(cuid())
-  userId     String
-  blockedTeacherId String
+  studentId  String
+  teacherId  String
   createdAt  DateTime @default(now())
 
-  user       User     @relation("BlockingUser", fields: [userId], references: [id], onDelete: Cascade)
-  blockedTeacher User @relation("BlockedUser", fields: [blockedTeacherId], references: [id], onDelete: Cascade)
+  student    StudentProfile  @relation("BlockingStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  teacher    TeacherProfile  @relation("BlockedTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, blockedTeacherId])
-}
-
-enum ReportStatus {
-  PENDING
-  RESOLVED
+  @@unique([studentId, teacherId])
 }
 
 model Report {
-  id String @id @default(cuid())
-  userId String
-  subjectId String
+  id                String       @id @default(cuid())
+  studentId         String
+  subjectId          String
   reportDescription String
-  reportStatus ReportStatus @default(PENDING)
-  reportResolution String?
-  createdAt DateTime @default(now())
+  reportStatus      ReportStatus @default(PENDING)
+  reportResolution  String?
+  createdAt         DateTime     @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reportedSubject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  student           StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  reportedSubject   Subject      @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 }
 
 model StripePurchases {
-  id String @id @default(cuid())
-  userId String
-  subjectId String
-  purchaseDate DateTime @default(now())
-  purchaseStatus BookingStatus @default(PENDING)
-  purchaseAmount Int
-  purchaseCurrency String
-  stripeCustomerId String
+  id                 String        @id @default(cuid())
+  studentId          String
+  subjectId          String
+  purchaseDate       DateTime      @default(now())
+  purchaseStatus     BookingStatus @default(PENDING)
+  purchaseAmount     Int
+  purchaseCurrency   String
+  stripeCustomerId   String
   purchaseReceiptUrl String
-  createdAt DateTime @default(now())
+  createdAt          DateTime      @default(now())
+  bookingId          String        @unique
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  booking Booking @relation(fields: [bookingId], references: [id])
-  bookingId String @unique
+  student            StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject            Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  booking            Booking       @relation(fields: [bookingId], references: [id])
 }
 
-model UserSubject{
-  id String @id @default(cuid())
-  userId String
+model UserSubject {
+  id        String @id @default(cuid())
+  studentId String
   subjectId String
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, subjectId])
+  @@unique([studentId, subjectId])
 }
