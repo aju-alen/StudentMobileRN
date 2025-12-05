@@ -744,27 +744,53 @@ export const getTeacherProfile = async (req, res, next) => {
   try{
     const { teacherProfileId } = req.params;
     console.log(teacherProfileId, 'this is the teacher profile id');
-    const teacherProfile = await prisma.user.findUnique({
+    
+    // Find user by ID (teacherProfileId could be User.id or TeacherProfile.id)
+    const user = await prisma.user.findUnique({
       where: { id: teacherProfileId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        isTeacher: true,
-        profileImage: true,
-        userDescription: true,
-        reccomendedSubjects: true,
-        recommendedBoard: true,
-        recommendedGrade: true,
-        subjects: true,
+      include: {
+        teacherProfile: {
+          include: {
+            subjects: {
+              select: {
+                id: true,
+                subjectName: true,
+                subjectImage: true,
+                subjectBoard: true,
+                subjectGrade: true,
+                subjectPrice: true,
+                subjectVerification: true,
+              }
+            },
+            ledOrganization: true,
+            organization: true
+          }
+        }
       },
     });
 
-    if (!teacherProfile) {
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    if (user.userType !== 'TEACHER' || !user.teacherProfile) {
       return res.status(400).json({ message: "Teacher profile not found" });
     }
 
-    res.status(200).json(teacherProfile);
+    // Format response to match expected structure
+    const response = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      profileImage: user.profileImage,
+      userDescription: user.userDescription,
+      userType: user.userType,
+      isTeamLead: user.teacherProfile.isTeamLead,
+      organization: user.teacherProfile.ledOrganization || user.teacherProfile.organization,
+      subjects: user.teacherProfile.subjects || [],
+    };
+
+    res.status(200).json(response);
   }
   catch(err){
     next(err);
@@ -952,9 +978,23 @@ export const verifyPurchase = async (req, res, next) => {
   }
 
   try {
+    // Get StudentProfile.id from User.id
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        studentProfile: {
+          select: { id: true }
+        }
+      }
+    });
+
+    if (!user || !user.studentProfile) {
+      return res.status(400).json({ message: "Student profile not found" });
+    }
+
     const purchase = await prisma.stripePurchases.findFirst({
       where: {
-        userId: userId,
+        studentId: user.studentProfile.id,
         subjectId: subjectId,
         purchaseStatus: 'CONFIRMED'
       }
