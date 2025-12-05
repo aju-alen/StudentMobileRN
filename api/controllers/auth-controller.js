@@ -14,46 +14,60 @@ const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
 const prisma = new PrismaClient();
 
 export const registerSuperAdmin = async (req, res, next) => {
- 
     try {
-        const { name, email, password, profileImage, userDescription, isTeacher,reccomendedSubjects,recommendedBoard,recommendedGrade } = req.body;
+        const { name, email, password, profileImage, userDescription, role, permissions } = req.body;
         console.log(req.body, 'this is the req body');
 
-        // if (!name || !email || !password || !profileImage || !userDescription || !isTeacher || !reccomendedSubjects || !recommendedBoard || !recommendedGrade) {
-        //     return res.status(400).json({ message: "Please enter all fields" });
-        // }
+        if (!name || !email || !password) {
+            return res.status(400).json({ message: "Please enter all required fields" });
+        }
 
         const hash = bcrypt.hashSync(password, 5);
 
-        const existingSuperAdmin = await prisma.superAdmin.findUnique({
+        // Check if the user already exists
+        const existingUser = await prisma.user.findUnique({
             where: { email },
         });
 
-        if (existingSuperAdmin) {
-            return res.status(400).json({ message: "Super Admin already exists" });
+        if (existingUser) {
+            return res.status(400).json({ message: "User already exists" });
         }
 
-        const newSuperAdmin = await prisma.superAdmin.create({
+        // Generate the verification token
+        const verificationToken = crypto.randomBytes(20).toString('hex');
+
+        // Create User with AdminProfile
+        const newUser = await prisma.user.create({
             data: {
                 name,
                 email,
                 password: hash,
-                profileImage,
-                userDescription,
-                isTeacher,
-                reccomendedSubjects,
-                recommendedBoard,
-                recommendedGrade:Number(recommendedGrade),
+                profileImage: profileImage || null,
+                userDescription: userDescription || "No description provided",
+                userType: 'ADMIN',
+                verificationToken,
+                hasSeenOnboarding: false,
+                adminProfile: {
+                    create: {
+                        role: role || 'SUPERADMIN',
+                        permissions: permissions || [],
+                    }
+                }
             },
+            include: {
+                adminProfile: true
+            }
         });
 
         res.status(202).json({
             message: "Super Admin Registered",
-            savedSuperAdmin: newSuperAdmin,
-            superAdminId: newSuperAdmin.id,
+            savedUser: newUser,
+            userId: newUser.id,
+            adminProfile: newUser.adminProfile
         });
     }
     catch(err){
+        console.error('Error registering super admin:', err);
         next(err);
     }
 }
@@ -553,12 +567,20 @@ export const verifyEmail = async (req, res, next) => {
     try {
       const { email, password } = req.body;
   
-      // Find the user by email
-      const user = await prisma.superAdmin.findUnique({
+      // Find the user by email with admin profile
+      const user = await prisma.user.findUnique({
         where: { email },
+        include: {
+          adminProfile: true
+        }
       });
   
       if (!user) {
+        return res.status(400).json({ message: "Invalid email or password" });
+      }
+
+      // Check if user is an admin
+      if (user.userType !== 'ADMIN') {
         return res.status(400).json({ message: "Invalid email or password" });
       }
   
@@ -572,10 +594,17 @@ export const verifyEmail = async (req, res, next) => {
       if (!isCorrect) {
         return res.status(400).json({ message: "Invalid email or password" });
       }
+
+      // Determine user type and get profile-specific data
+      const isAdmin = user.userType === 'ADMIN';
   
       // Generate a JWT token
       const token = jwt.sign(
-        { userId: user.id, isTeacher: user.isTeacher, isAdmin: user.isAdmin, email: user.email },
+        { 
+          userId: user.id, 
+          userType: user.userType,
+          email: user.email 
+        },
         process.env.SECRET_KEY
       );
       console.log(user, 'this is the user');
@@ -583,13 +612,17 @@ export const verifyEmail = async (req, res, next) => {
       res.status(200).json({
         message: "Super Admin Login successful",
         token,
-        isTeacher: user.isTeacher,
-        isAdmin: user.isAdmin,
+        userType: user.userType,
+        isTeacher: false,
+        isAdmin: isAdmin,
         userId: user.id,
-        recommendedSubjects: user.recommendedSubjects,
+        userName: user.name,
         userProfileImage: user.profileImage,
         hasSeenOnboarding: user.hasSeenOnboarding,
         email: user.email,
+        ...(isAdmin && user.adminProfile && {
+          adminProfile: user.adminProfile
+        })
       });
     } catch (err) {
       console.error(err);
