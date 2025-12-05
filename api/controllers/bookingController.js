@@ -150,19 +150,49 @@ export const updatePaymentStatus = async (req, res) => {
 export const getUpcomingClasses = async (req, res) => {
   try{
     const userId = req.userId;
-    const isTeacher = req.isTeacher;
+    const userType = req.userType || (req.isTeacher ? 'TEACHER' : 'STUDENT');
     const limit = req.query.limit ? parseInt(req.query.limit) : undefined;
 
-    console.log('reached 111');
-    
+    // Get the profile ID from User.id
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        studentProfile: {
+          select: { id: true }
+        },
+        teacherProfile: {
+          select: { id: true }
+        }
+      }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'User not found' });
+    }
+
+    // Determine which profile ID to use
+    let profileId = null;
+    if (userType === 'TEACHER' && user.teacherProfile) {
+      profileId = user.teacherProfile.id;
+    } else if (userType === 'STUDENT' && user.studentProfile) {
+      profileId = user.studentProfile.id;
+    } else {
+      return res.status(400).json({ error: 'Profile not found' });
+    }
+
+    // Build where clause based on user type
+    const whereClause = {
+      bookingStatus: BookingStatus.CONFIRMED
+    };
+
+    if (userType === 'TEACHER') {
+      whereClause.teacherId = profileId;
+    } else {
+      whereClause.studentId = profileId;
+    }
     
     const upcomingClasses = await prisma.booking.findMany({
-      where: {
-        OR: [
-          isTeacher ? { teacherId: userId } : { studentId: userId }
-        ],
-        bookingStatus: BookingStatus.CONFIRMED
-      },
+      where: whereClause,
       select: {
         id: true,
         bookingDate: true,
@@ -175,15 +205,23 @@ export const getUpcomingClasses = async (req, res) => {
           }
         },
         teacher: {
-          select: {
-            name: true,
-            id: true
+          include: {
+            user: {
+              select: {
+                name: true,
+                id: true
+              }
+            }
           }
         },
         student: {
-          select: {
-            name: true,
-            id: true
+          include: {
+            user: {
+              select: {
+                name: true,
+                id: true
+              }
+            }
           }
         }
       },
@@ -191,9 +229,26 @@ export const getUpcomingClasses = async (req, res) => {
       orderBy: {
         bookingDate: 'asc'
       }
-    })
-    console.log('reached 222');
-    res.status(200).json(upcomingClasses);
+    });
+
+    // Transform response to match expected format
+    const transformedClasses = upcomingClasses.map(booking => ({
+      id: booking.id,
+      bookingDate: booking.bookingDate,
+      bookingTime: booking.bookingTime,
+      bookingZoomUrl: booking.bookingZoomUrl,
+      subject: booking.subject,
+      teacher: {
+        id: booking.teacher.user.id,
+        name: booking.teacher.user.name
+      },
+      student: {
+        id: booking.student.user.id,
+        name: booking.student.user.name
+      }
+    }));
+
+    res.status(200).json(transformedClasses);
   }
   catch(error){
     console.log(error);

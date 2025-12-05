@@ -61,8 +61,10 @@ interface User {
   name?: string;
   profileImage?: string;
   id?: string;
-  isTeacher?: boolean;
+  userType?: UserType;
 }
+
+type UserType = 'TEACHER' | 'ADMIN' | 'STUDENT';
 
 const { width } = Dimensions.get('window');
 
@@ -121,7 +123,6 @@ const ReviewForm = React.memo(({ onSubmit, isSubmitting, purchaseStatus }: Revie
 
 const SubjectPage = ({ subjectId }) => {
   const [singleSubjectData, setSingleSubjectData] = React.useState<SubjectData>({});
-  const [userData, setUserData] = React.useState<User>({});
   const [teacherId, setTeacherId] = React.useState<string>("");
   const [isBookingModalVisible, setIsBookingModalVisible] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -133,10 +134,11 @@ const SubjectPage = ({ subjectId }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
-  const [isTeacher, setIsTeacher] = useState(false);
+  const [isUserType, setIsUserType] = useState<UserType>();
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [purchaseStatus, setPurchaseStatus] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitializingChat, setIsInitializingChat] = useState(false);
 
   // Animation values
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -151,6 +153,9 @@ const SubjectPage = ({ subjectId }) => {
 
   console.log(singleSubjectData,'singleSubjectData in single subject page');
   const handleChatNow = async () => {
+    if (isInitializingChat) {
+      return; // Prevent multiple simultaneous initializations
+    }
 
     if(!purchaseStatus){
       alert('Please purchase the course to chat with the teacher');
@@ -159,8 +164,19 @@ const SubjectPage = ({ subjectId }) => {
 
     const token = await AsyncStorage.getItem('authToken');
     const userDetails = await AsyncStorage.getItem('userDetails');
+    if (!userDetails) {
+      alert('Please login to chat');
+      return;
+    }
     const userId = JSON.parse(userDetails).userId;
     const clientId = singleSubjectData.user?.id;
+    
+    if (!clientId) {
+      alert('Teacher information not available');
+      return;
+    }
+
+    setIsInitializingChat(true);
 
     try {
         // First check if a conversation already exists
@@ -172,59 +188,103 @@ const SubjectPage = ({ subjectId }) => {
 
         // Set up listeners for the response
         socket.once("conversation-exists", async (conversation) => {
-            // Remove other listeners to prevent memory leaks
-            socket.off("no-conversation-found");
-            socket.off("conversation-check-error");
-            
-            // Join the existing conversation room
-            socket.emit('chat-room', conversation.id);
-            
-            // Navigate to the existing conversation
-            router.push(`/(tabs)/chat/${conversation.id}`);
+            try {
+                // Remove other listeners to prevent memory leaks
+                socket.off("no-conversation-found");
+                socket.off("conversation-check-error");
+                
+                // Join the existing conversation room
+                socket.emit('chat-room', conversation.id);
+                
+                // Navigate to the existing conversation
+                router.push(`/(tabs)/chat/${conversation.id}`);
+            } finally {
+                setIsInitializingChat(false);
+            }
         });
 
         socket.once("no-conversation-found", async () => {
-            // Remove other listeners
-            socket.off("conversation-exists");
-            socket.off("conversation-check-error");
-            
             try {
-                // Create a new conversation since none exists
-                const response = await axios.post(
-                    `${ipURL}/api/conversation`,
-                    {
-                        userId,
-                        clientId,
-                        subjectId
-                    },
-                    {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }
-                );
-
-                // Join the new chat room
-                socket.emit('chat-room', response.data.id);
+                // Remove other listeners
+                socket.off("conversation-exists");
+                socket.off("conversation-check-error");
                 
-                // Navigate to the new conversation
-                router.push(`/(tabs)/chat/${response.data.id}`);
+                // Create a new conversation since none exists
+                try {
+                    const response = await axios.post(
+                        `${ipURL}/api/conversation`,
+                        {
+                            userId,
+                            clientId,
+                            subjectId
+                        },
+                        {
+                            headers: { Authorization: `Bearer ${token}` }
+                        }
+                    );
+
+                    // Join the new chat room
+                    socket.emit('chat-room', response.data.id);
+                    
+                    // Navigate to the new conversation
+                    router.push(`/(tabs)/chat/${response.data.id}`);
+                } catch (err: any) {
+                    console.error('Error creating new conversation:', err);
+                    
+                    // If conversation already exists (race condition), find and navigate to it
+                    if (err.response?.status === 400 || err.response?.data?.message?.includes('already exists') || err.response?.data?.message?.includes('Conversation already exists')) {
+                        // Re-check for existing conversation
+                        socket.emit("check-existing-conversation", {
+                            userId,
+                            clientId,
+                            subjectId
+                        });
+                        
+                        socket.once("conversation-exists", async (conversation) => {
+                            try {
+                                socket.off("no-conversation-found");
+                                socket.off("conversation-check-error");
+                                socket.emit('chat-room', conversation.id);
+                                router.push(`/(tabs)/chat/${conversation.id}`);
+                            } finally {
+                                setIsInitializingChat(false);
+                            }
+                        });
+
+                        socket.once("no-conversation-found", () => {
+                            socket.off("conversation-exists");
+                            socket.off("conversation-check-error");
+                            alert('Failed to create new chat. Please try again.');
+                            setIsInitializingChat(false);
+                        });
+                    } else {
+                        alert('Failed to create new chat. Please try again.');
+                        setIsInitializingChat(false);
+                    }
+                }
             } catch (err) {
-                console.error('Error creating new conversation:', err);
-                alert('Failed to create new chat. Please try again.');
+                console.error('Error in no-conversation-found handler:', err);
+                setIsInitializingChat(false);
             }
         });
 
         socket.once("conversation-check-error", (error) => {
-            // Remove other listeners
-            socket.off("conversation-exists");
-            socket.off("no-conversation-found");
-            
-            console.error('Error checking for conversation:', error);
-            alert('Failed to check for existing chat. Please try again.');
+            try {
+                // Remove other listeners
+                socket.off("conversation-exists");
+                socket.off("no-conversation-found");
+                
+                console.error('Error checking for conversation:', error);
+                alert('Failed to check for existing chat. Please try again.');
+            } finally {
+                setIsInitializingChat(false);
+            }
         });
 
     } catch (err) {
         console.error('Error in chat initialization:', err);
         alert('Failed to start chat. Please try again.');
+        setIsInitializingChat(false);
     }
   };
 
@@ -313,18 +373,24 @@ const SubjectPage = ({ subjectId }) => {
       try {
         const token = await AsyncStorage.getItem("authToken");
         const userDetails = await AsyncStorage.getItem('userDetails');
-        setIsTeacher(JSON.parse(userDetails).isTeacher);
+        if (userDetails) {
+          const parsedDetails = JSON.parse(userDetails);
+          setIsUserType(parsedDetails.userType);
+        }
         setUserToken(token);
         const resp = await axiosWithAuth.get(`${ipURL}/api/subjects/${subjectId}`);
-        setTeacherId(resp.data.user.id);
+        if (resp.data?.user?.id) {
+          setTeacherId(resp.data.user.id);
+        }
         setSingleSubjectData(resp.data);
         console.log(resp.data,'resp.data in subject page');
 
         const purchaseStatus = await axiosWithAuth.get(`${ipURL}/api/auth/metadata/verify-purchase/${subjectId}`);
-        setPurchaseStatus(purchaseStatus.data.hasPurchased);
+        setPurchaseStatus(purchaseStatus.data?.hasPurchased || false);
         setIsPageLoading(false);
       } catch (error) {
         console.error("Error fetching subject data:", error);
+        setIsPageLoading(false);
       }
     };
 
@@ -338,9 +404,12 @@ const SubjectPage = ({ subjectId }) => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        setReviews(response.data);
+        // Ensure reviews have the expected structure with user object
+        const reviewsData = Array.isArray(response.data) ? response.data : [];
+        setReviews(reviewsData);
       } catch (error) {
         console.error("Error fetching reviews:", error);
+        setReviews([]);
       }
       setIsLoadingReviews(false);
     };
@@ -351,10 +420,14 @@ const SubjectPage = ({ subjectId }) => {
         const response = await axios.get(`${ipURL}/api/subjects/saved`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        const savedSubjects = response.data;
-        setIsSaved(savedSubjects.some((subject: any) => subject.subjectId === subjectId));
+        const savedSubjects = Array.isArray(response.data) ? response.data : [];
+        // Check if subjectId matches either subjectId field or subject.id
+        setIsSaved(savedSubjects.some((saved: any) => 
+          saved.subjectId === subjectId || saved.subject?.id === subjectId
+        ));
       } catch (error) {
         console.error("Error checking saved status:", error);
+        setIsSaved(false);
       }
     };
 
@@ -494,7 +567,10 @@ const SubjectPage = ({ subjectId }) => {
         }
       );
       
-      setReviews(prevReviews => [response.data, ...prevReviews]);
+      // Ensure response.data has the expected structure with user object
+      if (response.data) {
+        setReviews(prevReviews => [response.data, ...prevReviews]);
+      }
     } catch (error) {
       console.error("Error submitting review:", error);
       alert('Failed to submit review. Please try again.');
@@ -508,9 +584,9 @@ const SubjectPage = ({ subjectId }) => {
 
   const ReviewItem = ({ review }) => {
     const [voteState, setVoteState] = useState({
-      upvotes: review.upvotes,
-      downvotes: review.downvotes,
-      userVote: review.userVote
+      upvotes: review?.upvotes || 0,
+      downvotes: review?.downvotes || 0,
+      userVote: review?.userVote || null
     });
 
     const handleVote = async (voteType: 'up' | 'down') => {
@@ -533,25 +609,30 @@ const SubjectPage = ({ subjectId }) => {
       }
     };
 
+    // Safety check for review data
+    if (!review || !review.user) {
+      return null;
+    }
+
     return (
       <View style={styles.reviewItem}>
         <View style={styles.reviewHeader}>
           <Image
-            source={{ uri: review.user.profileImage }}
+            source={{ uri: review.user?.profileImage || '' }}
             style={styles.reviewerImage}
             placeholder={blurhash}
             contentFit='fill'
             transition={100}
           />
           <View style={styles.reviewerInfo}>
-            <Text style={styles.reviewerName}>{review.user.name}</Text>
+            <Text style={styles.reviewerName}>{review.user?.name || 'Anonymous'}</Text>
             <Text style={styles.reviewDate}>
-              {new Date(review.createdAt).toLocaleDateString()}
+              {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : ''}
             </Text>
           </View>
         </View>
-        <Text style={styles.reviewTitle}>{review.title}</Text>
-        <Text style={styles.reviewDescription}>{review.description}</Text>
+        <Text style={styles.reviewTitle}>{review.title || ''}</Text>
+        <Text style={styles.reviewDescription}>{review.description || ''}</Text>
         
         <View style={styles.voteContainer}>
           <TouchableOpacity 
@@ -646,7 +727,7 @@ const SubjectPage = ({ subjectId }) => {
                 Premium Course
               </Text>
             </View>
-            <TouchableOpacity 
+              <TouchableOpacity 
               style={[styles.saveButton, isSaved && styles.savedButton]} 
               onPress={handleSaveSubject}
               disabled={isSaving}
@@ -689,23 +770,27 @@ const SubjectPage = ({ subjectId }) => {
           </View>
 
           {/* Teacher Info */}
-          <TouchableOpacity  
-            style={styles.teacherCard}
-            onPress={() => router.push(`/(tabs)/home/singleProfile/${teacherId}`)}
-          >
-            <Image
-              source={{ uri: singleSubjectData?.user?.profileImage }}
-              style={styles.teacherImage}
-              placeholder={blurhash}
-              contentFit="cover"
-              transition={100}
-            />
-            <View style={styles.teacherInfo}>
-              <Text style={styles.teacherName}>{singleSubjectData.user?.name}</Text>  
-              <Text style={styles.teacherRole}>{singleSubjectData.user?.isTeacher ? "Instructor" : "Student"}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color="#1A4C6E" />
-          </TouchableOpacity>
+          {singleSubjectData?.user && teacherId && (
+            <TouchableOpacity  
+              style={styles.teacherCard}
+              onPress={() => router.push(`/(tabs)/home/singleProfile/${teacherId}`)}
+            >
+              <Image
+                source={{ uri: singleSubjectData.user?.profileImage || '' }}
+                style={styles.teacherImage}
+                placeholder={blurhash}
+                contentFit="cover"
+                transition={100}
+              />
+              <View style={styles.teacherInfo}>
+                <Text style={styles.teacherName}>{singleSubjectData.user?.name || 'Teacher'}</Text>  
+                <Text style={styles.teacherRole}>
+                  {singleSubjectData.user?.userType}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={24} color="#1A4C6E" />
+            </TouchableOpacity>
+          )}
 
           {/* Quick Info Cards */}
           <View style={styles.quickInfoContainer}>
@@ -775,29 +860,36 @@ const SubjectPage = ({ subjectId }) => {
         <TouchableOpacity 
           style={[
             styles.primaryButton,
-            isTeacher && styles.disabledButton
+            isUserType === 'TEACHER' && styles.disabledButton
           ]} 
           onPress={() => {
             handleButtonPress();
             handleEnrollPress();
           }}
-          disabled={isTeacher}
+          disabled={isUserType === 'TEACHER'}
         >
           <Ionicons name="cart" size={24} color="white" />
           <Text style={styles.primaryButtonText}>
-            {isTeacher ? "Please login as student to purchase" : "Enroll Now"}
+            {isUserType === 'TEACHER' ? "Please login as student to purchase" : "Enroll Now"}
           </Text>
-          {!isTeacher && <Text style={styles.priceText}>AED {(singleSubjectData.subjectPrice) / 100}</Text>}
+          {isUserType !== 'TEACHER' && <Text style={styles.priceText}>AED {(singleSubjectData.subjectPrice) / 100}</Text>}
         </TouchableOpacity>
         <TouchableOpacity 
-          style={styles.secondaryButton} 
+          style={[styles.secondaryButton, isInitializingChat && styles.disabledButton]} 
           onPress={() => {
             handleButtonPress();
             handleChatNow();
           }}
+          disabled={isInitializingChat}
         >
-          <Ionicons name="chatbubbles-outline" size={24} color="#FFFFFF" />
-          <Text style={styles.secondaryButtonText}>Chat</Text>
+          {isInitializingChat ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Ionicons name="chatbubbles-outline" size={24} color="#FFFFFF" />
+          )}
+          <Text style={styles.secondaryButtonText}>
+            {isInitializingChat ? 'Connecting...' : 'Chat'}
+          </Text>
         </TouchableOpacity>
       </Animated.View>
 

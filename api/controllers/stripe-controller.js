@@ -159,11 +159,13 @@ export const stripeWebhook = async (req, res, next) => {
                     if (isFirstPurchase) {
                         const teacher = await prisma.user.findUnique({
                             where: { id: chargeSucceeded.metadata.teacherId },
-                            select: { 
-                                id: true, 
-                                email: true, 
-                                name: true, 
-                                zoomAccountCreated: true 
+                            include: {
+                                teacherProfile: {
+                                    select: {
+                                        id: true,
+                                        zoomAccountCreated: true
+                                    }
+                                }
                             }
                         });
 
@@ -324,6 +326,36 @@ export const stripeWebhook = async (req, res, next) => {
                         // }
                     }
 
+                    // Get TeacherProfile.id and StudentProfile.id from User.id
+                    const teacherUser = await prisma.user.findUnique({
+                        where: { id: chargeSucceeded.metadata.teacherId },
+                        include: {
+                            teacherProfile: {
+                                select: { id: true }
+                            }
+                        }
+                    });
+
+                    const studentUser = await prisma.user.findUnique({
+                        where: { id: chargeSucceeded.metadata.userId },
+                        include: {
+                            studentProfile: {
+                                select: { id: true }
+                            }
+                        }
+                    });
+
+                    if (!teacherUser || !teacherUser.teacherProfile) {
+                        throw new Error('Teacher profile not found');
+                    }
+
+                    if (!studentUser || !studentUser.studentProfile) {
+                        throw new Error('Student profile not found');
+                    }
+
+                    const teacherProfileId = teacherUser.teacherProfile.id;
+                    const studentProfileId = studentUser.studentProfile.id;
+
                     // create meeting for teacher
                     const meeting = await createZoomMeeting(chargeSucceeded.metadata.teacherEmail, chargeSucceeded.metadata.subjectName, new Date(chargeSucceeded.metadata.date), parseInt(chargeSucceeded.metadata.subjectDuration) * 60);
                     
@@ -333,8 +365,8 @@ export const stripeWebhook = async (req, res, next) => {
                     const createBooking = await tx.booking.create({
                         data: {
                             subjectId: chargeSucceeded.metadata.subjectId,
-                            teacherId: chargeSucceeded.metadata.teacherId,
-                            studentId: chargeSucceeded.metadata.userId,
+                            teacherId: teacherProfileId,
+                            studentId: studentProfileId,
                             bookingDate: new Date(chargeSucceeded.metadata.date),
                             bookingTime: chargeSucceeded.metadata.time,
                             bookingStatus: BookingStatus.CONFIRMED,
@@ -351,7 +383,7 @@ export const stripeWebhook = async (req, res, next) => {
                     // Create stripe purchase with booking reference
                     const saveTransaction = await tx.stripePurchases.create({
                         data: {
-                            userId: chargeSucceeded.metadata.userId,
+                            studentId: studentProfileId,
                             subjectId: chargeSucceeded.metadata.subjectId,
                             purchaseStatus: BookingStatus.CONFIRMED,
                             purchaseAmount: chargeSucceeded.amount,
@@ -362,15 +394,13 @@ export const stripeWebhook = async (req, res, next) => {
                         }
                     });
 
-                    const saveSubject = await tx.userSubject
-
                     return { saveTransaction, createBooking };
                 });
 
                 const checkUserSubject = await prisma.userSubject.findUnique({
                     where: {
-                       userId_subjectId: {
-                        userId: chargeSucceeded.metadata.userId,
+                       studentId_subjectId: {
+                        studentId: studentProfileId,
                         subjectId: chargeSucceeded.metadata.subjectId
                        }
                     }
@@ -378,7 +408,7 @@ export const stripeWebhook = async (req, res, next) => {
                 if(!checkUserSubject){
                     await prisma.userSubject.create({
                         data: {
-                            userId: chargeSucceeded.metadata.userId,
+                            studentId: studentProfileId,
                             subjectId: chargeSucceeded.metadata.subjectId
                         }
                     })

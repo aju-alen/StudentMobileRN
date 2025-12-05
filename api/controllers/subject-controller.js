@@ -388,6 +388,7 @@ export const getOneSubject = async (req, res, next) => {
                                 name: true,
                                 email: true,
                                 profileImage: true,
+                                userType: true,
                             },
                         },
                     },
@@ -407,7 +408,7 @@ export const getOneSubject = async (req, res, next) => {
                 name: subject.teacherProfile?.user?.name,
                 email: subject.teacherProfile?.user?.email,
                 profileImage: subject.teacherProfile?.user?.profileImage,
-                isTeacher: req.isTeacher || req.userType === 'TEACHER',
+                userType: subject.teacherProfile?.user?.userType,
             },
         };
 

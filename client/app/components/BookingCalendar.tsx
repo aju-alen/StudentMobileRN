@@ -117,7 +117,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, subjectId,
       Alert.alert('Success', 'Session booked successfully!');
       setShowSummary(false);
       onClose();
-      router.push('/home');
+      router.replace('/(tabs)/home');
     } catch (error) {
       console.error('Error booking session:', error);
       Alert.alert('Error', 'Failed to book session');

@@ -50,17 +50,27 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
       try {
         const token = await AsyncStorage.getItem('authToken');
         
-        // Fetch subject details
+        // Fetch subject details (which includes teacher info)
         const subjectResponse = await axios.get(`${ipURL}/api/subjects/${subjectId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setSubjectData(subjectResponse.data);
 
-        // Fetch teacher details
-        const teacherResponse = await axios.get(`${ipURL}/api/auth/teacher/profile/${teacherId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setTeacherData(teacherResponse.data);
+        // Extract teacher data from subject response
+        if (subjectResponse.data.user) {
+          setTeacherData({
+            id: subjectResponse.data.user.id,
+            name: subjectResponse.data.user.name,
+            email: subjectResponse.data.user.email,
+            profileImage: subjectResponse.data.user.profileImage,
+          });
+        } else {
+          // Fallback: Fetch teacher details if not in subject response
+          const teacherResponse = await axios.get(`${ipURL}/api/auth/teacher/profile/${teacherId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setTeacherData(teacherResponse.data);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -120,7 +130,7 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
           defaultBillingDetails: {
             name: 'Jane Doe',
           },
-          returnURL: 'coachacadem://home',
+          returnURL: 'coachacadem://booking-success',
         });
 
         if (error) {
