@@ -5,26 +5,53 @@ const prisma = new PrismaClient();
 export const createReview = async (req, res, next) => {
   try {
     const { title, description, subjectId } = req.body;
-    const userId = req.userId; // Assuming user ID is available from auth middleware
+    const userId = req.userId;
+
+    // Get StudentProfile.id from User.id
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        studentProfile: {
+          select: { id: true }
+        }
+      }
+    });
+
+    if (!user || !user.studentProfile) {
+      return res.status(400).json({ message: "Student profile not found" });
+    }
 
     const review = await prisma.review.create({
       data: {
         title,
         description,
-        userId,
+        studentId: user.studentProfile.id,
         subjectId,
       },
       include: {
-        user: {
-          select: {
-            name: true,
-            profileImage: true,
+        student: {
+          include: {
+            user: {
+              select: {
+                name: true,
+                profileImage: true,
+              },
+            },
           },
         },
       },
     });
 
-    res.status(201).json(review);
+    // Transform response to match expected format
+    const response = {
+      ...review,
+      user: {
+        name: review.student.user.name,
+        profileImage: review.student.user.profileImage,
+      },
+    };
+
+    res.status(201).json(response);
   } catch (error) {
     console.error('Error creating review:', error);
     next(error);
@@ -34,25 +61,68 @@ export const createReview = async (req, res, next) => {
 export const getSubjectReviews = async (req, res, next) => {
   try {
     const { subjectId } = req.params;
+    const userId = req.userId;
+
+    // Get user's StudentProfile if logged in
+    let studentProfileId = null;
+    if (userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          studentProfile: {
+            select: { id: true }
+          }
+        }
+      });
+      studentProfileId = user?.studentProfile?.id;
+    }
 
     const reviews = await prisma.review.findMany({
       where: {
         subjectId,
       },
       include: {
-        user: {
-          select: {
-            name: true,
-            profileImage: true,
+        student: {
+          include: {
+            user: {
+              select: {
+                name: true,
+                profileImage: true,
+              },
+            },
           },
         },
+        votes: studentProfileId ? {
+          where: {
+            studentId: studentProfileId
+          },
+          select: {
+            voteType: true
+          }
+        } : false,
       },
       orderBy: {
         createdAt: 'desc',
       },
     });
 
-    res.status(200).json(reviews);
+    // Transform response to match expected format and add userVote
+    const transformedReviews = reviews.map(review => {
+      const userVote = review.votes && review.votes.length > 0 
+        ? review.votes[0].voteType 
+        : null;
+      
+      return {
+        ...review,
+        user: {
+          name: review.student.user.name,
+          profileImage: review.student.user.profileImage,
+        },
+        userVote: userVote,
+      };
+    });
+
+    res.status(200).json(transformedReviews);
   } catch (error) {
     console.error('Error fetching reviews:', error);
     next(error);
@@ -64,6 +134,22 @@ export const voteReview = async (req, res, next) => {
     const { reviewId } = req.params;
     const { voteType } = req.body;
     const userId = req.userId;
+
+    // Get StudentProfile.id from User.id
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        studentProfile: {
+          select: { id: true }
+        }
+      }
+    });
+
+    if (!user || !user.studentProfile) {
+      return res.status(400).json({ message: "Student profile not found" });
+    }
+
+    const studentId = user.studentProfile.id;
 
     // Find the review
     const review = await prisma.review.findUnique({
@@ -77,8 +163,8 @@ export const voteReview = async (req, res, next) => {
     // Check if user has already voted
     const existingVote = await prisma.reviewVote.findUnique({
       where: {
-        userId_reviewId: {
-          userId,
+        studentId_reviewId: {
+          studentId,
           reviewId,
         },
       },
@@ -92,8 +178,8 @@ export const voteReview = async (req, res, next) => {
       if (existingVote.voteType === voteType) {
         await prisma.reviewVote.delete({
           where: {
-            userId_reviewId: {
-              userId,
+            studentId_reviewId: {
+              studentId,
               reviewId,
             },
           },
@@ -111,8 +197,8 @@ export const voteReview = async (req, res, next) => {
         // If user is changing their vote
         await prisma.reviewVote.update({
           where: {
-            userId_reviewId: {
-              userId,
+            studentId_reviewId: {
+              studentId,
               reviewId,
             },
           },
@@ -132,7 +218,7 @@ export const voteReview = async (req, res, next) => {
       // Create new vote
       await prisma.reviewVote.create({
         data: {
-          userId,
+          studentId,
           reviewId,
           voteType,
         },
