@@ -42,8 +42,8 @@ interface UserProfile {
 
 interface Conversation {
   messages?: Message[];
-  userId?: UserProfile;
-  clientId?: UserProfile;
+  user?: UserProfile;
+  client?: UserProfile;
 }
 
 const blurhash = '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
@@ -86,7 +86,12 @@ const ConversationId = () => {
   }, [message, user, conversationId]);
 
   const handleLeaveRoom = useCallback(() => {
-    socket.emit("leave-room", { allMessages, conversationId });
+    if (conversationId && allMessages?.messages) {
+      socket.emit("leave-room", { 
+        allMessages: { messages: allMessages.messages },
+        conversationId: conversationId as string
+      });
+    }
     router.replace('/(tabs)/chat');
   }, [allMessages, conversationId]);
 
@@ -119,13 +124,16 @@ const ConversationId = () => {
 
     fetchConversation();
 
+    // Join the chat room when component mounts
+    if (conversationId) {
+      socket.emit("chat-room", conversationId);
+    }
+
     socket.on("server-message", (message) => {
+      // Use the messageId from server, don't generate a new one
       setAllMessages(prev => ({ 
         ...prev, 
-        messages: [...(prev.messages || []), { 
-          ...message,
-          messageId: uuidv4() 
-        }]
+        messages: [...(prev.messages || []), message]
       }));
       
       setTimeout(() => {
@@ -135,8 +143,9 @@ const ConversationId = () => {
 
     return () => {
       socket.off("server-message");
+      // Note: Leave room cleanup is handled in handleLeaveRoom when user navigates away
     };
-  }, []);
+  }, [conversationId]);
 
   const formatMessageText = useCallback((text: string) => {
     if (!text) return null;
@@ -201,9 +210,9 @@ const ConversationId = () => {
           headerTitle: () => (
             <View style={styles.headerTitle}>
               <Text style={styles.headerName}>
-                {user === allMessages.userId?.id 
-                  ? allMessages.clientId?.name 
-                  : allMessages.userId?.name}
+                {user === allMessages.user?.id 
+                  ? allMessages.client?.name 
+                  : allMessages.user?.name}
               </Text>
               <Text style={styles.headerStatus}>Online</Text>
             </View>
@@ -212,7 +221,7 @@ const ConversationId = () => {
             <View style={styles.headerAvatarContainer}>
               <Image 
                 source={{ 
-                  uri: user === allMessages.userId
+                  uri: user === allMessages.user?.id
                     ? allMessages.client?.profileImage 
                     : allMessages.user?.profileImage 
                 }}

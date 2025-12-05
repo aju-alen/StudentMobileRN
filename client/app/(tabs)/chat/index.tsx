@@ -84,8 +84,8 @@ const ChatPage = () => {
     router.push(`/(tabs)/chat/${id}`);
   };
 
-  const handleLongPress = (clientId, userId) => {
-    const profileId = user === userId.id ? clientId.id : userId.id;
+  const handleLongPress = (client, userObj) => {
+    const profileId = user === userObj?.id ? client?.id : userObj?.id;
     router.push(`/(tabs)/chat/singleProfile/${profileId}`);
   };
 
@@ -94,15 +94,15 @@ const ChatPage = () => {
   
 
   const ChatItem = ({ item }) => {
-    const isCurrentUser = user === item.userId;
-    const displayName = isCurrentUser ? item.client.name : item.user.name;
-    const profileImage = isCurrentUser ? item.client.profileImage : item.user.profileImage;
+    const isCurrentUser = user === item.user?.id;
+    const displayName = isCurrentUser ? item.client?.name : item.user?.name;
+    const profileImage = isCurrentUser ? item.client?.profileImage : item.user?.profileImage;
     const lastMessage = item.messages[item.messages.length - 1]?.text;
 
     return (
       <TouchableOpacity 
         onPress={() => handlePress(item.id)} 
-        onLongPress={() => handleLongPress(item.clientId, item.userId)}
+        onLongPress={() => handleLongPress(item.client, item.user)}
         style={styles.chatCard}
         activeOpacity={0.7}
       >

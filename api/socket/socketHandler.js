@@ -26,18 +26,51 @@ export const initializeSocket = (server) => {
             try {
                 console.log('Received the chat details on the client side', data);
         
+                // Get StudentProfile.id from userId (student)
+                const studentUser = await prisma.user.findUnique({
+                    where: { id: data.userId },
+                    include: {
+                        studentProfile: {
+                            select: { id: true }
+                        }
+                    }
+                });
+
+                if (!studentUser || !studentUser.studentProfile) {
+                    socket.emit("chat-details-error", { error: "Student profile not found" });
+                    return;
+                }
+
+                // Get TeacherProfile.id from clientId (teacher)
+                const teacherUser = await prisma.user.findUnique({
+                    where: { id: data.clientId },
+                    include: {
+                        teacherProfile: {
+                            select: { id: true }
+                        }
+                    }
+                });
+
+                if (!teacherUser || !teacherUser.teacherProfile) {
+                    socket.emit("chat-details-error", { error: "Teacher profile not found" });
+                    return;
+                }
+
+                const studentProfileId = studentUser.studentProfile.id;
+                const teacherProfileId = teacherUser.teacherProfile.id;
+        
                 // Check for an existing chat room
                 const existingChatRoom = await prisma.conversation.findFirst({
                     where: {
                         OR: [
                             {
-                                userId: data.userId,
-                                clientId: data.clientId,
+                                studentId: studentProfileId,
+                                teacherId: teacherProfileId,
                                 subjectId: data.subjectId,
                             },
                             {
-                                userId: data.clientId,
-                                clientId: data.userId,
+                                studentId: teacherProfileId,
+                                teacherId: studentProfileId,
                                 subjectId: data.subjectId,
                             },
                         ],
@@ -52,8 +85,8 @@ export const initializeSocket = (server) => {
                     // Create a new chat room
                     const newChatRoom = await prisma.conversation.create({
                         data: {
-                            userId: data.userId,
-                            clientId: data.clientId,
+                            studentId: studentProfileId,
+                            teacherId: teacherProfileId,
                             subjectId: data.subjectId,
                         },
                     });
@@ -64,6 +97,7 @@ export const initializeSocket = (server) => {
                 }
             } catch (err) {
                 console.error('Error handling chat details:', err);
+                socket.emit("chat-details-error", { error: err.message });
             }
         });
 
@@ -73,14 +107,107 @@ export const initializeSocket = (server) => {
             socket.to(data).emit('server-joining-message', 'Welcome to the chat room');
         });
 
-        socket.on("send-single-message-to-server", (data) => {
-            console.log(data, 'this is message seen in server after hitting send');
-            socket.to(data.conversationId).emit('server-message', data);
+        socket.on("send-single-message-to-server", async (data) => {
+            try {
+                console.log(data, 'this is message seen in server after hitting send');
+                
+                // Get user type to determine senderType
+                const senderUser = await prisma.user.findUnique({
+                    where: { id: data.senderId },
+                    select: { userType: true }
+                });
+
+                if (!senderUser) {
+                    console.error(`User not found: ${data.senderId}`);
+                    // Still broadcast even if user not found
+                    socket.to(data.conversationId).emit('server-message', data);
+                    return;
+                }
+
+                const senderType = senderUser.userType === 'TEACHER' ? 'TEACHER' : 'STUDENT';
+
+                // Save message immediately to database
+                try {
+                    await prisma.conversationMessage.create({
+                        data: {
+                            text: data.text,
+                            senderId: data.senderId,
+                            senderType: senderType,
+                            messageId: data.messageId,
+                            conversationId: data.conversationId,
+                        },
+                    });
+                } catch (saveError) {
+                    // If message already exists (duplicate messageId), skip
+                    if (saveError.code === 'P2002') {
+                        console.log('Message already exists, skipping save');
+                    } else {
+                        console.error('Error saving message:', saveError);
+                    }
+                }
+
+                // Broadcast message to other users in the room
+                socket.to(data.conversationId).emit('server-message', data);
+            } catch (err) {
+                console.error('Error in send-single-message-to-server:', err);
+                // Still broadcast even if save fails
+                socket.to(data.conversationId).emit('server-message', data);
+            }
         });
 
-        socket.on("send-single-message-to-Community-server", (data) => {
-            console.log(data, 'this is message seen in server after hitting send');
-            socket.to(data.chatName).emit('server-message', data);
+        socket.on("send-single-message-to-Community-server", async (data) => {
+            try {
+                console.log(data, 'this is message seen in server after hitting send');
+                
+                // Get user with teacher profile - only teachers can send messages
+                const senderUser = await prisma.user.findUnique({
+                    where: { id: data.senderId },
+                    include: {
+                        teacherProfile: {
+                            select: { id: true }
+                        }
+                    }
+                });
+
+                if (!senderUser || !senderUser.teacherProfile) {
+                    console.error(`Teacher profile not found for senderId: ${data.senderId}. Only teachers can send messages.`);
+                    // Emit error to sender only
+                    socket.emit('community-message-error', { 
+                        message: 'Only teachers can send messages in communities' 
+                    });
+                    return;
+                }
+
+                const teacherProfileId = senderUser.teacherProfile.id;
+
+                // Save message immediately to database
+                try {
+                    await prisma.communityMessage.create({
+                        data: {
+                            text: data.text,
+                            messageId: data.messageId,
+                            teacherId: teacherProfileId,
+                            communityId: data.chatName,
+                        },
+                    });
+                } catch (saveError) {
+                    // If message already exists (duplicate messageId), skip
+                    if (saveError.code === 'P2002') {
+                        console.log('Message already exists, skipping save');
+                    } else {
+                        console.error('Error saving community message:', saveError);
+                    }
+                }
+
+                // Broadcast message to other users in the room
+                socket.to(data.chatName).emit('server-message', data);
+            } catch (err) {
+                console.error('Error in send-single-message-to-Community-server:', err);
+                // Emit error to sender only
+                socket.emit('community-message-error', { 
+                    message: 'Failed to send message. Please try again.' 
+                });
+            }
         });
 
         socket.on('leave-room', async (data) => {
@@ -90,61 +217,110 @@ export const initializeSocket = (server) => {
             socket.leave(data.conversationId);
         
             try {
-                // Fetch the conversation from the database using Prisma
-                const conversation = await prisma.conversation.findUnique({
-                    where: {
-                        id: data.conversationId,
-                    },
-                    include: {
-                        messages: true, // Include all related messages
-                    },
-                });
-        
-                if (!conversation) {
-                    console.error(`Conversation with ID ${data.conversationId} not found.`);
+                // Validate input
+                if (!data.allMessages?.messages || !Array.isArray(data.allMessages.messages) || data.allMessages.messages.length === 0) {
+                    return; // No messages to save
+                }
+
+                // Filter valid messages
+                const validMessages = data.allMessages.messages.filter(
+                    msg => msg.senderId && msg.messageId && msg.text
+                );
+
+                if (validMessages.length === 0) {
                     return;
                 }
-        
-                console.log(conversation, 'this is Prisma conversation object');
-                console.log(conversation.messages, 'this is Prisma conversation messages');
-                console.log(data, 'this is client object data');
-                console.log(data.allMessages.messages, 'this is message from client');
-        
-                // Update messages if provided by the client
-                if (data.allMessages.messages !== undefined) {
-                    for (const msg of data.allMessages.messages) {
-                        // Check if message ID exists or handle it as a new message
-                        if (msg.id) {
-                            // Update or create message
-                            await prisma.conversationMessage.upsert({
-                                where: {
-                                    id: msg.id, // Unique identifier for existing messages
-                                },
-                                update: {
-                                    text: msg.text,
-                                    senderId: msg.senderId,
-                                    messageId: msg.messageId,
-                                },
-                                create: {
-                                    text: msg.text,
-                                    senderId: msg.senderId,
-                                    messageId: msg.messageId,
-                                    conversationId: data.conversationId,
-                                },
-                            });
-                        } else {
-                            // Create a new message if no ID is provided
-                            await prisma.conversationMessage.create({
-                                data: {
-                                    text: msg.text,
-                                    senderId: msg.senderId,
-                                    messageId: msg.messageId,
-                                    conversationId: data.conversationId,
-                                },
-                            });
-                        }
+
+                // Get all unique senderIds
+                const uniqueSenderIds = [...new Set(validMessages.map(msg => msg.senderId))];
+                
+                // Batch fetch all user types in one query
+                const users = await prisma.user.findMany({
+                    where: { id: { in: uniqueSenderIds } },
+                    select: { id: true, userType: true }
+                });
+
+                // Create a map for O(1) lookup
+                const userTypeMap = new Map(
+                    users.map(u => [u.id, u.userType === 'TEACHER' ? 'TEACHER' : 'STUDENT'])
+                );
+
+                // Get all existing messageIds in one query
+                const existingMessageIds = await prisma.conversationMessage.findMany({
+                    where: {
+                        messageId: { in: validMessages.map(msg => msg.messageId) },
+                        conversationId: data.conversationId,
+                    },
+                    select: { messageId: true, id: true }
+                });
+
+                const existingMessageIdSet = new Set(existingMessageIds.map(m => m.messageId));
+                const existingMessageIdMap = new Map(
+                    existingMessageIds.map(m => [m.messageId, m.id])
+                );
+
+                // Separate new and existing messages
+                const newMessages = [];
+                const updateMessages = [];
+
+                for (const msg of validMessages) {
+                    const senderType = userTypeMap.get(msg.senderId);
+                    
+                    if (!senderType) {
+                        console.warn(`User type not found for senderId: ${msg.senderId}`);
+                        continue;
+                    }
+
+                    if (existingMessageIdSet.has(msg.messageId)) {
+                        // Message exists, prepare for update
+                        updateMessages.push({
+                            id: existingMessageIdMap.get(msg.messageId),
+                            text: msg.text,
+                            senderId: msg.senderId,
+                            senderType: senderType,
+                            messageId: msg.messageId,
+                        });
+                    } else {
+                        // New message, prepare for create
+                        newMessages.push({
+                            text: msg.text,
+                            senderId: msg.senderId,
+                            senderType: senderType,
+                            messageId: msg.messageId,
+                            conversationId: data.conversationId,
+                        });
                     }
                 }
+
+                // Use transaction for atomicity
+                await prisma.$transaction(async (tx) => {
+                    // Bulk create new messages
+                    if (newMessages.length > 0) {
+                        await tx.conversationMessage.createMany({
+                            data: newMessages,
+                            skipDuplicates: true, // Skip if messageId already exists
+                        });
+                    }
+
+                    // Bulk update existing messages
+                    if (updateMessages.length > 0) {
+                        await Promise.all(
+                            updateMessages.map(msg =>
+                                tx.conversationMessage.update({
+                                    where: { id: msg.id },
+                                    data: {
+                                        text: msg.text,
+                                        senderId: msg.senderId,
+                                        senderType: msg.senderType,
+                                        messageId: msg.messageId,
+                                    },
+                                })
+                            )
+                        );
+                    }
+                });
+
+                console.log(`Saved ${newMessages.length} new messages and updated ${updateMessages.length} existing messages`);
             } catch (err) {
                 console.error('Error handling leave-room event:', err);
             }
@@ -157,40 +333,94 @@ export const initializeSocket = (server) => {
                 // Leave the chat room
                 socket.leave(data.chatName);
         
-                // Find the community by ID (chatName represents communityId here)
-                let community = await prisma.community.findUnique({
-                    where: { id: data.chatName },
+                // Validate input
+                if (!data.allMessages?.messages || !Array.isArray(data.allMessages.messages) || data.allMessages.messages.length === 0) {
+                    return; // No messages to save
+                }
+
+                // Filter valid messages - handle both direct senderId and senderId.userId
+                // Only save messages from teachers
+                const validMessages = data.allMessages.messages.filter(
+                    msg => {
+                        const senderId = msg.senderId?.userId || msg.senderId;
+                        return senderId && msg.messageId && msg.text;
+                    }
+                );
+
+                if (validMessages.length === 0) {
+                    return;
+                }
+
+                // Get all unique sender User IDs
+                const uniqueSenderUserIds = [...new Set(validMessages.map(msg => {
+                    return msg.senderId?.userId || msg.senderId;
+                }))];
+                
+                // Batch fetch teacher profiles only - only teachers can send messages
+                const users = await prisma.user.findMany({
+                    where: { id: { in: uniqueSenderUserIds } },
                     include: {
-                        messages: true, // Fetch existing messages
-                    },
+                        teacherProfile: {
+                            select: { id: true }
+                        }
+                    }
                 });
-        
-                console.log(community, 'this is the Prisma Community object');
-                console.log(community?.messages, 'this is the Prisma Community messages');
-                console.log(data, 'this is the client object data');
-                console.log(data.allMessages.messages, 'this is messages from client');
-        
-                // If client provided updated messages, update the community messages
-                if (data.allMessages.messages !== undefined) {
-                    // Delete existing messages
-                    await prisma.communityMessage.deleteMany({
-                        where: { communityId: data.chatName },
-                    });
-        
-                    // Create new messages from the client
-                    const newMessages = data.allMessages.messages.map((message) => ({
-                        text: message.text,
-                        messageId: message.messageId,
-                        senderId: message.senderId,
+
+                // Create map for O(1) lookup: User.id -> TeacherProfile.id
+                const teacherProfileMap = new Map();
+                users.forEach(u => {
+                    if (u.teacherProfile) {
+                        teacherProfileMap.set(u.id, u.teacherProfile.id);
+                    }
+                });
+
+                // Get all existing messageIds in one query
+                const existingMessageIds = await prisma.communityMessage.findMany({
+                    where: {
+                        messageId: { in: validMessages.map(msg => msg.messageId) },
                         communityId: data.chatName,
-                    }));
-        
-                    await prisma.communityMessage.createMany({
-                        data: newMessages,
+                    },
+                    select: { messageId: true, id: true }
+                });
+
+                const existingMessageIdSet = new Set(existingMessageIds.map(m => m.messageId));
+
+                // Separate new and existing messages (only from teachers)
+                const newMessages = [];
+
+                for (const msg of validMessages) {
+                    const senderUserId = msg.senderId?.userId || msg.senderId;
+                    const teacherProfileId = teacherProfileMap.get(senderUserId);
+                    
+                    // Skip if not a teacher (only teachers can send messages)
+                    if (!teacherProfileId) {
+                        console.warn(`Teacher profile not found for senderId: ${senderUserId}. Skipping message.`);
+                        continue;
+                    }
+
+                    if (!existingMessageIdSet.has(msg.messageId)) {
+                        // New message, prepare for create
+                        newMessages.push({
+                            text: msg.text,
+                            messageId: msg.messageId,
+                            teacherId: teacherProfileId,
+                            communityId: data.chatName,
+                        });
+                    }
+                    // Existing messages are already saved, skip
+                }
+
+                // Use transaction for atomicity
+                if (newMessages.length > 0) {
+                    await prisma.$transaction(async (tx) => {
+                        await tx.communityMessage.createMany({
+                            data: newMessages,
+                            skipDuplicates: true,
+                        });
                     });
                 }
-        
-                console.log('Community messages updated successfully');
+
+                console.log(`Saved ${newMessages.length} new community messages`);
             } catch (err) {
                 console.error('Error in leave-room-community:', err);
             }
@@ -206,18 +436,51 @@ export const initializeSocket = (server) => {
             try {
                 const { userId, clientId, subjectId } = data;
                 
+                // Get StudentProfile.id from userId (student)
+                const studentUser = await prisma.user.findUnique({
+                    where: { id: userId },
+                    include: {
+                        studentProfile: {
+                            select: { id: true }
+                        }
+                    }
+                });
+
+                if (!studentUser || !studentUser.studentProfile) {
+                    socket.emit("conversation-check-error", { error: "Student profile not found" });
+                    return;
+                }
+
+                // Get TeacherProfile.id from clientId (teacher)
+                const teacherUser = await prisma.user.findUnique({
+                    where: { id: clientId },
+                    include: {
+                        teacherProfile: {
+                            select: { id: true }
+                        }
+                    }
+                });
+
+                if (!teacherUser || !teacherUser.teacherProfile) {
+                    socket.emit("conversation-check-error", { error: "Teacher profile not found" });
+                    return;
+                }
+
+                const studentProfileId = studentUser.studentProfile.id;
+                const teacherProfileId = teacherUser.teacherProfile.id;
+                
                 // Check for an existing conversation
                 const existingConversation = await prisma.conversation.findFirst({
                     where: {
                         OR: [
                             {
-                                userId: userId,
-                                clientId: clientId,
+                                studentId: studentProfileId,
+                                teacherId: teacherProfileId,
                                 subjectId: subjectId,
                             },
                             {
-                                userId: clientId,
-                                clientId: userId,
+                                studentId: teacherProfileId,
+                                teacherId: studentProfileId,
                                 subjectId: subjectId,
                             },
                         ],

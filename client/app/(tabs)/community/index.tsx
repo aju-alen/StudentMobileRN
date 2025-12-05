@@ -98,7 +98,7 @@ const CommunityCard = ({ item, onPress, index }) => {
           />
           <View style={styles.memberBadge}>
             <Ionicons name="people" size={12} color="#FFF" />
-            <Text style={styles.memberCount}>{item.users.length}</Text>
+            <Text style={styles.memberCount}>{item.users?.length || 0}</Text>
           </View>
         </View>
         
@@ -219,14 +219,15 @@ const CommunityPage = () => {
     try {
       setIsLoading(true);
       const storedToken = await AsyncStorage.getItem("authToken");
-      const resp = await axios.get(`${ipURL}/api/community?q=${searchQuery}`, {
+      const searchParam = debouncedSearchQuery ? `?q=${encodeURIComponent(debouncedSearchQuery)}` : '';
+      const resp = await axios.get(`${ipURL}/api/community${searchParam}`, {
         headers: { Authorization: `Bearer ${storedToken}` },
       });
-      setCommunities(resp.data);
+      setCommunities(resp.data || []);
       setToken(storedToken);
-      setIsLoading(false);
     } catch (error) {
       console.error("Error fetching communities:", error);
+      setCommunities([]);
     } finally {
       setIsLoading(false);
       setRefreshing(false);
@@ -239,15 +240,23 @@ const CommunityPage = () => {
 
   const handlePress = async(item) => {
     try {
+      const storedToken = await AsyncStorage.getItem("authToken");
       const resp = await axios.post(
         `${ipURL}/api/community/${item.id}`, 
-        null, 
-        { headers: { Authorization: `Bearer ${token}` }}
+        {}, 
+        { headers: { Authorization: `Bearer ${storedToken || token}` }}
       );
       socket.emit('chat-room', item.id);
       router.push(`/(tabs)/community/${item.id}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error joining community:", error);
+      // If already part of community, still navigate
+      if (error.response?.status === 200 || error.response?.data?.message?.includes('already part')) {
+        socket.emit('chat-room', item.id);
+        router.push(`/(tabs)/community/${item.id}`);
+      } else {
+        alert(error.response?.data?.message || 'Failed to join community. Please try again.');
+      }
     }
   }
 

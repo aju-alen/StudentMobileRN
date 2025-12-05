@@ -9,25 +9,59 @@ export const getAllConversations = async (req, res, next) => {
     try {
         const userId = req.params.userId;
 
-        // Fetch conversations where the user is either userId or clientId
+        // Get user's profile IDs (could be student or teacher)
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                studentProfile: { select: { id: true } },
+                teacherProfile: { select: { id: true } }
+            }
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: "User not found" });
+        }
+
+        const studentProfileId = user.studentProfile?.id;
+        const teacherProfileId = user.teacherProfile?.id;
+
+        // Build OR condition for conversations
+        const orConditions = [];
+        if (studentProfileId) {
+            orConditions.push({ studentId: studentProfileId });
+        }
+        if (teacherProfileId) {
+            orConditions.push({ teacherId: teacherProfileId });
+        }
+
+        if (orConditions.length === 0) {
+            return res.status(200).json([]);
+        }
+
+        // Fetch conversations where the user is either student or teacher
         const conversations = await prisma.conversation.findMany({
             where: {
-                OR: [
-                    { userId: userId },
-                    { clientId: userId },
-                ],
+                OR: orConditions,
             },
             include: {
-                user: {
-                    select: {
-                        name: true,
-                        profileImage: true,
+                student: {
+                    include: {
+                        user: {
+                            select: {
+                                name: true,
+                                profileImage: true,
+                            },
+                        },
                     },
                 },
-                client: {
-                    select: {
-                        name: true,
-                        profileImage: true,
+                teacher: {
+                    include: {
+                        user: {
+                            select: {
+                                name: true,
+                                profileImage: true,
+                            },
+                        },
                     },
                 },
                 subject: {
@@ -48,13 +82,20 @@ export const getAllConversations = async (req, res, next) => {
             },
         });
 
-        if (!conversations || conversations.length === 0) {
-            console.log('No conversations found');
-             res.status(204).json({ message: 'No conversations found' });
-             return;
-            }
+        // Transform response to match expected format
+        const transformedConversations = conversations.map(conv => ({
+            ...conv,
+            user: conv.student.user,
+            client: conv.teacher.user,
+        }));
 
-        return res.status(200).json(conversations);
+        if (!transformedConversations || transformedConversations.length === 0) {
+            console.log('No conversations found');
+            res.status(204).json({ message: 'No conversations found' });
+            return;
+        }
+
+        return res.status(200).json(transformedConversations);
     } catch (err) {
         console.error(err);
         next(err);
@@ -67,19 +108,27 @@ export const getSingleConversation = async (req, res, next) => {
         // Find the conversation by its ID
         const conversation = await prisma.conversation.findUnique({
             where: {
-                id: req.params.conversationId, // Ensure the conversationId exists in the request params
+                id: req.params.conversationId,
             },
             include: {
-                client: {
-                    select: {
-                        name: true,
-                        profileImage: true,
+                student: {
+                    include: {
+                        user: {
+                            select: {
+                                name: true,
+                                profileImage: true,
+                            },
+                        },
                     },
                 },
-                user: {
-                    select: {
-                        name: true,
-                        profileImage: true,
+                teacher: {
+                    include: {
+                        user: {
+                            select: {
+                                name: true,
+                                profileImage: true,
+                            },
+                        },
                     },
                 },
                 messages: {
@@ -100,8 +149,15 @@ export const getSingleConversation = async (req, res, next) => {
             return res.status(400).json({ message: "No conversation found" });
         }
 
+        // Transform response to match expected format
+        const response = {
+            ...conversation,
+            user: conversation.student.user,
+            client: conversation.teacher.user,
+        };
+
         // Return the conversation
-        return res.status(200).json(conversation);
+        return res.status(200).json(response);
     } catch (err) {
         console.log(err);
         next(err);
@@ -110,10 +166,73 @@ export const getSingleConversation = async (req, res, next) => {
 export const createConversation = async (req, res, next) => {
     try {
         const { userId, clientId, subjectId } = req.body;
-        const conversation = await prisma.conversation.create({
-            data: { userId, clientId, subjectId },
+
+        // Get StudentProfile.id from userId (student)
+        const studentUser = await prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                studentProfile: {
+                    select: { id: true }
+                }
+            }
         });
-        res.status(201).json(conversation);
+
+        if (!studentUser || !studentUser.studentProfile) {
+            return res.status(400).json({ message: "Student profile not found" });
+        }
+
+        // Get TeacherProfile.id from clientId (teacher)
+        const teacherUser = await prisma.user.findUnique({
+            where: { id: clientId },
+            include: {
+                teacherProfile: {
+                    select: { id: true }
+                }
+            }
+        });
+
+        if (!teacherUser || !teacherUser.teacherProfile) {
+            return res.status(400).json({ message: "Teacher profile not found" });
+        }
+
+        const conversation = await prisma.conversation.create({
+            data: {
+                studentId: studentUser.studentProfile.id,
+                teacherId: teacherUser.teacherProfile.id,
+                subjectId,
+            },
+            include: {
+                student: {
+                    include: {
+                        user: {
+                            select: {
+                                name: true,
+                                profileImage: true,
+                            },
+                        },
+                    },
+                },
+                teacher: {
+                    include: {
+                        user: {
+                            select: {
+                                name: true,
+                                profileImage: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        // Transform response to match expected format
+        const response = {
+            ...conversation,
+            user: conversation.student.user,
+            client: conversation.teacher.user,
+        };
+
+        res.status(201).json(response);
     } catch (err) {
         console.error(err);
         next(err);

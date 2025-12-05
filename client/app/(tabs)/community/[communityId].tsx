@@ -123,16 +123,26 @@ const CommunityId = () => {
         setIsAdmin(parsedDetails.isAdmin);
         setAllMessages(resp.data);
 
+        // Join the community chat room when component mounts
+        if (chatName) {
+          socket.emit('chat-room', chatName);
+        }
+
         socket.on("server-message", (message) => {
+          // Use the messageId from server, don't generate a new one
           setAllMessages(prev => ({
             ...prev,
-            messages: [...prev.messages, {
+            messages: [...(prev.messages || []), {
               ...message,
-              messageId: uuidv4(),
-              timestamp: new Date()
+              timestamp: message.timestamp || new Date()
             }]
           }));
           scrollViewRef.current?.scrollToEnd({ animated: true });
+        });
+
+        // Handle error when trying to send message (e.g., if student tries to send)
+        socket.on("community-message-error", (error) => {
+          alert(error.message || 'Only teachers can send messages in communities');
         });
       } catch (error) {
         console.error('Error fetching messages:', error);
@@ -144,8 +154,9 @@ const CommunityId = () => {
 
     return () => {
       socket.off("server-message");
+      socket.off("community-message-error");
     };
-  }, []);
+  }, [chatName]);
 
   const formatTime = useCallback((date: Date) => {
     if (!date) return '';
@@ -252,7 +263,7 @@ const CommunityId = () => {
             keyboardVerticalOffset={100}
             style={styles.keyboardAvoidingView}
           >
-            {(isAdmin || isTeacher) ? (
+            {isTeacher ? (
               <View style={styles.inputContainer}>
                 <TextInput
                   style={[styles.input, { height: Math.max(40, inputHeight) }]}
@@ -285,7 +296,7 @@ const CommunityId = () => {
               <View style={styles.restrictedContainer}>
                 <Ionicons name="lock-closed" size={20} color="#7F8C8D" />
                 <Text style={styles.restrictedText}>
-                  Only Teachers & Admins can send messages
+                  Only teachers can send messages in communities
                 </Text>
               </View>
             )}
