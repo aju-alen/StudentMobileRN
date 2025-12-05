@@ -70,7 +70,6 @@ model StudentProfile {
   reviews             Review[]
   sentConversations   Conversation[] @relation("StudentConversations")
   communityMemberships CommunityUser[]
-  communityMessages   CommunityMessage[]
   savedSubjects       SavedSubject[]
   reviewVotes         ReviewVote[]
   blockedTeachers     BlockedTeacher[] @relation("BlockingStudent")
@@ -97,6 +96,8 @@ model TeacherProfile {
   bookings               Booking[]     @relation("TeacherBookings")
   organization           Organization? @relation("OrganizationMembers", fields: [organizationId], references: [id])
   ledOrganization        Organization? @relation("OrganizationLead")
+  communityMemberships   CommunityUser[]
+  communityMessages      CommunityMessage[]
 }
 
 // Admin-specific data
@@ -216,15 +217,22 @@ model Community {
   messages           CommunityMessage[]
 }
 
-// Junction table for many-to-many relationship between StudentProfile and Community
+// Junction table for many-to-many relationship between StudentProfile/TeacherProfile and Community
 model CommunityUser {
   id          String    @id @default(cuid())
   
-  // Relations
-  student     StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  studentId   String
+  // Relations - one of studentId or teacherId must be present
+  student     StudentProfile?   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId   String?
+  teacher     TeacherProfile?   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  teacherId   String?
   community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
   communityId String
+  
+  @@unique([communityId, studentId])
+  @@unique([communityId, teacherId])
+  @@index([studentId])
+  @@index([teacherId])
 }
 
 model CommunityMessage {
@@ -234,11 +242,11 @@ model CommunityMessage {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   
-  // Relations
+  // Relations - only teachers can send messages
   community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
   communityId String
-  student     StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  studentId   String
+  teacher     TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  teacherId   String
 }
 
 model Booking {
