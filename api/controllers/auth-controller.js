@@ -1186,6 +1186,81 @@ export const updateOrganizationTradeLicense = async (req, res, next) => {
   }
 }
 
+// Update organization capacity (team lead only)
+export const updateOrganizationCapacity = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+    const { newCapacity } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    if (!newCapacity) {
+      return res.status(400).json({ message: "New capacity is required" });
+    }
+
+    // Validate capacity is one of the allowed values (13, 18, or 33)
+    const validCapacities = [13, 18, 33];
+    if (!validCapacities.includes(newCapacity)) {
+      return res.status(400).json({ 
+        message: "Invalid capacity. Allowed values are 13, 18, or 33" 
+      });
+    }
+
+    // Get user with teacher profile
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        teacherProfile: {
+          include: {
+            ledOrganization: true
+          }
+        }
+      }
+    });
+
+    if (!user || user.userType !== 'TEACHER') {
+      return res.status(400).json({ message: "User not found or not a teacher" });
+    }
+
+    if (!user.teacherProfile) {
+      return res.status(400).json({ message: "Teacher profile not found" });
+    }
+
+    // Check if user is a team lead
+    if (!user.teacherProfile.isTeamLead) {
+      return res.status(403).json({ message: "Only team leads can update organization capacity" });
+    }
+
+    // Check if user has an organization
+    const organization = user.teacherProfile.ledOrganization;
+    if (!organization) {
+      return res.status(400).json({ message: "User is not a team lead of an organization" });
+    }
+
+    // Update organization capacity
+    const updatedOrganization = await prisma.organization.update({
+      where: { id: organization.id },
+      data: {
+        orgCapacity: newCapacity
+      }
+    });
+
+    res.status(200).json({ 
+      message: "Organization capacity updated successfully", 
+      organization: {
+        id: updatedOrganization.id,
+        orgName: updatedOrganization.orgName,
+        orgCapacity: updatedOrganization.orgCapacity,
+      }
+    });
+  } catch (err) {
+    console.error('Error updating organization capacity:', err);
+    next(err);
+  }
+}
+
 // Helper function to send organization invitation email
 const sendOrganizationInviteEmail = async (teacherEmail, teacherName, orgName, teamLeadName) => {
   const emailHtml = `

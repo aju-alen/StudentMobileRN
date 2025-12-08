@@ -1,5 +1,5 @@
 import express from "express";
-import {  register, verifyEmail,login,singleUser,updateMetadata,getTeacherProfile,changePassword,deleteAccount,updateProfileImage,verifyPurchase,getActiveStudentCourses,updateUserHasSeenOnboarding,registerSuperAdmin,loginSuperAdmin,zoomTest,verificationCheck,updateOrganizationTradeLicense,getOrganizationMembers,inviteTeacherToOrganization,getOrganizationInviteCode,refreshOrganizationInviteCode,joinOrganizationByInvite,removeTeacherFromOrganization } from "../controllers/auth-controller.js";
+import {  register, verifyEmail,login,singleUser,updateMetadata,getTeacherProfile,changePassword,deleteAccount,updateProfileImage,verifyPurchase,getActiveStudentCourses,updateUserHasSeenOnboarding,registerSuperAdmin,loginSuperAdmin,zoomTest,verificationCheck,updateOrganizationTradeLicense,updateOrganizationCapacity,getOrganizationMembers,inviteTeacherToOrganization,getOrganizationInviteCode,refreshOrganizationInviteCode,joinOrganizationByInvite,removeTeacherFromOrganization } from "../controllers/auth-controller.js";
 import { verifyToken } from "../middlewares/jwt.js";
 const router = express.Router()
 
@@ -28,6 +28,7 @@ router.get('/organization/invite-code', verifyToken, getOrganizationInviteCode);
 router.put('/organization/refresh-invite', verifyToken, refreshOrganizationInviteCode);
 router.post('/organization/join', verifyToken, joinOrganizationByInvite);
 router.post('/organization/remove-teacher', verifyToken, removeTeacherFromOrganization);
+router.put('/organization/capacity', verifyToken, updateOrganizationCapacity);
 
 router.post('/zoom-test', verifyToken, zoomTest);
 
