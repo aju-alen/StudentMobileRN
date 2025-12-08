@@ -13,6 +13,16 @@ const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
 
 const prisma = new PrismaClient();
 
+// Helper function to generate 8-character alphanumeric invite code
+const generateInviteCode = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+};
+
 export const registerSuperAdmin = async (req, res, next) => {
     try {
         const { name, email, password, profileImage, userDescription, role, permissions } = req.body;
@@ -402,11 +412,27 @@ export const verifyEmail = async (req, res, next) => {
           verified: true,
           verificationToken: null,
         },
+        include: {
+          teacherProfile: {
+            include: {
+              ledOrganization: true
+            }
+          }
+        },
       });
 
       // create zoom account for teacher
       if(user.userType === 'TEACHER'){
         await createZoomAccountForTeacher(user.email, user.name);
+        
+        // Generate invite code for team leads after verification
+        if (updatedUser.teacherProfile?.isTeamLead && updatedUser.teacherProfile?.ledOrganization) {
+          const inviteCode = generateInviteCode();
+          await prisma.organization.update({
+            where: { id: updatedUser.teacherProfile.ledOrganization.id },
+            data: { orgInvite: inviteCode }
+          });
+        }
       }
   
       // Send HTML success page
@@ -1159,3 +1185,549 @@ export const updateOrganizationTradeLicense = async (req, res, next) => {
     next(err);
   }
 }
+
+// Helper function to send organization invitation email
+const sendOrganizationInviteEmail = async (teacherEmail, teacherName, orgName, teamLeadName) => {
+  const emailHtml = `
+    <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #ffffff;">
+      <div style="display: flex; margin-bottom: 20px;">
+        <div style="width: 20%; background-color: #1A4C6E;"></div>
+        <div style="width: 60%; background-color: #1A4C6E; color: #ffffff; padding: 30px 20px; text-align: center;">
+          <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase;">Organization Invitation</h1>
+        </div>
+        <div style="width: 20%; background-color: #1A4C6E;"></div>
+      </div>
+      
+      <div style="padding: 30px; color: #000000;">
+        <p style="font-size: 20px; margin-bottom: 20px; font-weight: 700;">Hello <strong>${teacherName}</strong>,</p>
+        
+        <div style="background-color: #f5f5f5; padding: 25px; margin: 25px 0; border-left: 8px solid #1A4C6E;">
+          <p style="margin: 0; font-size: 16px; line-height: 1.8; font-weight: 500;">
+            You have been invited to join <strong>${orgName}</strong> by <strong>${teamLeadName}</strong>.
+          </p>
+          <p style="margin: 15px 0 0 0; font-size: 16px; line-height: 1.8; font-weight: 500;">
+            You are now a member of this organization. You can access organization settings from your profile settings page.
+          </p>
+        </div>
+        
+        <p style="font-size: 16px; line-height: 1.6; font-weight: 500;">Welcome to the team!</p>
+        
+        <div style="text-align: center; padding-top: 30px; border-top: 2px solid #F8FAFC;">
+          <p style="color: #64748B; font-size: 14px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1px;">The Coach Academ Team</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: process.env.COACH_ACADEM_RESEND_EMAIL,
+      to: teacherEmail,
+      subject: `You've been invited to join ${orgName}`,
+      html: emailHtml,
+    });
+    console.log("Organization invitation email sent to", teacherEmail);
+  } catch (err) {
+    console.log("Error sending organization invitation email", err);
+    throw err;
+  }
+};
+
+// Get organization members
+export const getOrganizationMembers = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+    
+    // Get user with teacher profile and organization
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        teacherProfile: {
+          include: {
+            organization: {
+              include: {
+                members: {
+                  include: {
+                    user: {
+                      select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        profileImage: true,
+                      }
+                    }
+                  }
+                },
+                teamLead: {
+                  include: {
+                    user: {
+                      select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        profileImage: true,
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            ledOrganization: {
+              include: {
+                members: {
+                  include: {
+                    user: {
+                      select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        profileImage: true,
+                      }
+                    }
+                  }
+                },
+                teamLead: {
+                  include: {
+                    user: {
+                      select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        profileImage: true,
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!user || user.userType !== 'TEACHER') {
+      return res.status(400).json({ message: "User is not a teacher" });
+    }
+
+    if (!user.teacherProfile) {
+      return res.status(400).json({ message: "Teacher profile not found" });
+    }
+
+    const organization = user.teacherProfile.ledOrganization || user.teacherProfile.organization;
+    
+    if (!organization) {
+      return res.status(400).json({ message: "User is not part of an organization" });
+    }
+
+    // Format members array
+    // Filter out team lead from members to avoid duplicates
+    const teamLeadId = organization.teamLead.user.id;
+    const regularMembers = organization.members
+      .filter(member => member.user.id !== teamLeadId)
+      .map(member => ({
+        id: member.user.id,
+        name: member.user.name,
+        email: member.user.email,
+        profileImage: member.user.profileImage,
+        isTeamLead: false,
+      }));
+
+    const allMembers = [
+      {
+        id: organization.teamLead.user.id,
+        name: organization.teamLead.user.name,
+        email: organization.teamLead.user.email,
+        profileImage: organization.teamLead.user.profileImage,
+        isTeamLead: true,
+      },
+      ...regularMembers
+    ];
+
+    res.status(200).json({
+      organization: {
+        id: organization.id,
+        orgName: organization.orgName,
+        orgCapacity: organization.orgCapacity,
+        currentMemberCount: allMembers.length,
+        orgInvite: user.teacherProfile.isTeamLead ? organization.orgInvite : null,
+      },
+      members: allMembers,
+      isTeamLead: user.teacherProfile.isTeamLead,
+    });
+  } catch (err) {
+    console.error('Error fetching organization members:', err);
+    next(err);
+  }
+};
+
+// Invite teacher to organization
+export const inviteTeacherToOrganization = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    // Get user (team lead) with organization
+    const teamLeadUser = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        teacherProfile: {
+          include: {
+            ledOrganization: {
+              include: {
+                members: true,
+                teamLead: true,
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!teamLeadUser || teamLeadUser.userType !== 'TEACHER') {
+      return res.status(400).json({ message: "User is not a teacher" });
+    }
+
+    if (!teamLeadUser.teacherProfile || !teamLeadUser.teacherProfile.isTeamLead) {
+      return res.status(403).json({ message: "Only team leads can invite teachers" });
+    }
+
+    const organization = teamLeadUser.teacherProfile.ledOrganization;
+    
+    if (!organization) {
+      return res.status(400).json({ message: "Organization not found" });
+    }
+
+    // Check capacity
+    const currentMemberCount = organization.members.length + 1; // +1 for team lead
+    if (currentMemberCount >= organization.orgCapacity) {
+      return res.status(400).json({ 
+        message: `Organization has reached maximum capacity of ${organization.orgCapacity} members` 
+      });
+    }
+
+    // Find teacher by email
+    const teacherUser = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      include: {
+        teacherProfile: true
+      }
+    });
+
+    if (!teacherUser) {
+      return res.status(404).json({ message: "Teacher with this email does not exist" });
+    }
+
+    if (teacherUser.userType !== 'TEACHER') {
+      return res.status(400).json({ message: "User is not a teacher" });
+    }
+
+    if (!teacherUser.teacherProfile) {
+      return res.status(400).json({ message: "Teacher profile not found" });
+    }
+
+    // Check if teacher is already in an organization
+    if (teacherUser.teacherProfile.organizationId !== null) {
+      return res.status(400).json({ message: "Teacher is already part of an organization" });
+    }
+
+    // Check if teacher is already the team lead of another organization
+    const existingOrgAsLead = await prisma.organization.findUnique({
+      where: { teamLeadId: teacherUser.teacherProfile.id }
+    });
+
+    if (existingOrgAsLead) {
+      return res.status(400).json({ message: "Teacher is already a team lead of another organization" });
+    }
+
+    // Add teacher to organization
+    await prisma.teacherProfile.update({
+      where: { id: teacherUser.teacherProfile.id },
+      data: {
+        organizationId: organization.id
+      }
+    });
+
+    // Send invitation/welcome email
+    await sendOrganizationInviteEmail(
+      teacherUser.email,
+      teacherUser.name,
+      organization.orgName,
+      teamLeadUser.name
+    );
+
+    res.status(200).json({ 
+      message: "Teacher invited successfully",
+      teacher: {
+        id: teacherUser.id,
+        name: teacherUser.name,
+        email: teacherUser.email,
+      }
+    });
+  } catch (err) {
+    console.error('Error inviting teacher:', err);
+    next(err);
+  }
+};
+
+// Get organization invite code (team lead only)
+export const getOrganizationInviteCode = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+
+    // Get user with teacher profile
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        teacherProfile: {
+          include: {
+            ledOrganization: true
+          }
+        }
+      }
+    });
+
+    if (!user || user.userType !== 'TEACHER') {
+      return res.status(400).json({ message: "User is not a teacher" });
+    }
+
+    if (!user.teacherProfile || !user.teacherProfile.isTeamLead) {
+      return res.status(403).json({ message: "Only team leads can view invite code" });
+    }
+
+    const organization = user.teacherProfile.ledOrganization;
+    if (!organization) {
+      return res.status(400).json({ message: "Organization not found" });
+    }
+
+    // Generate invite code if it doesn't exist (for existing organizations)
+    let inviteCode = organization.orgInvite;
+    if (!inviteCode) {
+      inviteCode = generateInviteCode();
+      await prisma.organization.update({
+        where: { id: organization.id },
+        data: { orgInvite: inviteCode }
+      });
+    }
+
+    res.status(200).json({
+      inviteCode: inviteCode
+    });
+  } catch (err) {
+    console.error('Error fetching invite code:', err);
+    next(err);
+  }
+};
+
+// Refresh organization invite code (team lead only)
+export const refreshOrganizationInviteCode = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+
+    // Get user with teacher profile
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        teacherProfile: {
+          include: {
+            ledOrganization: true
+          }
+        }
+      }
+    });
+
+    if (!user || user.userType !== 'TEACHER') {
+      return res.status(400).json({ message: "User is not a teacher" });
+    }
+
+    if (!user.teacherProfile || !user.teacherProfile.isTeamLead) {
+      return res.status(403).json({ message: "Only team leads can refresh invite code" });
+    }
+
+    const organization = user.teacherProfile.ledOrganization;
+    if (!organization) {
+      return res.status(400).json({ message: "Organization not found" });
+    }
+
+    // Generate new invite code
+    const newInviteCode = generateInviteCode();
+    
+    // Update organization with new invite code
+    const updatedOrganization = await prisma.organization.update({
+      where: { id: organization.id },
+      data: { orgInvite: newInviteCode }
+    });
+
+    res.status(200).json({
+      message: "Invite code refreshed successfully",
+      inviteCode: updatedOrganization.orgInvite
+    });
+  } catch (err) {
+    console.error('Error refreshing invite code:', err);
+    next(err);
+  }
+};
+
+// Join organization by invite code
+export const joinOrganizationByInvite = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+    const { inviteCode } = req.body;
+
+    if (!inviteCode) {
+      return res.status(400).json({ message: "Invite code is required" });
+    }
+
+    // Get user with teacher profile
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        teacherProfile: true
+      }
+    });
+
+    if (!user || user.userType !== 'TEACHER') {
+      return res.status(400).json({ message: "User is not a teacher" });
+    }
+
+    if (!user.teacherProfile) {
+      return res.status(400).json({ message: "Teacher profile not found" });
+    }
+
+    // Check if teacher is already in an organization
+    if (user.teacherProfile.organizationId !== null) {
+      return res.status(400).json({ message: "Teacher is already part of an organization" });
+    }
+
+    // Check if teacher is a team lead
+    if (user.teacherProfile.isTeamLead) {
+      return res.status(400).json({ message: "Team leads cannot join other organizations" });
+    }
+
+    // Find organization by invite code
+    const organization = await prisma.organization.findUnique({
+      where: { orgInvite: inviteCode.toUpperCase() },
+      include: {
+        members: true
+      }
+    });
+
+    if (!organization) {
+      return res.status(404).json({ message: "Invalid invite code" });
+    }
+
+    // Check capacity
+    const currentMemberCount = organization.members.length + 1; // +1 for team lead
+    if (currentMemberCount >= organization.orgCapacity) {
+      return res.status(400).json({ 
+        message: `Organization has reached maximum capacity of ${organization.orgCapacity} members` 
+      });
+    }
+
+    // Add teacher to organization
+    await prisma.teacherProfile.update({
+      where: { id: user.teacherProfile.id },
+      data: {
+        organizationId: organization.id
+      }
+    });
+
+    res.status(200).json({
+      message: "Successfully joined organization",
+      organization: {
+        id: organization.id,
+        orgName: organization.orgName
+      }
+    });
+  } catch (err) {
+    console.error('Error joining organization:', err);
+    next(err);
+  }
+};
+
+// Remove teacher from organization (team lead only)
+export const removeTeacherFromOrganization = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+    const { teacherUserId } = req.body;
+
+    if (!teacherUserId) {
+      return res.status(400).json({ message: "Teacher user ID is required" });
+    }
+
+    // Get user (team lead) with organization
+    const teamLeadUser = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        teacherProfile: {
+          include: {
+            ledOrganization: {
+              include: {
+                members: true,
+                teamLead: true,
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!teamLeadUser || teamLeadUser.userType !== 'TEACHER') {
+      return res.status(400).json({ message: "User is not a teacher" });
+    }
+
+    if (!teamLeadUser.teacherProfile || !teamLeadUser.teacherProfile.isTeamLead) {
+      return res.status(403).json({ message: "Only team leads can remove teachers" });
+    }
+
+    const organization = teamLeadUser.teacherProfile.ledOrganization;
+    if (!organization) {
+      return res.status(400).json({ message: "Organization not found" });
+    }
+
+    // Prevent removing the team lead themselves
+    if (teamLeadUser.id === teacherUserId) {
+      return res.status(400).json({ message: "Cannot remove team lead from organization" });
+    }
+
+    // Find the teacher to remove by user ID
+    const teacherToRemove = await prisma.user.findUnique({
+      where: { id: teacherUserId },
+      include: {
+        teacherProfile: true
+      }
+    });
+
+    if (!teacherToRemove || !teacherToRemove.teacherProfile) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    // Check if teacher is actually in this organization
+    if (teacherToRemove.teacherProfile.organizationId !== organization.id) {
+      return res.status(400).json({ message: "Teacher is not a member of this organization" });
+    }
+
+    // Remove teacher from organization
+    await prisma.teacherProfile.update({
+      where: { id: teacherToRemove.teacherProfile.id },
+      data: {
+        organizationId: null
+      }
+    });
+
+    res.status(200).json({
+      message: "Teacher removed from organization successfully",
+      teacher: {
+        id: teacherToRemove.id,
+        name: teacherToRemove.name,
+        email: teacherToRemove.email,
+      }
+    });
+  } catch (err) {
+    console.error('Error removing teacher from organization:', err);
+    next(err);
+  }
+};

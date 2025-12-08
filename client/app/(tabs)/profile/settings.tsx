@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,8 +6,23 @@ import { FONT } from '../../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import StatusBarComponent from '../../components/StatusBarComponent';
+import { axiosWithAuth } from '../../utils/customAxios';
+import { ipURL } from '../../utils/utils';
 
 const SettingsPage = () => {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await axiosWithAuth.get(`${ipURL}/api/auth/metadata`);
+        setUser(response.data);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+    fetchUser();
+  }, []);
   const handleLogout = async () => {
     Alert.alert(
       "Logout",
@@ -79,6 +94,19 @@ const SettingsPage = () => {
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
         </TouchableOpacity> */}
       </View>
+
+      {user?.isTeacher === true && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Organization</Text>
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => router.push('/(tabs)/profile/organization')}
+          >
+            <Text style={styles.settingText}>Organization Settings</Text>
+            <Ionicons name="chevron-forward" size={24} color="#64748B" />
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Actions</Text>

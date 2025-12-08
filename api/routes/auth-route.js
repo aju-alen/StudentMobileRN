@@ -1,5 +1,5 @@
 import express from "express";
-import {  register, verifyEmail,login,singleUser,updateMetadata,getTeacherProfile,changePassword,deleteAccount,updateProfileImage,verifyPurchase,getActiveStudentCourses,updateUserHasSeenOnboarding,registerSuperAdmin,loginSuperAdmin,zoomTest,verificationCheck,updateOrganizationTradeLicense } from "../controllers/auth-controller.js";
+import {  register, verifyEmail,login,singleUser,updateMetadata,getTeacherProfile,changePassword,deleteAccount,updateProfileImage,verifyPurchase,getActiveStudentCourses,updateUserHasSeenOnboarding,registerSuperAdmin,loginSuperAdmin,zoomTest,verificationCheck,updateOrganizationTradeLicense,getOrganizationMembers,inviteTeacherToOrganization,getOrganizationInviteCode,refreshOrganizationInviteCode,joinOrganizationByInvite,removeTeacherFromOrganization } from "../controllers/auth-controller.js";
 import { verifyToken } from "../middlewares/jwt.js";
 const router = express.Router()
 
@@ -22,6 +22,12 @@ router.get('/verification-check', verifyToken, verificationCheck);
 router.put('/organization/trade-license', updateOrganizationTradeLicense);
 // Also support authenticated requests
 router.put('/organization/trade-license-auth', verifyToken, updateOrganizationTradeLicense);
+router.get('/organization/members', verifyToken, getOrganizationMembers);
+router.post('/organization/invite', verifyToken, inviteTeacherToOrganization);
+router.get('/organization/invite-code', verifyToken, getOrganizationInviteCode);
+router.put('/organization/refresh-invite', verifyToken, refreshOrganizationInviteCode);
+router.post('/organization/join', verifyToken, joinOrganizationByInvite);
+router.post('/organization/remove-teacher', verifyToken, removeTeacherFromOrganization);
 
 router.post('/zoom-test', verifyToken, zoomTest);
 

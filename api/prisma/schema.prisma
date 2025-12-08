@@ -118,6 +118,7 @@ model Organization {
   orgWebsite      String?
   orgLicense      String?
   orgCapacity     Int       @default(3)
+  orgInvite       String?   @unique
   teamLeadId      String    @unique
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
