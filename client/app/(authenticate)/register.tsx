@@ -275,7 +275,7 @@ const RegisterPage = () => {
     const [tradeLicensePdf, setTradeLicensePdf] = useState<string | null>(null);
     const [tradeLicensePdfUri, setTradeLicensePdfUri] = useState<string | null>(null);
     const [isUploadingTradeLicense, setIsUploadingTradeLicense] = useState(false);
-    const [teacherCount, setTeacherCount] = useState('');
+    const [teacherCount, setTeacherCount] = useState('3');
 
 
 
@@ -377,8 +377,9 @@ const RegisterPage = () => {
             if (!tradeLicensePdfUri) {
                 newErrors.tradeLicensePdf = 'Trade license PDF is required';
             }
-            if (teacherCount.trim() === '' || parseInt(teacherCount) < 1) {
-                newErrors.teacherCount = 'Please enter the number of teachers';
+            // Teacher count is fixed at 3 (free tier)
+            if (teacherCount !== '3') {
+                newErrors.teacherCount = 'Invalid teacher count';
             }
         }
 
@@ -825,19 +826,15 @@ const RegisterPage = () => {
                             <View style={styles.inputGroup}>
                                 <Text style={styles.label}>Number of Teachers</Text>
                                 <TextInput
-                                    style={[styles.input, errors.teacherCount && styles.inputError]}
+                                    style={[styles.input, errors.teacherCount && styles.inputError, styles.inputDisabled]}
                                     placeholder="Enter number of teachers"
                                     placeholderTextColor="#666"
                                     value={teacherCount}
-                                    onChangeText={(text) => {
-                                        const numericValue = text.replace(/[^0-9]/g, '');
-                                        setTeacherCount(numericValue);
-                                        clearFieldError('teacherCount');
-                                    }}
+                                    editable={false}
                                     keyboardType="numeric"
                                 />
                                 <Text style={styles.infoText}>
-                                    3 users are free. Additional users require premium subscription (can be purchased in settings after approval).
+                                    3 users are free. You can purchase additional capacity later in Organization Settings.
                                 </Text>
                                 {errors.teacherCount && <Text style={styles.errorText}>{errors.teacherCount}</Text>}
                             </View>
@@ -1235,6 +1232,10 @@ const styles = StyleSheet.create({
     },
     inputError: {
         borderColor: '#DC2626',
+    },
+    inputDisabled: {
+        backgroundColor: '#F3F4F6',
+        color: '#666',
     },
     passwordContainerError: {
         borderColor: '#DC2626',

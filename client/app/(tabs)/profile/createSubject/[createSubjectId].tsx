@@ -59,7 +59,7 @@ const CreateSubject = () => {
   const [isEulaAccepted, setIsEulaAccepted] = useState(false);
   const [isDocumentsConfirmed, setIsDocumentsConfirmed] = useState(false);
   const [isCreatingSubject, setIsCreatingSubject] = useState(false);
-  const EULA_PDF_URL = `https://coachacademic.s3.ap-southeast-1.amazonaws.com/EULA+/COACHACADEM_TOU_(EULA).pdf`; // Replace with your actual EULA PDF URL
+  const EULA_PDF_URL = `https://coachacademic.s3.ap-southeast-1.amazonaws.com/EULA+/COACHACADEM_TOU_(EULA).pdf`;
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -210,17 +210,7 @@ const CreateSubject = () => {
       Alert.alert('PDFs uploaded successfully.');
     
     } catch (error) {
-      Sentry.captureException(error, {
-        tags: {
-          location: 'uploadPdfsToAws',
-          createSubjectId: createSubjectId
-        },
-        extra: {
-          error: error.message,
-          stack: error.stack,
-          awsId: awsId
-        }
-      });
+ 
       console.error('PDF upload failed:', error);
       Alert.alert('PDF upload failed', error.message);
       setIsDocumentsConfirmed(false);
@@ -300,17 +290,7 @@ const CreateSubject = () => {
 
       setImage(response.data.data.Location);
     } catch (error) {
-      Sentry.captureException(error, {
-        tags: {
-          location: 'uploadImageToBe',
-          createSubjectId: createSubjectId
-        },
-        extra: {
-          error: error.message,
-          stack: error.stack,
-          awsId: awsId
-        }
-      });
+      
       console.error('Image upload failed', error);
       Alert.alert('Error', 'Failed to upload image. Please try again.');
       setImage(null);
@@ -460,30 +440,7 @@ const CreateSubject = () => {
       }
       setIsLoading(false);
     } catch (err) {
-      Sentry.captureException(err, {
-        tags: {
-          location: 'handleCreateSubject',
-          createSubjectId: createSubjectId
-        },
-        extra: {
-          error: err.message,
-          stack: err.stack,
-          subjectData: {
-            subjectName,
-            subjectDescription,
-            subjectPrice,
-            subjectBoard,
-            subjectGrade,
-            subjectDuration,
-            subjectLanguage,
-            subjectPoints: subjectPoints.length,
-            hasImage: !!image,
-            hasPdf1: !!pdf1,
-            hasPdf2: !!pdf2,
-            isEulaAccepted
-          }
-        }
-      });
+    
       console.log("error", err);
       Alert.alert(
         "Error",

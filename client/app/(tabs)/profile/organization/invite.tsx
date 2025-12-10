@@ -68,15 +68,7 @@ const InviteTeacherPage = () => {
     <ScrollView style={styles.container}>
       <StatusBarComponent />
 
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Invite Teacher</Text>
-      </View>
+  
 
       <View style={styles.content}>
         <Text style={styles.description}>

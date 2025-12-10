@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 import { StripeProviderWrapper } from './components/StripeProviderWrapper';
 import * as Sentry from '@sentry/react-native';
+import { RevenueCatProvider } from './providers/RevenueCatProvider';
 
 Sentry.init({
   dsn: 'https://851470963daf9849a9ae739b0172546e@o4508838422118400.ingest.de.sentry.io/4509444142989392',
@@ -25,6 +26,7 @@ Sentry.init({
 const MainLayout = () => {
   return (
     <StripeProviderWrapper>
+    <RevenueCatProvider>
     <View style={{ flex: 1 }}>
       <StatusBar style="dark" backgroundColor="#FFFFFF" />
       <Stack
@@ -64,7 +66,9 @@ const MainLayout = () => {
         />
       </Stack>
     </View>
+    </RevenueCatProvider>
     </StripeProviderWrapper>
+
   );
 };
 

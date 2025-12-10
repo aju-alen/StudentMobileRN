@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONT } from '../../../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../../../utils/metrics';
@@ -40,10 +41,28 @@ const OrganizationMembersPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [userEmail, setUserEmail] = useState<string>('');
 
   useEffect(() => {
     fetchOrganizationMembers();
+    fetchUserEmail();
   }, []);
+
+  // Refresh data when screen comes into focus (e.g., returning from capacity page)
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchOrganizationMembers();
+    }, [])
+  );
+
+  const fetchUserEmail = async () => {
+    try {
+      const response = await axiosWithAuth.get(`${ipURL}/api/auth/metadata`);
+      setUserEmail(response.data.email || '');
+    } catch (err) {
+      console.error('Error fetching user email:', err);
+    }
+  };
 
   const fetchOrganizationMembers = async () => {
     try {
@@ -104,15 +123,7 @@ const OrganizationMembersPage = () => {
     return (
       <View style={styles.container}>
         <StatusBarComponent />
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
-          </TouchableOpacity>
-          <Text style={styles.title}>Organization Members</Text>
-        </View>
+     
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#1A2B4B" />
         </View>
@@ -129,16 +140,7 @@ const OrganizationMembersPage = () => {
     >
       <StatusBarComponent />
 
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Organization Members</Text>
-      </View>
-
+   
       {error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
@@ -151,6 +153,21 @@ const OrganizationMembersPage = () => {
               <Text style={styles.capacityText}>
                 {organization.currentMemberCount} / {organization.orgCapacity} members
               </Text>
+              {isTeamLead && (
+                <TouchableOpacity
+                  style={styles.increaseCapacityButton}
+                  onPress={() => router.push({
+                    pathname: '/(tabs)/profile/organization/capacity',
+                    params: {
+                      currentCapacity: organization.orgCapacity.toString(),
+                      userEmail: userEmail,
+                    },
+                  })}
+                >
+                  <Ionicons name="trending-up-outline" size={20} color="#FFFFFF" />
+                  <Text style={styles.increaseCapacityButtonText}>Purchase Capacity</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
 
@@ -277,6 +294,27 @@ const styles = StyleSheet.create({
     fontFamily: FONT.medium,
     fontSize: moderateScale(14),
     color: '#64748B',
+    marginBottom: verticalScale(10),
+  },
+  increaseCapacityButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1A2B4B',
+    padding: moderateScale(15),
+    borderRadius: moderateScale(12),
+    marginTop: verticalScale(10),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  increaseCapacityButtonText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(16),
+    color: '#FFFFFF',
+    marginLeft: horizontalScale(8),
   },
   inviteSection: {
     marginTop: verticalScale(20),

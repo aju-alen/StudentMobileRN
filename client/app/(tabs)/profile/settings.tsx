@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking, ActivityIndicator } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { FONT } from '../../../constants';
@@ -11,14 +11,29 @@ import { ipURL } from '../../utils/utils';
 
 const SettingsPage = () => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        setLoading(true);
         const response = await axiosWithAuth.get(`${ipURL}/api/auth/metadata`);
         setUser(response.data);
+        
+        // Validate organization data if user is a teacher
+        if (response.data?.isTeacher === true) {
+          // Additional validation: ensure organization data is present
+          // The metadata endpoint should return organization info if user is a teacher
+          // If organization data is missing, we can still show the page but log a warning
+          if (!response.data?.organization) {
+            console.warn('Teacher user but no organization data found');
+          }
+        }
       } catch (error) {
         console.error('Error fetching user data:', error);
+        Alert.alert('Error', 'Failed to load settings. Please try again.');
+      } finally {
+        setLoading(false);
       }
     };
     fetchUser();
@@ -58,6 +73,28 @@ const SettingsPage = () => {
       console.error("Error opening URL:", error);
     }
   };
+
+  // Show loading state until user data is loaded and validated
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <StatusBarComponent />
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Settings</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1A2B4B" />
+          <Text style={styles.loadingText}>Loading settings...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -264,6 +301,18 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(16),
     color: '#DC2626',
     marginLeft: horizontalScale(8),
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: verticalScale(100),
+  },
+  loadingText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
+    color: '#64748B',
+    marginTop: verticalScale(10),
   },
 });
 
