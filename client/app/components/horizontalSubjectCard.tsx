@@ -74,6 +74,11 @@ const HorizontalSubjectCard = ({ subjectData, handleItemPress, isHorizontal }) =
                 <Text numberOfLines={1} style={styles.subjectTeacherDesignation}>
                   {item?.user.designation || 'Senior Teacher'}
                 </Text>
+                {item?.maxCapacity > 1 && (
+                  <Text style={styles.enrollmentText}>
+                    {(item?.currentEnrollment ?? 0)} / {item?.maxCapacity} enrolled
+                  </Text>
+                )}
               </View>
             </View>
           </View>
@@ -220,5 +225,11 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(12),
     color: '#666',
     marginTop: verticalScale(2),
+  },
+  enrollmentText: {
+    marginTop: verticalScale(4),
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(11),
+    color: '#2DCB63',
   },
 });

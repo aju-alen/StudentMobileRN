@@ -24,6 +24,7 @@ import { horizontalScale, verticalScale, moderateScale } from '../utils/metrics'
 import { COLORS, FONT } from "../../constants";
 import { socket } from '../utils/socket';
 import BookingCalendar from './BookingCalendar';
+import BookingSummaryModal from './BookingSummaryModal';
 import { axiosWithAuth } from "../utils/customAxios";
 
 interface Review {
@@ -55,6 +56,12 @@ interface SubjectData {
   subjectNameSubHeading?: string;
   subjectDuration?: string;
   reviews?: Review[];
+  courseType?: 'SINGLE_STUDENT' | 'MULTI_STUDENT';
+  maxCapacity?: number;
+  currentEnrollment?: number;
+  scheduledDateTime?: string;
+  zoomMeetingUrl?: string;
+  zoomMeetingPassword?: string;
 }
 
 interface User {
@@ -123,8 +130,16 @@ const ReviewForm = React.memo(({ onSubmit, isSubmitting, purchaseStatus }: Revie
 
 const SubjectPage = ({ subjectId }) => {
   const [singleSubjectData, setSingleSubjectData] = React.useState<SubjectData>({});
+  const [capacityInfo, setCapacityInfo] = React.useState<{
+    availableSpots: number;
+    isFull: boolean;
+    isVerified: boolean;
+  } | null>(null);
   const [teacherId, setTeacherId] = React.useState<string>("");
   const [isBookingModalVisible, setIsBookingModalVisible] = useState(false);
+  const [showBookingSummary, setShowBookingSummary] = useState(false);
+  const [selectedBookingDate, setSelectedBookingDate] = useState<string>("");
+  const [selectedBookingTime, setSelectedBookingTime] = useState<string>("");
   const [reviews, setReviews] = useState<Review[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
@@ -152,6 +167,26 @@ const SubjectPage = ({ subjectId }) => {
   const menuOpacity = useRef(new Animated.Value(0)).current;
 
   console.log(singleSubjectData,'singleSubjectData in single subject page');
+
+  // Fetch capacity info for multi-student courses
+  React.useEffect(() => {
+    const fetchCapacityInfo = async () => {
+      if (singleSubjectData.courseType === 'MULTI_STUDENT' && subjectId) {
+        try {
+          const token = await AsyncStorage.getItem("authToken");
+          const capacityResponse = await axios.get(
+            `${ipURL}/api/subjects/capacity/${subjectId}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          setCapacityInfo(capacityResponse.data);
+        } catch (error) {
+          console.error('Error fetching capacity info:', error);
+        }
+      }
+    };
+
+    fetchCapacityInfo();
+  }, [singleSubjectData.courseType, subjectId]);
   const handleChatNow = async () => {
     if (isInitializingChat) {
       return; // Prevent multiple simultaneous initializations
@@ -288,8 +323,49 @@ const SubjectPage = ({ subjectId }) => {
     }
   };
 
-  const handleEnrollPress = () => {
-    setIsBookingModalVisible(true);
+  const handleEnrollPress = async () => {
+    // For multi-student courses, skip date/time selection and go directly to payment
+    if (singleSubjectData.courseType === 'MULTI_STUDENT') {
+      try {
+        const token = await AsyncStorage.getItem("authToken");
+        const capacityResponse = await axios.get(
+          `${ipURL}/api/subjects/capacity/${subjectId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const { availableSpots, isFull, isVerified } = capacityResponse.data;
+
+        if (!isVerified) {
+          alert('This course has not been verified yet.');
+          return;
+        }
+
+        if (isFull || availableSpots === 0) {
+          alert('This course is full. No spots available.');
+          return;
+        }
+
+        // Extract date and time from scheduledDateTime
+        if (singleSubjectData.scheduledDateTime) {
+          const scheduledDate = new Date(singleSubjectData.scheduledDateTime);
+          const dateString = scheduledDate.toISOString().split('T')[0]; // YYYY-MM-DD
+          const timeString = scheduledDate.toTimeString().split(' ')[0].slice(0, 5); // HH:MM
+          
+          setSelectedBookingDate(dateString);
+          setSelectedBookingTime(timeString);
+          // Show booking summary modal directly (payment page) - skip BookingCalendar
+          setShowBookingSummary(true);
+        } else {
+          alert('Course schedule information is missing. Please contact support.');
+        }
+      } catch (error) {
+        console.error('Error checking capacity:', error);
+        alert('Failed to check course availability. Please try again.');
+      }
+    } else {
+      // Single student course - show booking calendar for date/time selection
+      setIsBookingModalVisible(true);
+    }
   };
 
   const handleSaveSubject = async () => {
@@ -806,6 +882,44 @@ const SubjectPage = ({ subjectId }) => {
             </View>
           </View>
 
+          {/* Multi-Student Course Schedule Info */}
+          {singleSubjectData.courseType === 'MULTI_STUDENT' && singleSubjectData.scheduledDateTime && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Course Schedule</Text>
+              <View style={styles.scheduleInfo}>
+                <View style={styles.scheduleItem}>
+                  <Ionicons name="calendar-outline" size={20} color="#1976D2" />
+                  <Text style={styles.scheduleText}>
+                    {new Date(singleSubjectData.scheduledDateTime).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </Text>
+                </View>
+                <View style={styles.scheduleItem}>
+                  <Ionicons name="time-outline" size={20} color="#1976D2" />
+                  <Text style={styles.scheduleText}>
+                    {new Date(singleSubjectData.scheduledDateTime).toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true
+                    })}
+                  </Text>
+                </View>
+                {capacityInfo && (
+                  <View style={styles.scheduleItem}>
+                    <Ionicons name="people-outline" size={20} color="#1976D2" />
+                    <Text style={styles.scheduleText}>
+                      {capacityInfo.availableSpots} of {singleSubjectData.maxCapacity} spots available
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
           {/* Description Section */}
           {singleSubjectData.subjectDescription && (
             <View style={styles.section}>
@@ -860,19 +974,42 @@ const SubjectPage = ({ subjectId }) => {
         <TouchableOpacity 
           style={[
             styles.primaryButton,
-            isUserType === 'TEACHER' && styles.disabledButton
+            isUserType === 'TEACHER' && styles.disabledButton,
+            singleSubjectData.courseType === 'MULTI_STUDENT' && purchaseStatus && styles.disabledButton
           ]} 
           onPress={() => {
             handleButtonPress();
             handleEnrollPress();
           }}
-          disabled={isUserType === 'TEACHER'}
+          disabled={
+            isUserType === 'TEACHER' ||
+            (singleSubjectData.courseType === 'MULTI_STUDENT' && purchaseStatus)
+          }
         >
           <Ionicons name="cart" size={24} color="white" />
-          <Text style={styles.primaryButtonText}>
-            {isUserType === 'TEACHER' ? "Please login as student to purchase" : "Enroll Now"}
-          </Text>
-          {isUserType !== 'TEACHER' && <Text style={styles.priceText}>AED {(singleSubjectData.subjectPrice) / 100}</Text>}
+          <View style={styles.buttonTextContainer}>
+            <View style={styles.buttonMainRow}>
+              <Text style={styles.primaryButtonText}>
+                {isUserType === 'TEACHER' 
+                  ? "Please login as student to purchase" 
+                  : singleSubjectData.courseType === 'MULTI_STUDENT' && purchaseStatus
+                  ? "Already Enrolled"
+                  : singleSubjectData.courseType === 'MULTI_STUDENT' && capacityInfo?.isFull
+                  ? "Course Full"
+                  : "Enroll Now"}
+              </Text>
+              {isUserType !== 'TEACHER' 
+                && !(singleSubjectData.courseType === 'MULTI_STUDENT' && capacityInfo?.isFull) 
+                && !(singleSubjectData.courseType === 'MULTI_STUDENT' && purchaseStatus) && (
+                <Text style={styles.priceText}>AED {(singleSubjectData.subjectPrice) / 100}</Text>
+              )}
+            </View>
+            {singleSubjectData.courseType === 'MULTI_STUDENT' && capacityInfo && !capacityInfo.isFull && !purchaseStatus && (
+              <Text style={styles.capacityText}>
+                {capacityInfo.availableSpots} of {singleSubjectData.maxCapacity} spots available
+              </Text>
+            )}
+          </View>
         </TouchableOpacity>
         <TouchableOpacity 
           style={[styles.secondaryButton, isInitializingChat && styles.disabledButton]} 
@@ -893,12 +1030,32 @@ const SubjectPage = ({ subjectId }) => {
         </TouchableOpacity>
       </Animated.View>
 
-      <BookingCalendar
-        teacherId={teacherId}
-        subjectId={subjectId}
-        visible={isBookingModalVisible}
-        onClose={() => setIsBookingModalVisible(false)}
-      />
+      {/* Only show BookingCalendar for single-student courses */}
+      {singleSubjectData.courseType !== 'MULTI_STUDENT' && (
+        <BookingCalendar
+          teacherId={teacherId}
+          subjectId={subjectId}
+          visible={isBookingModalVisible}
+          onClose={() => setIsBookingModalVisible(false)}
+        />
+      )}
+
+      {/* BookingSummaryModal for multi-student courses (direct payment) */}
+      {singleSubjectData.courseType === 'MULTI_STUDENT' && (
+        <BookingSummaryModal
+          visible={showBookingSummary}
+          onClose={() => setShowBookingSummary(false)}
+          teacherId={teacherId}
+          subjectId={subjectId}
+          date={selectedBookingDate}
+          time={selectedBookingTime}
+          onConfirm={() => {
+            setShowBookingSummary(false);
+            // Refresh the page or navigate
+            router.replace('/(tabs)/home');
+          }}
+        />
+      )}
 
       <Modal
         visible={showReportModal}
@@ -1245,16 +1402,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: horizontalScale(8),
-  }, 
+  },
+  buttonTextContainer: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+  buttonMainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    flexWrap: 'wrap',
+    gap: horizontalScale(8),
+  },
   primaryButtonText: {
     color: 'white',
     fontSize: moderateScale(16),
     fontWeight: '600',
+    flexShrink: 1,
+  },
+  capacityText: {
+    fontSize: moderateScale(11),
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontFamily: FONT.medium,
+    marginTop: verticalScale(2),
   },
   priceText: {
     color: 'white',
     fontSize: moderateScale(14),
-    marginLeft: horizontalScale(8),
+    fontWeight: '600',
   },
   secondaryButton: {
     backgroundColor: '#3498DB',
@@ -1414,6 +1591,20 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     marginTop: verticalScale(12),
+  },
+  scheduleInfo: {
+    gap: verticalScale(12),
+  },
+  scheduleItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: horizontalScale(12),
+    paddingVertical: verticalScale(8),
+  },
+  scheduleText: {
+    fontSize: moderateScale(16),
+    color: '#1a1a1a',
+    fontFamily: FONT.medium,
   },
 });
 

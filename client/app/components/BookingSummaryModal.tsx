@@ -102,12 +102,13 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
             teacherId: teacherId,
             subjectId: subjectId,
             userId: user.userId,
-            date: date,
-            time: time,
+            date: subjectData.courseType === 'MULTI_STUDENT' ? '' : date,
+            time: subjectData.courseType === 'MULTI_STUDENT' ? '' : time,
             subjectDuration: subjectData.subjectDuration,
             teacherEmail: teacherData.email,
             subjectName: subjectData.subjectName,
             userEmail: user.email,
+            courseType: subjectData.courseType || 'SINGLE_STUDENT',
           }),
           headers: {
             'Content-Type': 'application/json',
@@ -226,7 +227,11 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
             <Ionicons name="checkmark" size={50} color="#FFFFFF" />
           </View>
           <Text style={styles.successTitle}>Payment Successful!</Text>
-          <Text style={styles.successMessage}>Your booking has been confirmed</Text>
+          <Text style={styles.successMessage}>
+            {subjectData?.courseType === 'MULTI_STUDENT' 
+              ? 'Your enrollment has been confirmed' 
+              : 'Your booking has been confirmed'}
+          </Text>
         </Animated.View>
       </Animated.View>
     );
@@ -333,17 +338,58 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
                   <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                       <Ionicons name="calendar" size={24} color="#1A4C6E" />
-                      <Text style={styles.sectionTitle}>Session Details</Text>
+                      <Text style={styles.sectionTitle}>
+                        {subjectData.courseType === 'MULTI_STUDENT' ? 'Course Details' : 'Session Details'}
+                      </Text>
                     </View>
                     <View style={styles.sectionContent}>
-                      <View style={styles.sessionDetail}>
-                        <Ionicons name="calendar-outline" size={20} color="#64748B" />
-                        <Text style={styles.detailText}>{formatDate(date)}</Text>
-                      </View>
-                      <View style={styles.sessionDetail}>
-                        <Ionicons name="time-outline" size={20} color="#64748B" />
-                        <Text style={styles.detailText}>{time}</Text>
-                      </View>
+                      {subjectData.courseType === 'MULTI_STUDENT' ? (
+                        <>
+                          {subjectData.scheduledDateTime && (
+                            <>
+                              <View style={styles.sessionDetail}>
+                                <Ionicons name="calendar-outline" size={20} color="#64748B" />
+                                <Text style={styles.detailText}>
+                                  {new Date(subjectData.scheduledDateTime).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                  })}
+                                </Text>
+                              </View>
+                              <View style={styles.sessionDetail}>
+                                <Ionicons name="time-outline" size={20} color="#64748B" />
+                                <Text style={styles.detailText}>
+                                  {new Date(subjectData.scheduledDateTime).toLocaleTimeString('en-US', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: true
+                                  })}
+                                </Text>
+                              </View>
+                            </>
+                          )}
+                          {subjectData.maxCapacity && (
+                            <View style={styles.sessionDetail}>
+                              <Ionicons name="people-outline" size={20} color="#64748B" />
+                              <Text style={styles.detailText}>
+                                Up to {subjectData.maxCapacity} students
+                              </Text>
+                            </View>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <View style={styles.sessionDetail}>
+                            <Ionicons name="calendar-outline" size={20} color="#64748B" />
+                            <Text style={styles.detailText}>{formatDate(date)}</Text>
+                          </View>
+                          <View style={styles.sessionDetail}>
+                            <Ionicons name="time-outline" size={20} color="#64748B" />
+                            <Text style={styles.detailText}>{time}</Text>
+                          </View>
+                        </>
+                      )}
                       <View style={styles.sessionDetail}>
                         <Ionicons name="hourglass-outline" size={20} color="#64748B" />
                         <Text style={styles.detailText}>{subjectData.subjectDuration} hours/session</Text>

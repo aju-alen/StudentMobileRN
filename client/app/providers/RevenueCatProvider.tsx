@@ -15,6 +15,7 @@ interface RevenueCatProps {
   identifyUser: (email: string) => Promise<void>;
   getOfferings: () => Promise<PurchasesOffering | null>;
   purchasePackage: (packageToPurchase: PurchasesPackage) => Promise<CustomerInfo>;
+  getMultiStudentCapacity: () => Promise<number | null>;
 }
 
 const RevenueCatContext = createContext<RevenueCatProps | null>(null);
@@ -126,12 +127,50 @@ export const RevenueCatProvider = ({ children }: any) => {
     }
   };
 
+  // Get multi-student capacity from RevenueCat entitlement
+  const getMultiStudentCapacity = async (): Promise<number | null> => {
+    // TODO: Re-enable RevenueCat checks after entitlement verification
+    // For testing: return default capacity
+    return 10; // Default capacity for testing
+    
+    // Original RevenueCat check code (commented out for testing):
+    // try {
+    //   const customerInfo = await Purchases.getCustomerInfo();
+    //   const activeEntitlement = customerInfo?.entitlements.active['student_zoom_capacity'];
+    //   
+    //   if (activeEntitlement !== undefined) {
+    //     // Extract capacity number from product identifier (e.g., "zoom_capacity_10" -> 10)
+    //     const productIdentifier = activeEntitlement.productIdentifier;
+    //     
+    //     // Try to extract number from product identifier
+    //     const planMatch = productIdentifier.match(/(\d+)/);
+    //     if (planMatch) {
+    //       const capacity = parseInt(planMatch[1], 10);
+    //       // Return the capacity number
+    //       return capacity;
+    //     }
+    //   }
+    //   
+    //   // For testing: assume zoom_capacity_10 if entitlement exists but can't parse
+    //   // Remove this in production
+    //   if (customerInfo?.entitlements.active['student_zoom_capacity']) {
+    //     return 10; // Default for testing
+    //   }
+    //   
+    //   return null;
+    // } catch (error) {
+    //   console.error('Error fetching multi-student capacity:', error);
+    //   return null;
+    // }
+  };
+
   const value = {
     plan,
     isReady,
     identifyUser,
     getOfferings,
     purchasePackage,
+    getMultiStudentCapacity,
   };
 
   // Return empty fragment if provider is not ready (Purchase not yet initialised)

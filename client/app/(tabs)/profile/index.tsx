@@ -23,6 +23,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { axiosWithAuth } from "../../utils/customAxios";
 import UserSubjectCards from "../../components/UserSubjectCards";
 import * as Sentry from '@sentry/react-native';
+import CourseTypeModal from "../../components/CourseTypeModal";
+import MultiStudentPaywallModal from "../../components/MultiStudentPaywallModal";
+import { useRevenueCat } from "../../providers/RevenueCatProvider";
 
 interface User {
   id?: string;
@@ -57,6 +60,9 @@ const ProfilePage = () => {
   const [activeCourses, setActiveCourses] = useState<SubjectItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [showCourseTypeModal, setShowCourseTypeModal] = useState(false);
+  const [showPaywallModal, setShowPaywallModal] = useState(false);
+  const revenueCatContext = useRevenueCat();
   
   const getUser = async () => {
     try {
@@ -87,7 +93,6 @@ const ProfilePage = () => {
 
   const handleCreateNewSubject = async () => {
     try {
-
       const userverificationCheck = await axiosWithAuth.get(`${ipURL}/api/auth/verification-check`);
 
       const {isTeacher, id, zoomAccountCreated, zoomUserAcceptedInvite} = userverificationCheck.data.userDetail;
@@ -101,17 +106,8 @@ const ProfilePage = () => {
         throw new Error('User ID not found in user details');
       }
       
-      Sentry.addBreadcrumb({
-        category: 'navigation',
-        message: 'Attempting to create new subject',
-        level: 'info',
-        data: {
-          userId: userverificationCheck.data.userDetail.id,
-          userType: userverificationCheck.data.userDetail.isTeacher ? 'teacher' : 'student'
-        }
-      });
-      
-      router.push(`/(tabs)/profile/createSubject/${userverificationCheck.data.userDetail.id}`);
+      // Show course type selection modal
+      setShowCourseTypeModal(true);
     } catch (error) {
       Sentry.captureException(error, {
         tags: {
@@ -126,6 +122,89 @@ const ProfilePage = () => {
       });
       Alert.alert('Error', 'Failed to create new course. Please try again.');
     }
+  };
+
+  const handleSelectSingleStudent = async () => {
+    try {
+      const userverificationCheck = await axiosWithAuth.get(`${ipURL}/api/auth/verification-check`);
+      const { id } = userverificationCheck.data.userDetail;
+      
+      Sentry.addBreadcrumb({
+        category: 'navigation',
+        message: 'Creating single student course',
+        level: 'info',
+        data: {
+          userId: id,
+          courseType: 'SINGLE_STUDENT'
+        }
+      });
+      
+      router.push(`/(tabs)/profile/createSubject/${id}?courseType=SINGLE_STUDENT`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to navigate to course creation.');
+    }
+  };
+
+  const handleSelectMultiStudent = async () => {
+    try {
+      // TODO: Re-enable RevenueCat checks after entitlement verification
+      // For testing: bypass RevenueCat checks and use default capacity
+      const defaultCapacity = 10; // Default capacity for testing
+      
+      const userverificationCheck = await axiosWithAuth.get(`${ipURL}/api/auth/verification-check`);
+      const { id } = userverificationCheck.data.userDetail;
+      
+      Sentry.addBreadcrumb({
+        category: 'navigation',
+        message: 'Creating multi student course',
+        level: 'info',
+        data: {
+          userId: id,
+          courseType: 'MULTI_STUDENT',
+          capacity: defaultCapacity
+        }
+      });
+      
+      router.push(`/(tabs)/profile/createSubject/${id}?courseType=MULTI_STUDENT&maxCapacity=${defaultCapacity}`);
+      
+      // Original RevenueCat check code (commented out for testing):
+      // if (revenueCatContext && revenueCatContext.getMultiStudentCapacity) {
+      //   const capacity = await revenueCatContext.getMultiStudentCapacity();
+      //   
+      //   if (capacity && capacity > 0) {
+      //     // User has entitlement, proceed to create multi-student course
+      //     const userverificationCheck = await axiosWithAuth.get(`${ipURL}/api/auth/verification-check`);
+      //     const { id } = userverificationCheck.data.userDetail;
+      //     
+      //     Sentry.addBreadcrumb({
+      //       category: 'navigation',
+      //       message: 'Creating multi student course',
+      //       level: 'info',
+      //       data: {
+      //         userId: id,
+      //         courseType: 'MULTI_STUDENT',
+      //         capacity
+      //       }
+      //     });
+      //     
+      //     router.push(`/(tabs)/profile/createSubject/${id}?courseType=MULTI_STUDENT&maxCapacity=${capacity}`);
+      //   } else {
+      //     // No entitlement, show paywall
+      //     setShowPaywallModal(true);
+      //   }
+      // } else {
+      //   // RevenueCat not ready, show paywall
+      //   setShowPaywallModal(true);
+      // }
+    } catch (error) {
+      console.error('Error in handleSelectMultiStudent:', error);
+      Alert.alert('Error', 'Failed to navigate to course creation.');
+    }
+  };
+
+  const handlePaywallSuccess = async () => {
+    // After successful purchase, try again
+    await handleSelectMultiStudent();
   };
 
   const closeDropdown = () => {
@@ -293,6 +372,22 @@ const ProfilePage = () => {
           <ActivityIndicator size="large" color={COLORS.primary} />
         </View>
       )}
+
+      {/* Course Type Selection Modal */}
+      <CourseTypeModal
+        visible={showCourseTypeModal}
+        onClose={() => setShowCourseTypeModal(false)}
+        onSelectSingle={handleSelectSingleStudent}
+        onSelectMulti={handleSelectMultiStudent}
+      />
+
+      {/* Multi-Student Paywall Modal */}
+      <MultiStudentPaywallModal
+        visible={showPaywallModal}
+        onClose={() => setShowPaywallModal(false)}
+        onPurchaseSuccess={handlePaywallSuccess}
+        userEmail={user.email || ''}
+      />
     </View>
   );
 };

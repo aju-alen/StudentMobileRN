@@ -37,6 +37,17 @@ enum MessageSenderType {
   TEACHER
 }
 
+enum CourseType {
+  SINGLE_STUDENT
+  MULTI_STUDENT
+}
+
+enum EnrollmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
 // Core authentication and shared fields
 model User {
   id                  String   @id @default(cuid())
@@ -77,6 +88,7 @@ model StudentProfile {
   stripePurchases     StripePurchases[]
   bookings            Booking[] @relation("StudentBookings")
   userSubjects        UserSubject[]
+  courseEnrollments   CourseEnrollment[]
 }
 
 // Teacher-specific data
@@ -146,6 +158,15 @@ model Subject {
   teacherVerification  Json     @default("[]") 
   createdAt            DateTime @default(now())
   
+  // Multi-student course fields
+  courseType           CourseType @default(SINGLE_STUDENT)
+  maxCapacity          Int        @default(1)
+  currentEnrollment    Int        @default(0)
+  scheduledDateTime    DateTime?
+  zoomMeetingId        Int?
+  zoomMeetingPassword  String?
+  zoomMeetingUrl       String?
+  
   // Relations
   teacherProfile      TeacherProfile  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   teacherId           String
@@ -156,8 +177,11 @@ model Subject {
   reports             Report[]
   stripePurchases     StripePurchases[]
   userSubjects        UserSubject[]
+  courseEnrollments   CourseEnrollment[]
   
   @@unique([id, teacherId])
+  @@index([courseType])
+  @@index([scheduledDateTime])
 }
 
 model Review {
@@ -334,11 +358,13 @@ model StripePurchases {
   stripeCustomerId   String
   purchaseReceiptUrl String
   createdAt          DateTime      @default(now())
-  bookingId          String        @unique
+  bookingId          String?       @unique
+  courseEnrollmentId String?       @unique
 
   student            StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
   subject            Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  booking            Booking       @relation(fields: [bookingId], references: [id])
+  booking            Booking?      @relation(fields: [bookingId], references: [id])
+  courseEnrollment   CourseEnrollment? @relation(fields: [courseEnrollmentId], references: [id])
 }
 
 model UserSubject {
@@ -350,4 +376,23 @@ model UserSubject {
   subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, subjectId])
+}
+
+model CourseEnrollment {
+  id               String           @id @default(cuid())
+  subjectId        String
+  studentId        String
+  enrollmentStatus EnrollmentStatus @default(CONFIRMED)
+  enrolledAt       DateTime         @default(now())
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  subject          Subject          @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  student          StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  stripePurchase   StripePurchases?
+
+  @@unique([subjectId, studentId])
+  @@index([subjectId])
+  @@index([studentId])
+  @@index([subjectId, enrollmentStatus])
 }

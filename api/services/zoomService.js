@@ -25,29 +25,39 @@ export const getZoomAccessToken = async () => {
   return accessToken;
 };
 
-export const createZoomMeeting = async (hostEmail, topic, startTime, bookingTimeInMinutes) => {
+export const createZoomMeeting = async (hostEmail, topic, startTime, bookingTimeInMinutes, participantLimit = null) => {
   const token = await getZoomAccessToken();
   console.log(token);
-  console.log(hostEmail, topic, startTime, bookingTimeInMinutes, 'hostEmail, topic, startTime, bookingTimeInMinutes');
+  console.log(hostEmail, topic, startTime, bookingTimeInMinutes, participantLimit, 'hostEmail, topic, startTime, bookingTimeInMinutes, participantLimit');
 
   try {
+    const meetingData = {
+      topic: topic,
+      type: 1,
+      start_time: startTime,
+      duration: bookingTimeInMinutes,
+      timezone: 'Asia/Dubai',
+      settings: {
+        host_video: true,
+        participant_video: true,
+        join_before_host: false,
+        mute_upon_entry: true,
+        waiting_room: true,
+        meeting_authentication: true
+      }
+    };
+
+    // Add participant limit if provided (for multi-student courses)
+    if (participantLimit && participantLimit > 0) {
+      meetingData.settings.participant_video = true;
+      // Note: Zoom API may require specific license types for participant limits
+      // This is a placeholder - actual implementation may vary based on Zoom plan
+      meetingData.settings.meeting_invitees = [];
+    }
+
     const res = await axios.post(
       `https://api.zoom.us/v2/users/${hostEmail}/meetings`,
-      {
-        topic: topic,
-        type: 1,
-        start_time: startTime,
-        duration: bookingTimeInMinutes,
-        timezone: 'Asia/Dubai',
-        settings: {
-          host_video: true,
-          participant_video: true,
-          join_before_host: false,
-          mute_upon_entry: true,
-          waiting_room: true,
-          meeting_authentication: true
-        }
-      },
+      meetingData,
       {
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -60,6 +70,7 @@ export const createZoomMeeting = async (hostEmail, topic, startTime, bookingTime
     return res.data;
   } catch (error) {
     console.error("Error creating Zoom meeting:", error.response?.data || error.message);
+    throw error;
   }
 };
 

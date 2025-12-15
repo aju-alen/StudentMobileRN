@@ -32,6 +32,8 @@ import * as FileSystem from 'expo-file-system';
 import { axiosWithAuth } from "../../../utils/customAxios";
 import * as Sentry from '@sentry/react-native';
 import * as Crypto from 'expo-crypto';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useRevenueCat } from '../../../providers/RevenueCatProvider';
 
 // Add type definition for file object
 type FileObject = {
@@ -41,7 +43,8 @@ type FileObject = {
 };
 
 const CreateSubject = () => {
-  const { createSubjectId } = useLocalSearchParams(); //userId
+  const { createSubjectId, courseType, maxCapacity } = useLocalSearchParams(); //userId
+  const revenueCatContext = useRevenueCat();
   const [subjectName, setSubjectName] = useState("");
   const [subjectDescription, setSubjectDescription] = useState("");
   const [image, setImage] = useState(null);
@@ -62,6 +65,13 @@ const CreateSubject = () => {
   const EULA_PDF_URL = `https://coachacademic.s3.ap-southeast-1.amazonaws.com/EULA+/COACHACADEM_TOU_(EULA).pdf`;
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Multi-student course fields
+  const [currentCourseType, setCurrentCourseType] = useState<string>(courseType as string || 'SINGLE_STUDENT');
+  const [scheduledDateTime, setScheduledDateTime] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [currentMaxCapacity, setCurrentMaxCapacity] = useState<number>(parseInt(maxCapacity as string) || 1);
 
   // Add initialization error tracking
   useEffect(() => {
@@ -72,12 +82,40 @@ const CreateSubject = () => {
         throw new Error('createSubjectId is undefined');
       }
 
+      // Set course type from params
+      if (courseType) {
+        setCurrentCourseType(courseType as string);
+      }
+
+      // Get max capacity from RevenueCat if multi-student
+      // TODO: Re-enable RevenueCat checks after entitlement verification
+      // For testing: use maxCapacity from params or default to 10
+      if (courseType === 'MULTI_STUDENT') {
+        if (maxCapacity) {
+          setCurrentMaxCapacity(parseInt(maxCapacity as string));
+        } else {
+          setCurrentMaxCapacity(10); // Default for testing
+        }
+      }
+      
+      // Original RevenueCat check code (commented out for testing):
+      // if (courseType === 'MULTI_STUDENT' && revenueCatContext?.getMultiStudentCapacity) {
+      //   revenueCatContext.getMultiStudentCapacity().then((capacity) => {
+      //     if (capacity) {
+      //       setCurrentMaxCapacity(capacity);
+      //     } else if (maxCapacity) {
+      //       setCurrentMaxCapacity(parseInt(maxCapacity as string));
+      //     }
+      //   });
+      // }
+
       Sentry.addBreadcrumb({
         category: 'component',
         message: 'CreateSubject component initialized',
         level: 'info',
         data: {
           createSubjectId,
+          courseType: courseType || 'SINGLE_STUDENT',
           timestamp: new Date().toISOString()
         }
       });
@@ -106,7 +144,7 @@ const CreateSubject = () => {
         ]
       );
     }
-  }, [createSubjectId]);
+  }, [createSubjectId, courseType, maxCapacity]);
 
   console.log(pdf1, 'pdf1');
   console.log(pdf2, 'pdf2');
@@ -314,6 +352,7 @@ const CreateSubject = () => {
   };
 
   const handleCreateSubject = async () => {
+
     setIsLoading(true);
     if (!isDocumentsConfirmed) {
       Alert.alert('Please confirm your documents first.');
@@ -367,6 +406,28 @@ const CreateSubject = () => {
         setIsLoading(false);
         return;
       }
+
+      // Validate multi-student course requirements
+      if (currentCourseType === 'MULTI_STUDENT') {
+        console.log(scheduledDateTime, 'scheduledDateTime');
+        
+        if (!scheduledDateTime) {
+          validationErrors.push("Scheduled date and time is required for multi-student courses");
+          setIsLoading(false);
+          return;
+        }
+        if (scheduledDateTime <= new Date()) {
+          validationErrors.push("Scheduled date and time must be in the future");
+          setIsLoading(false);
+          return;
+        }
+        if (currentMaxCapacity < 1) {
+          validationErrors.push("Max capacity must be at least 1");
+          setIsLoading(false);
+          return;
+        }
+      }
+
       // if (!subjectNameSubHeading.trim()) {
       //   validationErrors.push("Subject subheading is required");
       // }
@@ -398,7 +459,7 @@ const CreateSubject = () => {
         return;
       }
       
-      const subject = {
+      const subject: any = {
         subjectName,
         subjectDescription,
         subjectImage: image,
@@ -411,7 +472,18 @@ const CreateSubject = () => {
         subjectLanguage,
         subjectPoints,
         teacherVerification:[pdf1, pdf2],
+        courseType: currentCourseType,
       };
+      console.log(currentCourseType, 'currentCourseType');
+      
+
+      // Add multi-student specific fields
+      if (currentCourseType === 'MULTI_STUDENT') {
+        subject.scheduledDateTime = scheduledDateTime?.toISOString();
+        subject.maxCapacity = currentMaxCapacity;
+        console.log('inside multi');
+        
+      }
       
       console.log("subject", subject);
       const token = await AsyncStorage.getItem("authToken");
@@ -603,6 +675,179 @@ const CreateSubject = () => {
                 keyboardType="numeric"
                 isDuration
               />
+              {/* Multi-Student Course Date/Time Picker */}
+              {currentCourseType === 'MULTI_STUDENT' && (
+                <View style={styles.inputWrapper}>
+                  <View style={styles.labelContainer}>
+                    <Text style={styles.inputLabel}>Scheduled Date & Time</Text>
+                    <TouchableOpacity 
+                      onPress={() => Alert.alert('Scheduled Date & Time', 'Select the date and time when this multi-student course will take place. This will be the same for all enrolled students.')}
+                      style={styles.infoButton}
+                    >
+                      <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.dateTimeContainer}>
+                    <TouchableOpacity
+                      style={styles.dateTimeButton}
+                      onPress={() => setShowDatePicker(true)}
+                    >
+                      <Ionicons name="calendar-outline" size={20} color={COLORS.primary} />
+                      <Text style={styles.dateTimeText}>
+                        {scheduledDateTime 
+                          ? scheduledDateTime.toLocaleDateString('en-US', { 
+                              year: 'numeric', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            })
+                          : 'Select Date'}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.dateTimeButton}
+                      onPress={() => setShowTimePicker(true)}
+                    >
+                      <Ionicons name="time-outline" size={20} color={COLORS.primary} />
+                      <Text style={styles.dateTimeText}>
+                        {scheduledDateTime
+                          ? scheduledDateTime.toLocaleTimeString('en-US', { 
+                              hour: '2-digit', 
+                              minute: '2-digit',
+                              hour12: true
+                            })
+                          : 'Select Time'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  {Platform.OS === 'ios' ? (
+                    <>
+                      {showDatePicker && (
+                        <Modal
+                          visible={showDatePicker}
+                          transparent={true}
+                          animationType="slide"
+                          onRequestClose={() => setShowDatePicker(false)}
+                        >
+                          <View style={styles.pickerModalContainer}>
+                            <View style={styles.pickerModalContent}>
+                              <View style={styles.iosPickerHeader}>
+                                <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                                  <Text style={styles.iosPickerCancelText}>Cancel</Text>
+                                </TouchableOpacity>
+                                <Text style={styles.iosPickerTitle}>Select Date</Text>
+                                <TouchableOpacity
+                                  onPress={() => setShowDatePicker(false)}
+                                >
+                                  <Text style={styles.iosPickerDoneText}>Done</Text>
+                                </TouchableOpacity>
+                              </View>
+                              <DateTimePicker
+                                value={scheduledDateTime || new Date()}
+                                mode="date"
+                                display="spinner"
+                                minimumDate={new Date()}
+                                onChange={(event, selectedDate) => {
+                                  if (selectedDate) {
+                                    const currentTime = scheduledDateTime || new Date();
+                                    const newDateTime = new Date(selectedDate);
+                                    newDateTime.setHours(currentTime.getHours());
+                                    newDateTime.setMinutes(currentTime.getMinutes());
+                                    setScheduledDateTime(newDateTime);
+                                    
+                                  }
+                                }}
+                                style={styles.iosPicker}
+                              />
+                            </View>
+                          </View>
+                        </Modal>
+                      )}
+                      {showTimePicker && (
+                        <Modal
+                          visible={showTimePicker}
+                          transparent={true}
+                          animationType="slide"
+                          onRequestClose={() => setShowTimePicker(false)}
+                        >
+                          <View style={styles.pickerModalContainer}>
+                            <View style={styles.pickerModalContent}>
+                              <View style={styles.iosPickerHeader}>
+                                <TouchableOpacity onPress={() => setShowTimePicker(false)}>
+                                  <Text style={styles.iosPickerCancelText}>Cancel</Text>
+                                </TouchableOpacity>
+                                <Text style={styles.iosPickerTitle}>Select Time</Text>
+                                <TouchableOpacity
+                                  onPress={() => setShowTimePicker(false)}
+                                >
+                                  <Text style={styles.iosPickerDoneText}>Done</Text>
+                                </TouchableOpacity>
+                              </View>
+                              <DateTimePicker
+                                value={scheduledDateTime || new Date()}
+                                mode="time"
+                                display="spinner"
+                                onChange={(event, selectedTime) => {
+                                  if (selectedTime) {
+                                    const currentDate = scheduledDateTime || new Date();
+                                    const newDateTime = new Date(currentDate);
+                                    newDateTime.setHours(selectedTime.getHours());
+                                    newDateTime.setMinutes(selectedTime.getMinutes());
+                                    setScheduledDateTime(newDateTime);
+                                  }
+                                }}
+                                style={styles.iosPicker}
+                              />
+                            </View>
+                          </View>
+                        </Modal>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {showDatePicker && (
+                        <DateTimePicker
+                          value={scheduledDateTime || new Date()}
+                          mode="date"
+                          display="default"
+                          minimumDate={new Date()}
+                          onChange={(event, selectedDate) => {
+                            setShowDatePicker(false);
+                            if (event.type === 'set' && selectedDate) {
+                              const currentTime = scheduledDateTime || new Date();
+                              const newDateTime = new Date(selectedDate);
+                              newDateTime.setHours(currentTime.getHours());
+                              newDateTime.setMinutes(currentTime.getMinutes());
+                              setScheduledDateTime(newDateTime);
+                            }
+                          }}
+                        />
+                      )}
+                      {showTimePicker && (
+                        <DateTimePicker
+                          value={scheduledDateTime || new Date()}
+                          mode="time"
+                          display="default"
+                          onChange={(event, selectedTime) => {
+                            setShowTimePicker(false);
+                            if (event.type === 'set' && selectedTime) {
+                              const currentDate = scheduledDateTime || new Date();
+                              const newDateTime = new Date(currentDate);
+                              newDateTime.setHours(selectedTime.getHours());
+                              newDateTime.setMinutes(selectedTime.getMinutes());
+                              setScheduledDateTime(newDateTime);
+                            }
+                          }}
+                        />
+                      )}
+                    </>
+                  )}
+                  <View style={styles.capacityInfo}>
+                    <Text style={styles.capacityText}>
+                      Max Capacity: {currentMaxCapacity} students
+                    </Text>
+                  </View>
+                </View>
+              )}
               <FormInput
                 label="Search Heading"
                 info="Add keywords that will help students find your subject when searching. Use relevant terms and topics."
@@ -1197,6 +1442,75 @@ const styles = StyleSheet.create({
     padding: moderateScale(12),
     fontSize: moderateScale(16),
     color: welcomeCOLOR.black,
+  },
+  dateTimeContainer: {
+    flexDirection: 'row',
+    gap: horizontalScale(12),
+    marginTop: verticalScale(8),
+  },
+  dateTimeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    padding: moderateScale(12),
+    borderRadius: moderateScale(8),
+    borderWidth: 1,
+    borderColor: '#e1e1e1',
+    gap: horizontalScale(8),
+  },
+  dateTimeText: {
+    fontSize: moderateScale(14),
+    color: welcomeCOLOR.black,
+    flex: 1,
+  },
+  capacityInfo: {
+    marginTop: verticalScale(8),
+    padding: moderateScale(8),
+    backgroundColor: '#E3F2FD',
+    borderRadius: moderateScale(8),
+  },
+  capacityText: {
+    fontSize: moderateScale(12),
+    color: COLORS.primary,
+    fontFamily: FONT.medium,
+  },
+  pickerModalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  pickerModalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: moderateScale(20),
+    borderTopRightRadius: moderateScale(20),
+    paddingBottom: verticalScale(20),
+  },
+  iosPickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: moderateScale(16),
+    borderBottomWidth: 1,
+    borderBottomColor: '#e1e1e1',
+  },
+  iosPickerTitle: {
+    fontSize: moderateScale(18),
+    fontFamily: FONT.bold,
+    color: welcomeCOLOR.black,
+  },
+  iosPickerCancelText: {
+    fontSize: moderateScale(16),
+    color: '#666',
+    fontFamily: FONT.medium,
+  },
+  iosPickerDoneText: {
+    fontSize: moderateScale(16),
+    color: COLORS.primary,
+    fontFamily: FONT.bold,
+  },
+  iosPicker: {
+    height: verticalScale(200),
   },
 });
 

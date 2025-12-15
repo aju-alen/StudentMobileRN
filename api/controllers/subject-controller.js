@@ -8,7 +8,23 @@ const prisma = new PrismaClient();
 const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
 
 export const createSubject = async (req, res, next) => {
-    const { subjectName, subjectDescription, subjectImage, subjectPrice, subjectBoard, subjectGrade, subjectDuration, subjectNameSubHeading,subjectSearchHeading, subjectLanguage, subjectPoints,teacherVerification } = req.body;
+    const { 
+        subjectName, 
+        subjectDescription, 
+        subjectImage, 
+        subjectPrice, 
+        subjectBoard, 
+        subjectGrade, 
+        subjectDuration, 
+        subjectNameSubHeading,
+        subjectSearchHeading, 
+        subjectLanguage, 
+        subjectPoints,
+        teacherVerification,
+        courseType,
+        scheduledDateTime,
+        maxCapacity
+    } = req.body;
 
     console.log(req.userId,'req.userId');
     
@@ -21,6 +37,21 @@ export const createSubject = async (req, res, next) => {
         // Check if user is a teacher
         if (req.userType !== 'TEACHER') {
             return res.status(400).json({ message: "Only teachers can create subjects" });
+        }
+
+        // Validate multi-student course requirements
+        if (courseType === 'MULTI_STUDENT') {
+            if (!scheduledDateTime) {
+                return res.status(400).json({ message: "Scheduled date and time is required for multi-student courses" });
+            }
+            if (!maxCapacity || maxCapacity < 1) {
+                return res.status(400).json({ message: "Max capacity must be at least 1 for multi-student courses" });
+            }
+            // Validate scheduledDateTime is in the future
+            const scheduledDate = new Date(scheduledDateTime);
+            if (scheduledDate <= new Date()) {
+                return res.status(400).json({ message: "Scheduled date and time must be in the future" });
+            }
         }
 
         // Get TeacherProfile.id from User.id
@@ -39,23 +70,34 @@ export const createSubject = async (req, res, next) => {
 
         const teacherProfileId = user.teacherProfile.id;
 
+        // Prepare subject data
+        const subjectData = {
+            subjectName,
+            subjectDescription,
+            subjectImage,
+            subjectPrice: parseInt(subjectPrice) * 100,
+            subjectBoard,
+            subjectGrade: parseInt(subjectGrade),
+            subjectDuration: parseInt(subjectDuration),
+            subjectNameSubHeading,
+            subjectSearchHeading,
+            subjectLanguage,
+            subjectPoints,
+            teacherVerification,
+            teacherId: teacherProfileId,
+            courseType: courseType || 'SINGLE_STUDENT',
+            maxCapacity: courseType === 'MULTI_STUDENT' ? parseInt(maxCapacity) : 1,
+            currentEnrollment: 0,
+        };
+
+        // Add scheduledDateTime only for multi-student courses
+        if (courseType === 'MULTI_STUDENT' && scheduledDateTime) {
+            subjectData.scheduledDateTime = new Date(scheduledDateTime);
+        }
+
         // Create a new subject with teacherId (TeacherProfile.id)
         const newSubject = await prisma.subject.create({
-            data: {
-                subjectName,
-                subjectDescription,
-                subjectImage,
-                subjectPrice: parseInt(subjectPrice) * 100,
-                subjectBoard,
-                subjectGrade: parseInt(subjectGrade),
-                subjectDuration: parseInt(subjectDuration),
-                subjectNameSubHeading,
-                subjectSearchHeading,
-                subjectLanguage,
-                subjectPoints,
-                teacherVerification,
-                teacherId: teacherProfileId, // Use TeacherProfile.id instead of User.id
-            },
+            data: subjectData,
         });
 
             const emailHtml = `
@@ -549,9 +591,21 @@ export const verifySubject = async (req, res, next) => {
 
         console.log("Admin access granted");
 
-        // Fetch the subject by ID
+        // Fetch the subject by ID with teacher info
         const subject = await prisma.subject.findUnique({
             where: { id: req.params.subjectId },
+            include: {
+                teacherProfile: {
+                    include: {
+                        user: {
+                            select: {
+                                email: true,
+                                name: true,
+                            },
+                        },
+                    },
+                },
+            },
         });
 
         console.log(subject, "Fetched subject");
@@ -567,10 +621,54 @@ export const verifySubject = async (req, res, next) => {
         }
 
         // Update the subject verification status
-        const updatedSubject = await prisma.subject.update({
+        let updatedSubject = await prisma.subject.update({
             where: { id: req.params.subjectId },
             data: { subjectVerification: true },
         });
+
+        // If it's a multi-student course and Zoom meeting hasn't been created yet, create it
+        if (subject.courseType === 'MULTI_STUDENT' && !subject.zoomMeetingId && subject.scheduledDateTime) {
+            try {
+                const { createZoomMeeting } = await import('../services/zoomService.js');
+                const teacherEmail = subject.teacherProfile?.user?.email;
+                const teacherName = subject.teacherProfile?.user?.name || subject.subjectName;
+
+                if (!teacherEmail) {
+                    console.error('Teacher email not found for Zoom meeting creation');
+                } else {
+                    // Calculate duration in minutes
+                    const durationInMinutes = subject.subjectDuration * 60;
+                    
+                    // Create Zoom meeting with participant limit (teacher + maxCapacity students)
+                    const participantLimit = subject.maxCapacity + 1; // teacher + students
+                    
+                    const meeting = await createZoomMeeting(
+                        teacherEmail,
+                        subject.subjectName,
+                        new Date(subject.scheduledDateTime),
+                        durationInMinutes,
+                        participantLimit
+                    );
+
+                    if (meeting && meeting.id) {
+                        // Update subject with Zoom meeting details
+                        updatedSubject = await prisma.subject.update({
+                            where: { id: req.params.subjectId },
+                            data: {
+                                zoomMeetingId: meeting.id,
+                                zoomMeetingPassword: meeting.password || null,
+                                zoomMeetingUrl: meeting.join_url || null,
+                            },
+                        });
+
+                        console.log('Zoom meeting created for multi-student course:', meeting.id);
+                    }
+                }
+            } catch (zoomError) {
+                console.error('Error creating Zoom meeting during verification:', zoomError);
+                // Don't fail verification if Zoom creation fails, just log it
+            }
+        }
 
         console.log(updatedSubject, "Subject verified successfully");
 
@@ -740,4 +838,83 @@ export const unsaveSubject = async (req, res, next) => {
         next(err);
     }
 }
+
+export const getSubjectCapacity = async (req, res, next) => {
+    try {
+        const { subjectId } = req.params;
+
+        if (!subjectId) {
+            return res.status(400).json({ error: 'Subject ID is required' });
+        }
+
+        const subject = await prisma.subject.findUnique({
+            where: { id: subjectId },
+            select: {
+                courseType: true,
+                maxCapacity: true,
+                currentEnrollment: true,
+                subjectVerification: true,
+            },
+        });
+
+        if (!subject) {
+            return res.status(404).json({ error: 'Subject not found' });
+        }
+
+        const availableSpots = Math.max(0, subject.maxCapacity - subject.currentEnrollment);
+
+        res.status(200).json({
+            courseType: subject.courseType,
+            maxCapacity: subject.maxCapacity,
+            currentEnrollment: subject.currentEnrollment,
+            availableSpots,
+            isFull: availableSpots === 0,
+            isVerified: subject.subjectVerification,
+        });
+    } catch (error) {
+        console.error('Error fetching subject capacity:', error);
+        next(error);
+    }
+};
+
+export const getMultiStudentSubjects = async (req, res, next) => {
+    try {
+        const subjects = await prisma.subject.findMany({
+            where: {
+                courseType: 'MULTI_STUDENT',
+                subjectVerification: true,
+            },
+            include: {
+                teacherProfile: {
+                    include: {
+                        user: {
+                            select: {
+                                name: true,
+                                profileImage: true,
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+
+        // Transform response to match expected format
+        const transformedSubjects = subjects.map(subject => ({
+            ...subject,
+            user: {
+                name: subject.teacherProfile?.user?.name,
+                profileImage: subject.teacherProfile?.user?.profileImage,
+            },
+            availableSpots: Math.max(0, subject.maxCapacity - subject.currentEnrollment),
+        }));
+
+        res.status(200).json(transformedSubjects);
+    } catch (err) {
+        console.error(err);
+        next(err);
+    }
+};
 

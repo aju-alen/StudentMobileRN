@@ -22,7 +22,7 @@ export const getPublisherKey = async (req, res, next) => {
 
 export const paymentSheet = async (req, res, next) => {
     try {
-        const { amount, currency = 'aed', customerId, teacherId, subjectId, date, time, subjectDuration, teacherEmail, subjectName, userEmail } = req.body;
+        const { amount, currency = 'aed', customerId, teacherId, subjectId, date, time, subjectDuration, teacherEmail, subjectName, userEmail, courseType } = req.body;
         const userId = req.body.userId;
         
         
@@ -38,10 +38,29 @@ export const paymentSheet = async (req, res, next) => {
                 id: subjectId
             }
         });
+        if (!subject) {
+            return res.status(404).json({
+                error: 'Subject not found.'
+            });
+        }
         if (subject.subjectPrice !== amount) {
             return res.status(400).json({
                 error: 'Invalid amount. Price of the subject is not same as amount.'
             });
+        }
+
+        // For multi-student courses, check capacity before allowing payment
+        if (subject.courseType === 'MULTI_STUDENT') {
+            if (!subject.subjectVerification) {
+                return res.status(400).json({
+                    error: 'This course has not been verified yet.'
+                });
+            }
+            if (subject.currentEnrollment >= subject.maxCapacity) {
+                return res.status(400).json({
+                    error: 'Course is full. No spots available.'
+                });
+            }
         }
         // Validate currency
         const validCurrencies = ['aed'];
@@ -80,12 +99,13 @@ export const paymentSheet = async (req, res, next) => {
                 userId,
                 teacherId,
                 subjectId,
-                date,
-                time,
+                date: date || '',
+                time: time || '',
                 subjectDuration,
                 teacherEmail,
                 subjectName,
-                userEmail
+                userEmail,
+                courseType: subject.courseType || courseType || 'SINGLE_STUDENT'
             }
         });
 
@@ -356,46 +376,176 @@ export const stripeWebhook = async (req, res, next) => {
                     const teacherProfileId = teacherUser.teacherProfile.id;
                     const studentProfileId = studentUser.studentProfile.id;
 
-                    // create meeting for teacher
-                    const meeting = await createZoomMeeting(chargeSucceeded.metadata.teacherEmail, chargeSucceeded.metadata.subjectName, new Date(chargeSucceeded.metadata.date), parseInt(chargeSucceeded.metadata.subjectDuration) * 60);
+                    // Check course type from metadata
+                    const courseType = chargeSucceeded.metadata.courseType || 'SINGLE_STUDENT';
+
+                    if (courseType === 'MULTI_STUDENT') {
+                        // Handle multi-student course enrollment
+                        // Get subject to check capacity again (double-check)
+                        const subject = await prisma.subject.findUnique({
+                            where: { id: chargeSucceeded.metadata.subjectId },
+                            select: {
+                                courseType: true,
+                                maxCapacity: true,
+                                currentEnrollment: true,
+                                zoomMeetingUrl: true,
+                                zoomMeetingPassword: true,
+                                zoomMeetingId: true,
+                            },
+                        });
+
+                        if (!subject || subject.courseType !== 'MULTI_STUDENT') {
+                            throw new Error('Subject is not a multi-student course');
+                        }
+
+                        if (subject.currentEnrollment >= subject.maxCapacity) {
+                            throw new Error('Course is full. Cannot enroll.');
+                        }
+
+                        // Check if student is already enrolled
+                        const existingEnrollment = await prisma.courseEnrollment.findUnique({
+                            where: {
+                                subjectId_studentId: {
+                                    subjectId: chargeSucceeded.metadata.subjectId,
+                                    studentId: studentProfileId,
+                                },
+                            },
+                        });
+
+                        if (existingEnrollment && existingEnrollment.enrollmentStatus !== 'CANCELLED') {
+                            throw new Error('Student is already enrolled in this course');
+                        }
+
+                        // Create enrollment and stripe purchase in transaction
+                        const { saveTransaction, createEnrollment } = await prisma.$transaction(async (tx) => {
+                            // Create or update enrollment
+                            let enrollment;
+                            if (existingEnrollment && existingEnrollment.enrollmentStatus === 'CANCELLED') {
+                                // Re-enroll if previously cancelled
+                                enrollment = await tx.courseEnrollment.update({
+                                    where: { id: existingEnrollment.id },
+                                    data: {
+                                        enrollmentStatus: 'CONFIRMED',
+                                        enrolledAt: new Date(),
+                                    },
+                                });
+                            } else {
+                                // Create new enrollment
+                                enrollment = await tx.courseEnrollment.create({
+                                    data: {
+                                        subjectId: chargeSucceeded.metadata.subjectId,
+                                        studentId: studentProfileId,
+                                        enrollmentStatus: 'CONFIRMED',
+                                    },
+                                });
+                            }
+
+                            // Increment enrollment count
+                            await tx.subject.update({
+                                where: { id: chargeSucceeded.metadata.subjectId },
+                                data: {
+                                    currentEnrollment: {
+                                        increment: 1,
+                                    },
+                                },
+                            });
+
+                            // Create stripe purchase with enrollment reference
+                            const saveTransaction = await tx.stripePurchases.create({
+                                data: {
+                                    studentId: studentProfileId,
+                                    subjectId: chargeSucceeded.metadata.subjectId,
+                                    purchaseStatus: BookingStatus.CONFIRMED,
+                                    purchaseAmount: chargeSucceeded.amount,
+                                    purchaseCurrency: chargeSucceeded.currency,
+                                    stripeCustomerId: chargeSucceeded.customer,
+                                    purchaseReceiptUrl: chargeSucceeded.receipt_url,
+                                    courseEnrollmentId: enrollment.id, // Link to enrollment instead of booking
+                                },
+                            });
+
+                            return { saveTransaction, createEnrollment: enrollment };
+                        });
+
+                        // Create UserSubject entry for multi-student courses too
+                        const checkUserSubject = await prisma.userSubject.findUnique({
+                            where: {
+                                studentId_subjectId: {
+                                    studentId: studentProfileId,
+                                    subjectId: chargeSucceeded.metadata.subjectId,
+                                },
+                            },
+                        });
+
+                        if (!checkUserSubject) {
+                            await prisma.userSubject.create({
+                                data: {
+                                    studentId: studentProfileId,
+                                    subjectId: chargeSucceeded.metadata.subjectId,
+                                },
+                            });
+                        }
+                    } else {
+                        // Handle single-student course booking (existing flow)
+                        // create meeting for teacher
+                        const meeting = await createZoomMeeting(chargeSucceeded.metadata.teacherEmail, chargeSucceeded.metadata.subjectName, new Date(chargeSucceeded.metadata.date), parseInt(chargeSucceeded.metadata.subjectDuration) * 60);
+                        
                     
-                
-                const { saveTransaction, createBooking } = await prisma.$transaction(async (tx) => {
-                    // Create booking first
-                    const createBooking = await tx.booking.create({
-                        data: {
-                            subjectId: chargeSucceeded.metadata.subjectId,
-                            teacherId: teacherProfileId,
-                            studentId: studentProfileId,
-                            bookingDate: new Date(chargeSucceeded.metadata.date),
-                            bookingTime: chargeSucceeded.metadata.time,
-                            bookingStatus: BookingStatus.CONFIRMED,
-                            bookingPrice: chargeSucceeded.amount,
-                            bookingPaymentCompleted: true,
-                            bookingZoomUrl: meeting.join_url,
-                            bookingZoomPassword: meeting.password,
-                            bookingZoomId: meeting.id,
-                            bookingHours: parseInt(chargeSucceeded.metadata.subjectDuration),
-                            bookingMinutes: (chargeSucceeded.metadata.subjectDuration) * 60
-                        }
-                    });
+                        const { saveTransaction, createBooking } = await prisma.$transaction(async (tx) => {
+                            // Create booking first
+                            const createBooking = await tx.booking.create({
+                                data: {
+                                    subjectId: chargeSucceeded.metadata.subjectId,
+                                    teacherId: teacherProfileId,
+                                    studentId: studentProfileId,
+                                    bookingDate: new Date(chargeSucceeded.metadata.date),
+                                    bookingTime: chargeSucceeded.metadata.time,
+                                    bookingStatus: BookingStatus.CONFIRMED,
+                                    bookingPrice: chargeSucceeded.amount,
+                                    bookingPaymentCompleted: true,
+                                    bookingZoomUrl: meeting.join_url,
+                                    bookingZoomPassword: meeting.password,
+                                    bookingZoomId: meeting.id,
+                                    bookingHours: parseInt(chargeSucceeded.metadata.subjectDuration),
+                                    bookingMinutes: (chargeSucceeded.metadata.subjectDuration) * 60
+                                }
+                            });
 
-                    // Create stripe purchase with booking reference
-                    const saveTransaction = await tx.stripePurchases.create({
-                        data: {
-                            studentId: studentProfileId,
-                            subjectId: chargeSucceeded.metadata.subjectId,
-                            purchaseStatus: BookingStatus.CONFIRMED,
-                            purchaseAmount: chargeSucceeded.amount,
-                            purchaseCurrency: chargeSucceeded.currency,
-                            stripeCustomerId: chargeSucceeded.customer,
-                            purchaseReceiptUrl: chargeSucceeded.receipt_url,
-                            bookingId: createBooking.id // Link to the booking
-                        }
-                    });
+                            // Create stripe purchase with booking reference
+                            const saveTransaction = await tx.stripePurchases.create({
+                                data: {
+                                    studentId: studentProfileId,
+                                    subjectId: chargeSucceeded.metadata.subjectId,
+                                    purchaseStatus: BookingStatus.CONFIRMED,
+                                    purchaseAmount: chargeSucceeded.amount,
+                                    purchaseCurrency: chargeSucceeded.currency,
+                                    stripeCustomerId: chargeSucceeded.customer,
+                                    purchaseReceiptUrl: chargeSucceeded.receipt_url,
+                                    bookingId: createBooking.id // Link to the booking
+                                }
+                            });
 
-                    return { saveTransaction, createBooking };
-                });
+                            return { saveTransaction, createBooking };
+                        });
+
+                        const checkUserSubject = await prisma.userSubject.findUnique({
+                            where: {
+                                studentId_subjectId: {
+                                    studentId: studentProfileId,
+                                    subjectId: chargeSucceeded.metadata.subjectId
+                                }
+                            }
+                        });
+                        
+                        if (!checkUserSubject) {
+                            await prisma.userSubject.create({
+                                data: {
+                                    studentId: studentProfileId,
+                                    subjectId: chargeSucceeded.metadata.subjectId
+                                }
+                            });
+                        }
+                    }
 
                 const checkUserSubject = await prisma.userSubject.findUnique({
                     where: {
@@ -619,7 +769,7 @@ export const stripeWebhook = async (req, res, next) => {
                                     <div class="booking-details">
                                         <div class="detail-row">
                                             <span class="detail-label">Booking ID</span>
-                                            <span class="detail-value"> ${createBooking.id}</span>
+                                            <span class="detail-value"> ${courseType === 'MULTI_STUDENT' ? saveTransaction.courseEnrollmentId : createBooking.id}</span>
                                         </div>
                                         <div class="detail-row">
                                             <span class="detail-label">Course</span>
@@ -875,7 +1025,7 @@ export const stripeWebhook = async (req, res, next) => {
                                     <div class="booking-details">
                                         <div class="detail-row">
                                             <span class="detail-label">Booking ID</span>
-                                            <span class="detail-value"> ${createBooking.id}</span>
+                                            <span class="detail-value"> ${courseType === 'MULTI_STUDENT' ? saveTransaction.courseEnrollmentId : createBooking.id}</span>
                                         </div>
                                         <div class="detail-row">
                                             <span class="detail-label">Subject</span>
@@ -927,7 +1077,7 @@ export const stripeWebhook = async (req, res, next) => {
                     console.error('Error sending new booking email to teacher via Resend:', emailError);
                 }                
                          
-                console.log('saveTransaction', saveTransaction);
+                console.log('saveTransaction', saveTransaction)
                 console.log('createBooking', createBooking);
             }
 

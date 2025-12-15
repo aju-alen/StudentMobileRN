@@ -52,6 +52,11 @@ const ColumnSubjectCards = ({subjectData, handleItemPress, isHorizontal}) => {
                 </View>
               </View>
             </View>
+            {item?.maxCapacity > 1 && (
+              <Text style={styles.enrollmentText}>
+                {(item?.currentEnrollment ?? 0)} / {item?.maxCapacity} enrolled
+              </Text>
+            )}
           </View>
         </View>
       </View>
@@ -200,5 +205,11 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(10),
     color: '#888',
     marginTop: verticalScale(2),
+  },
+  enrollmentText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(11),
+    color: '#2DCB63',
+    marginTop: verticalScale(6),
   }
 });
