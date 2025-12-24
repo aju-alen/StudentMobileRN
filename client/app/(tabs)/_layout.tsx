@@ -3,7 +3,9 @@ import React, { useEffect, useState } from "react";
 import { Tabs, useSegments } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from 'react-native';
-import { COLORS } from "../../constants";
+import { COLORS } from "../../constants"
+import { verticalScale, moderateScale, horizontalScale} from "../utils/metrics";
+import useSafeAreaInsets, { addBasePaddingToInset } from "../hooks/useSafeAreaInsets";
 
 interface UserDetails {
   isTeacher?: boolean;
@@ -13,6 +15,8 @@ interface UserDetails {
 const TabsLayout = () => {
   const segments = useSegments() as string[];
   const [userDetails, setUserDetails] = useState<UserDetails>({});
+  const insets = useSafeAreaInsets();
+  
   
   useEffect(() => {
     const getUserDetails = async () => {
@@ -45,20 +49,20 @@ const TabsLayout = () => {
   const isCommunityDetailRoute = segments.includes('community') && segments.length > 2;
 
   const defaultTabBarStyle = {
-    height: Platform.OS === 'ios' ? 88 : 60,
-    paddingBottom: Platform.OS === 'ios' ? 28 : 8,
-    paddingTop: Platform.OS === 'ios' ? 8 : 0,
+    height: Platform.OS === 'ios' ? verticalScale(88) : verticalScale(60) + insets.bottom,
+    paddingBottom: Platform.OS === 'ios' ? verticalScale(28) : addBasePaddingToInset(8, insets.bottom),
+    paddingTop: Platform.OS === 'ios' ? verticalScale(8) : 0,
     backgroundColor: 'white',
     borderTopWidth: 1,
     borderTopColor: '#eee',
-    elevation: 8,
+    elevation: verticalScale(8),
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: -2,
+      height: verticalScale(-2),
     },
     //shadowOpacity: 0.1,
-    shadowRadius: 3,
+    shadowRadius: verticalScale(3),
   };
 
   return (
@@ -75,14 +79,14 @@ const TabsLayout = () => {
           );
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: moderateScale(12),
           fontWeight: '500',
-          marginBottom: Platform.OS === 'ios' ? 0 : 4,
+          marginBottom: Platform.OS === 'ios' ? 0 : verticalScale(4),
           color: COLORS.primary || '#000',
         },
         tabBarStyle: isChatDetailRoute || isCommunityDetailRoute ? { display: 'none' } : defaultTabBarStyle,
         tabBarItemStyle: {
-          paddingVertical: 4,
+          paddingVertical: verticalScale(4),
         },
         tabBarActiveTintColor: COLORS.primary || '#000',
         tabBarInactiveTintColor: '#666',

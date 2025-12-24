@@ -3,9 +3,8 @@
     "name": "Coach Academ",
     "slug": "coach-academ",
     "scheme": "coachacadem",
-    "version": "1.0.6",
+    "version": "1.0.8",
     "orientation": "portrait",
-    "icon": "./assets/images/ca_logo_android.png",
     "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/images/logo.png",
@@ -18,16 +17,18 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.rise.coachacadem",
+      "icon": "./assets/images/ca_logo_android.png",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "27"
+      "buildNumber": "32"
     },
     "android": {
       "edgeToEdgeEnabled": true,
-      "versionCode": 8,
+      "versionCode": 10,
+      "icon": "./assets/images/playstore-icon.png",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.png",
+        "foregroundImage": "./assets/images/playstore-icon.png",
         "backgroundColor": "#FFFFFF"
       },
       "package": "com.rise.coachacadem",
@@ -78,6 +79,12 @@
           "url": "https://sentry.io/",
           "project": "ca_sentry",
           "organization": "rise-ltd"
+        }
+      ],
+      [
+        "expo-dev-client",
+        {
+          "launchMode": "most-recent"
         }
       ]
     ],

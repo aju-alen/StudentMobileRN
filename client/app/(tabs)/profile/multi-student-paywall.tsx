@@ -3,36 +3,31 @@ import {
   View,
   Text,
   StyleSheet,
-  Modal,
   TouchableOpacity,
   ActivityIndicator,
   Alert,
   ScrollView,
+  SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
 import Purchases, { PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
-import { useRevenueCat } from '../providers/RevenueCatProvider';
-import { COLORS } from '../../constants/theme';
-import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
-import { FONT } from '../../constants';
-
-interface MultiStudentPaywallModalProps {
-  visible: boolean;
-  onClose: () => void;
-  onPurchaseSuccess: () => void;
-  userEmail: string;
-}
+import { useRevenueCat } from '../../providers/RevenueCatProvider';
+import { COLORS } from '../../../constants/theme';
+import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
+import { FONT } from '../../../constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { axiosWithAuth } from '../../utils/customAxios';
+import { ipURL } from '../../utils/utils';
 
 // Configure product identifiers in RevenueCat dashboard
 // Entitlement identifier: "student_zoom_capacity"
 // Product identifiers: "zoom_capacity_10", "zoom_capacity_15", etc.
 
-const MultiStudentPaywallModal: React.FC<MultiStudentPaywallModalProps> = ({
-  visible,
-  onClose,
-  onPurchaseSuccess,
-  userEmail,
-}) => {
+const MultiStudentPaywallPage = () => {
+  const params = useLocalSearchParams();
+  const userEmail = (params.userEmail as string) || '';
+  
   const revenueCatContext = useRevenueCat();
   const [offerings, setOfferings] = useState<PurchasesOffering | null>(null);
   const [loading, setLoading] = useState(false);
@@ -40,16 +35,58 @@ const MultiStudentPaywallModal: React.FC<MultiStudentPaywallModalProps> = ({
   const [error, setError] = useState<string>('');
 
   if (!revenueCatContext) {
-    return null;
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Multi-Student Subscription</Text>
+          <View style={styles.placeholder} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>Initializing subscription service...</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
-  const { identifyUser, getStudentZoomCapacityOffering, purchasePackage, isReady } = revenueCatContext;
-  
+  const { identifyUser, getStudentZoomCapacityOffering, purchasePackage, getMultiStudentCapacity, isReady } = revenueCatContext;
+
+  // Check if user already has an active subscription and redirect if they do
   useEffect(() => {
-    if (visible && isReady) {
+    const checkExistingSubscription = async () => {
+      if (!isReady) return;
+
+      try {
+        // Identify user first to ensure we have latest subscription status
+        if (userEmail) {
+          await identifyUser(userEmail);
+        }
+
+        // Check if user already has an active subscription
+        const capacity = await getMultiStudentCapacity();
+        
+        if (capacity && capacity > 0) {
+          console.log('User already has active subscription with capacity:', capacity);
+          // User already has subscription, redirect back
+          router.back();
+        }
+      } catch (error) {
+        console.error('Error checking existing subscription:', error);
+        // Continue to show paywall if check fails
+      }
+    };
+
+    checkExistingSubscription();
+  }, [isReady, userEmail]);
+
+  useEffect(() => {
+    if (isReady) {
       fetchOfferings();
     }
-  }, [visible, isReady]);
+  }, [isReady]);
 
   const fetchOfferings = async () => {
     try {
@@ -119,9 +156,24 @@ const MultiStudentPaywallModal: React.FC<MultiStudentPaywallModalProps> = ({
         [
           {
             text: 'OK',
-            onPress: () => {
-              onPurchaseSuccess();
-              onClose();
+            onPress: async () => {
+              // Navigate back and then to course creation
+              router.back();
+              
+              // Small delay to ensure navigation completes
+              setTimeout(async () => {
+                try {
+                  const userverificationCheck = await axiosWithAuth.get(`${ipURL}/api/auth/verification-check`);
+                  const { id } = userverificationCheck.data.userDetail;
+                  const capacity = await revenueCatContext.getMultiStudentCapacity();
+                  
+                  if (capacity && capacity > 0) {
+                    router.push(`/(tabs)/profile/createSubject/${id}?courseType=MULTI_STUDENT&maxCapacity=${capacity}`);
+                  }
+                } catch (error) {
+                  console.error('Error navigating to course creation:', error);
+                }
+              }, 300);
             },
           },
         ]
@@ -159,7 +211,7 @@ const MultiStudentPaywallModal: React.FC<MultiStudentPaywallModalProps> = ({
     // Display ALL packages from the student_zoom_capacity offering
     for (const pkg of availablePackages) {
       // Extract capacity from product.identifier (where "zoom_capacity_10" is stored)
-      let capacity = extractCapacity(pkg.identifier, pkg.product.identifier);
+      const capacity = extractCapacity(pkg.identifier, pkg.product.identifier);
       
       console.log('Package:', {
         identifier: pkg.identifier,
@@ -167,23 +219,12 @@ const MultiStudentPaywallModal: React.FC<MultiStudentPaywallModalProps> = ({
         extractedCapacity: capacity
       });
       
-      // If we can't extract capacity, use a default or try to get it from the identifier
-      if (capacity === null) {
-        // Try extracting from package identifier as fallback
-        const fallbackMatch = pkg.identifier.match(/(\d+)/);
-        if (fallbackMatch) {
-          capacity = parseInt(fallbackMatch[1], 10);
-          console.log('Using fallback capacity from package identifier:', capacity);
-        } else {
-          // Default to 10 if we can't extract at all
-          capacity = 10;
-          console.log('Using default capacity: 10');
-        }
+      if (capacity !== null) {
+        packages.push({ package: pkg, capacity });
+        console.log('✓ Added package with capacity:', capacity);
+      } else {
+        console.log('✗ Skipped package - could not extract capacity');
       }
-      
-      // Always add the package - don't filter anything out
-      packages.push({ package: pkg, capacity });
-      console.log('✓ Added package with capacity:', capacity);
     }
     
     console.log('Final packages count:', packages.length);
@@ -192,161 +233,135 @@ const MultiStudentPaywallModal: React.FC<MultiStudentPaywallModalProps> = ({
     return packages.sort((a, b) => a.capacity - b.capacity);
   };
 
-  const formatPrice = (price: number, currencyCode: string): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currencyCode.toUpperCase(),
-    }).format(price);
-  };
-
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-      statusBarTranslucent
-    >
-      <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Multi-Student Course Subscription</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={COLORS.primary} />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Multi-Student Subscription</Text>
+        <View style={styles.placeholder} />
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <Text style={styles.description}>
+          Unlock the ability to create multi-student courses and host classes for multiple students at once.
+        </Text>
+
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+            <Text style={styles.loadingText}>Loading plans...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle" size={32} color="#FF6B6B" />
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={fetchOfferings}
+            >
+              <Text style={styles.retryButtonText}>Retry</Text>
             </TouchableOpacity>
           </View>
-
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            <Text style={styles.description}>
-              Unlock the ability to create multi-student courses and host classes for multiple students at once.
-            </Text>
-
-            {loading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
-                <Text style={styles.loadingText}>Loading plans...</Text>
-              </View>
-            ) : error ? (
-              <View style={styles.errorContainer}>
-                <Ionicons name="alert-circle" size={32} color="#FF6B6B" />
-                <Text style={styles.errorText}>{error}</Text>
-                <TouchableOpacity
-                  style={styles.retryButton}
-                  onPress={fetchOfferings}
-                >
-                  <Text style={styles.retryButtonText}>Retry</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.packagesContainer}>
-                {getAvailablePackages().map(({ package: pkg, capacity }) => (
-                  <TouchableOpacity
-                    key={pkg.identifier}
-                    style={[
-                      styles.packageCard,
-                      purchasing === pkg.identifier && styles.packageCardDisabled,
-                    ]}
-                    onPress={() => handlePurchase(pkg)}
-                    disabled={!!purchasing}
-                  >
-                    <View style={styles.packageHeader}>
-                      <View>
-                        <Text style={styles.packageTitle}>
-                          {capacity} Student Capacity
-                        </Text>
-                        <Text style={styles.packageSubtitle}>
-                          Host up to {capacity} students per course
-                        </Text>
-                      </View>
-                      <Ionicons name="people" size={32} color={COLORS.primary} />
-                    </View>
-                    
-                    <View style={styles.packagePrice}>
-                      <Text style={styles.priceText}>
-                        {pkg.product.priceString}
-                      </Text>
-                      {pkg.packageType === 'MONTHLY' && (
-                        <Text style={styles.pricePeriod}>/month</Text>
-                      )}
-                      {pkg.packageType === 'ANNUAL' && (
-                        <Text style={styles.pricePeriod}>/year</Text>
-                      )}
-                    </View>
-
-                    {purchasing === pkg.identifier ? (
-                      <View style={styles.purchasingContainer}>
-                        <ActivityIndicator size="small" color="white" />
-                        <Text style={styles.purchasingText}>Processing...</Text>
-                      </View>
-                    ) : (
-                      <TouchableOpacity
-                        style={styles.purchaseButton}
-                        onPress={() => handlePurchase(pkg)}
-                      >
-                        <Text style={styles.purchaseButtonText}>Subscribe</Text>
-                      </TouchableOpacity>
-                    )}
-                  </TouchableOpacity>
-                ))}
-
-                {getAvailablePackages().length === 0 && (
-                  <View style={styles.noPackagesContainer}>
-                    <Ionicons name="information-circle" size={32} color="#999" />
-                    <Text style={styles.noPackagesText}>
-                      No subscription plans available at the moment.
+        ) : (
+          <View style={styles.packagesContainer}>
+            {getAvailablePackages().map(({ package: pkg, capacity }) => (
+              <TouchableOpacity
+                key={pkg.identifier}
+                style={[
+                  styles.packageCard,
+                  purchasing === pkg.identifier && styles.packageCardDisabled,
+                ]}
+                onPress={() => handlePurchase(pkg)}
+                disabled={!!purchasing}
+              >
+                <View style={styles.packageHeader}>
+                  <View>
+                    <Text style={styles.packageTitle}>
+                      {capacity} Student Capacity
+                    </Text>
+                    <Text style={styles.packageSubtitle}>
+                      Host up to {capacity} students per course
                     </Text>
                   </View>
+                  <Ionicons name="people" size={32} color={COLORS.primary} />
+                </View>
+                
+                <View style={styles.packagePrice}>
+                  <Text style={styles.priceText}>
+                    {pkg.product.priceString}
+                  </Text>
+                  {pkg.packageType === 'MONTHLY' && (
+                    <Text style={styles.pricePeriod}>/month</Text>
+                  )}
+                  {pkg.packageType === 'ANNUAL' && (
+                    <Text style={styles.pricePeriod}>/year</Text>
+                  )}
+                </View>
+
+                {purchasing === pkg.identifier ? (
+                  <View style={styles.purchasingContainer}>
+                    <ActivityIndicator size="small" color="white" />
+                    <Text style={styles.purchasingText}>Processing...</Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.purchaseButton}
+                    onPress={() => handlePurchase(pkg)}
+                  >
+                    <Text style={styles.purchaseButtonText}>Subscribe</Text>
+                  </TouchableOpacity>
                 )}
+              </TouchableOpacity>
+            ))}
+
+            {getAvailablePackages().length === 0 && (
+              <View style={styles.noPackagesContainer}>
+                <Ionicons name="information-circle" size={32} color="#999" />
+                <Text style={styles.noPackagesText}>
+                  No subscription plans available at the moment.
+                </Text>
               </View>
             )}
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  overlay: {
+  container: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-    alignItems: 'stretch',
-  },
-  modalContainer: {
-    backgroundColor: 'white',
-    borderTopLeftRadius: moderateScale(24),
-    borderTopRightRadius: moderateScale(24),
-    maxHeight: '90%',
-    width: '100%',
-    minHeight: moderateScale(300),
-    paddingBottom: verticalScale(20),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 10,
+    backgroundColor: '#F4F6F8',
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: moderateScale(20),
+    justifyContent: 'space-between',
+    paddingHorizontal: horizontalScale(20),
+    paddingVertical: verticalScale(16),
+    backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
-  title: {
+  backButton: {
+    padding: moderateScale(4),
+  },
+  headerTitle: {
     fontSize: moderateScale(20),
     fontFamily: FONT.bold,
     color: COLORS.primary,
     flex: 1,
+    textAlign: 'center',
   },
-  closeButton: {
-    padding: moderateScale(4),
+  placeholder: {
+    width: moderateScale(32),
   },
   content: {
+    flex: 1,
     padding: moderateScale(20),
-    flexGrow: 1,
   },
   description: {
     fontSize: moderateScale(14),
@@ -394,7 +409,12 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
     borderRadius: moderateScale(16),
     padding: moderateScale(20),
-    backgroundColor: '#fafafa',
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   packageCardDisabled: {
     opacity: 0.6,
@@ -467,7 +487,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MultiStudentPaywallModal;
-
-
-
+export default MultiStudentPaywallPage;

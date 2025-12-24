@@ -24,7 +24,6 @@ import { axiosWithAuth } from "../../utils/customAxios";
 import UserSubjectCards from "../../components/UserSubjectCards";
 import * as Sentry from '@sentry/react-native';
 import CourseTypeModal from "../../components/CourseTypeModal";
-import MultiStudentPaywallModal from "../../components/MultiStudentPaywallModal";
 import { useRevenueCat } from "../../providers/RevenueCatProvider";
 
 interface User {
@@ -61,7 +60,7 @@ const ProfilePage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [showCourseTypeModal, setShowCourseTypeModal] = useState(false);
-  const [showPaywallModal, setShowPaywallModal] = useState(false);
+  const [isButtonCooldown, setIsButtonCooldown] = useState<boolean>(false);
   const revenueCatContext = useRevenueCat();
   
   const getUser = async () => {
@@ -92,6 +91,19 @@ const ProfilePage = () => {
   };
 
   const handleCreateNewSubject = async () => {
+    // Prevent multiple clicks within 3 seconds
+    if (isButtonCooldown) {
+      return;
+    }
+
+    // Set cooldown state
+    setIsButtonCooldown(true);
+    
+    // Reset cooldown after 3 seconds
+    setTimeout(() => {
+      setIsButtonCooldown(false);
+    }, 3000);
+
     try {
       const userverificationCheck = await axiosWithAuth.get(`${ipURL}/api/auth/verification-check`);
 
@@ -147,65 +159,47 @@ const ProfilePage = () => {
 
   const handleSelectMultiStudent = async () => {
     try {
-      // TODO: Re-enable RevenueCat checks after entitlement verification
-      // For testing: bypass RevenueCat checks and use default capacity
-      const defaultCapacity = 10; // Default capacity for testing
+      console.log(revenueCatContext, 'this is the revenue cat context');
       
-      const userverificationCheck = await axiosWithAuth.get(`${ipURL}/api/auth/verification-check`);
-      const { id } = userverificationCheck.data.userDetail;
-      
-      Sentry.addBreadcrumb({
-        category: 'navigation',
-        message: 'Creating multi student course',
-        level: 'info',
-        data: {
-          userId: id,
-          courseType: 'MULTI_STUDENT',
-          capacity: defaultCapacity
+      if (revenueCatContext && revenueCatContext.getMultiStudentCapacity) {
+        const capacity = await revenueCatContext.getMultiStudentCapacity();
+
+        console.log(capacity, 'this is the capacity');
+        
+        
+        if (capacity && capacity > 0) {
+          // User has entitlement, proceed to create multi-student course
+          const userverificationCheck = await axiosWithAuth.get(`${ipURL}/api/auth/verification-check`);
+          const { id } = userverificationCheck.data.userDetail;
+          
+          Sentry.addBreadcrumb({
+            category: 'navigation',
+            message: 'Creating multi student course',
+            level: 'info',
+            data: {
+              userId: id,
+              courseType: 'MULTI_STUDENT',
+              capacity
+            }
+          });
+          
+          router.push(`/(tabs)/profile/createSubject/${id}?courseType=MULTI_STUDENT&maxCapacity=${capacity}`);
+        } else {
+          // No entitlement, navigate to paywall page
+          console.log('no entitlement, navigating to paywall');
+          router.push(`/(tabs)/profile/multi-student-paywall?userEmail=${encodeURIComponent(user.email || '')}`);
         }
-      });
-      
-      router.push(`/(tabs)/profile/createSubject/${id}?courseType=MULTI_STUDENT&maxCapacity=${defaultCapacity}`);
-      
-      // Original RevenueCat check code (commented out for testing):
-      // if (revenueCatContext && revenueCatContext.getMultiStudentCapacity) {
-      //   const capacity = await revenueCatContext.getMultiStudentCapacity();
-      //   
-      //   if (capacity && capacity > 0) {
-      //     // User has entitlement, proceed to create multi-student course
-      //     const userverificationCheck = await axiosWithAuth.get(`${ipURL}/api/auth/verification-check`);
-      //     const { id } = userverificationCheck.data.userDetail;
-      //     
-      //     Sentry.addBreadcrumb({
-      //       category: 'navigation',
-      //       message: 'Creating multi student course',
-      //       level: 'info',
-      //       data: {
-      //         userId: id,
-      //         courseType: 'MULTI_STUDENT',
-      //         capacity
-      //       }
-      //     });
-      //     
-      //     router.push(`/(tabs)/profile/createSubject/${id}?courseType=MULTI_STUDENT&maxCapacity=${capacity}`);
-      //   } else {
-      //     // No entitlement, show paywall
-      //     setShowPaywallModal(true);
-      //   }
-      // } else {
-      //   // RevenueCat not ready, show paywall
-      //   setShowPaywallModal(true);
-      // }
+      } else {
+        // RevenueCat not ready, navigate to paywall page
+        console.log('revenue cat not ready, navigating to paywall');
+        router.push(`/(tabs)/profile/multi-student-paywall?userEmail=${encodeURIComponent(user.email || '')}`);
+      }
     } catch (error) {
       console.error('Error in handleSelectMultiStudent:', error);
       Alert.alert('Error', 'Failed to navigate to course creation.');
     }
   };
 
-  const handlePaywallSuccess = async () => {
-    // After successful purchase, try again
-    await handleSelectMultiStudent();
-  };
 
   const closeDropdown = () => {
     setShowDropdown(false);
@@ -343,11 +337,17 @@ const ProfilePage = () => {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Your Courses</Text>
             {userDetails?.isTeacher && (
-              <TouchableWithoutFeedback onPress={handleCreateNewSubject}>
-                <View style={styles.addButton}>
-                  <Text style={styles.addButtonText}>+ New Course</Text>
+              <TouchableOpacity 
+                onPress={handleCreateNewSubject}
+                disabled={loading || refreshing || isButtonCooldown}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.addButton, (loading || refreshing || isButtonCooldown) && styles.addButtonDisabled]}>
+                  <Text style={[styles.addButtonText, (loading || refreshing || isButtonCooldown) && styles.addButtonTextDisabled]}>
+                    + New Course
+                  </Text>
                 </View>
-              </TouchableWithoutFeedback>
+              </TouchableOpacity>
             )}
           </View>
        {userDetails?.isTeacher && <SubjectCards 
@@ -379,14 +379,6 @@ const ProfilePage = () => {
         onClose={() => setShowCourseTypeModal(false)}
         onSelectSingle={handleSelectSingleStudent}
         onSelectMulti={handleSelectMultiStudent}
-      />
-
-      {/* Multi-Student Paywall Modal */}
-      <MultiStudentPaywallModal
-        visible={showPaywallModal}
-        onClose={() => setShowPaywallModal(false)}
-        onPurchaseSuccess={handlePaywallSuccess}
-        userEmail={user.email || ''}
       />
     </View>
   );
@@ -559,6 +551,13 @@ const styles = StyleSheet.create({
     fontFamily: FONT.medium,
     fontSize: moderateScale(12),
     color: '#64748B',
+  },
+  addButtonDisabled: {
+    opacity: 0.5,
+    backgroundColor: '#cccccc',
+  },
+  addButtonTextDisabled: {
+    color: '#999999',
   },
   addButton: {
     backgroundColor: COLORS.primary,

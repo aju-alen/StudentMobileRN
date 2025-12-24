@@ -4,3 +4,7 @@ export const limitTextLength = ( text, limit ) => {
     }
     return text;
 };
+
+const helperFunctions = {};
+
+export default helperFunctions;

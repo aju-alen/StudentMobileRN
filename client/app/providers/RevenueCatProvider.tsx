@@ -11,9 +11,11 @@ const APIKeys = {
 
 interface RevenueCatProps {
   plan: number | null;
+  multiStudentCapacity: number | null;
   isReady: boolean;
   identifyUser: (email: string) => Promise<void>;
   getOfferings: () => Promise<PurchasesOffering | null>;
+  getStudentZoomCapacityOffering: () => Promise<PurchasesOffering | null>;
   purchasePackage: (packageToPurchase: PurchasesPackage) => Promise<CustomerInfo>;
   getMultiStudentCapacity: () => Promise<number | null>;
 }
@@ -21,9 +23,10 @@ interface RevenueCatProps {
 const RevenueCatContext = createContext<RevenueCatProps | null>(null);
 
 // Provide RevenueCat functions to our app
-export const RevenueCatProvider = ({ children }: any) => {
+ const RevenueCatProvider = ({ children }: any) => {
   const [isReady, setIsReady] = useState(false);
   const [plan, setPlan] = useState<number | null>(null);
+  const [multiStudentCapacity, setMultiStudentCapacity] = useState<number | null>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -56,12 +59,13 @@ export const RevenueCatProvider = ({ children }: any) => {
 
   // Update user state based on previous purchases
   const updateCustomerInformation = async (customerInfo: CustomerInfo) => {
-    const activeEntitlement = customerInfo?.entitlements.active['teacher_capacity'];
+    // Check teacher_capacity entitlement
+    const teacherEntitlement = customerInfo?.entitlements.active['teacher_capacity'];
     
-    if (activeEntitlement !== undefined) {
+    if (teacherEntitlement !== undefined) {
       // Extract plan number from product identifier or entitlement identifier
       // Assuming product identifiers like "plan_10", "plan_15", "plan_30" or similar
-      const productIdentifier = activeEntitlement.productIdentifier;
+      const productIdentifier = teacherEntitlement.productIdentifier;
       
       // Try to extract number from product identifier
       const planMatch = productIdentifier.match(/(\d+)/);
@@ -75,7 +79,7 @@ export const RevenueCatProvider = ({ children }: any) => {
         }
       } else {
         // If no number found, check entitlement identifier
-        const entitlementIdentifier = activeEntitlement.identifier;
+        const entitlementIdentifier = teacherEntitlement.identifier;
         const entitlementMatch = entitlementIdentifier.match(/(\d+)/);
         if (entitlementMatch) {
           const planNumber = parseInt(entitlementMatch[1], 10);
@@ -91,6 +95,33 @@ export const RevenueCatProvider = ({ children }: any) => {
     } else {
       setPlan(null);
     }
+
+    // Check student_zoom_capacity entitlement
+    const studentEntitlement = customerInfo?.entitlements.active['student_zoom_capacity'];
+    
+    if (studentEntitlement !== undefined) {
+      // Extract capacity number from product identifier (e.g., "zoom_capacity_10" -> 10)
+      const productIdentifier = studentEntitlement.productIdentifier;
+      
+      // Try to extract number from product identifier
+      const capacityMatch = productIdentifier.match(/(\d+)/);
+      if (capacityMatch) {
+        const capacity = parseInt(capacityMatch[1], 10);
+        setMultiStudentCapacity(capacity);
+      } else {
+        // If no number found, check entitlement identifier
+        const entitlementIdentifier = studentEntitlement.identifier;
+        const entitlementMatch = entitlementIdentifier.match(/(\d+)/);
+        if (entitlementMatch) {
+          const capacity = parseInt(entitlementMatch[1], 10);
+          setMultiStudentCapacity(capacity);
+        } else {
+          setMultiStudentCapacity(null);
+        }
+      }
+    } else {
+      setMultiStudentCapacity(null);
+    }
   };
 
   // Identify user by email
@@ -104,13 +135,40 @@ export const RevenueCatProvider = ({ children }: any) => {
     }
   };
 
-  // Get available offerings
+  // Get available offerings (returns current offering)
   const getOfferings = async (): Promise<PurchasesOffering | null> => {
     try {
       const offerings = await Purchases.getOfferings();
+      console.log(offerings, 'offerings in revenu cat provider');
       return offerings.current;
     } catch (error) {
       console.error('Error fetching offerings:', error);
+      return null;
+    }
+  };
+
+  // Get student_zoom_capacity offering specifically
+  const getStudentZoomCapacityOffering = async (): Promise<PurchasesOffering | null> => {
+    try {
+      const offerings = await Purchases.getOfferings();
+      console.log('All offerings keys:', Object.keys(offerings.all));
+      console.log('Looking for student_zoom_capacity offering');
+      
+      // Get the specific offering for student_zoom_capacity
+      const studentZoomOffering = offerings.all['student_zoom_capacity'];
+      
+      if (studentZoomOffering) {
+        console.log('Found student_zoom_capacity offering:', studentZoomOffering.identifier);
+        console.log('Packages in offering:', studentZoomOffering.availablePackages?.length || 0);
+      } else {
+        console.log('student_zoom_capacity offering not found in offerings.all');
+        // Fallback to current offering if specific one not found
+        return offerings.current;
+      }
+      
+      return studentZoomOffering;
+    } catch (error) {
+      console.error('Error fetching student_zoom_capacity offering:', error);
       return null;
     }
   };
@@ -129,46 +187,43 @@ export const RevenueCatProvider = ({ children }: any) => {
 
   // Get multi-student capacity from RevenueCat entitlement
   const getMultiStudentCapacity = async (): Promise<number | null> => {
-    // TODO: Re-enable RevenueCat checks after entitlement verification
-    // For testing: return default capacity
-    return 10; // Default capacity for testing
-    
-    // Original RevenueCat check code (commented out for testing):
-    // try {
-    //   const customerInfo = await Purchases.getCustomerInfo();
-    //   const activeEntitlement = customerInfo?.entitlements.active['student_zoom_capacity'];
-    //   
-    //   if (activeEntitlement !== undefined) {
-    //     // Extract capacity number from product identifier (e.g., "zoom_capacity_10" -> 10)
-    //     const productIdentifier = activeEntitlement.productIdentifier;
-    //     
-    //     // Try to extract number from product identifier
-    //     const planMatch = productIdentifier.match(/(\d+)/);
-    //     if (planMatch) {
-    //       const capacity = parseInt(planMatch[1], 10);
-    //       // Return the capacity number
-    //       return capacity;
-    //     }
-    //   }
-    //   
-    //   // For testing: assume zoom_capacity_10 if entitlement exists but can't parse
-    //   // Remove this in production
-    //   if (customerInfo?.entitlements.active['student_zoom_capacity']) {
-    //     return 10; // Default for testing
-    //   }
-    //   
-    //   return null;
-    // } catch (error) {
-    //   console.error('Error fetching multi-student capacity:', error);
-    //   return null;
-    // }
+    try {
+      // First check if we have the capacity in state (from updateCustomerInformation)
+      if (multiStudentCapacity !== null) {
+        return multiStudentCapacity;
+      }
+
+      // If not in state, fetch from RevenueCat
+      const customerInfo = await Purchases.getCustomerInfo();
+      const activeEntitlement = customerInfo?.entitlements.active['student_zoom_capacity'];
+      
+      if (activeEntitlement !== undefined) {
+        // Extract capacity number from product identifier (e.g., "zoom_capacity_10" -> 10)
+        const productIdentifier = activeEntitlement.productIdentifier;
+        
+        // Try to extract number from product identifier
+        const capacityMatch = productIdentifier.match(/(\d+)/);
+        if (capacityMatch) {
+          const capacity = parseInt(capacityMatch[1], 10);
+          setMultiStudentCapacity(capacity);
+          return capacity;
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error fetching multi-student capacity:', error);
+      return null;
+    }
   };
 
   const value = {
     plan,
+    multiStudentCapacity,
     isReady,
     identifyUser,
     getOfferings,
+    getStudentZoomCapacityOffering,
     purchasePackage,
     getMultiStudentCapacity,
   };
@@ -183,6 +238,7 @@ export const RevenueCatProvider = ({ children }: any) => {
   )
 };
 
+export default RevenueCatProvider;
 // Export context for easy usage
 export const useRevenueCat = () => {
   const context = useContext(RevenueCatContext);

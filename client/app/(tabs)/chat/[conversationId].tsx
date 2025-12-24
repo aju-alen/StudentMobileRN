@@ -25,6 +25,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { router } from 'expo-router';
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
 import { COLORS, FONT } from "../../../constants";
+import useSafeAreaInsets, { addBasePaddingToInset } from "../../hooks/useSafeAreaInsets";
 
 // Types moved to separate interfaces for better organization
 interface Message {
@@ -49,6 +50,7 @@ interface Conversation {
 const blurhash = '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
 const ConversationId = () => {
+  const insets = useSafeAreaInsets();
   const [allMessages, setAllMessages] = useState<Conversation>({});
   const [message, setMessage] = useState('');
   const [user, setUser] = useState('');
@@ -253,7 +255,7 @@ const ConversationId = () => {
       <KeyboardAvoidingView 
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-        style={styles.inputContainer}
+        style={[styles.inputContainer, { paddingBottom: Platform.OS === 'android' ? addBasePaddingToInset(8, insets.bottom) : undefined }]}
       >
         <View style={styles.inputWrapper}>
           <TextInput 

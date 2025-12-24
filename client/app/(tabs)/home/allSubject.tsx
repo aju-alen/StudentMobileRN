@@ -1,15 +1,15 @@
-import { RefreshControl } from 'react-native'
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, TextInput, ActivityIndicator, StatusBar } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import SubjectCards from '../../components/SubjectCards'
-import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from "@expo/vector-icons";
-import { ipURL } from '../../utils/utils';
-import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
-import { FONT, COLORS } from '../../../constants';
-import { ScrollView, GestureHandlerRootView } from 'react-native-gesture-handler';
-import {axiosWithAuth}   from '../../utils/customAxios';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Platform, RefreshControl, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
+import { COLORS, FONT } from '../../../constants';
 import StatusBarComponent from '../../components/StatusBarComponent';
+import SubjectCards from '../../components/SubjectCards';
+import useSafeAreaInsets, { addBasePaddingToTopInset } from '../../hooks/useSafeAreaInsets';
+import { axiosWithAuth } from '../../utils/customAxios';
+import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
+import { ipURL } from '../../utils/utils';
 
 interface Subject {
   id: string;
@@ -29,6 +29,7 @@ interface PaginationInfo {
 }
 
 const allSubject = () => {
+  const insets = useSafeAreaInsets();
   const [subjectData, setSubjectData] = useState<Subject[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -143,15 +144,11 @@ const allSubject = () => {
     router.push(`/(tabs)/home/${itemId.id}`);
   };
 
-  const handleFilterPress = () => {
-    router.push('/home/filter');
-  };
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaView style={styles.mainContainer}>
        <StatusBarComponent />
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? addBasePaddingToTopInset(20, insets.top) : verticalScale(20) }]}>
           <Text style={styles.headerTitle}>All Courses</Text>
           {/* <TouchableOpacity onPress={handleFilterPress} style={styles.filterButton}>
             <Ionicons name="options-outline" size={moderateScale(24)} color={COLORS.primary} />

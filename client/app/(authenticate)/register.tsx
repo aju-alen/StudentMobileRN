@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, SafeAreaView, StyleSheet, TouchableOpacity, Text, Pressable, Alert, ScrollView, Modal, ActivityIndicator } from 'react-native';
+import { View, TextInput, SafeAreaView, StyleSheet, TouchableOpacity, Text, Pressable, Alert, ScrollView, Modal, ActivityIndicator, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import axios from 'axios';
@@ -9,6 +9,7 @@ import { verticalScale, horizontalScale, moderateScale } from '../utils/metrics'
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import useSafeAreaInsets, { addBasePaddingToTopInset, addBasePaddingToInset } from '../hooks/useSafeAreaInsets';
 
 const UserTypeScreen = ({ onSelect }) => {
     const [expandedCard, setExpandedCard] = useState<string | null>(null);
@@ -33,7 +34,7 @@ const UserTypeScreen = ({ onSelect }) => {
                         onPress={() => onSelect('student')}
                     >
                         <View style={styles.userTypeIconContainer}>
-                            <Ionicons name="school-outline" size={40} color={COLORS.primary} />
+                            <Ionicons name="school-outline" size={32} color={COLORS.primary} />
                         </View>
                         <Text style={styles.userTypeTitle}>Student</Text>
                         <Text style={styles.userTypeDescription}>Join as a student to learn and grow with personalized guidance</Text>
@@ -113,7 +114,7 @@ const UserTypeScreen = ({ onSelect }) => {
                         onPress={() => onSelect('organization')}
                     >
                         <View style={styles.userTypeIconContainer}>
-                            <Ionicons name="business-outline" size={40} color={COLORS.primary} />
+                            <Ionicons name="business-outline" size={32} color={COLORS.primary} />
                         </View>
                         <Text style={styles.userTypeTitle}>Organization</Text>
                         <Text style={styles.userTypeDescription}>Register your organization to manage multiple teachers and students</Text>
@@ -251,6 +252,7 @@ const CustomDropdown = ({ label, value, options, onSelect, placeholder, isMultiS
 };
 
 const RegisterPage = () => {
+    const insets = useSafeAreaInsets();
     const [showUserType, setShowUserType] = useState(true);
     const [name, setName] = useState('');
     const [isPasswordShown, setIsPasswordShown] = useState(false);
@@ -577,16 +579,16 @@ const RegisterPage = () => {
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView showsVerticalScrollIndicator={false}>
-                <View style={styles.content}>
+                <View style={[styles.content, { paddingBottom: Platform.OS === 'android' ? addBasePaddingToInset(20, insets.bottom) : undefined }]}>
                     <TouchableOpacity 
-                        style={styles.backButton}
+                        style={[styles.backButton, { paddingTop: Platform.OS === 'android' ? addBasePaddingToTopInset(6, insets.top) : undefined }]}
                         onPress={handleGoBack}
                     >
                         <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
                         <Text style={styles.backButtonText}>Change User Type</Text>
                     </TouchableOpacity>
 
-                    <View style={styles.headerSection}>
+                    <View style={[styles.headerSection, { paddingTop: Platform.OS === 'android' ? addBasePaddingToTopInset(20, insets.top) : undefined }]}>
                         <Text style={styles.title}>
                             Create {
                                 userType === 'organization' ? 'Organization' : 
@@ -1119,14 +1121,14 @@ const styles = StyleSheet.create({
     },
     userTypeContainer: {
         flexDirection: 'column',
-        gap: moderateScale(12),
-        marginTop: verticalScale(20),
+        gap: moderateScale(10),
+        marginTop: verticalScale(16),
         paddingHorizontal: horizontalScale(10),
     },
     userTypeButton: {
         backgroundColor: '#fff',
         borderRadius: moderateScale(20),
-        padding: moderateScale(16),
+        padding: moderateScale(12),
         borderWidth: 1,
         borderColor: '#ddd',
         shadowColor: '#000',
@@ -1139,28 +1141,28 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     userTypeIconContainer: {
-        width: moderateScale(60),
-        height: moderateScale(60),
-        borderRadius: moderateScale(30),
+        width: moderateScale(50),
+        height: moderateScale(50),
+        borderRadius: moderateScale(25),
         backgroundColor: COLORS.primary + '15',
         justifyContent: 'center',
         alignItems: 'center',
         alignSelf: 'center',
-        marginBottom: verticalScale(10),
+        marginBottom: verticalScale(6),
     },
     userTypeTitle: {
-        fontSize: moderateScale(20),
+        fontSize: moderateScale(18),
         fontWeight: '700',
         color: COLORS.primary,
         textAlign: 'center',
-        marginBottom: verticalScale(8),
+        marginBottom: verticalScale(4),
     },
     userTypeDescription: {
-        fontSize: moderateScale(14),
+        fontSize: moderateScale(13),
         color: '#666',
         textAlign: 'center',
-        marginBottom: verticalScale(10),
-        lineHeight: moderateScale(18),
+        marginBottom: verticalScale(6),
+        lineHeight: moderateScale(16),
     },
     knowMoreButton: {
         flexDirection: 'row',
@@ -1221,11 +1223,11 @@ const styles = StyleSheet.create({
     backButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: verticalScale(10),
-        marginBottom: verticalScale(10),
+        paddingVertical: verticalScale(6),
+        marginBottom: verticalScale(6),
     },
     backButtonText: {
-        fontSize: moderateScale(16),
+        fontSize: moderateScale(14),
         color: COLORS.primary,
         marginLeft: horizontalScale(8),
         fontWeight: '500',

@@ -47,3 +47,12 @@ axiosWithAuth.interceptors.request.use(async (config) => {
 });
 
 // Usage: Some API needs credentials (Bearer and cookies), some don't. This is where customAxios comes in handy.
+
+
+export const axiosNoHeadersSample = axios.create({
+  headers: {
+  },
+});
+
+export default axiosNoHeadersSample;
+

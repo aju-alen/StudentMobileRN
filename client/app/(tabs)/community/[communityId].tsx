@@ -23,6 +23,7 @@ import { socket } from "../../utils/socket";
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
 import { COLORS, FONT } from "../../../constants";
 import { axiosWithAuth } from "../../utils/customAxios";
+import useSafeAreaInsets, { addBasePaddingToInset } from "../../hooks/useSafeAreaInsets";
 
 interface User {
   userId?: string;
@@ -51,6 +52,7 @@ interface Message {
 }
 
 const CommunityId = () => {
+  const insets = useSafeAreaInsets();
   const chatName = useLocalSearchParams().communityId;
   const [allMessages, setAllMessages] = useState<Community>({messages: [], communityName: ''});
   const [message, setMessage] = useState("");
@@ -264,7 +266,7 @@ const CommunityId = () => {
             style={styles.keyboardAvoidingView}
           >
             {isTeacher ? (
-              <View style={styles.inputContainer}>
+              <View style={[styles.inputContainer, { paddingBottom: Platform.OS === 'android' ? addBasePaddingToInset(12, insets.bottom) : undefined }]}>
                 <TextInput
                   style={[styles.input, { height: Math.max(40, inputHeight) }]}
                   placeholder="Type your message..."
@@ -293,7 +295,7 @@ const CommunityId = () => {
                 </TouchableOpacity>
               </View>
             ) : (
-              <View style={styles.restrictedContainer}>
+              <View style={[styles.restrictedContainer, { paddingBottom: Platform.OS === 'android' ? addBasePaddingToInset(16, insets.bottom) : undefined }]}>
                 <Ionicons name="lock-closed" size={20} color="#7F8C8D" />
                 <Text style={styles.restrictedText}>
                   Only teachers can send messages in communities

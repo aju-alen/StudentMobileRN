@@ -9,6 +9,7 @@ import {
   RefreshControl,
   StatusBar,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import { useFocusEffect } from '@react-navigation/native';
 import { Image } from 'expo-image';
@@ -21,7 +22,7 @@ import { ipURL } from "../../utils/utils";
 import { Ionicons } from '@expo/vector-icons';
 import { horizontalScale, verticalScale, moderateScale } from "../../utils/metrics";
 import { socket } from "../../utils/socket";
-
+import useSafeAreaInsets, { addBasePaddingToTopInset } from "../../hooks/useSafeAreaInsets";
 import { FONT } from "../../../constants/theme";
 
 const blurhash =
@@ -31,6 +32,7 @@ const blurhash =
 
 
 const ChatPage = () => {
+  const insets = useSafeAreaInsets();
   const [conversation, setConversation] = useState();
   const [user, setUser] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -169,7 +171,7 @@ const ChatPage = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? addBasePaddingToTopInset(16, insets.top) : undefined }]}>
         <Text style={styles.headerTitle}>Messages</Text>
         {/* <TouchableOpacity style={styles.newChatButton}>
           <Ionicons name="add-circle-outline" size={moderateScale(24)} color="#1A4C6E" />

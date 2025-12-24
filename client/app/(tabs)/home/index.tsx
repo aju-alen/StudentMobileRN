@@ -134,7 +134,6 @@ const HomePage = () => {
   useEffect(() => {
     async function getUserDetails() {
       const userDetails = JSON.parse(await AsyncStorage.getItem('userDetails'));
-      console.log(userDetails, 'this is the user details');
       setUserDetails(userDetails);
     }
     getUserDetails();
@@ -401,7 +400,6 @@ const HomePage = () => {
 
 
       setUser(userResponse.data);
-      console.log(userResponse.data, 'this is the user response');
       setSubjectData(subjectsResponse.data);
 
       const { reccomendedSubjects: recommendedSubjects, recommendedGrade, recommendedBoard } = userResponse.data;
@@ -647,7 +645,7 @@ const HomePage = () => {
 
         {/* Upcoming Deadlines */}
         {deadlines.length > 0 && <View style={styles.section}>
-          <SectionHeader title="Upcoming Deadlines" />
+          <SectionHeader title="Booked Classes" />
           <View style={styles.deadlinesContainer}>
             {deadlines.map(deadline => (
               <DeadlineCard

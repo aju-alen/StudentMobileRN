@@ -12,7 +12,8 @@ import {
   Easing,
   Dimensions,
   TextInput,
-  Keyboard
+  Keyboard,
+  Platform
 } from "react-native";
 import { Image } from 'expo-image';
 import React, { useEffect, useState, useRef, useCallback } from "react";
@@ -25,6 +26,7 @@ import { ipURL } from "../../utils/utils";
 import { socket } from "../../utils/socket";
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
 import { COLORS } from "../../../constants";
+import useSafeAreaInsets, { addBasePaddingToTopInset } from "../../hooks/useSafeAreaInsets";
 
 const { width } = Dimensions.get('window');
 
@@ -140,6 +142,7 @@ const useDebounce = (value: string, delay: number) => {
 };
 
 const CommunityPage = () => {
+  const insets = useSafeAreaInsets();
   const [communities, setCommunities] = useState([]);
   const [token, setToken] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -281,7 +284,8 @@ const CommunityPage = () => {
         styles.header,
         {
           opacity: headerOpacity,
-          transform: [{ translateY: headerTranslateY }]
+          transform: [{ translateY: headerTranslateY }],
+          paddingTop: Platform.OS === 'android' ? addBasePaddingToTopInset(16, insets.top) : undefined
         }
       ]}>
         <Text style={styles.headerTitle}>Communities</Text>
