@@ -3,7 +3,7 @@
     "name": "Coach Academ",
     "slug": "coach-academ",
     "scheme": "coachacadem",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "splash": {
@@ -21,11 +21,11 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "32"
+      "buildNumber": "33"
     },
     "android": {
       "edgeToEdgeEnabled": true,
-      "versionCode": 10,
+      "versionCode": 11,
       "icon": "./assets/images/playstore-icon.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/playstore-icon.png",
@@ -43,12 +43,6 @@
     },
     "plugins": [
       "expo-router",
-      [
-        "expo-av",
-        {
-          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone."
-        }
-      ],
       [
         "expo-build-properties",
         {
@@ -86,7 +80,8 @@
         {
           "launchMode": "most-recent"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

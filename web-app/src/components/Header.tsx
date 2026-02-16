@@ -4,15 +4,15 @@ import { Menu, X } from 'lucide-react';
 const navItems = [
   {
     label: 'Find Tutors',
-    href: '/#online/english-tutor'
+    href: 'https://apps.apple.com/us/app/coach-academ/id6745173635'
   },
   {
     label: 'Become a Tutor',
-    href: '/#teach'
+    href: 'https://apps.apple.com/us/app/coach-academ/id6745173635'
   },
   {
     label: 'Courses',
-    href: '/#courses',
+    href: 'https://apps.apple.com/us/app/coach-academ/id6745173635'
   },
   {
     label: 'FAQ',

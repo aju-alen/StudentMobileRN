@@ -37,20 +37,26 @@ export const reportSubject = async (req, res, next) => {
                 process.env.NAMECHEAP_EMAIL,
                 "⚠️ New Report Alert",
                 `
-                <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; border: 2px solid #1A4C6E;">
-                    <div style="background-color: #1A4C6E; color: #ffffff; padding: 20px; margin-bottom: 20px; text-align: center;">
-                        <h1 style="margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 2px;">NEW REPORT ALERT</h1>
-                    </div>
-                    
-                    <div style="padding: 20px; border: 1px solid #1A4C6E; margin-bottom: 20px;">
-                        <h2 style="color: #1A4C6E; font-size: 18px; margin-bottom: 15px; border-bottom: 2px solid #1A4C6E; padding-bottom: 10px;">Report Details</h2>
-                        <p style="margin: 10px 0; color: #333333;"><strong>User ID:</strong> ${userId}</p>
-                        <p style="margin: 10px 0; color: #333333;"><strong>Subject ID:</strong> ${subjectId}</p>
-                        <p style="margin: 10px 0; color: #333333;"><strong>Reason:</strong> ${reportReason}</p>
+                <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #ffffff;">
+                    <div style="background-color: #1A2B4B; padding: 40px 20px; text-align: center; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1;">
+                            <div style="position: absolute; top: 20px; left: 20px; width: 60px; height: 60px; border: 4px solid #ffffff; transform: rotate(45deg);"></div>
+                            <div style="position: absolute; bottom: 20px; right: 20px; width: 40px; height: 40px; border: 4px solid #ffffff; border-radius: 50%;"></div>
+                        </div>
+                        <h1 style="color: #ffffff; font-size: 32px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 2px;">New Report Alert</h1>
                     </div>
 
-                    <div style="text-align: center; padding: 20px; background-color: #f5f5f5;">
-                        <p style="margin: 0; color: #666666; font-size: 14px;">Please review this report and take appropriate action.</p>
+                    <div style="padding: 40px 20px; background-color: #ffffff;">
+                        <div style="background-color: #F8FAFC; padding: 30px; margin-bottom: 30px; position: relative; border-left: 4px solid #1A2B4B;">
+                            <h3 style="color: #1A2B4B; font-size: 18px; margin: 0 0 15px; text-transform: uppercase; letter-spacing: 1px;">Report Details</h3>
+                            <p style="margin: 10px 0; color: #64748B;"><strong>User ID:</strong> ${userId}</p>
+                            <p style="margin: 10px 0; color: #64748B;"><strong>Subject ID:</strong> ${subjectId}</p>
+                            <p style="margin: 10px 0; color: #64748B;"><strong>Reason:</strong> ${reportReason}</p>
+                        </div>
+
+                        <div style="text-align: center; padding-top: 30px; border-top: 2px solid #F8FAFC;">
+                            <p style="margin: 0; color: #64748B; font-size: 14px;">Please review this report and take appropriate action.</p>
+                        </div>
                     </div>
                 </div>
                 `
@@ -59,28 +65,32 @@ export const reportSubject = async (req, res, next) => {
                 userEmail,
                 "Report Submission Confirmation",
                 `
-                <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #ffffff; border: 2px solid #1A4C6E;">
-                    <div style="background-color: #1A4C6E; color: #ffffff; padding: 20px; margin-bottom: 20px; text-align: center;">
-                        <h1 style="margin: 0; font-size: 24px; font-weight: bold; letter-spacing: 2px;">REPORT SUBMITTED</h1>
+                <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #ffffff;">
+                    <div style="background-color: #1A2B4B; padding: 40px 20px; text-align: center; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1;">
+                            <div style="position: absolute; top: 20px; left: 20px; width: 60px; height: 60px; border: 4px solid #ffffff; transform: rotate(45deg);"></div>
+                            <div style="position: absolute; bottom: 20px; right: 20px; width: 40px; height: 40px; border: 4px solid #ffffff; border-radius: 50%;"></div>
+                        </div>
+                        <h1 style="color: #ffffff; font-size: 32px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 2px;">Report Submitted</h1>
                     </div>
-                    
-                    <div style="padding: 20px; border: 1px solid #1A4C6E; margin-bottom: 20px;">
-                        <p style="margin: 10px 0; color: #333333; font-size: 16px; line-height: 1.6;">
+
+                    <div style="padding: 40px 20px; background-color: #ffffff;">
+                        <p style="margin: 0 0 20px 0; color: #64748B; font-size: 16px; line-height: 1.6;">
                             Thank you for bringing this to our attention. Your report has been successfully submitted and will be reviewed by our team.
                         </p>
-                        <div style="background-color: #f5f5f5; padding: 15px; margin: 20px 0; border-left: 4px solid #1A4C6E;">
-                            <p style="margin: 0; color: #333333; font-size: 14px;">
+                        <div style="background-color: #F8FAFC; padding: 30px; margin-bottom: 30px; position: relative; border-left: 4px solid #1A2B4B;">
+                            <p style="margin: 0; color: #64748B; font-size: 14px;">
                                 <strong>Report Details:</strong><br>
                                 Subject ID: ${subjectId}<br>
                                 Reason: ${reportReason}
                             </p>
                         </div>
-                    </div>
 
-                    <div style="text-align: center; padding: 20px; background-color: #f5f5f5;">
-                        <p style="margin: 0; color: #666666; font-size: 14px;">
-                            We take all reports seriously and will investigate this matter thoroughly.
-                        </p>
+                        <div style="text-align: center; padding-top: 30px; border-top: 2px solid #F8FAFC;">
+                            <p style="margin: 0; color: #64748B; font-size: 14px;">
+                                We take all reports seriously and will investigate this matter thoroughly.
+                            </p>
+                        </div>
                     </div>
                 </div>
                 `

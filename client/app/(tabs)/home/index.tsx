@@ -691,7 +691,8 @@ const HomePage = () => {
         </View>
 
         {/* Video Section */}
-        <View style={[styles.section, styles.lastSection]}>
+       {/* 
+          <View style={[styles.section, styles.lastSection]}>
           <SectionHeader title="Recommended Videos" />
           <ScrollView 
             horizontal 
@@ -714,7 +715,7 @@ const HomePage = () => {
               videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/VIDEO-2025-06-04-12-54-20.mp4'} 
             />
           </ScrollView>
-        </View>
+        </View> */}
       </Animated.ScrollView>
     </View>
   );

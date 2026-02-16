@@ -294,46 +294,35 @@ const sendVerificationEmail = async (email, verificationToken, name, isTeacher) 
       subject: 'Verify Your Account – Action Required',
       html: `
       <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #ffffff;">
-        <!-- Bauhaus-style header with primary colors -->
-        <div style="display: flex; margin-bottom: 20px;">
-          <div style="width: 20%; background-color: #FF0000;"></div>
-          <div style="width: 60%; background-color: #000000; color: #ffffff; padding: 30px 20px; text-align: center;">
-            <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase;">VERIFY</h1>
+        <div style="background-color: #1A2B4B; padding: 40px 20px; text-align: center; position: relative; overflow: hidden;">
+          <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1;">
+            <div style="position: absolute; top: 20px; left: 20px; width: 60px; height: 60px; border: 4px solid #ffffff; transform: rotate(45deg);"></div>
+            <div style="position: absolute; bottom: 20px; right: 20px; width: 40px; height: 40px; border: 4px solid #ffffff; border-radius: 50%;"></div>
           </div>
-          <div style="width: 20%; background-color: #FFD700;"></div>
+          <h1 style="color: #ffffff; font-size: 32px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 2px;">VERIFY</h1>
         </div>
-        
-        <div style="padding: 30px; color: #000000;">
-          <p style="font-size: 20px; margin-bottom: 20px; font-weight: 700;">Hello <strong>${name}</strong>,</p>
-          
-          <!-- Geometric highlight box -->
-          <div style="background-color: #f5f5f5; padding: 25px; margin: 25px 0; border-left: 8px solid #FF0000;">
-            <p style="margin: 0; font-size: 16px; line-height: 1.8; font-weight: 500;">${welcomeMessage}</p>
+
+        <div style="padding: 40px 20px; background-color: #ffffff;">
+          <p style="font-size: 20px; margin-bottom: 20px; font-weight: 700; color: #1A2B4B;">Hello <strong>${name}</strong>,</p>
+
+          <div style="background-color: #F8FAFC; padding: 30px; margin-bottom: 30px; position: relative; border-left: 4px solid #1A2B4B;">
+            <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #64748B;">${welcomeMessage}</p>
           </div>
-          
-          <p style="font-size: 16px; line-height: 1.6; font-weight: 500;">To complete your registration, please verify your account by clicking the button below:</p>
-          
-          <!-- Bauhaus-style button -->
+
+          <p style="font-size: 16px; line-height: 1.6; color: #64748B; margin-bottom: 20px;">To complete your registration, please verify your account by clicking the button below:</p>
+
           <div style="text-align: center; margin: 40px 0;">
-            <a href="https://studentmobilern-31oo.onrender.com/api/auth/verify/${verificationToken}" 
-               style="background-color: #000000; color: #ffffff; padding: 20px 40px; text-decoration: none; font-weight: 900; display: inline-block; border: 3px solid #000000; text-transform: uppercase; letter-spacing: 2px;">
+            <a href="https://api.coachacadem.ae/api/auth/verify/${verificationToken}"
+               style="background-color: #1A2B4B; color: #ffffff; padding: 20px 40px; text-decoration: none; font-weight: 700; display: inline-block; text-transform: uppercase; letter-spacing: 2px;">
               VERIFY NOW
             </a>
           </div>
-          
-          <!-- Geometric separator -->
-          <div style="display: flex; margin: 30px 0;">
-            <div style="width: 30%; height: 3px; background-color: #FF0000;"></div>
-            <div style="width: 40%; height: 3px; background-color: #000000;"></div>
-            <div style="width: 30%; height: 3px; background-color: #FFD700;"></div>
+
+          <p style="font-size: 14px; color: #64748B; margin: 0; font-weight: 500;">If you didn't sign up for this account, please ignore this email.</p>
+
+          <div style="text-align: center; padding-top: 30px; border-top: 2px solid #F8FAFC;">
+            <p style="color: #64748B; font-size: 14px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1px;">Best regards,<br>The Coach Academ Team</p>
           </div>
-          
-          <p style="font-size: 14px; color: #666666; margin: 0; font-weight: 500;">If you didn't sign up for this account, please ignore this email.</p>
-        </div>
-        
-        <!-- Bauhaus-style footer -->
-        <div style="background-color: #000000; color: #ffffff; padding: 20px; text-align: center;">
-          <p style="margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 1px;">Best regards,<br>The Coach Academ Team</p>
         </div>
       </div>
       `,
@@ -344,7 +333,7 @@ const sendVerificationEmail = async (email, verificationToken, name, isTeacher) 
 
       To complete your registration, please verify your account by clicking the link below:
 
-      https://studentmobilern-31oo.onrender.com/api/auth/verify/${verificationToken}
+      https://api.coachacadem.ae/api/auth/verify/${verificationToken}
 
       If you didn't sign up for this account, please ignore this email.
 
@@ -385,19 +374,22 @@ export const verifyEmail = async (req, res, next) => {
       if (!user) {
         return res.status(400).send(`
           <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0; background-color: #ffffff;">
-            <div style="display: flex; margin-bottom: 20px;">
-              <div style="width: 20%; background-color: #FF0000;"></div>
-              <div style="width: 60%; background-color: #000000; color: #ffffff; padding: 30px 20px; text-align: center;">
-                <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase;">Error</h1>
+            <div style="background-color: #1A2B4B; padding: 40px 20px; text-align: center; position: relative; overflow: hidden;">
+              <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1;">
+                <div style="position: absolute; top: 20px; left: 20px; width: 60px; height: 60px; border: 4px solid #ffffff; transform: rotate(45deg);"></div>
+                <div style="position: absolute; bottom: 20px; right: 20px; width: 40px; height: 40px; border: 4px solid #ffffff; border-radius: 50%;"></div>
               </div>
-              <div style="width: 20%; background-color: #FFD700;"></div>
+              <h1 style="color: #ffffff; font-size: 32px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 2px;">Error</h1>
             </div>
-            <div style="padding: 30px; text-align: center;">
-              <p style="font-size: 20px; color: #FF0000; font-weight: 700;">Invalid verification token</p>
-              <p style="font-size: 16px; margin-top: 20px;">Please check your email for the correct verification link.</p>
-              <p style="font-size: 18px; margin-top: 20px; font-weight: 700; color: #FF0000; text-decoration: underline;">
-                Once your email is verified, a Zoom invite will be sent to you.
+            <div style="padding: 40px 20px; background-color: #ffffff;">
+              <p style="font-size: 20px; color: #1A2B4B; font-weight: 700;">Invalid verification token</p>
+              <p style="font-size: 16px; margin-top: 20px; color: #64748B;">Please check your email for the correct verification link.</p>
+              <p style="font-size: 18px; margin-top: 20px; font-weight: 700; color: #1A2B4B; text-decoration: underline;">
+                Once your email is verified, a Zoom invite will be sent to you. Please check the spam folder if you don't see it in your inbox. Link expires in 30 days.
               </p>
+              <div style="text-align: center; padding-top: 30px; border-top: 2px solid #F8FAFC;">
+                <p style="color: #64748B; font-size: 14px; margin: 0;">The Coach Academ Team</p>
+              </div>
             </div>
           </div>
         `);
@@ -453,52 +445,41 @@ export const verifyEmail = async (req, res, next) => {
             }
           </style>
         </head>
-        <body style="margin: 0; padding: 0; background-color: #f5f5f5;">
-          <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <!-- Bauhaus-style header -->
-            <div style="display: flex; margin-bottom: 20px;">
-              <div style="width: 20%; background-color: #FF0000;"></div>
-              <div style="width: 60%; background-color: #000000; color: #ffffff; padding: 30px 20px; text-align: center;">
-                <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase;">Verified</h1>
+        <body style="margin: 0; padding: 0; background-color: #F8FAFC;">
+          <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0; background-color: #ffffff;">
+            <div style="background-color: #1A2B4B; padding: 40px 20px; text-align: center; position: relative; overflow: hidden;">
+              <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1;">
+                <div style="position: absolute; top: 20px; left: 20px; width: 60px; height: 60px; border: 4px solid #ffffff; transform: rotate(45deg);"></div>
+                <div style="position: absolute; bottom: 20px; right: 20px; width: 40px; height: 40px; border: 4px solid #ffffff; border-radius: 50%;"></div>
               </div>
-              <div style="width: 20%; background-color: #FFD700;"></div>
+              <h1 style="color: #ffffff; font-size: 32px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 2px;">Verified</h1>
             </div>
-            
-            <div style="padding: 40px 30px; text-align: center;">
-              <!-- Success Icon -->
-              <div class="success-icon" style="width: 80px; height: 80px; margin: 0 auto 30px; background-color: #000000; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M20 6L9 17L4 12" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+
+            <div style="padding: 40px 20px; background-color: #ffffff; text-align: center;">
+              <div class="success-icon" style="width: 80px; height: 80px; background-color: #1A2B4B; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; transform: rotate(45deg);">
+                <span style="color: #ffffff; font-size: 40px; transform: rotate(-45deg);">✓</span>
               </div>
-              
-              <h2 style="font-size: 24px; font-weight: 700; margin-bottom: 20px; color: #000000;">Account Successfully Verified!</h2>
-              
-              <p style="font-size: 16px; line-height: 1.6; color: #333333; margin-bottom: 30px;">
+
+              <h2 style="color: #1A2B4B; font-size: 24px; font-weight: 700; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">Account Successfully Verified!</h2>
+
+              <p style="font-size: 16px; line-height: 1.6; color: #64748B; margin-bottom: 30px;">
                 Welcome to Coach Academ! Your account has been verified and you can now access all features.
               </p>
               ${user.userType === 'TEACHER' ? `
-              <p style="font-size: 18px; line-height: 1.6; color: #FF0000; font-weight: 700; margin-bottom: 30px; text-decoration: underline;">
-                Once your email is verified, a Zoom invite will be sent to you.
+              <p style="font-size: 18px; line-height: 1.6; color: #1A2B4B; font-weight: 700; margin-bottom: 30px; text-decoration: underline;">
+                Once your email is verified, a Zoom invite will be sent to you. Please check the spam folder if you don't see it in your inbox. Link expires in 30 days.
               </p>
               ` : ''}
-              
-              <!-- Geometric separator -->
-              <div style="display: flex; margin: 30px auto; max-width: 200px;">
-                <div style="width: 30%; height: 3px; background-color: #FF0000;"></div>
-                <div style="width: 40%; height: 3px; background-color: #000000;"></div>
-                <div style="width: 30%; height: 3px; background-color: #FFD700;"></div>
-              </div>
-              
+
               <a href="coachacadem://login"
-                 style="background-color: #000000; color: #ffffff; padding: 15px 30px; text-decoration: none; font-weight: 700; display: inline-block; text-transform: uppercase; letter-spacing: 1px; margin-top: 20px;">
+                 style="background-color: #1A2B4B; color: #ffffff; padding: 15px 30px; text-decoration: none; font-weight: 700; display: inline-block; text-transform: uppercase; letter-spacing: 1px; margin-top: 20px;">
                 Proceed to Login
               </a>
-            </div>
-            
-            <!-- Bauhaus-style footer -->
-            <div style="background-color: #000000; color: #ffffff; padding: 20px; text-align: center;">
-              <p style="margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 1px;">Coach Academ Team</p>
+
+              <div style="text-align: center; padding-top: 30px; border-top: 2px solid #F8FAFC;">
+                <p style="color: #64748B; font-size: 14px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1px;">The Coach Academ Team</p>
+                <p style="color: #1A2B4B; font-size: 16px; font-weight: 700; margin: 0;">Coach Academ Team</p>
+              </div>
             </div>
           </div>
         </body>
@@ -898,55 +879,44 @@ export const changePassword = async (req, res, next) => {
         "Password Changed Successfully",
         `
         <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #ffffff;">
-          <!-- Bauhaus-style header with primary colors -->
-          <div style="display: flex; margin-bottom: 20px;">
-            <div style="width: 20%; background-color: #1A4C6E;"></div>
-            <div style="width: 60%; background-color: #1A4C6E; color: #ffffff; padding: 30px 20px; text-align: center;">
-              <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase;">Password Changed</h1>
+          <div style="background-color: #1A2B4B; padding: 40px 20px; text-align: center; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1;">
+              <div style="position: absolute; top: 20px; left: 20px; width: 60px; height: 60px; border: 4px solid #ffffff; transform: rotate(45deg);"></div>
+              <div style="position: absolute; bottom: 20px; right: 20px; width: 40px; height: 40px; border: 4px solid #ffffff; border-radius: 50%;"></div>
             </div>
-            <div style="width: 20%; background-color: #1A4C6E;"></div>
+            <h1 style="color: #ffffff; font-size: 32px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 2px;">Password Changed</h1>
           </div>
-          
-          <div style="padding: 30px; color: #000000;">
-            <p style="font-size: 20px; margin-bottom: 20px; font-weight: 700;">Hello <strong>${user.name}</strong>,</p>
-            
-            <!-- Geometric highlight box -->
-            <div style="background-color: #f5f5f5; padding: 25px; margin: 25px 0; border-left: 8px solid #1A4C6E;">
-              <p style="margin: 0; font-size: 16px; line-height: 1.8; font-weight: 500;">Your password has been successfully changed at ${new Date().toLocaleString()} (GMT+4).</p>
+
+          <div style="padding: 40px 20px; background-color: #ffffff;">
+            <p style="font-size: 20px; margin-bottom: 20px; font-weight: 700; color: #1A2B4B;">Hello <strong>${user.name}</strong>,</p>
+
+            <div style="background-color: #F8FAFC; padding: 30px; margin-bottom: 30px; position: relative; border-left: 4px solid #1A2B4B;">
+              <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #64748B;">Your password has been successfully changed at ${new Date().toLocaleString()} (GMT+4).</p>
             </div>
-            
-            <!-- Warning Box -->
-            <div style="background-color: #1A4C6E; border: 1px solid #ffeeba; color: #fff; padding: 20px; margin: 25px 0; border-left: 8px solid #FFD700;">
-              <h3 style="margin: 0 0 15px 0; font-size: 18px; font-weight: 700;">⚠️ Important Security Notice</h3>
-              <p style="margin: 0; font-size: 16px; line-height: 1.6;">If you did not make this change, please contact our security team immediately at <a href="mailto:support@coachacadem.ae" style="color:rgb(255, 255, 255); text-decoration: underline;">support@coachacadem.ae</a></p>
+
+            <div style="background-color: #F8FAFC; padding: 30px; margin-bottom: 30px; position: relative; border-left: 4px solid #1A2B4B;">
+              <h3 style="color: #1A2B4B; font-size: 18px; margin: 0 0 15px; text-transform: uppercase; letter-spacing: 1px;">⚠️ Important Security Notice</h3>
+              <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #64748B;">If you did not make this change, please contact our security team immediately at <a href="mailto:support@coachacadem.ae" style="color: #1A2B4B; text-decoration: underline;">support@coachacadem.ae</a></p>
             </div>
-            
-            <p style="font-size: 16px; line-height: 1.6; font-weight: 500;">For your security, please note:</p>
-            <ul style="font-size: 16px; line-height: 1.6; font-weight: 500;">
+
+            <p style="font-size: 16px; line-height: 1.6; color: #64748B;">For your security, please note:</p>
+            <ul style="font-size: 16px; line-height: 1.6; color: #64748B;">
               <li>Your new password is now active</li>
               <li>All existing sessions have been logged out</li>
               <li>You will need to log in again with your new password</li>
             </ul>
-            
-            <!-- Geometric separator -->
-            <div style="display: flex; margin: 30px 0;">
-              <div style="width: 30%; height: 3px; background-color: #1A4C6E;"></div>
-              <div style="width: 40%; height: 3px; background-color: #1A4C6E;"></div>
-              <div style="width: 30%; height: 3px; background-color: #1A4C6E;"></div>
-            </div>
-            
-            <p style="font-size: 16px; line-height: 1.6; font-weight: 500;">Security Best Practices:</p>
-            <ul style="font-size: 16px; line-height: 1.6; font-weight: 500;">
+
+            <p style="font-size: 16px; line-height: 1.6; color: #64748B; margin-top: 20px;">Security Best Practices:</p>
+            <ul style="font-size: 16px; line-height: 1.6; color: #64748B;">
               <li>Never share your password with anyone</li>
               <li>Use a strong, unique password</li>
               <li>Regularly update your password</li>
             </ul>
-          </div>
-          
-          <!-- Bauhaus-style footer -->
-          <div style="background-color: #000000; color: #ffffff; padding: 20px; text-align: center;">
-            <p style="margin: 0; font-size: 14px; font-weight: 700; letter-spacing: 1px;">This is an automated message, please do not reply to this email.</p>
-              <p style="margin: 10px 0 0 0; font-size: 14px; font-weight: 700; letter-spacing: 1px;">For support, contact: <a href="mailto:support@coachacadem.ae" style="color: #ffffff; text-decoration: underline;">support@coachacadem.ae</a></p>
+
+            <div style="text-align: center; padding-top: 30px; border-top: 2px solid #F8FAFC;">
+              <p style="color: #64748B; font-size: 14px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1px;">This is an automated message, please do not reply to this email.</p>
+              <p style="color: #1A2B4B; font-size: 16px; font-weight: 700; margin: 0;">For support, contact: <a href="mailto:support@coachacadem.ae" style="color: #1A2B4B; text-decoration: underline;">support@coachacadem.ae</a></p>
+            </div>
           </div>
         </div>
         `
@@ -1265,28 +1235,28 @@ export const updateOrganizationCapacity = async (req, res, next) => {
 const sendOrganizationInviteEmail = async (teacherEmail, teacherName, orgName, teamLeadName) => {
   const emailHtml = `
     <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #ffffff;">
-      <div style="display: flex; margin-bottom: 20px;">
-        <div style="width: 20%; background-color: #1A4C6E;"></div>
-        <div style="width: 60%; background-color: #1A4C6E; color: #ffffff; padding: 30px 20px; text-align: center;">
-          <h1 style="margin: 0; font-size: 28px; font-weight: 900; letter-spacing: 3px; text-transform: uppercase;">Organization Invitation</h1>
+      <div style="background-color: #1A2B4B; padding: 40px 20px; text-align: center; position: relative; overflow: hidden;">
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1;">
+          <div style="position: absolute; top: 20px; left: 20px; width: 60px; height: 60px; border: 4px solid #ffffff; transform: rotate(45deg);"></div>
+          <div style="position: absolute; bottom: 20px; right: 20px; width: 40px; height: 40px; border: 4px solid #ffffff; border-radius: 50%;"></div>
         </div>
-        <div style="width: 20%; background-color: #1A4C6E;"></div>
+        <h1 style="color: #ffffff; font-size: 32px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 2px;">Organization Invitation</h1>
       </div>
-      
-      <div style="padding: 30px; color: #000000;">
-        <p style="font-size: 20px; margin-bottom: 20px; font-weight: 700;">Hello <strong>${teacherName}</strong>,</p>
-        
-        <div style="background-color: #f5f5f5; padding: 25px; margin: 25px 0; border-left: 8px solid #1A4C6E;">
-          <p style="margin: 0; font-size: 16px; line-height: 1.8; font-weight: 500;">
+
+      <div style="padding: 40px 20px; background-color: #ffffff;">
+        <p style="font-size: 20px; margin-bottom: 20px; font-weight: 700; color: #1A2B4B;">Hello <strong>${teacherName}</strong>,</p>
+
+        <div style="background-color: #F8FAFC; padding: 30px; margin-bottom: 30px; position: relative; border-left: 4px solid #1A2B4B;">
+          <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #64748B;">
             You have been invited to join <strong>${orgName}</strong> by <strong>${teamLeadName}</strong>.
           </p>
-          <p style="margin: 15px 0 0 0; font-size: 16px; line-height: 1.8; font-weight: 500;">
+          <p style="margin: 15px 0 0 0; font-size: 16px; line-height: 1.6; color: #64748B;">
             You are now a member of this organization. You can access organization settings from your profile settings page.
           </p>
         </div>
-        
-        <p style="font-size: 16px; line-height: 1.6; font-weight: 500;">Welcome to the team!</p>
-        
+
+        <p style="font-size: 16px; line-height: 1.6; color: #64748B;">Welcome to the team!</p>
+
         <div style="text-align: center; padding-top: 30px; border-top: 2px solid #F8FAFC;">
           <p style="color: #64748B; font-size: 14px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1px;">The Coach Academ Team</p>
         </div>

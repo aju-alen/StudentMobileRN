@@ -35,7 +35,7 @@ const Courses = () => {
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
-        const response = await axios.get(`https://studentmobilern-31oo.onrender.com/api/subjects/advance-search`, {
+        const response = await axios.get(`https://api.coachacadem.ae/api/subjects/advance-search`, {
           headers: {
             'Authorization': `Bearer ${import.meta.env.VITE_API_AUTH_TOKEN}`
           }

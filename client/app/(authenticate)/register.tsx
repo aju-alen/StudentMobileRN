@@ -29,7 +29,7 @@ const UserTypeScreen = ({ onSelect }) => {
                 </View>
 
                 <View style={styles.userTypeContainer}>
-                    <TouchableOpacity 
+                    <Pressable 
                         style={styles.userTypeButton}
                         onPress={() => onSelect('student')}
                     >
@@ -38,7 +38,7 @@ const UserTypeScreen = ({ onSelect }) => {
                         </View>
                         <Text style={styles.userTypeTitle}>Student</Text>
                         <Text style={styles.userTypeDescription}>Join as a student to learn and grow with personalized guidance</Text>
-                        <TouchableOpacity 
+                        <Pressable 
                             style={styles.knowMoreButton}
                             onPress={() => toggleExpand('student')}
                         >
@@ -48,7 +48,7 @@ const UserTypeScreen = ({ onSelect }) => {
                                 size={20} 
                                 color={COLORS.primary} 
                             />
-                        </TouchableOpacity>
+                        </Pressable>
                         {expandedCard === 'student' && (
                             <View style={styles.expandedContent}>
                                 <View style={styles.userTypeFeatures}>
@@ -67,7 +67,7 @@ const UserTypeScreen = ({ onSelect }) => {
                                 </View>
                             </View>
                         )}
-                    </TouchableOpacity>
+                    </Pressable>
 
                     <TouchableOpacity 
                         style={styles.userTypeButton}

@@ -1,16 +1,13 @@
+import BecomeTutor from '../components/BecomeTutor';
+import CallToAction from '../components/CallToAction';
+import FAQ from '../components/FAQ';
 import Header from '../components/Header';
 import Hero from '../components/Hero';
-import Features from '../components/Features';
-import AppPromotion from '../components/AppPromotion';
-import Courses from '../components/Courses';
-import FAQ from '../components/FAQ';
-import CallToAction from '../components/CallToAction';
-import SEO from '../components/SEO';
-import TutorLanguages from '../components/TutorLanguages';
 import HowItWorks from '../components/HowItWorks';
 import LoveLessonsBanner from '../components/LoveLessonsBanner';
-import BecomeTutor from '../components/BecomeTutor';
 import QRCodeFloater from '../components/QRCodeFloater';
+import SEO from '../components/SEO';
+import TutorLanguages from '../components/TutorLanguages';
 
 function Home() {
   return (
