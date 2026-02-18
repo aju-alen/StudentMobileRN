@@ -48,6 +48,12 @@ enum EnrollmentStatus {
   CANCELLED
 }
 
+enum OrganizationRole {
+  OWNER
+  TEACHER
+  MANAGER
+}
+
 // Core authentication and shared fields
 model User {
   id                  String   @id @default(cuid())
@@ -56,6 +62,8 @@ model User {
   name                String
   verified            Boolean  @default(false)
   verificationToken   String?
+  passwordResetToken  String?
+  passwordResetExpires DateTime?
   profileImage        String?
   userDescription     String   @default("No description provided")
   hasSeenOnboarding   Boolean  @default(false)
@@ -93,12 +101,13 @@ model StudentProfile {
 
 // Teacher-specific data
 model TeacherProfile {
-  id                     String        @id @default(cuid())
-  userId                 String        @unique
-  zoomAccountCreated     Boolean       @default(false)
-  zoomUserAcceptedInvite Boolean       @default(false)
-  isTeamLead             Boolean       @default(false)
+  id                     String            @id @default(cuid())
+  userId                 String            @unique
+  zoomAccountCreated     Boolean           @default(false)
+  zoomUserAcceptedInvite Boolean           @default(false)
+  isTeamLead             Boolean           @default(false)
   organizationId         String?
+  organizationRole       OrganizationRole?
   
   // Relations
   user                   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -106,7 +115,7 @@ model TeacherProfile {
   clientConversations    Conversation[] @relation("TeacherConversations")
   blockedByStudents      BlockedTeacher[] @relation("BlockedTeacher")
   bookings               Booking[]     @relation("TeacherBookings")
-  organization           Organization? @relation("OrganizationMembers", fields: [organizationId], references: [id])
+  organization           Organization? @relation("OrganizationMembers", fields: [organizationId], references: [id], onDelete: SetNull)
   ledOrganization        Organization? @relation("OrganizationLead")
   communityMemberships   CommunityUser[]
   communityMessages      CommunityMessage[]
@@ -127,6 +136,7 @@ model AdminProfile {
 model Organization {
   id              String    @id @default(cuid())
   orgName         String
+  orgEmail        String?
   orgWebsite      String?
   orgLicense      String?
   orgCapacity     Int       @default(3)
@@ -136,7 +146,7 @@ model Organization {
   updatedAt       DateTime  @updatedAt
   
   // Relations
-  teamLead        TeacherProfile   @relation("OrganizationLead", fields: [teamLeadId], references: [id], onDelete: Restrict)
+  teamLead        TeacherProfile   @relation("OrganizationLead", fields: [teamLeadId], references: [id], onDelete: Cascade)
   members         TeacherProfile[] @relation("OrganizationMembers")
 }
 
@@ -363,8 +373,8 @@ model StripePurchases {
 
   student            StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
   subject            Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  booking            Booking?      @relation(fields: [bookingId], references: [id])
-  courseEnrollment   CourseEnrollment? @relation(fields: [courseEnrollmentId], references: [id])
+  booking            Booking?      @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  courseEnrollment   CourseEnrollment? @relation(fields: [courseEnrollmentId], references: [id], onDelete: SetNull)
 }
 
 model UserSubject {

@@ -101,19 +101,27 @@ export const register = async (req, res, next) => {
             organizationEmail,
             organizationWebsite,
             tradeLicensePdf,
-            teacherCount
+            teacherCount,
+            organizationRole
         } = req.body;
         
         console.log(req.body, 'this is the req body');
 
-        if (!name || !email || !password || !userType) {
-            return res.status(400).json({ message: "Please enter all required fields" });
+        // Specific validation for required fields
+        const missing = [];
+        if (!name || (typeof name === 'string' && !name.trim())) missing.push('name');
+        if (!email || (typeof email === 'string' && !email.trim())) missing.push('email');
+        if (!password || (typeof password === 'string' && !password.trim())) missing.push('password');
+        if (!userType) missing.push('account type');
+        if (missing.length > 0) {
+            const fieldList = missing.length === 1 ? missing[0] : missing.slice(0, -1).join(', ') + ' and ' + missing[missing.length - 1];
+            return res.status(400).json({ message: `Please provide ${fieldList}` });
         }
 
         // Validate userType
         const validUserTypes = ['STUDENT', 'TEACHER', 'ADMIN', 'ORGANIZATION'];
         if (!validUserTypes.includes(userType.toUpperCase())) {
-            return res.status(400).json({ message: "Invalid user type" });
+            return res.status(400).json({ message: "Invalid account type. Please choose Student, Teacher, or Organization." });
         }
 
         const hash = bcrypt.hashSync(password, 5);
@@ -123,7 +131,7 @@ export const register = async (req, res, next) => {
             where: { email },
         });
         if (existingUser) {
-            return res.status(400).json({ message: "User already exists" });
+            return res.status(400).json({ message: "An account with this email address already exists. Please sign in or use a different email." });
         }
 
         // Generate the verification token
@@ -228,16 +236,26 @@ export const register = async (req, res, next) => {
         let organization = null;
         if (isOrganization) {
             // Validate organization fields
-            if (!organizationName || !organizationEmail || !organizationWebsite) {
-                // Rollback user creation if organization data is incomplete
+            const orgMissing = [];
+            if (!organizationName || (typeof organizationName === 'string' && !organizationName.trim())) orgMissing.push('organization name');
+            if (!organizationEmail || (typeof organizationEmail === 'string' && !organizationEmail.trim())) orgMissing.push('organization email');
+            if (!organizationWebsite || (typeof organizationWebsite === 'string' && !organizationWebsite.trim())) orgMissing.push('organization website');
+            if (orgMissing.length > 0) {
                 await prisma.user.delete({ where: { id: newUser.id } });
-                return res.status(400).json({ message: "Organization fields are required for organization registration" });
+                const fieldList = orgMissing.length === 1 ? orgMissing[0] : orgMissing.slice(0, -1).join(', ') + ' and ' + orgMissing[orgMissing.length - 1];
+                return res.status(400).json({ message: `Organization registration requires ${fieldList}.` });
             }
 
-            // Update teacher profile to be team lead
+            // Validate and normalize organization role (default OWNER for registrant)
+            const validOrgRoles = ['OWNER', 'TEACHER', 'MANAGER'];
+            const role = organizationRole && validOrgRoles.includes(String(organizationRole).toUpperCase())
+                ? String(organizationRole).toUpperCase()
+                : 'OWNER';
+
+            // Update teacher profile to be team lead and set organization role
             await prisma.teacherProfile.update({
                 where: { id: profile.id },
-                data: { isTeamLead: true }
+                data: { isTeamLead: true, organizationRole: role }
             });
 
             // Create Organization with teacher as team lead
@@ -261,7 +279,7 @@ export const register = async (req, res, next) => {
 
         // Send the verification email
         const isTeacher = userTypeEnum === 'TEACHER' || userTypeEnum === 'ADMIN';
-        console.log(newUser.email, verificationToken, name, isTeacher, 'this is the new user');
+        
         
         sendVerificationEmail(newUser.email, verificationToken, name, isTeacher);
 
@@ -312,7 +330,7 @@ const sendVerificationEmail = async (email, verificationToken, name, isTeacher) 
           <p style="font-size: 16px; line-height: 1.6; color: #64748B; margin-bottom: 20px;">To complete your registration, please verify your account by clicking the button below:</p>
 
           <div style="text-align: center; margin: 40px 0;">
-            <a href="https://api.coachacadem.ae/api/auth/verify/${verificationToken}"
+            <a href="${process.env.APP_VERIFY_BASE_URL || 'https://api.coachacadem.ae'}/api/auth/verify/${verificationToken}"
                style="background-color: #1A2B4B; color: #ffffff; padding: 20px 40px; text-decoration: none; font-weight: 700; display: inline-block; text-transform: uppercase; letter-spacing: 2px;">
               VERIFY NOW
             </a>
@@ -333,7 +351,7 @@ const sendVerificationEmail = async (email, verificationToken, name, isTeacher) 
 
       To complete your registration, please verify your account by clicking the link below:
 
-      https://api.coachacadem.ae/api/auth/verify/${verificationToken}
+      ${process.env.APP_VERIFY_BASE_URL || 'https://api.coachacadem.ae'}/api/auth/verify/${verificationToken}
 
       If you didn't sign up for this account, please ignore this email.
 
@@ -372,6 +390,15 @@ export const verifyEmail = async (req, res, next) => {
       console.log(user, 'this is the user in email check');
   
       if (!user) {
+        const wantsJson = req.get('Accept')?.includes('application/json') || req.query.format === 'json';
+        if (wantsJson) {
+          return res.status(400).json({ verified: false, error: 'Invalid or expired verification token' });
+        }
+        const errorRedirectUrl = process.env.APP_VERIFY_REDIRECT_ERROR_URL || process.env.APP_VERIFY_BASE_URL;
+        if (errorRedirectUrl) {
+          const redirectTo = `${errorRedirectUrl.replace(/\/$/, '')}/verify-error`;
+          return res.redirect(302, redirectTo);
+        }
         return res.status(400).send(`
           <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0; background-color: #ffffff;">
             <div style="background-color: #1A2B4B; padding: 40px 20px; text-align: center; position: relative; overflow: hidden;">
@@ -427,7 +454,20 @@ export const verifyEmail = async (req, res, next) => {
         }
       }
   
-      // Send HTML success page
+      // JSON response for server-side verification (e.g. main site calling API)
+      const wantsJson = req.get('Accept')?.includes('application/json') || req.query.format === 'json';
+      if (wantsJson) {
+        return res.status(202).json({ verified: true, message: 'Account verified successfully' });
+      }
+
+      // Redirect to main domain success page if configured (avoids "Dangerous site" on API domain)
+      const successRedirectUrl = process.env.APP_VERIFY_REDIRECT_SUCCESS_URL || process.env.APP_VERIFY_BASE_URL;
+      if (successRedirectUrl) {
+        const redirectTo = `${successRedirectUrl.replace(/\/$/, '')}/verified`;
+        return res.redirect(302, redirectTo);
+      }
+
+      // Send HTML success page (when no redirect URL is set)
       res.status(202).send(`
         <!DOCTYPE html>
         <html>
@@ -840,6 +880,7 @@ export const changePassword = async (req, res, next) => {
     const { currentPassword, newPassword } = req.body;
     const userId = req.userId;
 
+
   
 
     if (!currentPassword || !newPassword) {
@@ -865,19 +906,22 @@ export const changePassword = async (req, res, next) => {
       return res.status(400).json({ message: "Current password is incorrect" });
     }
 
+
     // Hash the new password
     const hash = bcrypt.hashSync(newPassword, 5);
 
+
     // Update the password
-    await prisma.user.update({
+  const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: { password: hash },
     });
 
-    await sendEmailService(
-        user.email,
-        "Password Changed Successfully",
-        `
+    await resend.emails.send({
+      from: process.env.COACH_ACADEM_RESEND_EMAIL,
+      to: user.email,
+      subject: "Password Changed Successfully",
+      html: `
         <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #ffffff;">
           <div style="background-color: #1A2B4B; padding: 40px 20px; text-align: center; position: relative; overflow: hidden;">
             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1;">
@@ -886,43 +930,108 @@ export const changePassword = async (req, res, next) => {
             </div>
             <h1 style="color: #ffffff; font-size: 32px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 2px;">Password Changed</h1>
           </div>
-
           <div style="padding: 40px 20px; background-color: #ffffff;">
-            <p style="font-size: 20px; margin-bottom: 20px; font-weight: 700; color: #1A2B4B;">Hello <strong>${user.name}</strong>,</p>
-
-            <div style="background-color: #F8FAFC; padding: 30px; margin-bottom: 30px; position: relative; border-left: 4px solid #1A2B4B;">
-              <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #64748B;">Your password has been successfully changed at ${new Date().toLocaleString()} (GMT+4).</p>
-            </div>
-
-            <div style="background-color: #F8FAFC; padding: 30px; margin-bottom: 30px; position: relative; border-left: 4px solid #1A2B4B;">
-              <h3 style="color: #1A2B4B; font-size: 18px; margin: 0 0 15px; text-transform: uppercase; letter-spacing: 1px;">⚠️ Important Security Notice</h3>
-              <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #64748B;">If you did not make this change, please contact our security team immediately at <a href="mailto:support@coachacadem.ae" style="color: #1A2B4B; text-decoration: underline;">support@coachacadem.ae</a></p>
-            </div>
-
-            <p style="font-size: 16px; line-height: 1.6; color: #64748B;">For your security, please note:</p>
-            <ul style="font-size: 16px; line-height: 1.6; color: #64748B;">
-              <li>Your new password is now active</li>
-              <li>All existing sessions have been logged out</li>
-              <li>You will need to log in again with your new password</li>
-            </ul>
-
-            <p style="font-size: 16px; line-height: 1.6; color: #64748B; margin-top: 20px;">Security Best Practices:</p>
-            <ul style="font-size: 16px; line-height: 1.6; color: #64748B;">
-              <li>Never share your password with anyone</li>
-              <li>Use a strong, unique password</li>
-              <li>Regularly update your password</li>
-            </ul>
-
+            <p style="font-size: 20px; color: #1A2B4B; font-weight: 700;">Hello ${user.name},</p>
+            <p style="font-size: 16px; margin-top: 20px; color: #64748B;">Your password was changed successfully at ${new Date().toLocaleString()}.</p>
+            <p style="font-size: 16px; margin-top: 20px; color: #64748B;">If you did not make this change, please contact support at <a href="mailto:support@coachacadem.ae" style="color: #1A2B4B; text-decoration: underline;">support@coachacadem.ae</a>.</p>
+            <p style="font-size: 16px; margin-top: 20px; color: #64748B;">You will need to log in again with your new password.</p>
             <div style="text-align: center; padding-top: 30px; border-top: 2px solid #F8FAFC;">
-              <p style="color: #64748B; font-size: 14px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1px;">This is an automated message, please do not reply to this email.</p>
-              <p style="color: #1A2B4B; font-size: 16px; font-weight: 700; margin: 0;">For support, contact: <a href="mailto:support@coachacadem.ae" style="color: #1A2B4B; text-decoration: underline;">support@coachacadem.ae</a></p>
+              <p style="color: #64748B; font-size: 14px; margin: 0;">The Coach Academ Team</p>
             </div>
           </div>
         </div>
-        `
-    );
+      `,
+    });
 
     res.status(200).json({ message: "Password changed successfully" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email || !String(email).trim()) {
+      return res.status(400).json({ message: "Please provide your email address" });
+    }
+    const trimmedEmail = String(email).trim().toLowerCase();
+    const user = await prisma.user.findUnique({
+      where: { email: trimmedEmail },
+    });
+    if (!user) {
+      return res.status(200).json({ message: "If an account exists with this email, you will receive a password reset code." });
+    }
+    const otp = String(crypto.randomInt(100000, 999999));
+    const resetExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken: otp,
+        passwordResetExpires: resetExpires,
+      },
+    });
+    await resend.emails.send({
+      from: process.env.COACH_ACADEM_RESEND_EMAIL,
+      to: user.email,
+      subject: "Your Password Reset Code",
+      html: `
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #ffffff;">
+          <div style="background-color: #1A2B4B; padding: 40px 20px; text-align: center; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1;">
+              <div style="position: absolute; top: 20px; left: 20px; width: 60px; height: 60px; border: 4px solid #ffffff; transform: rotate(45deg);"></div>
+              <div style="position: absolute; bottom: 20px; right: 20px; width: 40px; height: 40px; border: 4px solid #ffffff; border-radius: 50%;"></div>
+            </div>
+            <h1 style="color: #ffffff; font-size: 32px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 2px;">Reset Password</h1>
+          </div>
+          <div style="padding: 40px 20px; background-color: #ffffff;">
+            <p style="font-size: 20px; color: #1A2B4B; font-weight: 700;">Hello ${user.name},</p>
+            <p style="font-size: 16px; margin-top: 20px; color: #64748B;">You requested a password reset. Enter this code in the app to set a new password. This code expires in 15 minutes.</p>
+            <p style="font-size: 28px; margin-top: 20px; font-weight: 700; color: #1A2B4B; letter-spacing: 8px;">${otp}</p>
+            <p style="font-size: 16px; margin-top: 20px; color: #64748B;">If you did not request this, you can ignore this email.</p>
+            <div style="text-align: center; padding-top: 30px; border-top: 2px solid #F8FAFC;">
+              <p style="color: #64748B; font-size: 14px; margin: 0;">The Coach Academ Team</p>
+            </div>
+          </div>
+        </div>
+      `,
+    });
+    res.status(200).json({ message: "If an account exists with this email, you will receive a password reset code." });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const resetPassword = async (req, res, next) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !String(email).trim()) {
+      return res.status(400).json({ message: "Please provide your email address" });
+    }
+    if (!otp || !String(otp).trim()) {
+      return res.status(400).json({ message: "Please provide the code from your email" });
+    }
+    if (!newPassword) {
+      return res.status(400).json({ message: "Please provide your new password" });
+    }
+    const trimmedEmail = String(email).trim().toLowerCase();
+    const otpTrimmed = String(otp).trim();
+    const user = await prisma.user.findUnique({
+      where: { email: trimmedEmail },
+    });
+    if (!user || user.passwordResetToken !== otpTrimmed || !user.passwordResetExpires || user.passwordResetExpires < new Date()) {
+      return res.status(400).json({ message: "Invalid or expired code. Please request a new password reset." });
+    }
+    const hash = bcrypt.hashSync(newPassword, 5);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hash,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+      },
+    });
+    res.status(200).json({ message: "Password reset successfully. You can now log in with your new password." });
   } catch (err) {
     next(err);
   }
@@ -1364,9 +1473,9 @@ export const getOrganizationMembers = async (req, res, next) => {
       return res.status(400).json({ message: "User is not part of an organization" });
     }
 
-    // Format members array
-    // Filter out team lead from members to avoid duplicates
+    // Format members array; include organizationRole from DB for each member
     const teamLeadId = organization.teamLead.user.id;
+    const teamLeadRole = organization.teamLead.organizationRole || 'OWNER';
     const regularMembers = organization.members
       .filter(member => member.user.id !== teamLeadId)
       .map(member => ({
@@ -1375,6 +1484,7 @@ export const getOrganizationMembers = async (req, res, next) => {
         email: member.user.email,
         profileImage: member.user.profileImage,
         isTeamLead: false,
+        organizationRole: member.organizationRole || null,
       }));
 
     const allMembers = [
@@ -1384,6 +1494,7 @@ export const getOrganizationMembers = async (req, res, next) => {
         email: organization.teamLead.user.email,
         profileImage: organization.teamLead.user.profileImage,
         isTeamLead: true,
+        organizationRole: teamLeadRole,
       },
       ...regularMembers
     ];
@@ -1447,7 +1558,7 @@ export const inviteTeacherToOrganization = async (req, res, next) => {
     }
 
     // Check capacity
-    const currentMemberCount = organization.members.length + 1; // +1 for team lead
+    const currentMemberCount = organization.members.length ; // +1 for team lead
     if (currentMemberCount >= organization.orgCapacity) {
       return res.status(400).json({ 
         message: `Organization has reached maximum capacity of ${organization.orgCapacity} members` 
@@ -1616,6 +1727,135 @@ export const refreshOrganizationInviteCode = async (req, res, next) => {
   }
 };
 
+// Create organization (teacher only, not already in an org)
+export const createOrganization = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+    const { orgName, orgEmail, organizationRole, tradeLicenseLocation } = req.body;
+
+    const trimmedName = orgName != null ? String(orgName).trim() : '';
+    if (!trimmedName) {
+      return res.status(400).json({ message: "Organization name is required" });
+    }
+
+    const trimmedEmail = orgEmail != null ? String(orgEmail).trim() : '';
+    if (!trimmedEmail) {
+      return res.status(400).json({ message: "Organization email is required" });
+    }
+
+    const validRoles = ['OWNER', 'TEACHER', 'MANAGER'];
+    const role = organizationRole && validRoles.includes(String(organizationRole).toUpperCase())
+      ? String(organizationRole).toUpperCase()
+      : 'OWNER';
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { teacherProfile: true },
+    });
+
+    if (!user || user.userType !== 'TEACHER') {
+      return res.status(400).json({ message: "Only teachers can create an organization" });
+    }
+
+    if (!user.teacherProfile) {
+      return res.status(400).json({ message: "Teacher profile not found" });
+    }
+
+    if (user.teacherProfile.organizationId !== null) {
+      return res.status(400).json({ message: "You are already part of an organization" });
+    }
+
+    const existingAsLead = await prisma.organization.findUnique({
+      where: { teamLeadId: user.teacherProfile.id },
+    });
+    if (existingAsLead) {
+      return res.status(400).json({ message: "You are already the team lead of an organization" });
+    }
+
+    const inviteCode = generateInviteCode();
+    const organization = await prisma.organization.create({
+      data: {
+        orgName: trimmedName,
+        orgEmail: trimmedEmail,
+        orgCapacity: 3,
+        orgInvite: inviteCode,
+        teamLeadId: user.teacherProfile.id,
+        orgLicense: tradeLicenseLocation && String(tradeLicenseLocation).trim() ? String(tradeLicenseLocation).trim() : null,
+      },
+    });
+
+    await prisma.teacherProfile.update({
+      where: { id: user.teacherProfile.id },
+      data: {
+        isTeamLead: true,
+        organizationRole: role,
+        organizationId: organization.id,
+      },
+    });
+
+    res.status(201).json({
+      message: "Organization created successfully",
+      organization: {
+        id: organization.id,
+        orgName: organization.orgName,
+        orgCapacity: organization.orgCapacity,
+      },
+    });
+  } catch (err) {
+    console.error('Error creating organization:', err);
+    next(err);
+  }
+};
+
+// Delete organization (team lead only)
+export const deleteOrganization = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        teacherProfile: {
+          include: { ledOrganization: true },
+        },
+      },
+    });
+
+    if (!user || user.userType !== 'TEACHER' || !user.teacherProfile) {
+      return res.status(400).json({ message: "User is not a teacher" });
+    }
+
+    const organization = user.teacherProfile.ledOrganization;
+    if (!organization) {
+      return res.status(400).json({ message: "You are not the team lead of an organization" });
+    }
+
+    const orgId = organization.id;
+    const teamLeadProfileId = user.teacherProfile.id;
+
+    await prisma.$transaction([
+      prisma.teacherProfile.updateMany({
+        where: { organizationId: orgId },
+        data: { organizationId: null, organizationRole: null },
+      }),
+      prisma.teacherProfile.update({
+        where: { id: teamLeadProfileId },
+        data: { isTeamLead: false, organizationId: null, organizationRole: null },
+      }),
+      prisma.organization.delete({
+        where: { id: orgId },
+      }),
+    ]);
+
+    res.status(200).json({
+      message: "Organization deleted successfully",
+    });
+  } catch (err) {
+    console.error('Error deleting organization:', err);
+    next(err);
+  }
+};
+
 // Join organization by invite code
 export const joinOrganizationByInvite = async (req, res, next) => {
   try {
@@ -1665,7 +1905,7 @@ export const joinOrganizationByInvite = async (req, res, next) => {
     }
 
     // Check capacity
-    const currentMemberCount = organization.members.length + 1; // +1 for team lead
+    const currentMemberCount = organization.members.length ; // +1 for team lead
     if (currentMemberCount >= organization.orgCapacity) {
       return res.status(400).json({ 
         message: `Organization has reached maximum capacity of ${organization.orgCapacity} members` 

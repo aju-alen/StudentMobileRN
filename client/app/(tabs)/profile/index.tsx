@@ -13,6 +13,7 @@ import {
 import { Image } from 'expo-image';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import axios from "axios";
 import { ipURL } from "../../utils/utils";
 import { COLORS, FONT } from "../../../constants";
@@ -81,6 +82,13 @@ const ProfilePage = () => {
     getUser();
   }, []);
 
+  // Refetch user when screen is focused (e.g. returning from edit-profile after updating photo)
+  useFocusEffect(
+    React.useCallback(() => {
+      getUser();
+    }, [])
+  );
+
   console.log("user in profile", user);
   
 
@@ -108,9 +116,14 @@ const ProfilePage = () => {
       const userverificationCheck = await axiosWithAuth.get(`${ipURL}/api/auth/verification-check`);
 
       const {isTeacher, id, zoomAccountCreated, zoomUserAcceptedInvite} = userverificationCheck.data.userDetail;
+      const zoomVerified = zoomUserAcceptedInvite || zoomAccountCreated;
       console.log(zoomAccountCreated, zoomUserAcceptedInvite, isTeacher, 'this is the user verification check');
-      if( !zoomUserAcceptedInvite || !isTeacher ){
-        Alert.alert('Incomplete Profile', 'Please complete your profile to create a new subject. You need to be a teacher and have accepted the Zoom invite which was sent to your email to create a new subject.');
+      if ( !isTeacher ) {
+        Alert.alert('Incomplete Profile', 'You need to be registered as a teacher to create a course.');
+        return;
+      }
+      if ( !zoomVerified ) {
+        Alert.alert('Zoom required', 'Please complete Zoom setup: create your Zoom account and accept the invite sent to your email. After that you can create courses.');
         return;
       }
       
@@ -227,6 +240,7 @@ const ProfilePage = () => {
       <TouchableWithoutFeedback onPress={closeDropdown}>
         <ScrollView
           style={styles.mainContainer}
+          contentContainerStyle={styles.scrollContent}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
@@ -392,6 +406,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F4F6F8',
   },
+  scrollContent: {
+    paddingBottom: verticalScale(24),
+  },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
@@ -400,26 +417,26 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#FFFFFF',
-    paddingTop: verticalScale(60),
+    paddingTop: verticalScale(48),
     paddingBottom: verticalScale(20),
-    borderBottomLeftRadius: moderateScale(30),
-    borderBottomRightRadius: moderateScale(30),
+    borderBottomLeftRadius: moderateScale(20),
+    borderBottomRightRadius: moderateScale(20),
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     //shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowRadius: 4,
+    elevation: 2,
   },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: horizontalScale(20),
-    marginBottom: verticalScale(20),
+    marginBottom: verticalScale(12),
   },
   pageTitle: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(24),
+    fontSize: moderateScale(22),
     color: '#1A2B4B',
   },
   profileSection: {
@@ -428,36 +445,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   profileImage: {
-    width: horizontalScale(80),
-    height: verticalScale(80),
-    borderRadius: moderateScale(40),
-    marginRight: horizontalScale(15),
+    width: horizontalScale(72),
+    height: verticalScale(72),
+    borderRadius: moderateScale(36),
+    marginRight: horizontalScale(16),
   },
   profileInfo: {
     flex: 1,
   },
   name: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(20),
+    fontSize: moderateScale(18),
     color: '#1A2B4B',
-    marginBottom: verticalScale(4),
+    marginBottom: verticalScale(2),
   },
   role: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(14),
+    fontSize: moderateScale(13),
     color: '#64748B',
-    marginBottom: verticalScale(8),
+    marginBottom: verticalScale(6),
   },
   badgeContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: horizontalScale(6),
   },
   badge: {
     backgroundColor: '#EEF2FF',
-    paddingHorizontal: horizontalScale(12),
+    paddingHorizontal: horizontalScale(10),
     paddingVertical: verticalScale(4),
-    borderRadius: moderateScale(12),
-    marginRight: horizontalScale(8),
+    borderRadius: moderateScale(10),
+    marginRight: horizontalScale(6),
     marginBottom: verticalScale(4),
   },
   badgeText: {
@@ -497,32 +515,33 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   section: {
-    padding: moderateScale(20),
+    paddingVertical: verticalScale(16),
+    paddingHorizontal: horizontalScale(20),
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: verticalScale(15),
+    marginBottom: verticalScale(12),
   },
   sectionTitle: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(20),
+    fontSize: moderateScale(18),
     color: '#1A2B4B',
   },
   card: {
     backgroundColor: '#FFFFFF',
     padding: moderateScale(20),
-    borderRadius: moderateScale(15),
+    borderRadius: moderateScale(12),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     //shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 3,
     elevation: 2,
   },
   aboutText: {
     fontFamily: FONT.regular,
-    fontSize: moderateScale(15),
+    fontSize: moderateScale(14),
     color: '#475569',
     lineHeight: moderateScale(24),
   },
@@ -563,7 +582,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingHorizontal: horizontalScale(15),
     paddingVertical: verticalScale(8),
-    borderRadius: moderateScale(20),
+    borderRadius: moderateScale(12),
   },
   addButtonText: {
     fontFamily: FONT.medium,

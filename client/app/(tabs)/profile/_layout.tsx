@@ -7,11 +7,12 @@ const ProfileLayout = () => {
   return (
     <Stack>
     <Stack.Screen name="index" options={{ headerShown: false }} />
-    <Stack.Screen name="reports" options={{ headerShown: true, headerTitle:'Reports' }} />
-    <Stack.Screen name="edit-profile" options={{ headerShown: true, headerTitle:'Edit Profile' }} />
+    <Stack.Screen name="reports" options={{ headerShown: false }} />
+    <Stack.Screen name="your-reviews" options={{ headerShown: false }} />
+    <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
     <Stack.Screen name="change-password" options={{ headerShown: true, headerTitle:'Change Password' }} />
     <Stack.Screen name="delete-account" options={{ headerShown: true, headerTitle:'Delete Account' }} />
-    <Stack.Screen name="blocked-users" options={{ headerShown:true, headerTitle:'Blocked Users' }} />
+    <Stack.Screen name="blocked-users" options={{ headerShown: false }} />
     <Stack.Screen name="help-center" options={{ headerShown:false }} />
     <Stack.Screen name="help-item" options={{ headerShown:false }} />
     <Stack.Screen name="contact-us" options={{ headerShown:false }} />

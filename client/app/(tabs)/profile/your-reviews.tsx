@@ -14,34 +14,34 @@ import { ipURL } from '../../utils/utils';
 import { axiosWithAuth } from '../../utils/customAxios';
 import { FONT } from '../../../constants';
 
-interface Report {
+interface Review {
   id: string;
-  userId: string;
-  subjectId: string;
-  reportDescription: string;
-  reportStatus: 'PENDING' | 'RESOLVED' | 'REJECTED';
-  reportResolution: string | null;
+  title: string;
+  description: string;
   createdAt: string;
-  reportedSubject: {
+  upvotes: number;
+  downvotes: number;
+  subject: {
+    id: string;
     subjectName: string;
   };
 }
 
-const ReportsPage = () => {
-  const [reports, setReports] = useState<Report[]>([]);
+const YourReviewsPage = () => {
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchReports();
+    fetchReviews();
   }, []);
 
-  const fetchReports = async () => {
+  const fetchReviews = async () => {
     try {
-      const response = await axiosWithAuth.get(`${ipURL}/api/reports/user`);
-      setReports(response.data);
+      const response = await axiosWithAuth.get(`${ipURL}/api/reviews/my-reviews`);
+      setReviews(response.data);
     } catch (err) {
-      setError('Failed to fetch reports');
+      setError('Failed to fetch your reviews');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -57,17 +57,8 @@ const ReportsPage = () => {
     });
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'PENDING':
-        return '#F59E0B';
-      case 'RESOLVED':
-        return '#10B981';
-      case 'REJECTED':
-        return '#EF4444';
-      default:
-        return '#6B7280';
-    }
+  const handleReviewPress = (subjectId: string) => {
+    router.push(`/(tabs)/home/subjectReviews/${subjectId}`);
   };
 
   if (isLoading) {
@@ -84,37 +75,46 @@ const ReportsPage = () => {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Your Reports</Text>
+        <Text style={styles.headerTitle}>Your Reviews</Text>
       </View>
 
       {error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
         </View>
-      ) : reports.length === 0 ? (
+      ) : reviews.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Ionicons name="document-text-outline" size={48} color="#666" />
-          <Text style={styles.emptyText}>No reports found</Text>
+          <Ionicons name="star-outline" size={48} color="#666" />
+          <Text style={styles.emptyText}>You haven't posted any reviews yet</Text>
         </View>
       ) : (
-        <ScrollView style={styles.reportsList}>
-          {reports.map((report) => (
-            <View key={report.id} style={styles.reportCard}>
-              <View style={styles.reportHeader}>
-                <Text style={styles.subjectName}>{report.reportedSubject.subjectName}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(report.reportStatus) }]}>
-                  <Text style={styles.statusText}>{report.reportStatus}</Text>
-                </View>
+        <ScrollView style={styles.reviewsList} showsVerticalScrollIndicator={false}>
+          {reviews.map((review) => (
+            <TouchableOpacity
+              key={review.id}
+              style={styles.reviewCard}
+              onPress={() => handleReviewPress(review.subject.id)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.reviewHeader}>
+                <Text style={styles.subjectName} numberOfLines={1}>
+                  {review.subject.subjectName}
+                </Text>
+                <Text style={styles.date}>{formatDate(review.createdAt)}</Text>
               </View>
-              <Text style={styles.date}>{formatDate(report.createdAt)}</Text>
-              <Text style={styles.reportDescription}>{report.reportDescription}</Text>
-              {report.reportResolution && (
-                <View style={styles.resolutionContainer}>
-                  <Text style={styles.resolutionLabel}>Resolution:</Text>
-                  <Text style={styles.resolutionText}>{report.reportResolution}</Text>
-                </View>
-              )}
-            </View>
+              <Text style={styles.reviewTitle} numberOfLines={2}>
+                {review.title}
+              </Text>
+              <Text style={styles.reviewDescription} numberOfLines={3}>
+                {review.description}
+              </Text>
+              <View style={styles.votesRow}>
+                <Ionicons name="thumbs-up-outline" size={14} color="#64748B" />
+                <Text style={styles.votesText}>{review.upvotes}</Text>
+                <Ionicons name="thumbs-down-outline" size={14} color="#64748B" style={{ marginLeft: horizontalScale(12) }} />
+                <Text style={styles.votesText}>{review.downvotes}</Text>
+              </View>
+            </TouchableOpacity>
           ))}
         </ScrollView>
       )}
@@ -164,6 +164,7 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#c62828',
     textAlign: 'center',
+    fontFamily: FONT.medium,
   },
   emptyContainer: {
     flex: 1,
@@ -172,71 +173,67 @@ const styles = StyleSheet.create({
     padding: moderateScale(24),
   },
   emptyText: {
+    fontFamily: FONT.medium,
     fontSize: moderateScale(16),
     color: '#666',
     marginTop: verticalScale(16),
+    textAlign: 'center',
   },
-  reportsList: {
+  reviewsList: {
     flex: 1,
-    padding: moderateScale(16),
+    padding: moderateScale(20),
   },
-  reportCard: {
-    backgroundColor: '#f8f8f8',
+  reviewCard: {
+    backgroundColor: '#FFFFFF',
     borderRadius: moderateScale(12),
     padding: moderateScale(16),
-    marginBottom: verticalScale(16),
+    marginBottom: verticalScale(12),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 4,
+    elevation: 2,
   },
-  reportHeader: {
+  reviewHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: verticalScale(8),
   },
   subjectName: {
-    fontSize: moderateScale(16),
-    fontWeight: 'bold',
-    color: '#333',
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(14),
+    color: '#1A2B4B',
     flex: 1,
   },
-  statusBadge: {
-    paddingHorizontal: moderateScale(8),
-    paddingVertical: moderateScale(4),
-    borderRadius: moderateScale(12),
+  date: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(12),
+    color: '#64748B',
     marginLeft: horizontalScale(8),
   },
-  statusText: {
-    color: '#fff',
+  reviewTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(16),
+    color: '#1A2B4B',
+    marginBottom: verticalScale(6),
+  },
+  reviewDescription: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
+    color: '#64748B',
+    lineHeight: moderateScale(20),
+  },
+  votesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: verticalScale(10),
+  },
+  votesText: {
+    fontFamily: FONT.medium,
     fontSize: moderateScale(12),
-    fontWeight: '600',
-  },
-  date: {
-    fontSize: moderateScale(14),
-    color: '#666',
-    marginBottom: verticalScale(8),
-  },
-  reportDescription: {
-    fontSize: moderateScale(14),
-    color: '#666',
-    lineHeight: moderateScale(20),
-    marginBottom: verticalScale(8),
-  },
-  resolutionContainer: {
-    marginTop: verticalScale(8),
-    paddingTop: verticalScale(8),
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-  },
-  resolutionLabel: {
-    fontSize: moderateScale(14),
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: verticalScale(4),
-  },
-  resolutionText: {
-    fontSize: moderateScale(14),
-    color: '#666',
-    lineHeight: moderateScale(20),
+    color: '#64748B',
+    marginLeft: horizontalScale(4),
   },
 });
 
-export default ReportsPage; 
+export default YourReviewsPage;

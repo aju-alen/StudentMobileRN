@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Share } from 'react-native';
 import { router } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { FONT } from '../../../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../../../utils/metrics';
@@ -13,6 +14,7 @@ const OrganizationSettingsPage = () => {
   const [inviteCode, setInviteCode] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchUserData();
@@ -40,6 +42,58 @@ const OrganizationSettingsPage = () => {
         console.error('Error fetching invite code:', error);
       }
     }
+  };
+
+  const handleCopyCode = async () => {
+    if (!inviteCode) return;
+    try {
+      await Clipboard.setStringAsync(inviteCode);
+      Alert.alert('Copied', 'Invite code copied to clipboard.');
+    } catch (err) {
+      Alert.alert('Error', 'Could not copy to clipboard.');
+    }
+  };
+
+  const handleShareCode = async () => {
+    if (!inviteCode) return;
+    const message = `Join my organization on Coach Academ. Use this invite code: ${inviteCode}`;
+    try {
+      await Share.share({
+        message,
+        title: 'Organization Invite Code',
+      });
+    } catch (err) {
+      if ((err as { message?: string })?.message !== 'User did not share') {
+        Alert.alert('Error', 'Could not open share sheet.');
+      }
+    }
+  };
+
+  const handleDeleteOrganization = () => {
+    Alert.alert(
+      'Delete Organization',
+      'Are you sure you want to delete this organization? All members will be removed and this cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setDeleting(true);
+              await axiosWithAuth.delete(`${ipURL}/api/auth/organization`);
+              Alert.alert('Deleted', 'Organization has been deleted.', [
+                { text: 'OK', onPress: () => { fetchUserData(); setInviteCode(null); } },
+              ]);
+            } catch (err) {
+              Alert.alert('Error', err.response?.data?.message || 'Failed to delete organization');
+            } finally {
+              setDeleting(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleRefreshCode = async () => {
@@ -78,7 +132,12 @@ const OrganizationSettingsPage = () => {
     return (
       <View style={styles.container}>
         <StatusBarComponent />
-   
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
+            <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Organization Settings</Text>
+        </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#1A2B4B" />
         </View>
@@ -90,35 +149,63 @@ const OrganizationSettingsPage = () => {
     <ScrollView style={styles.container}>
       <StatusBarComponent />
 
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
+          <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Organization Settings</Text>
+      </View>
+
       {isTeamLead && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Invite Code</Text>
           <View style={styles.inviteCodeContainer}>
-            <View style={styles.inviteCodeBox}>
-              <Text style={styles.inviteCodeLabel}>Organization Invite Code</Text>
-              <Text style={styles.inviteCodeText}>
-                {inviteCode || 'Generating...'}
-              </Text>
-            </View>
             <TouchableOpacity
-              style={[styles.refreshButton, refreshing && styles.refreshButtonDisabled]}
-              onPress={handleRefreshCode}
-              disabled={refreshing}
+              style={styles.inviteCodeBox}
+              onPress={handleCopyCode}
+              activeOpacity={0.7}
+              disabled={!inviteCode}
             >
-              {refreshing ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <>
-                  <Ionicons name="refresh-outline" size={20} color="#FFFFFF" />
-                  <Text style={styles.refreshButtonText}>Refresh Code</Text>
-                </>
-              )}
+              <Text style={styles.inviteCodeLabel}>Organization Invite Code (tap to copy)</Text>
+              <View style={styles.inviteCodeRow}>
+                <Text style={styles.inviteCodeText}>
+                  {inviteCode || 'Generating...'}
+                </Text>
+                {inviteCode && (
+                  <Ionicons name="copy-outline" size={22} color="#64748B" style={styles.copyIcon} />
+                )}
+              </View>
             </TouchableOpacity>
+            <View style={styles.inviteCodeButtonRow}>
+              <TouchableOpacity
+                style={[styles.shareButton, !inviteCode && styles.buttonDisabled]}
+                onPress={handleShareCode}
+                disabled={!inviteCode}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="share-outline" size={20} color="#FFFFFF" />
+                <Text style={styles.shareButtonText}>Share</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.refreshButton, refreshing && styles.refreshButtonDisabled, !inviteCode && styles.buttonDisabled]}
+                onPress={handleRefreshCode}
+                disabled={refreshing || !inviteCode}
+              >
+                {refreshing ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Ionicons name="refresh-outline" size={20} color="#FFFFFF" />
+                    <Text style={styles.refreshButtonText}>Refresh Code</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
           <View style={styles.infoBox}>
             <Ionicons name="information-circle-outline" size={20} color="#64748B" />
             <Text style={styles.infoText}>
-              Share this code with teachers to allow them to join your organization.
+              Tap the code to copy, or use Share to send via WhatsApp, email, etc.
             </Text>
           </View>
         </View>
@@ -126,7 +213,18 @@ const OrganizationSettingsPage = () => {
 
       {!isInOrganization && !isTeamLead && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Join Organization</Text>
+          <Text style={styles.sectionTitle}>
+            {user?.userType === 'TEACHER' || user?.isTeacher ? 'Organization' : 'Join Organization'}
+          </Text>
+          {(user?.userType === 'TEACHER' || user?.isTeacher) && (
+            <TouchableOpacity 
+              style={styles.settingItem}
+              onPress={() => router.push('/(tabs)/profile/organization/create-organization')}
+            >
+              <Text style={styles.settingText}>Create Organization</Text>
+              <Ionicons name="chevron-forward" size={24} color="#64748B" />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity 
             style={styles.settingItem}
             onPress={() => router.push('/(tabs)/profile/organization/join')}
@@ -146,6 +244,26 @@ const OrganizationSettingsPage = () => {
           >
             <Text style={styles.settingText}>Organization Members</Text>
             <Ionicons name="chevron-forward" size={24} color="#64748B" />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {isTeamLead && (
+        <View style={[styles.section, styles.dangerZoneSection]}>
+          <Text style={styles.sectionTitle}>Danger zone</Text>
+          <TouchableOpacity
+            style={[styles.deleteButton, deleting && styles.buttonDisabled]}
+            onPress={handleDeleteOrganization}
+            disabled={deleting}
+          >
+            {deleting ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
+                <Text style={styles.deleteButtonText}>Delete Organization</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
       )}
@@ -174,6 +292,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginRight: horizontalScale(15),
+    padding: moderateScale(8),
   },
   title: {
     fontFamily: FONT.bold,
@@ -190,6 +309,9 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(20),
     paddingHorizontal: horizontalScale(20),
   },
+  dangerZoneSection: {
+    marginBottom: verticalScale(40),
+  },
   sectionTitle: {
     fontFamily: FONT.bold,
     fontSize: moderateScale(18),
@@ -203,7 +325,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: moderateScale(20),
     borderRadius: moderateScale(12),
-    marginBottom: verticalScale(15),
+    marginBottom: verticalScale(12),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowRadius: 4,
@@ -215,13 +337,46 @@ const styles = StyleSheet.create({
     color: '#64748B',
     marginBottom: verticalScale(10),
   },
+  inviteCodeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   inviteCodeText: {
     fontFamily: FONT.bold,
     fontSize: moderateScale(24),
     color: '#1A2B4B',
     letterSpacing: moderateScale(2),
+    flex: 1,
+  },
+  copyIcon: {
+    marginLeft: horizontalScale(8),
+  },
+  inviteCodeButtonRow: {
+    flexDirection: 'row',
+    gap: horizontalScale(12),
+  },
+  shareButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1A2B4B',
+    padding: moderateScale(15),
+    borderRadius: moderateScale(12),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  shareButtonText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(16),
+    color: '#FFFFFF',
+    marginLeft: horizontalScale(8),
   },
   refreshButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -235,6 +390,9 @@ const styles = StyleSheet.create({
   },
   refreshButtonDisabled: {
     opacity: 0.6,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
   },
   refreshButtonText: {
     fontFamily: FONT.medium,
@@ -274,6 +432,20 @@ const styles = StyleSheet.create({
     fontFamily: FONT.medium,
     fontSize: moderateScale(16),
     color: '#1A2B4B',
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#DC2626',
+    padding: moderateScale(15),
+    borderRadius: moderateScale(12),
+    gap: horizontalScale(8),
+  },
+  deleteButtonText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(16),
+    color: '#FFFFFF',
   },
 });
 

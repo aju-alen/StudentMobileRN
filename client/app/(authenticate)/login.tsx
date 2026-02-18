@@ -5,12 +5,14 @@ import { router } from 'expo-router';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Alert,
+  Keyboard,
   Pressable,
   SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
   ActivityIndicator,
   Animated,
@@ -40,8 +42,18 @@ const LoginPage = () => {
   }, []);
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      setError('Please fill in all fields');
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+    if (!trimmedEmail && !trimmedPassword) {
+      setError('Please enter your email and password');
+      return;
+    }
+    if (!trimmedEmail) {
+      setError('Please enter your email address');
+      return;
+    }
+    if (!trimmedPassword) {
+      setError('Please enter your password');
       return;
     }
 
@@ -49,8 +61,8 @@ const LoginPage = () => {
     setError('');
 
     const user = {
-      email,
-      password: password.trim(),
+      email: trimmedEmail,
+      password: trimmedPassword,
     };
 
     try {
@@ -84,7 +96,8 @@ const LoginPage = () => {
       }
     } catch (err) {
       console.log(err);
-      setError(err.response?.data?.message || 'Login failed');
+      const msg = err.response?.data?.message;
+      setError(msg && typeof msg === 'string' ? msg : 'Unable to sign in. Please check your email and password and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -92,8 +105,9 @@ const LoginPage = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-        <View style={styles.header}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+        <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+          <View style={styles.header}>
           <Text style={styles.headerText}>Welcome Back</Text>
           <Text style={styles.subHeaderText}>Login to continue</Text>
         </View>
@@ -142,6 +156,12 @@ const LoginPage = () => {
                 />
               </TouchableOpacity>
             </View>
+            <Pressable
+              onPress={() => router.push('/(authenticate)/forgot-password')}
+              style={({ pressed }) => [styles.forgotLink, pressed && { opacity: 0.7 }]}
+            >
+              <Text style={styles.forgotLinkText}>Forgot password?</Text>
+            </Pressable>
           </View>
 
           <Pressable
@@ -169,7 +189,8 @@ const LoginPage = () => {
             </Pressable>
           </View>
         </View>
-      </Animated.View>
+        </Animated.View>
+      </TouchableWithoutFeedback>
     </SafeAreaView>
   );
 };
@@ -272,6 +293,14 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
     color: '#c62828',
     textAlign: 'center',
+  },
+  forgotLink: {
+    alignSelf: 'flex-end',
+    marginTop: verticalScale(8),
+  },
+  forgotLinkText: {
+    fontSize: moderateScale(14),
+    color: COLORS.primary,
   },
 });
 

@@ -14,6 +14,7 @@ import { horizontalScale, moderateScale, verticalScale } from '../../utils/metri
 import { ipURL } from '../../utils/utils';
 import { axiosWithAuth } from '../../utils/customAxios';
 import StatusBarComponent from '../../components/StatusBarComponent';
+import { FONT } from '../../../constants';
 
 interface BlockedUser {
   id: string;
@@ -89,7 +90,7 @@ const BlockedUsersPage = () => {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#1A2B4B" />
       </View>
     );
   }
@@ -97,6 +98,12 @@ const BlockedUsersPage = () => {
   return (
     <View style={styles.container}>
       <StatusBarComponent />
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Blocked Users</Text>
+      </View>
       {error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
@@ -135,13 +142,35 @@ const BlockedUsersPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F4F6F8',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#F4F6F8',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: horizontalScale(20),
+    paddingTop: verticalScale(60),
+    paddingBottom: verticalScale(16),
+    backgroundColor: '#FFFFFF',
+    borderBottomLeftRadius: moderateScale(30),
+    borderBottomRightRadius: moderateScale(30),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  backButton: {
+    marginRight: horizontalScale(15),
+  },
+  headerTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(24),
+    color: '#1A2B4B',
   },
   errorContainer: {
     padding: moderateScale(16),

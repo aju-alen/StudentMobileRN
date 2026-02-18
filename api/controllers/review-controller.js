@@ -129,6 +129,47 @@ export const getSubjectReviews = async (req, res, next) => {
   }
 };
 
+export const getMyReviews = async (req, res, next) => {
+  try {
+    const userId = req.userId;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        studentProfile: {
+          select: { id: true }
+        }
+      }
+    });
+
+    if (!user || !user.studentProfile) {
+      return res.status(400).json({ message: "Student profile not found" });
+    }
+
+    const reviews = await prisma.review.findMany({
+      where: {
+        studentId: user.studentProfile.id,
+      },
+      include: {
+        subject: {
+          select: {
+            subjectName: true,
+            id: true,
+          }
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    res.status(200).json(reviews);
+  } catch (error) {
+    console.error('Error fetching user reviews:', error);
+    next(error);
+  }
+};
+
 export const voteReview = async (req, res, next) => {
   try {
     const { reviewId } = req.params;

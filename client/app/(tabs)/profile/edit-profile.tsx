@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Image, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { FONT } from '../../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -133,6 +134,17 @@ const EditProfilePage = () => {
 
       setProfileImage(imageLocation);
       setSelectedImageUri(null);
+
+      // Update AsyncStorage userDetails so home (and any screen using it) shows the new image
+      const stored = await AsyncStorage.getItem('userDetails');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        await AsyncStorage.setItem('userDetails', JSON.stringify({
+          ...parsed,
+          userProfileImage: imageLocation,
+        }));
+      }
+
       Alert.alert('Success', 'Your profile picture has been updated.');
     } catch (error: any) {
       console.error('Image upload failed', error);
@@ -163,90 +175,111 @@ const EditProfilePage = () => {
     }
   };
 
-  return (
-    <ScrollView style={styles.container}>
-      <View style={styles.profileImageContainer}>
-        {selectedImageUri ? (
-          <Image source={{ uri: selectedImageUri }} style={styles.profileImage} />
-        ) : profileImage ? (
-          <Image source={{ uri: profileImage }} style={styles.profileImage} />
-        ) : (
-          <View style={styles.profileImagePlaceholder}>
-            <Text style={styles.label}>Add Photo</Text>
-          </View>
-        )}
+  const displayImageUri = selectedImageUri || profileImage;
 
-        <View style={{ flexDirection: 'row', marginTop: verticalScale(12) }}>
-          <TouchableOpacity
-            style={[styles.saveButton, { marginRight: horizontalScale(10) }]}
-            onPress={pickImage}
-          >
-            <Text style={styles.saveButtonText}>Choose Photo</Text>
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Edit Profile</Text>
+      </View>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      {/* Photo section */}
+      <View style={styles.photoSection}>
+        <TouchableOpacity
+          style={styles.avatarWrapper}
+          onPress={pickImage}
+          activeOpacity={0.9}
+          disabled={isUploadingImage}
+        >
+          {displayImageUri ? (
+            <Image source={{ uri: displayImageUri }} style={styles.avatar} />
+          ) : (
+            <View style={styles.avatarPlaceholder}>
+              <Ionicons name="person" size={moderateScale(48)} color="#94A3B8" />
+            </View>
+          )}
+          <View style={styles.avatarBadge}>
+            <Ionicons name="camera" size={moderateScale(16)} color="#FFFFFF" />
+          </View>
+        </TouchableOpacity>
+        {selectedImageUri ? (
+          <View style={styles.photoActions}>
+            <TouchableOpacity
+              style={styles.uploadButton}
+              onPress={uploadProfileImage}
+              disabled={isUploadingImage}
+            >
+              {isUploadingImage ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Text style={styles.uploadButtonText}>Upload photo</Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelPhotoButton} onPress={() => setSelectedImageUri(null)}>
+              <Text style={styles.cancelPhotoText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity onPress={pickImage} style={styles.changePhotoLink}>
+            <Text style={styles.changePhotoText}>Change photo</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.saveButton,
-              (!selectedImageUri || isUploadingImage) && { opacity: 0.7 },
-            ]}
-            onPress={uploadProfileImage}
-            disabled={!selectedImageUri || isUploadingImage}
-          >
-            {isUploadingImage ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <ActivityIndicator color="#FFFFFF" style={{ marginRight: 8 }} />
-                <Text style={styles.saveButtonText}>Uploading...</Text>
-              </View>
-            ) : (
-              <Text style={styles.saveButtonText}>Update Photo</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+        )}
       </View>
 
-      <View style={styles.form}>
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Name</Text>
+      {/* Form card */}
+      <View style={styles.formCard}>
+        <View style={styles.field}>
+          <Text style={styles.fieldLabel}>Name</Text>
           <TextInput
-            style={styles.input}
+            style={styles.fieldInput}
             value={userData.name}
             onChangeText={(text) => setUserData(prev => ({ ...prev, name: text }))}
-            placeholder="Enter your name"
+            placeholder="Your name"
+            placeholderTextColor="#94A3B8"
           />
         </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Email</Text>
+        <View style={styles.fieldDivider} />
+        <View style={styles.field}>
+          <Text style={styles.fieldLabel}>Email</Text>
           <TextInput
-            style={[styles.input, styles.disabledInput]}
+            style={[styles.fieldInput, styles.fieldInputDisabled]}
             value={userData.email}
             editable={false}
-            placeholder="Your email"
+            placeholderTextColor="#94A3B8"
           />
+          <Text style={styles.fieldHint}>Email cannot be changed</Text>
         </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Bio</Text>
+        <View style={styles.fieldDivider} />
+        <View style={styles.field}>
+          <Text style={styles.fieldLabel}>Bio</Text>
           <TextInput
-            style={[styles.input, styles.textArea]}
+            style={[styles.fieldInput, styles.fieldInputArea]}
             value={userData.userDescription}
             onChangeText={(text) => setUserData(prev => ({ ...prev, userDescription: text }))}
-            placeholder="Tell us about yourself"
+            placeholder="A short bio about you"
+            placeholderTextColor="#94A3B8"
             multiline
-            numberOfLines={4}
+            numberOfLines={3}
           />
         </View>
-
-        <TouchableOpacity 
-          style={styles.saveButton}
-          onPress={handleSave}
-          disabled={isLoading}
-        >
-          <Text style={styles.saveButtonText}>
-            {isLoading ? 'Saving...' : 'Save Changes'}
-          </Text>
-        </TouchableOpacity>
       </View>
-    </ScrollView>
+
+      <TouchableOpacity
+        style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
+        onPress={handleSave}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <ActivityIndicator color="#FFFFFF" size="small" />
+        ) : (
+          <Text style={styles.saveButtonText}>Save changes</Text>
+        )}
+      </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -258,90 +291,161 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: verticalScale(60),
-    paddingBottom: verticalScale(20),
     paddingHorizontal: horizontalScale(20),
+    paddingTop: verticalScale(60),
+    paddingBottom: verticalScale(16),
     backgroundColor: '#FFFFFF',
     borderBottomLeftRadius: moderateScale(30),
     borderBottomRightRadius: moderateScale(30),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    //shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
   },
   backButton: {
     marginRight: horizontalScale(15),
   },
-  title: {
+  headerTitle: {
     fontFamily: FONT.bold,
     fontSize: moderateScale(24),
     color: '#1A2B4B',
   },
-  profileImageContainer: {
+  scrollView: {
+    flex: 1,
+  },
+  content: {
+    paddingHorizontal: horizontalScale(24),
+    paddingTop: verticalScale(32),
+    paddingBottom: verticalScale(48),
+  },
+  photoSection: {
     alignItems: 'center',
-    marginTop: verticalScale(20),
+    marginBottom: verticalScale(32),
   },
-  profileImage: {
-    width: moderateScale(120),
-    height: moderateScale(120),
-    borderRadius: moderateScale(60),
+  avatarWrapper: {
+    position: 'relative',
+    marginBottom: verticalScale(12),
   },
-  profileImagePlaceholder: {
-    width: moderateScale(120),
-    height: moderateScale(120),
-    borderRadius: moderateScale(60),
+  avatar: {
+    width: moderateScale(100),
+    height: moderateScale(100),
+    borderRadius: moderateScale(50),
+    backgroundColor: '#E2E8F0',
+  },
+  avatarPlaceholder: {
+    width: moderateScale(100),
+    height: moderateScale(100),
+    borderRadius: moderateScale(50),
     backgroundColor: '#E2E8F0',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  editImageButton: {
+  avatarBadge: {
     position: 'absolute',
     bottom: 0,
     right: 0,
+    width: moderateScale(32),
+    height: moderateScale(32),
+    borderRadius: moderateScale(16),
     backgroundColor: '#1A2B4B',
-    width: moderateScale(40),
-    height: moderateScale(40),
-    borderRadius: moderateScale(20),
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#F4F6F8',
   },
-  form: {
-    paddingHorizontal: horizontalScale(20),
-    marginTop: verticalScale(20),
+  changePhotoLink: {
+    paddingVertical: verticalScale(4),
+    paddingHorizontal: horizontalScale(8),
   },
-  inputContainer: {
-    marginBottom: verticalScale(20),
-  },
-  label: {
+  changePhotoText: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(16),
+    fontSize: moderateScale(14),
     color: '#1A2B4B',
-    marginBottom: verticalScale(8),
   },
-  input: {
+  photoActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: horizontalScale(12),
+  },
+  uploadButton: {
+    backgroundColor: '#1A2B4B',
+    paddingVertical: verticalScale(8),
+    paddingHorizontal: horizontalScale(20),
+    borderRadius: moderateScale(20),
+    minWidth: horizontalScale(120),
+    alignItems: 'center',
+  },
+  uploadButtonText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
+    color: '#FFFFFF',
+  },
+  cancelPhotoButton: {
+    paddingVertical: verticalScale(8),
+    paddingHorizontal: horizontalScale(12),
+  },
+  cancelPhotoText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
+    color: '#64748B',
+  },
+  formCard: {
     backgroundColor: '#FFFFFF',
-    padding: moderateScale(15),
-    borderRadius: moderateScale(12),
+    borderRadius: moderateScale(16),
+    paddingHorizontal: horizontalScale(20),
+    paddingVertical: verticalScale(8),
+    marginBottom: verticalScale(24),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  field: {
+    paddingVertical: verticalScale(16),
+  },
+  fieldDivider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginLeft: 0,
+  },
+  fieldLabel: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(13),
+    color: '#64748B',
+    marginBottom: verticalScale(6),
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  fieldInput: {
     fontFamily: FONT.regular,
     fontSize: moderateScale(16),
     color: '#1A2B4B',
+    paddingVertical: verticalScale(4),
   },
-  disabledInput: {
-    backgroundColor: '#F1F5F9',
+  fieldInputDisabled: {
     color: '#64748B',
   },
-  textArea: {
-    height: verticalScale(100),
+  fieldInputArea: {
+    minHeight: verticalScale(72),
     textAlignVertical: 'top',
+    paddingVertical: verticalScale(8),
+  },
+  fieldHint: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(12),
+    color: '#94A3B8',
+    marginTop: verticalScale(4),
   },
   saveButton: {
     backgroundColor: '#1A2B4B',
-    padding: moderateScale(15),
+    paddingVertical: verticalScale(16),
     borderRadius: moderateScale(12),
     alignItems: 'center',
-    marginTop: verticalScale(20),
-    marginBottom: verticalScale(40),
+    justifyContent: 'center',
+    minHeight: verticalScale(52),
+  },
+  saveButtonDisabled: {
+    opacity: 0.8,
   },
   saveButtonText: {
     fontFamily: FONT.medium,

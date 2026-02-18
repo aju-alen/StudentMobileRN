@@ -1,5 +1,5 @@
 import express from "express";
-import {  register, verifyEmail,login,singleUser,updateMetadata,getTeacherProfile,changePassword,deleteAccount,updateProfileImage,verifyPurchase,getActiveStudentCourses,updateUserHasSeenOnboarding,registerSuperAdmin,loginSuperAdmin,zoomTest,verificationCheck,updateOrganizationTradeLicense,updateOrganizationCapacity,getOrganizationMembers,inviteTeacherToOrganization,getOrganizationInviteCode,refreshOrganizationInviteCode,joinOrganizationByInvite,removeTeacherFromOrganization } from "../controllers/auth-controller.js";
+import {  register, verifyEmail,login,singleUser,updateMetadata,getTeacherProfile,changePassword,forgotPassword,resetPassword,deleteAccount,updateProfileImage,verifyPurchase,getActiveStudentCourses,updateUserHasSeenOnboarding,registerSuperAdmin,loginSuperAdmin,zoomTest,verificationCheck,updateOrganizationTradeLicense,updateOrganizationCapacity,getOrganizationMembers,inviteTeacherToOrganization,getOrganizationInviteCode,refreshOrganizationInviteCode,createOrganization,deleteOrganization,joinOrganizationByInvite,removeTeacherFromOrganization } from "../controllers/auth-controller.js";
 import { verifyToken } from "../middlewares/jwt.js";
 const router = express.Router()
 
@@ -9,6 +9,8 @@ router.get('/verify/:token', verifyEmail);
 router.get('/metadata',verifyToken, singleUser);
 router.put(`/update-metadata`,verifyToken, updateMetadata)
 router.put('/change-password', verifyToken, changePassword)
+router.post('/forgot-password', forgotPassword)
+router.post('/reset-password', resetPassword)
 router.delete('/delete-account', verifyToken, deleteAccount)
 router.get('/teacher/profile/:teacherProfileId', getTeacherProfile);
 router.post('/login', login);
@@ -26,6 +28,8 @@ router.get('/organization/members', verifyToken, getOrganizationMembers);
 router.post('/organization/invite', verifyToken, inviteTeacherToOrganization);
 router.get('/organization/invite-code', verifyToken, getOrganizationInviteCode);
 router.put('/organization/refresh-invite', verifyToken, refreshOrganizationInviteCode);
+router.post('/organization/create', verifyToken, createOrganization);
+router.delete('/organization', verifyToken, deleteOrganization);
 router.post('/organization/join', verifyToken, joinOrganizationByInvite);
 router.post('/organization/remove-teacher', verifyToken, removeTeacherFromOrganization);
 router.put('/organization/capacity', verifyToken, updateOrganizationCapacity);

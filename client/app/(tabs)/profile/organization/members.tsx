@@ -19,13 +19,22 @@ import { axiosWithAuth } from '../../../utils/customAxios';
 import StatusBarComponent from '../../../components/StatusBarComponent';
 import { Image as ExpoImage } from 'expo-image';
 
+type OrgRole = 'OWNER' | 'MANAGER' | 'TEACHER' | null;
+
 interface Member {
   id: string;
   name: string;
   email: string;
   profileImage?: string;
   isTeamLead: boolean;
+  organizationRole?: OrgRole;
 }
+
+const roleLabel: Record<NonNullable<OrgRole>, string> = {
+  OWNER: 'Owner',
+  MANAGER: 'Manager',
+  TEACHER: 'Tutor',
+};
 
 interface Organization {
   id: string;
@@ -123,7 +132,12 @@ const OrganizationMembersPage = () => {
     return (
       <View style={styles.container}>
         <StatusBarComponent />
-     
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
+            <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Organization Members</Text>
+        </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#1A2B4B" />
         </View>
@@ -140,7 +154,13 @@ const OrganizationMembersPage = () => {
     >
       <StatusBarComponent />
 
-   
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
+          <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Organization Members</Text>
+      </View>
+
       {error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
@@ -202,11 +222,13 @@ const OrganizationMembersPage = () => {
                   <View style={styles.memberDetails}>
                     <View style={styles.memberNameRow}>
                       <Text style={styles.memberName}>{member.name}</Text>
-                      {member.isTeamLead && (
+                      {member.organizationRole && roleLabel[member.organizationRole] ? (
                         <View style={styles.teamLeadBadge}>
-                          <Text style={styles.teamLeadText}>Team Lead</Text>
+                          <Text style={styles.teamLeadText}>
+                            {roleLabel[member.organizationRole]}
+                          </Text>
                         </View>
-                      )}
+                      ) : null}
                     </View>
                     <Text style={styles.memberEmail}>{member.email}</Text>
                   </View>
@@ -249,6 +271,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginRight: horizontalScale(15),
+    padding: moderateScale(8),
   },
   title: {
     fontFamily: FONT.bold,

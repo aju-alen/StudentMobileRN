@@ -22,6 +22,13 @@ const UserTypeScreen = ({ onSelect }) => {
         <SafeAreaView style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
             <View style={styles.content}>
+                <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => router.replace('/(authenticate)/welcome')}
+                >
+                    <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
+                    <Text style={styles.backButtonText}>Back</Text>
+                </TouchableOpacity>
                 <View style={styles.headerSection}>
                     <Text style={styles.title}>Register to</Text>
                     <Text style={styles.titleBold}>Coach Academ</Text>
@@ -149,26 +156,31 @@ const UserTypeScreen = ({ onSelect }) => {
                         )}
                     </TouchableOpacity>
                 </View>
+
+                <View style={styles.loginContainer}>
+                    <Text style={styles.loginText}>Already have an account? </Text>
+                    <Pressable onPress={() => router.replace('/(authenticate)/login')}>
+                        <Text style={styles.loginLink}>Login</Text>
+                    </Pressable>
+                </View>
             </View>
         </ScrollView>
         </SafeAreaView>
     );
 };
 
-const CustomDropdown = ({ label, value, options, onSelect, placeholder, isMultiSelect = false, selectedValues = [], hasError = false, errorMessage = '' }) => {
+const CustomDropdown = ({ label, value, options, onSelect, placeholder, isMultiSelect = false, selectedValues = [], multiSelectValueType = 'number', hasError = false, errorMessage = '' }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     const handleSelect = (optionValue) => {
         if (isMultiSelect) {
-            const newValue = Number(optionValue);
+            const newValue = multiSelectValueType === 'string' ? optionValue : Number(optionValue);
             if (selectedValues.includes(newValue)) {
-                onSelect(selectedValues.filter(v => v !== newValue));
+                onSelect(selectedValues.filter((v: number | string) => v !== newValue));
             } else {
                 onSelect([...selectedValues, newValue]);
             }
         } else {
-            // Pass the value as-is (preserve type: string for boards, number for grades)
-            // The optionValue from options array is already the correct type
             onSelect(optionValue);
         }
         if (!isMultiSelect) {
@@ -179,9 +191,11 @@ const CustomDropdown = ({ label, value, options, onSelect, placeholder, isMultiS
     const getDisplayValue = () => {
         if (isMultiSelect) {
             if (selectedValues.length === 0) return placeholder;
-            return selectedValues.map(v => `Grade ${v}`).join(', ');
+            if (multiSelectValueType === 'string') {
+                return selectedValues.map((v: string) => options.find(opt => opt.value === v)?.label ?? v).join(', ');
+            }
+            return selectedValues.map((v: number) => `Grade ${v}`).join(', ');
         }
-        // Find the selected option and display its label
         if (!value && value !== 0) return placeholder;
         const selectedOption = options.find(opt => opt.value === value);
         return selectedOption ? selectedOption.label : placeholder;
@@ -265,6 +279,7 @@ const RegisterPage = () => {
     const [subjectInput, setSubjectInput] = useState('');
     const [userType, setUserType] = useState<'student' | 'teacher' | 'organization' | null>(null);
     const [recommendedBoard, setRecommendedBoard] = useState('');
+    const [selectedBoards, setSelectedBoards] = useState<string[]>([]);
     const [recommendedGrade, setRecommendedGrade] = useState(0);
     const [selectedGrades, setSelectedGrades] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -278,10 +293,20 @@ const RegisterPage = () => {
     const [tradeLicensePdfUri, setTradeLicensePdfUri] = useState<string | null>(null);
     const [isUploadingTradeLicense, setIsUploadingTradeLicense] = useState(false);
     const [teacherCount, setTeacherCount] = useState('3');
+    const [organizationRole, setOrganizationRole] = useState<string>('OWNER');
 
 
 
     const boardOptions = [
+        { label: 'Select your board', value: '' },
+        { label: 'CBSE', value: 'CBSE' },
+        { label: 'ICSE', value: 'ICSE' },
+        { label: 'AP', value: 'AP' },
+        { label: 'IGCSE-A Levels', value: 'IGCSE-A Levels' },
+        { label: 'IB', value: 'IB' },
+    ].filter((opt) => opt.value !== '');
+
+    const boardOptionsWithPlaceholder = [
         { label: 'Select your board', value: '' },
         { label: 'CBSE', value: 'CBSE' },
         { label: 'ICSE', value: 'ICSE' },
@@ -296,6 +321,12 @@ const RegisterPage = () => {
             label: `Grade ${i + 1}`,
             value: i + 1
         }))
+    ];
+
+    const organizationRoleOptions = [
+        { label: 'OWNER', value: 'OWNER' },
+        { label: 'TEACHER', value: 'TEACHER' },
+        { label: 'MANAGER', value: 'MANAGER' },
     ];
 
     const handleUserTypeSelect = (selectedType: 'student' | 'teacher' | 'organization') => {
@@ -349,7 +380,11 @@ const RegisterPage = () => {
             newErrors.reccomendedSubjects = 'Please add at least one subject';
         }
 
-        if (recommendedBoard === '') {
+        if (userType === 'organization') {
+            if (selectedBoards.length === 0) {
+                newErrors.recommendedBoard = 'Please select at least one board';
+            }
+        } else if (recommendedBoard === '') {
             newErrors.recommendedBoard = 'Please select a board';
         }
 
@@ -383,6 +418,9 @@ const RegisterPage = () => {
             if (teacherCount !== '3') {
                 newErrors.teacherCount = 'Invalid teacher count';
             }
+            if (!organizationRole || !['OWNER', 'TEACHER', 'MANAGER'].includes(organizationRole)) {
+                newErrors.organizationRole = 'Please select a user role';
+            }
         }
 
         return newErrors;
@@ -413,13 +451,14 @@ const RegisterPage = () => {
             isOrganization: userType === 'organization',
             confirmPassword,
             reccomendedSubjects,
-            recommendedBoard,
+            recommendedBoard: userType === 'organization' ? (selectedBoards.length > 0 ? selectedBoards[0] : '') : recommendedBoard,
             recommendedGrade,
             selectedGrades: (userType === 'teacher' || userType === 'organization') ? selectedGrades : [recommendedGrade],
             ...(userType === 'organization' && {
                 organizationName,
                 organizationEmail,
                 organizationWebsite,
+                organizationRole,
                 // Don't send tradeLicensePdf here - we'll upload it after registration
                 teacherCount: parseInt(teacherCount),
             }),
@@ -480,7 +519,8 @@ const RegisterPage = () => {
         }
         catch (err) {
             setIsLoading(false);
-            Alert.alert('Error', err.response?.data?.message || 'Registration failed');
+            const msg = err.response?.data?.message;
+            Alert.alert('Registration Error', msg && typeof msg === 'string' ? msg : 'Something went wrong. Please check your details and try again.');
         }
     }
 
@@ -737,18 +777,39 @@ const RegisterPage = () => {
                         {errors.reccomendedSubjects && <Text style={styles.errorText}>{errors.reccomendedSubjects}</Text>}
                     </View>
 
-                    <CustomDropdown
-                        label="Board"
-                        value={recommendedBoard}
-                        options={boardOptions}
-                        onSelect={(value) => {
-                            setRecommendedBoard(value);
-                            clearFieldError('recommendedBoard');
-                        }}
-                        placeholder="Select your board"
-                        hasError={!!errors.recommendedBoard}
-                        errorMessage={errors.recommendedBoard || ''}
-                    />
+                    {userType === 'organization' ? (
+                        <>
+                            <CustomDropdown
+                                label="Boards"
+                                value=""
+                                options={boardOptions}
+                                onSelect={(value: string[] | string) => {
+                                    setSelectedBoards(value as string[]);
+                                    if ((value as string[]).length > 0) clearFieldError('recommendedBoard');
+                                }}
+                                placeholder="Select boards your organization supports"
+                                isMultiSelect
+                                selectedValues={selectedBoards}
+                                multiSelectValueType="string"
+                                hasError={!!errors.recommendedBoard}
+                                errorMessage={errors.recommendedBoard || ''}
+                            />
+                            <Text style={styles.infoText}>Only one board is stored on the backend. The first selected board will be saved.</Text>
+                        </>
+                    ) : (
+                        <CustomDropdown
+                            label="Board"
+                            value={recommendedBoard}
+                            options={boardOptionsWithPlaceholder}
+                            onSelect={(value) => {
+                                setRecommendedBoard(value);
+                                clearFieldError('recommendedBoard');
+                            }}
+                            placeholder="Select your board"
+                            hasError={!!errors.recommendedBoard}
+                            errorMessage={errors.recommendedBoard || ''}
+                        />
+                    )}
 
                     {userType === 'organization' && (
                         <>
@@ -766,6 +827,19 @@ const RegisterPage = () => {
                                 />
                                 {errors.organizationName && <Text style={styles.errorText}>{errors.organizationName}</Text>}
                             </View>
+
+                            <CustomDropdown
+                                label="User role"
+                                value={organizationRole}
+                                options={organizationRoleOptions}
+                                onSelect={(value) => {
+                                    setOrganizationRole(value as string);
+                                    clearFieldError('organizationRole');
+                                }}
+                                placeholder="Select your role"
+                                hasError={!!errors.organizationRole}
+                                errorMessage={errors.organizationRole || ''}
+                            />
 
                             <View style={styles.inputGroup}>
                                 <Text style={styles.label}>Organization Email</Text>

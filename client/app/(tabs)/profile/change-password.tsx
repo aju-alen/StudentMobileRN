@@ -49,7 +49,8 @@ const ChangePasswordPage = () => {
       }
     } catch (error) {
       console.error('Error changing password:', error);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to change password');
+      const message = error.response?.data?.message ?? (typeof error.response?.data === 'string' ? error.response.data : null);
+      Alert.alert('Error', message || 'Failed to change password');
     } finally {
       setIsLoading(false);
     }

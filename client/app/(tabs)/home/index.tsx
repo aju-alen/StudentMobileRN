@@ -12,9 +12,10 @@ import {
   Dimensions,
 } from "react-native";
 import { Image } from 'expo-image';
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import axios from "axios";
 import { ipURL } from '../../utils/utils';
 import { Ionicons } from "@expo/vector-icons";
@@ -133,11 +134,22 @@ const HomePage = () => {
 
   useEffect(() => {
     async function getUserDetails() {
-      const userDetails = JSON.parse(await AsyncStorage.getItem('userDetails'));
-      setUserDetails(userDetails);
+      const stored = await AsyncStorage.getItem('userDetails');
+      if (stored) setUserDetails(JSON.parse(stored));
     }
     getUserDetails();
   }, []);
+
+  // Re-read userDetails when home tab is focused so profile image updates after edit-profile
+  useFocusEffect(
+    useCallback(() => {
+      async function refreshUserDetails() {
+        const stored = await AsyncStorage.getItem('userDetails');
+        if (stored) setUserDetails(JSON.parse(stored));
+      }
+      refreshUserDetails();
+    }, [])
+  );
 
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
