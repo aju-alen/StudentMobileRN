@@ -65,11 +65,25 @@ const JoinOrganizationPage = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <StatusBarComponent />
 
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Join Organization</Text>
+      </View>
 
-      <View style={styles.content}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.description}>
           Enter the organization invite code provided by the team lead to join their organization.
         </Text>
@@ -116,8 +130,8 @@ const JoinOrganizationPage = () => {
             You must be a verified teacher to join an organization. Once joined, you'll be able to view organization members.
           </Text>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -125,6 +139,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F4F6F8',
+  },
+  scrollView: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
