@@ -319,18 +319,23 @@ const ProfilePage = () => {
           </View>
           
           <View style={styles.profileSection}>
-            <Image
-              key={user.profileImage ?? 'default'}
-              source={{
-                uri: user.profileImage,
-                cacheKey: `${user.profileImage ?? 'default'}-${profileImageVersion}`,
-              }}
-              style={styles.profileImage}
-              placeholder={blurhash}
-              contentFit="cover"
-              transition={500}
-              cachePolicy="memory-disk"
-            />
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => router.push('/(tabs)/profile/edit-profile')}
+            >
+              <Image
+                key={user.profileImage ?? 'default'}
+                source={{
+                  uri: user.profileImage,
+                  cacheKey: `${user.profileImage ?? 'default'}-${profileImageVersion}`,
+                }}
+                style={styles.profileImage}
+                placeholder={blurhash}
+                contentFit="cover"
+                transition={500}
+                cachePolicy="memory-disk"
+              />
+            </TouchableOpacity>
             <View style={styles.profileInfo}>
               <Text style={styles.name}>{user.name}</Text>
               <Text style={styles.role}>
