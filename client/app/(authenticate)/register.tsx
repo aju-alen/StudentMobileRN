@@ -661,6 +661,7 @@ const RegisterPage = () => {
 
                     <View style={styles.inputGroup} onLayout={(e) => { scrollInputTops.current['name'] = e.nativeEvent.layout.y; }}>
                         <Text style={styles.label}>Name</Text>
+                        <Text style={styles.infoText}>Use your official name as per your ID or school records.</Text>
                         <TextInput
                             style={[styles.input, errors.name && styles.inputError]}
                             placeholder="Enter your name"

@@ -250,12 +250,12 @@ const EditProfilePage = () => {
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>Name</Text>
           <TextInput
-            style={styles.fieldInput}
+            style={[styles.fieldInput, styles.fieldInputDisabled]}
             value={userData.name}
-            onChangeText={(text) => setUserData(prev => ({ ...prev, name: text }))}
-            placeholder="Your name"
+            editable={false}
             placeholderTextColor="#94A3B8"
           />
+          <Text style={styles.fieldHint}>Name cannot be changed. Contact support if this is incorrect.</Text>
         </View>
         <View style={styles.fieldDivider} />
         <View style={styles.field}>
@@ -266,7 +266,7 @@ const EditProfilePage = () => {
             editable={false}
             placeholderTextColor="#94A3B8"
           />
-          <Text style={styles.fieldHint}>Email cannot be changed</Text>
+          <Text style={styles.fieldHint}>Email cannot be changed. Contact support if this is incorrect.</Text>
         </View>
         <View style={styles.fieldDivider} />
         <View style={styles.field}>
