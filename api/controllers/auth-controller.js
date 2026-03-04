@@ -1817,6 +1817,11 @@ export const createOrganization = async (req, res, next) => {
 export const deleteOrganization = async (req, res, next) => {
   try {
     const userId = req.userId;
+    const { password } = req.body || {};
+
+    if (!password || (typeof password === 'string' && !password.trim())) {
+      return res.status(400).json({ message: "Please provide your password" });
+    }
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -1829,6 +1834,11 @@ export const deleteOrganization = async (req, res, next) => {
 
     if (!user || user.userType !== 'TEACHER' || !user.teacherProfile) {
       return res.status(400).json({ message: "User is not a teacher" });
+    }
+
+    const isCorrect = bcrypt.compareSync(password.trim(), user.password);
+    if (!isCorrect) {
+      return res.status(400).json({ message: "Incorrect password" });
     }
 
     const organization = user.teacherProfile.ledOrganization;

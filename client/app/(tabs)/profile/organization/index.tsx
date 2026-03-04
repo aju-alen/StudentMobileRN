@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Share } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, Share, TextInput, Modal } from 'react-native';
 import { router } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +15,9 @@ const OrganizationSettingsPage = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     fetchUserData();
@@ -70,6 +73,17 @@ const OrganizationSettingsPage = () => {
   };
 
   const handleDeleteOrganization = () => {
+    setDeleteError('');
+    setDeletePassword('');
+    setDeleteModalVisible(true);
+  };
+
+  const confirmDeleteOrganization = () => {
+    if (!deletePassword.trim()) {
+      setDeleteError('Please enter your password');
+      return;
+    }
+
     Alert.alert(
       'Delete Organization',
       'Are you sure you want to delete this organization? All members will be removed and this cannot be undone.',
@@ -81,12 +95,19 @@ const OrganizationSettingsPage = () => {
           onPress: async () => {
             try {
               setDeleting(true);
-              await axiosWithAuth.delete(`${ipURL}/api/auth/organization`);
+              await axiosWithAuth.delete(`${ipURL}/api/auth/organization`, {
+                data: { password: deletePassword.trim() },
+              });
+              setDeleteModalVisible(false);
+              setDeletePassword('');
+              setDeleteError('');
               Alert.alert('Deleted', 'Organization has been deleted.', [
                 { text: 'OK', onPress: () => { fetchUserData(); setInviteCode(null); } },
               ]);
             } catch (err) {
-              Alert.alert('Error', err.response?.data?.message || 'Failed to delete organization');
+              const message = (err as any)?.response?.data?.message || 'Failed to delete organization';
+              setDeleteError(message);
+              Alert.alert('Error', message);
             } finally {
               setDeleting(false);
             }
@@ -267,6 +288,66 @@ const OrganizationSettingsPage = () => {
           </TouchableOpacity>
         </View>
       )}
+
+      <Modal
+        animationType="slide"
+        transparent
+        visible={deleteModalVisible}
+        onRequestClose={() => {
+          if (!deleting) {
+            setDeleteModalVisible(false);
+          }
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Confirm deletion</Text>
+            <Text style={styles.modalMessage}>
+              To delete this organization, please enter your account password.
+            </Text>
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Password"
+              placeholderTextColor="#94A3B8"
+              secureTextEntry
+              autoCapitalize="none"
+              value={deletePassword}
+              editable={!deleting}
+              onChangeText={(text) => {
+                setDeletePassword(text);
+                if (deleteError) setDeleteError('');
+              }}
+            />
+            {deleteError ? <Text style={styles.modalError}>{deleteError}</Text> : null}
+            <View style={styles.modalButtonsRow}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => {
+                  if (!deleting) {
+                    setDeleteModalVisible(false);
+                    setDeletePassword('');
+                    setDeleteError('');
+                  }
+                }}
+                disabled={deleting}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalDeleteButton, deleting && styles.buttonDisabled]}
+                onPress={confirmDeleteOrganization}
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.modalDeleteText}>Delete</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -445,6 +526,80 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     fontFamily: FONT.medium,
     fontSize: moderateScale(16),
+    color: '#FFFFFF',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: horizontalScale(20),
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(16),
+    padding: moderateScale(20),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  modalTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(18),
+    color: '#1A2B4B',
+    marginBottom: verticalScale(8),
+  },
+  modalMessage: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(14),
+    color: '#64748B',
+    marginBottom: verticalScale(16),
+  },
+  modalInput: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: moderateScale(12),
+    paddingHorizontal: moderateScale(14),
+    paddingVertical: moderateScale(10),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(14),
+    color: '#1A2B4B',
+  },
+  modalError: {
+    marginTop: verticalScale(6),
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(12),
+    color: '#DC2626',
+  },
+  modalButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: verticalScale(20),
+    gap: horizontalScale(12),
+  },
+  modalCancelButton: {
+    paddingVertical: moderateScale(10),
+    paddingHorizontal: horizontalScale(18),
+    borderRadius: moderateScale(10),
+    backgroundColor: '#F1F5F9',
+  },
+  modalCancelText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
+    color: '#0F172A',
+  },
+  modalDeleteButton: {
+    paddingVertical: moderateScale(10),
+    paddingHorizontal: horizontalScale(20),
+    borderRadius: moderateScale(10),
+    backgroundColor: '#DC2626',
+  },
+  modalDeleteText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
     color: '#FFFFFF',
   },
 });
