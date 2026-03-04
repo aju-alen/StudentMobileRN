@@ -161,13 +161,15 @@ const SettingsPage = () => {
           <Text style={styles.settingText}>Blocked Users</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={() => router.push('/(tabs)/profile/your-reviews')}
-        >
-          <Text style={styles.settingText}>Your Reviews</Text>
-          <Ionicons name="chevron-forward" size={24} color="#64748B" />
-        </TouchableOpacity>
+        {user?.isTeacher !== true && (
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => router.push('/(tabs)/profile/your-reviews')}
+          >
+            <Text style={styles.settingText}>Your Reviews</Text>
+            <Ionicons name="chevron-forward" size={24} color="#64748B" />
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.section}>
