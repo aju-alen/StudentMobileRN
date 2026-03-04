@@ -1,5 +1,5 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   TextInput,
@@ -43,7 +43,7 @@ type FileObject = {
 };
 
 const CreateSubject = () => {
-  const { createSubjectId, courseType, maxCapacity } = useLocalSearchParams(); //userId
+  const { createSubjectId, courseType, maxCapacity, maxHours } = useLocalSearchParams(); //userId
   const revenueCatContext = useRevenueCat();
   const [subjectName, setSubjectName] = useState("");
   const [subjectDescription, setSubjectDescription] = useState("");
@@ -73,6 +73,22 @@ const CreateSubject = () => {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [currentMaxCapacity, setCurrentMaxCapacity] = useState<number>(parseInt(maxCapacity as string) || 1);
 
+  // Package course (Single/Multi): duration 3–20, topics with hours per topic (max 3h); multi = teacher assigns date/time per topic
+  const isPackageCourse = currentCourseType === 'SINGLE_PACKAGE' || currentCourseType === 'MULTI_PACKAGE';
+  const [numberOfTopics, setNumberOfTopics] = useState('');
+  type TopicBlock = { topicTitle: string; hours: string; scheduledDateTime?: Date | null };
+  const [topicBlocks, setTopicBlocks] = useState<TopicBlock[]>([]);
+  const [showTopicDatePicker, setShowTopicDatePicker] = useState<number | null>(null);
+  const [showTopicTimePicker, setShowTopicTimePicker] = useState<number | null>(null);
+
+  // Topic hours sum must match duration (package courses); computed once per topicBlocks change for performance
+  const topicHoursSum = useMemo(
+    () => topicBlocks.reduce((sum, b) => sum + parseInt(b.hours || '0', 10), 0),
+    [topicBlocks]
+  );
+  const durationNum = useMemo(() => parseInt(subjectDuration, 10) || 0, [subjectDuration]);
+  const topicHoursMatchDuration = isPackageCourse && topicBlocks.length > 0 && topicHoursSum === durationNum;
+
   // Add initialization error tracking
   useEffect(() => {
     try {
@@ -87,14 +103,13 @@ const CreateSubject = () => {
         setCurrentCourseType(courseType as string);
       }
 
-      // Get max capacity from RevenueCat if multi-student
-      // TODO: Re-enable RevenueCat checks after entitlement verification
-      // For testing: use maxCapacity from params or default to 10
-      if (courseType === 'MULTI_STUDENT') {
+      // Get max capacity from params for multi-student and multi-package
+      if (courseType === 'MULTI_STUDENT' || courseType === 'MULTI_PACKAGE') {
         if (maxCapacity) {
-          setCurrentMaxCapacity(parseInt(maxCapacity as string));
+          const cap = parseInt(maxCapacity as string, 10);
+          setCurrentMaxCapacity(Number.isNaN(cap) ? 10 : cap);
         } else {
-          setCurrentMaxCapacity(10); // Default for testing
+          setCurrentMaxCapacity(10);
         }
       }
       
@@ -428,6 +443,71 @@ const CreateSubject = () => {
         }
       }
 
+      // Validate package course (Single/Multi): topics, hours per topic (max 3), sum = duration; multi = date/time per topic
+      if (isPackageCourse) {
+        const numTopics = parseInt(numberOfTopics, 10);
+        if (!numberOfTopics || numTopics < 1 || numTopics > 20) {
+          validationErrors.push("Enter number of topics (1–20) for package course");
+          setIsLoading(false);
+          return;
+        }
+        if (topicBlocks.length !== numTopics) {
+          validationErrors.push("Set hours for each topic");
+          setIsLoading(false);
+          return;
+        }
+        const totalHours = topicBlocks.reduce((sum, b) => sum + parseInt(b.hours || '0', 10), 0);
+        const durationNum = parseInt(subjectDuration, 10);
+        if (totalHours !== durationNum) {
+          validationErrors.push(`Topic hours (${totalHours}) must add up to course duration (${durationNum}h)`);
+          setIsLoading(false);
+          return;
+        }
+        const invalidHours = topicBlocks.some(b => {
+          const h = parseInt(b.hours || '0', 10);
+          return h < 1 || h > 3;
+        });
+        if (invalidHours) {
+          validationErrors.push("Each topic must be 1–3 hours");
+          setIsLoading(false);
+          return;
+        }
+        const missingTitle = topicBlocks.some(b => !(b.topicTitle && b.topicTitle.trim()));
+        if (missingTitle) {
+          validationErrors.push("Enter what you'll teach for each topic block");
+          setIsLoading(false);
+          return;
+        }
+        if (currentCourseType === 'MULTI_PACKAGE') {
+          const missingDateTime = topicBlocks.some(b => !b.scheduledDateTime);
+          if (missingDateTime) {
+            validationErrors.push("Set date and time for each topic (Multi Course Package)");
+            setIsLoading(false);
+            return;
+          }
+          const pastDateTime = topicBlocks.some(b => b.scheduledDateTime && b.scheduledDateTime <= new Date());
+          if (pastDateTime) {
+            validationErrors.push("All topic dates and times must be in the future");
+            setIsLoading(false);
+            return;
+          }
+          const durationNum = parseInt(String(subjectDuration), 10) || 0;
+          const dates = topicBlocks.map(b => b.scheduledDateTime).filter(Boolean) as Date[];
+          if (dates.length >= 2 && durationNum > 0) {
+            const minTs = Math.min(...dates.map(d => d.getTime()));
+            const maxTs = Math.max(...dates.map(d => d.getTime()));
+            const spanDays = (maxTs - minTs) / (24 * 60 * 60 * 1000);
+            if (spanDays > durationNum) {
+              validationErrors.push(
+                `All topics must be scheduled within ${durationNum} days from the starting date (current span: ${Math.ceil(spanDays)} days).`
+              );
+              setIsLoading(false);
+              return;
+            }
+          }
+        }
+      }
+
       // if (!subjectNameSubHeading.trim()) {
       //   validationErrors.push("Subject subheading is required");
       // }
@@ -482,7 +562,21 @@ const CreateSubject = () => {
         subject.scheduledDateTime = scheduledDateTime?.toISOString();
         subject.maxCapacity = currentMaxCapacity;
         console.log('inside multi');
-        
+      }
+      // Add maxCapacity for MULTI_PACKAGE (capacity/slots like MULTI_STUDENT)
+      if (currentCourseType === 'MULTI_PACKAGE') {
+        subject.maxCapacity = currentMaxCapacity;
+      }
+
+      // Add package course topics: hours per topic; multi = scheduledDateTime per topic
+      if (isPackageCourse && topicBlocks.length > 0) {
+        subject.topics = topicBlocks.map(b => ({
+          topicTitle: (b.topicTitle || '').trim(),
+          hours: parseInt(b.hours, 10),
+          ...(currentCourseType === 'MULTI_PACKAGE' && b.scheduledDateTime
+            ? { scheduledDateTime: b.scheduledDateTime.toISOString() }
+            : {}),
+        }));
       }
       
       console.log("subject", subject);
@@ -662,19 +756,220 @@ const CreateSubject = () => {
                 value={subjectLanguage}
                 onChangeText={setSubjectLanguage}
               />
-              <FormInput
+              <CustomDropdown
                 label="Duration"
-                info="Enter the total number of hours for this course."
-                placeholder="Enter duration"
+                info={isPackageCourse ? 'Select total hours for this package (3–20). You will split these into topics (max 3h per topic).' : 'Select the total number of hours for this course (capped at 2 hours).'}
                 value={subjectDuration}
-                onChangeText={(text) => {
-                  // Only allow numbers
-                  const numericValue = text.replace(/[^0-9]/g, '');
-                  setSubjectDuration(numericValue);
+                options={isPackageCourse ? Array.from({ length: 18 }, (_, i) => ({ label: `${i + 3} hours`, value: `${i + 3}` })) : [{ label: '1 hour', value: '1' }, { label: '2 hours', value: '2' }]}
+                onSelect={(val) => {
+                  setSubjectDuration(val);
+                  if (isPackageCourse && numberOfTopics) setTopicBlocks([]);
                 }}
-                keyboardType="numeric"
-                isDuration
+                placeholder={isPackageCourse ? 'Select duration (3–20h)' : 'Select duration'}
               />
+              {/* Package course: number of topics and hours per topic (max 3h); multi = date/time per topic */}
+              {isPackageCourse && subjectDuration && (
+                <View style={styles.inputWrapper}>
+                  <View style={styles.labelContainer}>
+                    <Text style={styles.inputLabel}>Number of topics</Text>
+                    <TouchableOpacity onPress={() => Alert.alert('Number of topics', 'Split the course into topics. Each topic can be 1–3 hours. Topic hours must add up to the total duration.')} style={styles.infoButton}>
+                      <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.inputContainer}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="e.g. 4"
+                      placeholderTextColor="#666"
+                      keyboardType="number-pad"
+                      value={numberOfTopics}
+                      onChangeText={(t) => {
+                        const n = t.replace(/[^0-9]/g, '');
+                        setNumberOfTopics(n);
+                        const num = parseInt(n, 10);
+                        if (num >= 1 && num <= 20) {
+                          setTopicBlocks(prev => Array.from({ length: num }, (_, i) =>
+                            prev[i] ?? {
+                              topicTitle: '',
+                              hours: '1',
+                              ...(currentCourseType === 'MULTI_PACKAGE' ? { scheduledDateTime: null as Date | null } : {}),
+                            }
+                          ));
+                        } else if (n === '') {
+                          setTopicBlocks([]);
+                        }
+                      }}
+                    />
+                  </View>
+                  {topicBlocks.length > 0 && (
+                    <View style={styles.topicBlocksSection}>
+                      <Text style={styles.topicBlocksTitle}>Hours per topic (max 3h each). Total must equal course duration.</Text>
+                      <View style={[styles.topicHoursSumRow, topicHoursSum !== durationNum && styles.topicHoursSumMismatch]}>
+                        <Text style={[styles.topicHoursSumText, topicHoursSum !== durationNum && styles.topicHoursSumTextMismatch]}>
+                          Topic hours: {topicHoursSum} / {subjectDuration || 0} h
+                          {topicHoursSum !== durationNum && topicBlocks.length > 0 && " — adjust so they match"}
+                        </Text>
+                        {topicHoursSum === durationNum && topicBlocks.length > 0 && (
+                          <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
+                        )}
+                      </View>
+                      {currentCourseType === 'MULTI_PACKAGE' && durationNum > 0 && (
+                        <Text style={styles.topicDeadlineHint}>
+                          All topic dates must be within {durationNum} days of the starting date (e.g. 20h course = 20 days).
+                        </Text>
+                      )}
+                      {topicBlocks.map((block, index) => (
+                        <View key={index} style={styles.topicBlockCard}>
+                          <Text style={styles.topicBlockLabel}>Topic {index + 1}</Text>
+                          <FormInput
+                            label="What you'll teach"
+                            info="Brief name or description of what this topic block covers."
+                            placeholder="e.g. Introduction to Algebra"
+                            value={block.topicTitle}
+                            onChangeText={(text) => {
+                              setTopicBlocks(prev => {
+                                const next = [...prev];
+                                next[index] = { ...next[index], topicTitle: text };
+                                return next;
+                              });
+                            }}
+                          />
+                          <View style={styles.topicBlockRow}>
+                            <CustomDropdown
+                            label="Hours"
+                            info="Max 3 hours per topic."
+                            value={block.hours}
+                            options={[{ label: '1 hour', value: '1' }, { label: '2 hours', value: '2' }, { label: '3 hours', value: '3' }]}
+                            onSelect={(hours) => {
+                              setTopicBlocks(prev => {
+                                const next = [...prev];
+                                next[index] = { ...next[index], hours };
+                                return next;
+                              });
+                            }}
+                            placeholder="Hours"
+                          />
+                          {currentCourseType === 'MULTI_PACKAGE' && (
+                            <View style={styles.topicBlockDateTime}>
+                              <TouchableOpacity style={styles.dateTimeButton} onPress={() => setShowTopicDatePicker(index)}>
+                                <Ionicons name="calendar-outline" size={18} color={COLORS.primary} />
+                                <Text style={styles.dateTimeText}>
+                                  {block.scheduledDateTime ? block.scheduledDateTime.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Date'}
+                                </Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity style={styles.dateTimeButton} onPress={() => setShowTopicTimePicker(index)}>
+                                <Ionicons name="time-outline" size={18} color={COLORS.primary} />
+                                <Text style={styles.dateTimeText}>
+                                  {block.scheduledDateTime ? block.scheduledDateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'Time'}
+                                </Text>
+                              </TouchableOpacity>
+                            </View>
+                          )}
+                        </View>
+                      </View>
+                      ))}
+                      {showTopicDatePicker !== null && Platform.OS === 'ios' && (
+                        <Modal visible transparent animationType="slide" onRequestClose={() => setShowTopicDatePicker(null)}>
+                          <View style={styles.pickerModalContainer}>
+                            <View style={styles.pickerModalContent}>
+                              <View style={styles.iosPickerHeader}>
+                                <TouchableOpacity onPress={() => setShowTopicDatePicker(null)}><Text style={styles.iosPickerCancelText}>Cancel</Text></TouchableOpacity>
+                                <Text style={styles.iosPickerTitle}>Topic {showTopicDatePicker + 1} – Date</Text>
+                                <TouchableOpacity onPress={() => setShowTopicDatePicker(null)}><Text style={styles.iosPickerDoneText}>Done</Text></TouchableOpacity>
+                              </View>
+                              <DateTimePicker
+                                value={topicBlocks[showTopicDatePicker]?.scheduledDateTime || new Date()}
+                                mode="date"
+                                display="spinner"
+                                minimumDate={new Date()}
+                                textColor="#222222"
+                                onChange={(_, selectedDate) => {
+                                  if (selectedDate && showTopicDatePicker !== null) {
+                                    const current = topicBlocks[showTopicDatePicker]?.scheduledDateTime || new Date();
+                                    const next = new Date(selectedDate);
+                                    next.setHours(current.getHours(), current.getMinutes());
+                                    setTopicBlocks(prev => {
+                                      const p = [...prev];
+                                      p[showTopicDatePicker] = { ...p[showTopicDatePicker], scheduledDateTime: next };
+                                      return p;
+                                    });
+                                  }
+                                }}
+                                style={styles.iosPicker}
+                              />
+                            </View>
+                          </View>
+                        </Modal>
+                      )}
+                      {showTopicTimePicker !== null && Platform.OS === 'ios' && (
+                        <Modal visible transparent animationType="slide" onRequestClose={() => setShowTopicTimePicker(null)}>
+                          <View style={styles.pickerModalContainer}>
+                            <View style={styles.pickerModalContent}>
+                              <View style={styles.iosPickerHeader}>
+                                <TouchableOpacity onPress={() => setShowTopicTimePicker(null)}><Text style={styles.iosPickerCancelText}>Cancel</Text></TouchableOpacity>
+                                <Text style={styles.iosPickerTitle}>Topic {showTopicTimePicker + 1} – Time</Text>
+                                <TouchableOpacity onPress={() => setShowTopicTimePicker(null)}><Text style={styles.iosPickerDoneText}>Done</Text></TouchableOpacity>
+                              </View>
+                              <DateTimePicker
+                                value={topicBlocks[showTopicTimePicker]?.scheduledDateTime || new Date()}
+                                mode="time"
+                                display="spinner"
+                                textColor="#222222"
+                                onChange={(_, selectedTime) => {
+                                  if (selectedTime && showTopicTimePicker !== null) {
+                                    const current = topicBlocks[showTopicTimePicker]?.scheduledDateTime || new Date();
+                                    const next = new Date(current);
+                                    next.setHours(selectedTime.getHours(), selectedTime.getMinutes());
+                                    setTopicBlocks(prev => {
+                                      const p = [...prev];
+                                      p[showTopicTimePicker] = { ...p[showTopicTimePicker], scheduledDateTime: next };
+                                      return p;
+                                    });
+                                  }
+                                }}
+                                style={styles.iosPicker}
+                              />
+                            </View>
+                          </View>
+                        </Modal>
+                      )}
+                      {showTopicDatePicker !== null && Platform.OS !== 'ios' && (
+                        <DateTimePicker
+                          value={topicBlocks[showTopicDatePicker]?.scheduledDateTime || new Date()}
+                          mode="date"
+                          display="default"
+                          minimumDate={new Date()}
+                          onChange={(event, selectedDate) => {
+                            setShowTopicDatePicker(null);
+                            if (event.type === 'set' && selectedDate && showTopicDatePicker !== null) {
+                              const current = topicBlocks[showTopicDatePicker]?.scheduledDateTime || new Date();
+                              const next = new Date(selectedDate);
+                              next.setHours(current.getHours(), current.getMinutes());
+                              setTopicBlocks(prev => { const p = [...prev]; p[showTopicDatePicker] = { ...p[showTopicDatePicker], scheduledDateTime: next }; return p; });
+                            }
+                          }}
+                        />
+                      )}
+                      {showTopicTimePicker !== null && Platform.OS !== 'ios' && (
+                        <DateTimePicker
+                          value={topicBlocks[showTopicTimePicker]?.scheduledDateTime || new Date()}
+                          mode="time"
+                          display="default"
+                          onChange={(event, selectedTime) => {
+                            setShowTopicTimePicker(null);
+                            if (event.type === 'set' && selectedTime && showTopicTimePicker !== null) {
+                              const current = topicBlocks[showTopicTimePicker]?.scheduledDateTime || new Date();
+                              const next = new Date(current);
+                              next.setHours(selectedTime.getHours(), selectedTime.getMinutes());
+                              setTopicBlocks(prev => { const p = [...prev]; p[showTopicTimePicker] = { ...p[showTopicTimePicker], scheduledDateTime: next }; return p; });
+                            }
+                          }}
+                        />
+                      )}
+                    </View>
+                  )}
+                </View>
+              )}
               {/* Multi-Student Course Date/Time Picker */}
               {currentCourseType === 'MULTI_STUDENT' && (
                 <View style={styles.inputWrapper}>
@@ -746,6 +1041,7 @@ const CreateSubject = () => {
                                 mode="date"
                                 display="spinner"
                                 minimumDate={new Date()}
+                                textColor="#222222"
                                 onChange={(event, selectedDate) => {
                                   if (selectedDate) {
                                     const currentTime = scheduledDateTime || new Date();
@@ -786,6 +1082,7 @@ const CreateSubject = () => {
                                 value={scheduledDateTime || new Date()}
                                 mode="time"
                                 display="spinner"
+                                textColor="#222222"
                                 onChange={(event, selectedTime) => {
                                   if (selectedTime) {
                                     const currentDate = scheduledDateTime || new Date();
@@ -955,11 +1252,11 @@ const CreateSubject = () => {
                 styles.submitButton,
                 {
                   backgroundColor: COLORS.primary,
-                  opacity: (!isEulaAccepted || !isDocumentsConfirmed || isLoading) ? 0.5 : 1
+                  opacity: (!isEulaAccepted || !isDocumentsConfirmed || isLoading || (isPackageCourse && topicBlocks.length > 0 && !topicHoursMatchDuration)) ? 0.5 : 1
                 }
               ]}
               onPress={handleCreateSubject}
-              disabled={!isEulaAccepted || !isDocumentsConfirmed || isLoading}
+              disabled={!isEulaAccepted || !isDocumentsConfirmed || isLoading || (isPackageCourse && topicBlocks.length > 0 && !topicHoursMatchDuration)}
             >
               <Text style={styles.submitButtonText}>
                 {isLoading ? <ActivityIndicator size="large" color={COLORS.white} /> : "Create Subject"}
@@ -1461,7 +1758,7 @@ const styles = StyleSheet.create({
   },
   dateTimeText: {
     fontSize: moderateScale(14),
-    color: welcomeCOLOR.black,
+    color: '#222222',
     flex: 1,
   },
   capacityInfo: {
@@ -1473,6 +1770,71 @@ const styles = StyleSheet.create({
   capacityText: {
     fontSize: moderateScale(12),
     color: COLORS.primary,
+    fontFamily: FONT.medium,
+  },
+  topicBlocksSection: {
+    marginTop: verticalScale(12),
+    gap: verticalScale(10),
+  },
+  topicBlocksTitle: {
+    fontSize: moderateScale(13),
+    color: '#444',
+    marginBottom: verticalScale(6),
+  },
+  topicHoursSumRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: verticalScale(8),
+    paddingHorizontal: moderateScale(10),
+    backgroundColor: '#E8F5E9',
+    borderRadius: moderateScale(8),
+    marginBottom: verticalScale(10),
+  },
+  topicHoursSumMismatch: {
+    backgroundColor: '#FFEBEE',
+  },
+  topicHoursSumText: {
+    fontSize: moderateScale(14),
+    color: '#2E7D32',
+    fontFamily: FONT.medium,
+  },
+  topicHoursSumTextMismatch: {
+    color: '#C62828',
+  },
+  topicBlockCard: {
+    marginBottom: verticalScale(16),
+    padding: moderateScale(12),
+    backgroundColor: '#f8f9fa',
+    borderRadius: moderateScale(10),
+    borderWidth: 1,
+    borderColor: '#e1e1e1',
+  },
+  topicBlockRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: horizontalScale(8),
+    marginBottom: verticalScale(8),
+    paddingVertical: verticalScale(6),
+    paddingHorizontal: moderateScale(8),
+    backgroundColor: '#f8f9fa',
+    borderRadius: moderateScale(8),
+  },
+  topicBlockLabel: {
+    fontSize: moderateScale(14),
+    color: welcomeCOLOR.black,
+    minWidth: horizontalScale(56),
+  },
+  topicBlockDateTime: {
+    flexDirection: 'row',
+    gap: horizontalScale(8),
+    marginLeft: 'auto',
+  },
+  topicDeadlineHint: {
+    fontSize: moderateScale(12),
+    color: '#555',
+    marginBottom: verticalScale(8),
     fontFamily: FONT.medium,
   },
   pickerModalContainer: {
@@ -1497,7 +1859,7 @@ const styles = StyleSheet.create({
   iosPickerTitle: {
     fontSize: moderateScale(18),
     fontFamily: FONT.bold,
-    color: welcomeCOLOR.black,
+    color: '#222222',
   },
   iosPickerCancelText: {
     fontSize: moderateScale(16),

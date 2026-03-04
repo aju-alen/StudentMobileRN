@@ -62,8 +62,9 @@ const ProfilePage = () => {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [showCourseTypeModal, setShowCourseTypeModal] = useState(false);
   const [isButtonCooldown, setIsButtonCooldown] = useState<boolean>(false);
+  const [profileImageVersion, setProfileImageVersion] = useState<string>('0');
   const revenueCatContext = useRevenueCat();
-  
+
   const getUser = async () => {
     try {
       const apiUser = await axiosWithAuth.get(`${ipURL}/api/auth/metadata`);
@@ -86,6 +87,9 @@ const ProfilePage = () => {
   useFocusEffect(
     React.useCallback(() => {
       getUser();
+      AsyncStorage.getItem('profileImageVersion').then((v) => {
+        if (v != null) setProfileImageVersion(v);
+      });
     }, [])
   );
 
@@ -213,6 +217,61 @@ const ProfilePage = () => {
     }
   };
 
+  const handleSelectSinglePackage = async () => {
+    try {
+      const userverificationCheck = await axiosWithAuth.get(`${ipURL}/api/auth/verification-check`);
+      const { id } = userverificationCheck.data.userDetail;
+
+      Sentry.addBreadcrumb({
+        category: 'navigation',
+        message: 'Creating single course package',
+        level: 'info',
+        data: {
+          userId: id,
+          courseType: 'SINGLE_PACKAGE',
+          maxHours: 20,
+        },
+      });
+
+      router.push(`/(tabs)/profile/createSubject/${id}?courseType=SINGLE_PACKAGE&maxHours=20`);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to navigate to course creation.');
+    }
+  };
+
+  const handleSelectMultiPackage = async () => {
+    try {
+      if (revenueCatContext && revenueCatContext.getMultiStudentCapacity) {
+        const capacity = await revenueCatContext.getMultiStudentCapacity();
+
+        if (capacity && capacity > 0) {
+          const userverificationCheck = await axiosWithAuth.get(`${ipURL}/api/auth/verification-check`);
+          const { id } = userverificationCheck.data.userDetail;
+
+          Sentry.addBreadcrumb({
+            category: 'navigation',
+            message: 'Creating multi course package',
+            level: 'info',
+            data: {
+              userId: id,
+              courseType: 'MULTI_PACKAGE',
+              maxHours: 20,
+              capacity,
+            },
+          });
+
+          router.push(`/(tabs)/profile/createSubject/${id}?courseType=MULTI_PACKAGE&maxHours=20&maxCapacity=${capacity}`);
+        } else {
+          router.push(`/(tabs)/profile/multi-student-paywall?userEmail=${encodeURIComponent(user.email || '')}`);
+        }
+      } else {
+        router.push(`/(tabs)/profile/multi-student-paywall?userEmail=${encodeURIComponent(user.email || '')}`);
+      }
+    } catch (error) {
+      console.error('Error in handleSelectMultiPackage:', error);
+      Alert.alert('Error', 'Failed to navigate to course creation.');
+    }
+  };
 
   const closeDropdown = () => {
     setShowDropdown(false);
@@ -261,11 +320,16 @@ const ProfilePage = () => {
           
           <View style={styles.profileSection}>
             <Image
-              source={{ uri: user.profileImage }}
+              key={user.profileImage ?? 'default'}
+              source={{
+                uri: user.profileImage,
+                cacheKey: `${user.profileImage ?? 'default'}-${profileImageVersion}`,
+              }}
               style={styles.profileImage}
               placeholder={blurhash}
               contentFit="cover"
               transition={500}
+              cachePolicy="memory-disk"
             />
             <View style={styles.profileInfo}>
               <Text style={styles.name}>{user.name}</Text>
@@ -287,30 +351,6 @@ const ProfilePage = () => {
             </View>
           </View>
         </View>
-
-        {/* Stats Grid */}
-        {/* {userDetails?.isTeacher && <View style={styles.statsGrid}>
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>24</Text>
-              <Text style={styles.statLabel}>Hours Taught</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>156</Text>
-              <Text style={styles.statLabel}>Students</Text>
-            </View>
-          </View>
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>4.9</Text>
-              <Text style={styles.statLabel}>Rating</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>89%</Text>
-              <Text style={styles.statLabel}>Completion</Text>
-            </View>
-          </View>
-        </View>} */}
 
         {/* About Section */}
         <View style={styles.section}>
@@ -393,6 +433,8 @@ const ProfilePage = () => {
         onClose={() => setShowCourseTypeModal(false)}
         onSelectSingle={handleSelectSingleStudent}
         onSelectMulti={handleSelectMultiStudent}
+        onSelectSinglePackage={handleSelectSinglePackage}
+        onSelectMultiPackage={handleSelectMultiPackage}
       />
     </View>
   );

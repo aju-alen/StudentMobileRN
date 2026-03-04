@@ -23,7 +23,8 @@ export const createSubject = async (req, res, next) => {
         teacherVerification,
         courseType,
         scheduledDateTime,
-        maxCapacity
+        maxCapacity,
+        topics // package courses: [{ topicTitle, hours, scheduledDateTime? }]
     } = req.body;
 
     console.log(req.userId,'req.userId');
@@ -47,10 +48,58 @@ export const createSubject = async (req, res, next) => {
             if (!maxCapacity || maxCapacity < 1) {
                 return res.status(400).json({ message: "Max capacity must be at least 1 for multi-student courses" });
             }
-            // Validate scheduledDateTime is in the future
-            const scheduledDate = new Date(scheduledDateTime);
-            if (scheduledDate <= new Date()) {
-                return res.status(400).json({ message: "Scheduled date and time must be in the future" });
+        }
+        if (courseType === 'MULTI_PACKAGE') {
+            const cap = parseInt(maxCapacity, 10);
+            if (!cap || cap < 1) {
+                return res.status(400).json({ message: "Max capacity must be at least 1 for multi-package courses" });
+            }
+        }
+
+        // Validate package course (SINGLE_PACKAGE / MULTI_PACKAGE): topics required, hours sum = duration, max 3h per topic
+        const isPackageCourse = courseType === 'SINGLE_PACKAGE' || courseType === 'MULTI_PACKAGE';
+        if (isPackageCourse) {
+            const durationNum = parseInt(subjectDuration, 10);
+            if (!Number.isInteger(durationNum) || durationNum < 3 || durationNum > 20) {
+                return res.status(400).json({ message: "Package course duration must be between 3 and 20 hours" });
+            }
+            if (!Array.isArray(topics) || topics.length === 0) {
+                return res.status(400).json({ message: "Package courses require at least one topic" });
+            }
+            const totalHours = topics.reduce((sum, t) => sum + (parseInt(t.hours, 10) || 0), 0);
+            if (totalHours !== durationNum) {
+                return res.status(400).json({ message: `Topic hours (${totalHours}) must add up to course duration (${durationNum}h)` });
+            }
+            for (let i = 0; i < topics.length; i++) {
+                const t = topics[i];
+                const h = parseInt(t.hours, 10);
+                if (!t.topicTitle || !String(t.topicTitle).trim()) {
+                    return res.status(400).json({ message: `Topic ${i + 1}: title is required` });
+                }
+                if (!Number.isInteger(h) || h < 1 || h > 3) {
+                    return res.status(400).json({ message: `Topic ${i + 1}: hours must be 1, 2, or 3` });
+                }
+            }
+            if (courseType === 'MULTI_PACKAGE') {
+                for (let i = 0; i < topics.length; i++) {
+                    if (!topics[i].scheduledDateTime) {
+                        return res.status(400).json({ message: `Topic ${i + 1}: date and time are required for multi-package courses` });
+                    }
+                    const at = new Date(topics[i].scheduledDateTime);
+                    if (at <= new Date()) {
+                        return res.status(400).json({ message: `Topic ${i + 1}: scheduled date/time must be in the future` });
+                    }
+                }
+                // Deadline: all topics must fall within duration (hours) days from the starting date
+                const topicDates = topics.map(t => new Date(t.scheduledDateTime).getTime());
+                const minTs = Math.min(...topicDates);
+                const maxTs = Math.max(...topicDates);
+                const spanDays = (maxTs - minTs) / (24 * 60 * 60 * 1000);
+                if (spanDays > durationNum) {
+                    return res.status(400).json({
+                        message: `All topics must be scheduled within ${durationNum} days from the starting date. Current span is ${Math.ceil(spanDays)} days.`,
+                    });
+                }
             }
         }
 
@@ -86,7 +135,9 @@ export const createSubject = async (req, res, next) => {
             teacherVerification,
             teacherId: teacherProfileId,
             courseType: courseType || 'SINGLE_STUDENT',
-            maxCapacity: courseType === 'MULTI_STUDENT' ? parseInt(maxCapacity) : 1,
+            maxCapacity: (courseType === 'MULTI_STUDENT' || courseType === 'MULTI_PACKAGE')
+                ? (parseInt(maxCapacity, 10) || 10)
+                : 1,
             currentEnrollment: 0,
         };
 
@@ -95,9 +146,29 @@ export const createSubject = async (req, res, next) => {
             subjectData.scheduledDateTime = new Date(scheduledDateTime);
         }
 
-        // Create a new subject with teacherId (TeacherProfile.id)
-        const newSubject = await prisma.subject.create({
-            data: subjectData,
+        // Create subject and (for package courses) topic rows in one transaction
+        const newSubject = await prisma.$transaction(async (tx) => {
+            const { teacherId: _tid, ...restSubjectData } = subjectData;
+            const subject = await tx.subject.create({
+                data: {
+                    ...restSubjectData,
+                    teacherProfile: { connect: { id: teacherProfileId } },
+                },
+            });
+            if (isPackageCourse && Array.isArray(topics) && topics.length > 0) {
+                await tx.subjectTopic.createMany({
+                    data: topics.map((t, i) => ({
+                        subjectId: subject.id,
+                        orderIndex: i,
+                        topicTitle: String(t.topicTitle || '').trim(),
+                        hours: parseInt(t.hours, 10),
+                        scheduledAt: courseType === 'MULTI_PACKAGE' && t.scheduledDateTime
+                            ? new Date(t.scheduledDateTime)
+                            : null,
+                    })),
+                });
+            }
+            return subject;
         });
 
             const emailHtml = `
@@ -418,7 +489,7 @@ export const getOneSubject = async (req, res, next) => {
     try {
         const { subjectId } = req.params;
 
-        // Fetch the subject by ID and include the related teacher profile data
+        // Fetch the subject by ID and include the related teacher profile data and topic blocks (for package courses / booking)
         const subject = await prisma.subject.findUnique({
             where: { id: subjectId },
             include: {
@@ -434,6 +505,9 @@ export const getOneSubject = async (req, res, next) => {
                             },
                         },
                     },
+                },
+                subjectTopics: {
+                    orderBy: { orderIndex: 'asc' },
                 },
             },
         });

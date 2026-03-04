@@ -40,6 +40,8 @@ enum MessageSenderType {
 enum CourseType {
   SINGLE_STUDENT
   MULTI_STUDENT
+  SINGLE_PACKAGE
+  MULTI_PACKAGE
 }
 
 enum EnrollmentStatus {
@@ -180,6 +182,7 @@ model Subject {
   // Relations
   teacherProfile      TeacherProfile  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   teacherId           String
+  subjectTopics       SubjectTopic[]
   reviews             Review[]
   conversations       Conversation[]
   bookings            Booking[]
@@ -192,6 +195,22 @@ model Subject {
   @@unique([id, teacherId])
   @@index([courseType])
   @@index([scheduledDateTime])
+}
+
+model SubjectTopic {
+  id           String    @id @default(cuid())
+  subjectId    String
+  orderIndex   Int       // 0-based order for display/booking
+  topicTitle   String
+  hours       Int       // 1–3 per topic
+  scheduledAt DateTime? // set for MULTI_PACKAGE; null for SINGLE_PACKAGE (student picks when booking)
+  createdAt   DateTime  @default(now())
+
+  subject     Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  bookings    Booking[]
+
+  @@index([subjectId])
+  @@index([scheduledAt])
 }
 
 model Review {
@@ -289,6 +308,7 @@ model Booking {
   subjectId               String
   teacherId               String
   studentId               String
+  subjectTopicId           String?       // set for SINGLE_PACKAGE (one booking per topic)
   bookingDate             DateTime?
   bookingTime             String?
   bookingStatus           BookingStatus @default(PENDING)
@@ -303,6 +323,7 @@ model Booking {
   updatedAt               DateTime      @updatedAt
 
   subject                 Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  subjectTopic            SubjectTopic? @relation(fields: [subjectTopicId], references: [id], onDelete: SetNull)
   teacher                 TeacherProfile @relation("TeacherBookings", fields: [teacherId], references: [id], onDelete: Cascade)
   student                 StudentProfile @relation("StudentBookings", fields: [studentId], references: [id], onDelete: Cascade)
   stripePurchase          StripePurchases?

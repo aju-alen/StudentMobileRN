@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert, Image, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { FONT } from '../../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
@@ -21,10 +22,21 @@ const EditProfilePage = () => {
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [userIdForImageUpload, setUserIdForImageUpload] = useState<string | null>(null);
+  const [profileImageVersion, setProfileImageVersion] = useState<string>('0');
 
   useEffect(() => {
     fetchUserData();
   }, []);
+
+  // Refetch user when screen is focused (e.g. returning from image picker or after updating photo elsewhere)
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUserData();
+      AsyncStorage.getItem('profileImageVersion').then((v) => {
+        if (v != null) setProfileImageVersion(v);
+      });
+    }, [])
+  );
 
   const fetchUserData = async () => {
     try {
@@ -134,6 +146,7 @@ const EditProfilePage = () => {
 
       setProfileImage(imageLocation);
       setSelectedImageUri(null);
+      setProfileImageVersion(String(Date.now()));
 
       // Update AsyncStorage userDetails so home (and any screen using it) shows the new image
       const stored = await AsyncStorage.getItem('userDetails');
@@ -144,6 +157,9 @@ const EditProfilePage = () => {
           userProfileImage: imageLocation,
         }));
       }
+
+      // Bump version so profile screen revalidates image cache
+      await AsyncStorage.setItem('profileImageVersion', String(Date.now()));
 
       Alert.alert('Success', 'Your profile picture has been updated.');
     } catch (error: any) {
@@ -165,7 +181,7 @@ const EditProfilePage = () => {
       });
       console.log(response.data, 'this is the response');
       await AsyncStorage.setItem('authToken', response.data.token);
-      router.replace('/profile');
+      router.back();
 
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -175,7 +191,7 @@ const EditProfilePage = () => {
     }
   };
 
-  const displayImageUri = selectedImageUri || profileImage;
+  const displayImageUri = selectedImageUri || (profileImage ? `${profileImage}${profileImage.includes('?') ? '&' : '?'}v=${profileImageVersion}` : null);
 
   return (
     <View style={styles.container}>

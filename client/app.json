@@ -3,7 +3,7 @@
     "name": "Coach Academ",
     "slug": "coach-academ",
     "scheme": "coachacadem",
-    "version": "1.0.9",
+    "version": "1.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "splash": {
@@ -21,11 +21,11 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "33"
+      "buildNumber": "36"
     },
     "android": {
       "edgeToEdgeEnabled": true,
-      "versionCode": 11,
+      "versionCode": 12,
       "icon": "./assets/images/playstore-icon.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/playstore-icon.png",

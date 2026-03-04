@@ -533,11 +533,17 @@ export const verifyEmail = async (req, res, next) => {
   export const login = async (req, res, next) => {
     console.log(req.body, 'this is the login req body');
     try {
-      const { email, password } = req.body;
-  
+      const { email, password } = req.body || {};
+      const trimmedEmail = typeof email === 'string' ? email.trim() : '';
+      const trimmedPassword = typeof password === 'string' ? password : '';
+
+      if (!trimmedEmail || !trimmedPassword) {
+        return res.status(400).json({ message: "Invalid email or password" });
+      }
+
       // Find the user by email with profile
       const user = await prisma.user.findUnique({
-        where: { email },
+        where: { email: trimmedEmail },
         include: {
           studentProfile: true,
           teacherProfile: {
@@ -559,7 +565,7 @@ export const verifyEmail = async (req, res, next) => {
       }
   
       // Compare the provided password with the hashed password in the database
-      const isCorrect = bcrypt.compareSync(password, user.password);
+      const isCorrect = bcrypt.compareSync(trimmedPassword, user.password);
   
       if (!isCorrect) {
         return res.status(400).json({ message: "Invalid email or password" });
@@ -606,7 +612,7 @@ export const verifyEmail = async (req, res, next) => {
     } catch (err) {
       console.error(err);
       next(err);
-    } 
+    }
   };
 
   export const loginSuperAdmin = async (req, res, next) => {

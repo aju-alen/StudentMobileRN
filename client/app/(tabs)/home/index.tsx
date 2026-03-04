@@ -131,6 +131,7 @@ const HomePage = () => {
     userProfileImage: '',
 
   });
+  const [profileImageVersion, setProfileImageVersion] = useState<string>('0');
 
   useEffect(() => {
     async function getUserDetails() {
@@ -146,6 +147,8 @@ const HomePage = () => {
       async function refreshUserDetails() {
         const stored = await AsyncStorage.getItem('userDetails');
         if (stored) setUserDetails(JSON.parse(stored));
+        const version = await AsyncStorage.getItem('profileImageVersion');
+        if (version != null) setProfileImageVersion(version);
       }
       refreshUserDetails();
     }, [])
@@ -506,11 +509,15 @@ const HomePage = () => {
         >
           <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
             <Image
-              source={{ uri: userDetails.userProfileImage }}
+              source={{
+                uri: userDetails.userProfileImage,
+                cacheKey: `${userDetails.userProfileImage ?? 'default'}-${profileImageVersion}`,
+              }}
               style={styles.profileImage}
               placeholder={blurhash}
               contentFit="cover"
               transition={300}
+              cachePolicy="memory-disk"
             />
             <View style={styles.onlineIndicator} />
           </Animated.View>

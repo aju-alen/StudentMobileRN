@@ -9,6 +9,12 @@ import { ipURL } from '../utils/utils';
 import { useStripe } from '@stripe/stripe-react-native';
 import ConfettiCannon from 'react-native-confetti-cannon';
 
+interface TopicSlot {
+  subjectTopicId: string;
+  date: string;
+  time: string;
+}
+
 interface BookingSummaryModalProps {
   visible: boolean;
   onClose: () => void;
@@ -17,6 +23,7 @@ interface BookingSummaryModalProps {
   date: string;
   time: string;
   onConfirm: () => void;
+  topicSlots?: TopicSlot[];
 }
 
 const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
@@ -27,6 +34,7 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
   date,
   time,
   onConfirm,
+  topicSlots,
 }) => {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [subjectData, setSubjectData] = useState(null);
@@ -86,6 +94,7 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
   useEffect(() => {
     const initializePayment = async () => {
       if (!subjectData || !teacherData) return;
+      if (subjectData.courseType === 'SINGLE_PACKAGE' && (!topicSlots || !topicSlots.length)) return;
 
       try {
         setLoading(true);
@@ -102,13 +111,14 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
             teacherId: teacherId,
             subjectId: subjectId,
             userId: user.userId,
-            date: subjectData.courseType === 'MULTI_STUDENT' ? '' : date,
-            time: subjectData.courseType === 'MULTI_STUDENT' ? '' : time,
+            date: (subjectData.courseType === 'MULTI_STUDENT' || subjectData.courseType === 'MULTI_PACKAGE') ? '' : date,
+            time: (subjectData.courseType === 'MULTI_STUDENT' || subjectData.courseType === 'MULTI_PACKAGE') ? '' : time,
             subjectDuration: subjectData.subjectDuration,
             teacherEmail: teacherData.email,
             subjectName: subjectData.subjectName,
             userEmail: user.email,
             courseType: subjectData.courseType || 'SINGLE_STUDENT',
+            topicSlots: subjectData.courseType === 'SINGLE_PACKAGE' && topicSlots?.length ? topicSlots : undefined,
           }),
           headers: {
             'Content-Type': 'application/json',
@@ -152,7 +162,7 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
     if (visible && subjectData && teacherData) {
       initializePayment();
     }
-  }, [visible, subjectData, teacherData, initPaymentSheet]);
+  }, [visible, subjectData, teacherData, topicSlots, initPaymentSheet]);
 
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -228,8 +238,8 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
           </View>
           <Text style={styles.successTitle}>Payment Successful!</Text>
           <Text style={styles.successMessage}>
-            {subjectData?.courseType === 'MULTI_STUDENT' 
-              ? 'Your enrollment has been confirmed' 
+            {(subjectData?.courseType === 'MULTI_STUDENT' || subjectData?.courseType === 'MULTI_PACKAGE')
+              ? 'Your enrollment has been confirmed'
               : 'Your booking has been confirmed'}
           </Text>
         </Animated.View>
@@ -339,11 +349,43 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
                     <View style={styles.sectionHeader}>
                       <Ionicons name="calendar" size={24} color="#1A4C6E" />
                       <Text style={styles.sectionTitle}>
-                        {subjectData.courseType === 'MULTI_STUDENT' ? 'Course Details' : 'Session Details'}
+                        {(subjectData.courseType === 'MULTI_STUDENT' || subjectData.courseType === 'MULTI_PACKAGE') ? 'Course Details' : 'Session Details'}
                       </Text>
                     </View>
                     <View style={styles.sectionContent}>
-                      {subjectData.courseType === 'MULTI_STUDENT' ? (
+                      {subjectData.courseType === 'SINGLE_PACKAGE' && topicSlots?.length ? (
+                        <>
+                          {topicSlots.map((slot: TopicSlot, idx: number) => {
+                            const topic = subjectData.subjectTopics?.find((t: { id: string }) => t.id === slot.subjectTopicId);
+                            return (
+                              <View key={slot.subjectTopicId} style={styles.sessionDetail}>
+                                <Ionicons name="book-outline" size={20} color="#64748B" />
+                                <Text style={styles.detailText}>
+                                  {topic?.topicTitle ?? `Topic ${idx + 1}`}: {slot.date} at {slot.time}
+                                </Text>
+                              </View>
+                            );
+                          })}
+                        </>
+                      ) : subjectData.courseType === 'MULTI_PACKAGE' && subjectData.subjectTopics?.length ? (
+                        <>
+                          {subjectData.subjectTopics.map((topic: { topicTitle: string; hours: number; scheduledAt?: string | null }, idx: number) => (
+                            <View key={idx} style={styles.sessionDetail}>
+                              <Ionicons name="book-outline" size={20} color="#64748B" />
+                              <Text style={styles.detailText}>
+                                {topic.topicTitle} ({topic.hours}h)
+                                {topic.scheduledAt ? ` · ${new Date(topic.scheduledAt).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' })}` : ''}
+                              </Text>
+                            </View>
+                          ))}
+                          {subjectData.maxCapacity ? (
+                            <View style={styles.sessionDetail}>
+                              <Ionicons name="people-outline" size={20} color="#64748B" />
+                              <Text style={styles.detailText}>Up to {subjectData.maxCapacity} students</Text>
+                            </View>
+                          ) : null}
+                        </>
+                      ) : subjectData.courseType === 'MULTI_STUDENT' ? (
                         <>
                           {subjectData.scheduledDateTime && (
                             <>

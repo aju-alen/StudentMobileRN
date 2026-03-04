@@ -11,11 +11,21 @@ import BookingSummaryModal from './BookingSummaryModal';
 import { axiosWithAuth } from '../utils/customAxios';
 import { router } from 'expo-router';
 
+interface SubjectTopic {
+  id: string;
+  orderIndex: number;
+  topicTitle: string;
+  hours: number;
+  scheduledAt?: string | null;
+}
+
 interface BookingCalendarProps {
   teacherId: string;
   subjectId: string;
   onClose: () => void;
   visible: boolean;
+  courseType?: 'SINGLE_STUDENT' | 'SINGLE_PACKAGE';
+  subjectTopics?: SubjectTopic[];
 }
 
 interface TimeSlot {
@@ -23,13 +33,18 @@ interface TimeSlot {
   available: boolean;
 }
 
-const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, subjectId, onClose, visible }) => {
+const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, subjectId, onClose, visible, courseType = 'SINGLE_STUDENT', subjectTopics }) => {
+  const isPackage = courseType === 'SINGLE_PACKAGE' && subjectTopics && subjectTopics.length > 0;
+  const sortedTopics = isPackage ? [...(subjectTopics || [])].sort((a, b) => a.orderIndex - b.orderIndex) : [];
+  const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
+  const [topicSlots, setTopicSlots] = useState<Record<string, { date: string; time: string }>>({});
   const [selectedDate, setSelectedDate] = useState('');
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [markedDates, setMarkedDates] = useState({});
   const [loading, setLoading] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [selectedTime, setSelectedTime] = useState('');
+  const [summaryTopicSlots, setSummaryTopicSlots] = useState<{ subjectTopicId: string; date: string; time: string }[]>([]);
 
   console.log(markedDates,'---markedDates');
   
@@ -94,7 +109,25 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, subjectId,
 
   const handleTimeSlotSelect = async (time: string) => {
     setSelectedTime(time);
-    setShowSummary(true);
+    if (isPackage && sortedTopics[currentTopicIndex]) {
+      const topic = sortedTopics[currentTopicIndex];
+      const nextSlots = { ...topicSlots, [topic.id]: { date: selectedDate, time } };
+      setTopicSlots(nextSlots);
+      if (currentTopicIndex < sortedTopics.length - 1) {
+        setCurrentTopicIndex(currentTopicIndex + 1);
+        setSelectedDate('');
+        setSelectedTime('');
+        setMarkedDates({});
+        setTimeSlots(generateTimeSlots());
+      } else {
+        setSummaryTopicSlots(
+          sortedTopics.map((t) => ({ subjectTopicId: t.id, date: nextSlots[t.id].date, time: nextSlots[t.id].time }))
+        );
+        setShowSummary(true);
+      }
+    } else {
+      setShowSummary(true);
+    }
   };
 
   const handleConfirmBooking = async () => {
@@ -137,7 +170,11 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, subjectId,
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.header}>
-              <Text style={styles.title}>Book a Session</Text>
+              <Text style={styles.title}>
+                {isPackage
+                  ? `Book topic ${currentTopicIndex + 1} of ${sortedTopics.length}: ${sortedTopics[currentTopicIndex]?.topicTitle ?? ''}`
+                  : 'Book a Session'}
+              </Text>
               <TouchableOpacity onPress={onClose}>
                 <Ionicons name="close" size={24} color="#1A4C6E" />
               </TouchableOpacity>
@@ -210,12 +247,20 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, subjectId,
 
       <BookingSummaryModal
         visible={showSummary}
-        onClose={() => setShowSummary(false)}
+        onClose={() => {
+          setShowSummary(false);
+          if (isPackage) {
+            setCurrentTopicIndex(0);
+            setTopicSlots({});
+            setSummaryTopicSlots([]);
+          }
+        }}
         teacherId={teacherId}
         subjectId={subjectId}
-        date={selectedDate}
-        time={selectedTime}
+        date={summaryTopicSlots.length ? summaryTopicSlots[0]?.date ?? selectedDate : selectedDate}
+        time={summaryTopicSlots.length ? summaryTopicSlots[0]?.time ?? selectedTime : selectedTime}
         onConfirm={handleConfirmBooking}
+        topicSlots={summaryTopicSlots.length ? summaryTopicSlots : undefined}
       />
     </>
   );

@@ -22,7 +22,7 @@ export const getPublisherKey = async (req, res, next) => {
 
 export const paymentSheet = async (req, res, next) => {
     try {
-        const { amount, currency = 'aed', customerId, teacherId, subjectId, date, time, subjectDuration, teacherEmail, subjectName, userEmail, courseType } = req.body;
+        const { amount, currency = 'aed', customerId, teacherId, subjectId, date, time, subjectDuration, teacherEmail, subjectName, userEmail, courseType, topicSlots } = req.body;
         const userId = req.body.userId;
         
         
@@ -49,8 +49,8 @@ export const paymentSheet = async (req, res, next) => {
             });
         }
 
-        // For multi-student courses, check capacity before allowing payment
-        if (subject.courseType === 'MULTI_STUDENT') {
+        // For multi-student and multi-package courses, check capacity before allowing payment
+        if (subject.courseType === 'MULTI_STUDENT' || subject.courseType === 'MULTI_PACKAGE') {
             if (!subject.subjectVerification) {
                 return res.status(400).json({
                     error: 'This course has not been verified yet.'
@@ -105,7 +105,8 @@ export const paymentSheet = async (req, res, next) => {
                 teacherEmail,
                 subjectName,
                 userEmail,
-                courseType: subject.courseType || courseType || 'SINGLE_STUDENT'
+                courseType: subject.courseType || courseType || 'SINGLE_STUDENT',
+                topicSlots: (subject.courseType === 'SINGLE_PACKAGE' && Array.isArray(topicSlots) && topicSlots.length) ? JSON.stringify(topicSlots) : ''
             }
         });
 
@@ -378,9 +379,11 @@ export const stripeWebhook = async (req, res, next) => {
 
                     // Check course type from metadata
                     const courseType = chargeSucceeded.metadata.courseType || 'SINGLE_STUDENT';
+                    let createBooking = null;
+                    let saveTransaction = null;
 
-                    if (courseType === 'MULTI_STUDENT') {
-                        // Handle multi-student course enrollment
+                    if (courseType === 'MULTI_STUDENT' || courseType === 'MULTI_PACKAGE') {
+                        // Handle multi-student / multi-package course enrollment
                         // Get subject to check capacity again (double-check)
                         const subject = await prisma.subject.findUnique({
                             where: { id: chargeSucceeded.metadata.subjectId },
@@ -394,8 +397,8 @@ export const stripeWebhook = async (req, res, next) => {
                             },
                         });
 
-                        if (!subject || subject.courseType !== 'MULTI_STUDENT') {
-                            throw new Error('Subject is not a multi-student course');
+                        if (!subject || (subject.courseType !== 'MULTI_STUDENT' && subject.courseType !== 'MULTI_PACKAGE')) {
+                            throw new Error('Subject is not a multi-student or multi-package course');
                         }
 
                         if (subject.currentEnrollment >= subject.maxCapacity) {
@@ -417,7 +420,7 @@ export const stripeWebhook = async (req, res, next) => {
                         }
 
                         // Create enrollment and stripe purchase in transaction
-                        const { saveTransaction, createEnrollment } = await prisma.$transaction(async (tx) => {
+                        const result = await prisma.$transaction(async (tx) => {
                             // Create or update enrollment
                             let enrollment;
                             if (existingEnrollment && existingEnrollment.enrollmentStatus === 'CANCELLED') {
@@ -466,6 +469,7 @@ export const stripeWebhook = async (req, res, next) => {
 
                             return { saveTransaction, createEnrollment: enrollment };
                         });
+                        saveTransaction = result.saveTransaction;
 
                         // Create UserSubject entry for multi-student courses too
                         const checkUserSubject = await prisma.userSubject.findUnique({
@@ -485,15 +489,126 @@ export const stripeWebhook = async (req, res, next) => {
                                 },
                             });
                         }
+                    } else if (courseType === 'SINGLE_PACKAGE') {
+                        // Handle single-package: one booking per topic with student-chosen date/time
+                        const topicSlotsRaw = chargeSucceeded.metadata.topicSlots;
+                        if (!topicSlotsRaw) {
+                            throw new Error('SINGLE_PACKAGE payment missing topicSlots in metadata');
+                        }
+                        let topicSlotsParsed;
+                        try {
+                            topicSlotsParsed = JSON.parse(topicSlotsRaw);
+                        } catch (e) {
+                            throw new Error('Invalid topicSlots in metadata');
+                        }
+                        if (!Array.isArray(topicSlotsParsed) || topicSlotsParsed.length === 0) {
+                            throw new Error('topicSlots must be a non-empty array');
+                        }
+
+                        const subjectWithTopics = await prisma.subject.findUnique({
+                            where: { id: chargeSucceeded.metadata.subjectId },
+                            include: { subjectTopics: { orderBy: { orderIndex: 'asc' } } },
+                        });
+                        if (!subjectWithTopics || subjectWithTopics.courseType !== 'SINGLE_PACKAGE') {
+                            throw new Error('Subject is not a single-package course');
+                        }
+                        const topicIds = new Set(subjectWithTopics.subjectTopics.map((t) => t.id));
+                        const topicMap = new Map(subjectWithTopics.subjectTopics.map((t) => [t.id, t]));
+                        for (const slot of topicSlotsParsed) {
+                            if (!slot.subjectTopicId || !topicIds.has(slot.subjectTopicId)) {
+                                throw new Error('Invalid subjectTopicId in topicSlots');
+                            }
+                            if (!slot.date || !slot.time) {
+                                throw new Error('Each topic slot must have date and time');
+                            }
+                        }
+
+                        // Create one Zoom meeting per topic and one booking per topic
+                        const bookingsToCreate = [];
+                        for (const slot of topicSlotsParsed) {
+                            const topic = topicMap.get(slot.subjectTopicId);
+                            const startTime = new Date(`${slot.date}T${slot.time}:00`);
+                            const meeting = await createZoomMeeting(
+                                chargeSucceeded.metadata.teacherEmail,
+                                `${chargeSucceeded.metadata.subjectName} - ${topic.topicTitle}`,
+                                startTime,
+                                topic.hours * 60
+                            );
+                            bookingsToCreate.push({
+                                subjectTopicId: topic.id,
+                                bookingDate: startTime,
+                                bookingTime: slot.time,
+                                bookingHours: topic.hours,
+                                meeting,
+                            });
+                        }
+
+                        const amountPerBooking = Math.floor(chargeSucceeded.amount / bookingsToCreate.length);
+                        const singlePackageResult = await prisma.$transaction(async (tx) => {
+                            let firstBooking = null;
+                            for (const b of bookingsToCreate) {
+                                const created = await tx.booking.create({
+                                    data: {
+                                        subjectId: chargeSucceeded.metadata.subjectId,
+                                        teacherId: teacherProfileId,
+                                        studentId: studentProfileId,
+                                        subjectTopicId: b.subjectTopicId,
+                                        bookingDate: b.bookingDate,
+                                        bookingTime: b.bookingTime,
+                                        bookingStatus: BookingStatus.CONFIRMED,
+                                        bookingPrice: amountPerBooking,
+                                        bookingPaymentCompleted: true,
+                                        bookingZoomUrl: b.meeting.join_url,
+                                        bookingZoomPassword: b.meeting.password,
+                                        bookingZoomId: b.meeting.id,
+                                        bookingHours: b.bookingHours,
+                                        bookingMinutes: b.bookingHours * 60,
+                                    },
+                                });
+                                if (!firstBooking) firstBooking = created;
+                            }
+                            const saveTransaction = await tx.stripePurchases.create({
+                                data: {
+                                    studentId: studentProfileId,
+                                    subjectId: chargeSucceeded.metadata.subjectId,
+                                    purchaseStatus: BookingStatus.CONFIRMED,
+                                    purchaseAmount: chargeSucceeded.amount,
+                                    purchaseCurrency: chargeSucceeded.currency,
+                                    stripeCustomerId: chargeSucceeded.customer,
+                                    purchaseReceiptUrl: chargeSucceeded.receipt_url,
+                                    bookingId: firstBooking.id,
+                                },
+                            });
+                            return { saveTransaction, firstBooking };
+                        });
+                        saveTransaction = singlePackageResult.saveTransaction;
+                        createBooking = singlePackageResult.firstBooking;
+
+                        const checkUserSubjectPkg = await prisma.userSubject.findUnique({
+                            where: {
+                                studentId_subjectId: {
+                                    studentId: studentProfileId,
+                                    subjectId: chargeSucceeded.metadata.subjectId,
+                                },
+                            },
+                        });
+                        if (!checkUserSubjectPkg) {
+                            await prisma.userSubject.create({
+                                data: {
+                                    studentId: studentProfileId,
+                                    subjectId: chargeSucceeded.metadata.subjectId,
+                                },
+                            });
+                        }
                     } else {
                         // Handle single-student course booking (existing flow)
                         // create meeting for teacher
                         const meeting = await createZoomMeeting(chargeSucceeded.metadata.teacherEmail, chargeSucceeded.metadata.subjectName, new Date(chargeSucceeded.metadata.date), parseInt(chargeSucceeded.metadata.subjectDuration) * 60);
                         
                     
-                        const { saveTransaction, createBooking } = await prisma.$transaction(async (tx) => {
+                        const singleStudentResult = await prisma.$transaction(async (tx) => {
                             // Create booking first
-                            const createBooking = await tx.booking.create({
+                            const newBooking = await tx.booking.create({
                                 data: {
                                     subjectId: chargeSucceeded.metadata.subjectId,
                                     teacherId: teacherProfileId,
@@ -521,12 +636,14 @@ export const stripeWebhook = async (req, res, next) => {
                                     purchaseCurrency: chargeSucceeded.currency,
                                     stripeCustomerId: chargeSucceeded.customer,
                                     purchaseReceiptUrl: chargeSucceeded.receipt_url,
-                                    bookingId: createBooking.id // Link to the booking
+                                    bookingId: newBooking.id // Link to the booking
                                 }
                             });
 
-                            return { saveTransaction, createBooking };
+                            return { saveTransaction, createBooking: newBooking };
                         });
+                        saveTransaction = singleStudentResult.saveTransaction;
+                        createBooking = singleStudentResult.createBooking;
 
                         const checkUserSubject = await prisma.userSubject.findUnique({
                             where: {
@@ -585,7 +702,7 @@ export const stripeWebhook = async (req, res, next) => {
                                 <p style="font-size: 16px; line-height: 1.6; color: #64748B;">Your booking has been successfully confirmed. We're excited to have you join us!</p>
 
                                 <div style="background-color: #F8FAFC; padding: 30px; margin: 30px 0; position: relative; border-left: 4px solid #1A2B4B;">
-                                    <div style="margin: 15px 0; padding-bottom: 10px; border-bottom: 1px solid #E2E8F0;"><span style="font-weight: 700; color: #1A2B4B; text-transform: uppercase; font-size: 14px; letter-spacing: 1px;">Booking ID</span><span style="color: #64748B; font-weight: 500;"> ${courseType === 'MULTI_STUDENT' ? saveTransaction.courseEnrollmentId : createBooking.id}</span></div>
+                                    <div style="margin: 15px 0; padding-bottom: 10px; border-bottom: 1px solid #E2E8F0;"><span style="font-weight: 700; color: #1A2B4B; text-transform: uppercase; font-size: 14px; letter-spacing: 1px;">Booking ID</span><span style="color: #64748B; font-weight: 500;"> ${(courseType === 'MULTI_STUDENT' || courseType === 'MULTI_PACKAGE') ? saveTransaction.courseEnrollmentId : (createBooking?.id ?? '')}</span></div>
                                     <div style="margin: 15px 0; padding-bottom: 10px; border-bottom: 1px solid #E2E8F0;"><span style="font-weight: 700; color: #1A2B4B; text-transform: uppercase; font-size: 14px; letter-spacing: 1px;">Course</span><span style="color: #64748B; font-weight: 500;"> ${chargeSucceeded.metadata.subjectName}</span></div>
                                     <div style="margin: 15px 0; padding-bottom: 10px; border-bottom: 1px solid #E2E8F0;"><span style="font-weight: 700; color: #1A2B4B; text-transform: uppercase; font-size: 14px; letter-spacing: 1px;">Date</span><span style="color: #64748B; font-weight: 500;"> ${chargeSucceeded.metadata.date}</span></div>
                                     <div style="margin: 15px 0; padding-bottom: 10px; border-bottom: 1px solid #E2E8F0;"><span style="font-weight: 700; color: #1A2B4B; text-transform: uppercase; font-size: 14px; letter-spacing: 1px;">Time</span><span style="color: #64748B; font-weight: 500;"> ${chargeSucceeded.metadata.time}</span></div>
@@ -638,7 +755,7 @@ export const stripeWebhook = async (req, res, next) => {
                                 <p style="font-size: 16px; line-height: 1.6; color: #64748B;">You have received a new booking! A student has booked your class.</p>
 
                                 <div style="background-color: #F8FAFC; padding: 30px; margin: 30px 0; position: relative; border-left: 4px solid #1A2B4B;">
-                                    <div style="margin: 15px 0; padding-bottom: 10px; border-bottom: 1px solid #E2E8F0;"><span style="font-weight: 700; color: #1A2B4B; text-transform: uppercase; font-size: 14px; letter-spacing: 1px;">Booking ID</span><span style="color: #64748B; font-weight: 500;"> ${courseType === 'MULTI_STUDENT' ? saveTransaction.courseEnrollmentId : createBooking.id}</span></div>
+                                    <div style="margin: 15px 0; padding-bottom: 10px; border-bottom: 1px solid #E2E8F0;"><span style="font-weight: 700; color: #1A2B4B; text-transform: uppercase; font-size: 14px; letter-spacing: 1px;">Booking ID</span><span style="color: #64748B; font-weight: 500;"> ${(courseType === 'MULTI_STUDENT' || courseType === 'MULTI_PACKAGE') ? saveTransaction.courseEnrollmentId : (createBooking?.id ?? '')}</span></div>
                                     <div style="margin: 15px 0; padding-bottom: 10px; border-bottom: 1px solid #E2E8F0;"><span style="font-weight: 700; color: #1A2B4B; text-transform: uppercase; font-size: 14px; letter-spacing: 1px;">Subject</span><span style="color: #64748B; font-weight: 500;"> ${chargeSucceeded.metadata.subjectName}</span></div>
                                     <div style="margin: 15px 0; padding-bottom: 10px; border-bottom: 1px solid #E2E8F0;"><span style="font-weight: 700; color: #1A2B4B; text-transform: uppercase; font-size: 14px; letter-spacing: 1px;">Date & Time</span><span style="color: #64748B; font-weight: 500;"> ${chargeSucceeded.metadata.date} ${chargeSucceeded.metadata.time}</span></div>
                                     <div style="margin: 15px 0; padding-bottom: 10px; border-bottom: 1px solid #E2E8F0;"><span style="font-weight: 700; color: #1A2B4B; text-transform: uppercase; font-size: 14px; letter-spacing: 1px;">Duration</span><span style="color: #64748B; font-weight: 500;"> ${chargeSucceeded.metadata.subjectDuration} hours</span></div>

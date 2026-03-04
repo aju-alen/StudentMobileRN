@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, TextInput, SafeAreaView, StyleSheet, TouchableOpacity, Text, Pressable, Alert, ScrollView, Modal, ActivityIndicator, Platform } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, TextInput, SafeAreaView, StyleSheet, TouchableOpacity, Text, Pressable, Alert, ScrollView, Modal, ActivityIndicator, Platform, KeyboardAvoidingView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import axios from 'axios';
@@ -295,7 +295,16 @@ const RegisterPage = () => {
     const [teacherCount, setTeacherCount] = useState('3');
     const [organizationRole, setOrganizationRole] = useState<string>('OWNER');
 
+    const scrollViewRef = useRef<ScrollView>(null);
+    const scrollInputTops = useRef<Record<string, number>>({});
 
+    const scrollToInput = (key: string, extraOffset = 0) => {
+        const y = scrollInputTops.current[key];
+        if (y != null && scrollViewRef.current) {
+            const offset = Math.max(0, y - verticalScale(120) + extraOffset);
+            scrollViewRef.current.scrollTo({ y: offset, animated: true });
+        }
+    };
 
     const boardOptions = [
         { label: 'Select your board', value: '' },
@@ -618,7 +627,18 @@ const RegisterPage = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <KeyboardAvoidingView
+                style={styles.container}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? (insets.top || 0) : 20}
+            >
+                <ScrollView
+                    ref={scrollViewRef}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    contentContainerStyle={styles.scrollContent}
+                    keyboardDismissMode="on-drag"
+                >
                 <View style={[styles.content, { paddingBottom: Platform.OS === 'android' ? addBasePaddingToInset(20, insets.bottom) : undefined }]}>
                     <TouchableOpacity 
                         style={[styles.backButton, { paddingTop: Platform.OS === 'android' ? addBasePaddingToTopInset(6, insets.top) : undefined }]}
@@ -639,7 +659,7 @@ const RegisterPage = () => {
                         <Text style={styles.subtitle}>Join our learning community</Text>
                     </View>
 
-                    <View style={styles.inputGroup}>
+                    <View style={styles.inputGroup} onLayout={(e) => { scrollInputTops.current['name'] = e.nativeEvent.layout.y; }}>
                         <Text style={styles.label}>Name</Text>
                         <TextInput
                             style={[styles.input, errors.name && styles.inputError]}
@@ -650,11 +670,12 @@ const RegisterPage = () => {
                                 setName(text);
                                 clearFieldError('name');
                             }}
+                            onFocus={() => scrollToInput('name')}
                         />
                         {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
                     </View>
 
-                    <View style={styles.inputGroup}>
+                    <View style={styles.inputGroup} onLayout={(e) => { scrollInputTops.current['email'] = e.nativeEvent.layout.y; }}>
                         <Text style={styles.label}>Email</Text>
                         <TextInput
                             style={[styles.input, errors.email && styles.inputError]}
@@ -667,11 +688,12 @@ const RegisterPage = () => {
                                 clearFieldError('email');
                             }}
                             keyboardType="email-address"
+                            onFocus={() => scrollToInput('email')}
                         />
                         {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
                     </View>
 
-                    <View style={styles.inputGroup}>
+                    <View style={styles.inputGroup} onLayout={(e) => { scrollInputTops.current['password'] = e.nativeEvent.layout.y; }}>
                         <Text style={styles.label}>Password</Text>
                         <View style={[styles.passwordContainer, errors.password && styles.passwordContainerError]}>
                             <TextInput
@@ -684,6 +706,7 @@ const RegisterPage = () => {
                                     clearFieldError('password');
                                 }}
                                 secureTextEntry={!isPasswordShown}
+                                onFocus={() => scrollToInput('password')}
                             />
                             <TouchableOpacity 
                                 style={styles.eyeIcon}
@@ -695,7 +718,7 @@ const RegisterPage = () => {
                         {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
                     </View>
 
-                    <View style={styles.inputGroup}>
+                    <View style={styles.inputGroup} onLayout={(e) => { scrollInputTops.current['confirmPassword'] = e.nativeEvent.layout.y; }}>
                         <Text style={styles.label}>Confirm Password</Text>
                         <View style={[styles.passwordContainer, errors.confirmPassword && styles.passwordContainerError]}>
                             <TextInput
@@ -708,12 +731,13 @@ const RegisterPage = () => {
                                     clearFieldError('confirmPassword');
                                 }}
                                 secureTextEntry={!isPasswordShown}
+                                onFocus={() => scrollToInput('confirmPassword')}
                             />
                         </View>
                         {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
                     </View>
 
-                    <View style={styles.inputGroup}>
+                    <View style={styles.inputGroup} onLayout={(e) => { scrollInputTops.current['userDescription'] = e.nativeEvent.layout.y; }}>
                         <Text style={styles.label}>About You</Text>
                         <TextInput
                             style={[styles.input, styles.textArea, errors.userDescription && styles.inputError]}
@@ -726,11 +750,12 @@ const RegisterPage = () => {
                             }}
                             multiline
                             numberOfLines={3}
+                            onFocus={() => scrollToInput('userDescription')}
                         />
                         {errors.userDescription && <Text style={styles.errorText}>{errors.userDescription}</Text>}
                     </View>
 
-                    <View style={styles.inputGroup}>
+                    <View style={styles.inputGroup} onLayout={(e) => { scrollInputTops.current['subjects'] = e.nativeEvent.layout.y; }}>
                         <Text style={styles.label}>Add Subjects (Max 3)</Text>
                         <View style={styles.subjectContainer}>
                             <View style={[styles.subjectInputWrapper, errors.reccomendedSubjects && styles.subjectInputWrapperError]}>
@@ -745,6 +770,7 @@ const RegisterPage = () => {
                                             clearFieldError('reccomendedSubjects');
                                         }
                                     }}
+                                    onFocus={() => scrollToInput('subjects')}
                                 />
                               {reccomendedSubjects.length < 3 && <TouchableOpacity 
                                     style={styles.addButton}
@@ -813,7 +839,7 @@ const RegisterPage = () => {
 
                     {userType === 'organization' && (
                         <>
-                            <View style={styles.inputGroup}>
+                            <View style={styles.inputGroup} onLayout={(e) => { scrollInputTops.current['organizationName'] = e.nativeEvent.layout.y; }}>
                                 <Text style={styles.label}>Organization Name</Text>
                                 <TextInput
                                     style={[styles.input, errors.organizationName && styles.inputError]}
@@ -824,6 +850,7 @@ const RegisterPage = () => {
                                         setOrganizationName(text);
                                         clearFieldError('organizationName');
                                     }}
+                                    onFocus={() => scrollToInput('organizationName')}
                                 />
                                 {errors.organizationName && <Text style={styles.errorText}>{errors.organizationName}</Text>}
                             </View>
@@ -841,7 +868,7 @@ const RegisterPage = () => {
                                 errorMessage={errors.organizationRole || ''}
                             />
 
-                            <View style={styles.inputGroup}>
+                            <View style={styles.inputGroup} onLayout={(e) => { scrollInputTops.current['organizationEmail'] = e.nativeEvent.layout.y; }}>
                                 <Text style={styles.label}>Organization Email</Text>
                                 <TextInput
                                     style={[styles.input, errors.organizationEmail && styles.inputError]}
@@ -854,11 +881,12 @@ const RegisterPage = () => {
                                         clearFieldError('organizationEmail');
                                     }}
                                     keyboardType="email-address"
+                                    onFocus={() => scrollToInput('organizationEmail')}
                                 />
                                 {errors.organizationEmail && <Text style={styles.errorText}>{errors.organizationEmail}</Text>}
                             </View>
 
-                            <View style={styles.inputGroup}>
+                            <View style={styles.inputGroup} onLayout={(e) => { scrollInputTops.current['organizationWebsite'] = e.nativeEvent.layout.y; }}>
                                 <Text style={styles.label}>Website</Text>
                                 <TextInput
                                     style={[styles.input, errors.organizationWebsite && styles.inputError]}
@@ -871,6 +899,7 @@ const RegisterPage = () => {
                                         clearFieldError('organizationWebsite');
                                     }}
                                     keyboardType="url"
+                                    onFocus={() => scrollToInput('organizationWebsite')}
                                 />
                                 {errors.organizationWebsite && <Text style={styles.errorText}>{errors.organizationWebsite}</Text>}
                             </View>
@@ -967,6 +996,7 @@ const RegisterPage = () => {
                     </View>
                 </View>
             </ScrollView>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 };
@@ -975,6 +1005,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
+    },
+    scrollContent: {
+        flexGrow: 1,
     },
     content: {
         padding: moderateScale(20),

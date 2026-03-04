@@ -41,6 +41,14 @@ interface Review {
   };
 }
 
+interface SubjectTopic {
+  id: string;
+  orderIndex: number;
+  topicTitle: string;
+  hours: number;
+  scheduledAt?: string | null;
+}
+
 interface SubjectData {
   subjectImage?: string;
   subjectName?: string;
@@ -56,10 +64,11 @@ interface SubjectData {
   subjectNameSubHeading?: string;
   subjectDuration?: string;
   reviews?: Review[];
-  courseType?: 'SINGLE_STUDENT' | 'MULTI_STUDENT';
+  courseType?: 'SINGLE_STUDENT' | 'MULTI_STUDENT' | 'SINGLE_PACKAGE' | 'MULTI_PACKAGE';
   maxCapacity?: number;
   currentEnrollment?: number;
   scheduledDateTime?: string;
+  subjectTopics?: SubjectTopic[];
   zoomMeetingUrl?: string;
   zoomMeetingPassword?: string;
 }
@@ -168,10 +177,10 @@ const SubjectPage = ({ subjectId }) => {
 
   console.log(singleSubjectData,'singleSubjectData in single subject page');
 
-  // Fetch capacity info for multi-student courses
+  // Fetch capacity info for multi-student and multi-package courses
   React.useEffect(() => {
     const fetchCapacityInfo = async () => {
-      if (singleSubjectData.courseType === 'MULTI_STUDENT' && subjectId) {
+      if ((singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && subjectId) {
         try {
           const token = await AsyncStorage.getItem("authToken");
           const capacityResponse = await axios.get(
@@ -324,8 +333,8 @@ const SubjectPage = ({ subjectId }) => {
   };
 
   const handleEnrollPress = async () => {
-    // For multi-student courses, skip date/time selection and go directly to payment
-    if (singleSubjectData.courseType === 'MULTI_STUDENT') {
+    // For multi-student and multi-package courses, skip date/time selection and go directly to payment (slots/capacity only)
+    if (singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') {
       try {
         const token = await AsyncStorage.getItem("authToken");
         const capacityResponse = await axios.get(
@@ -345,25 +354,38 @@ const SubjectPage = ({ subjectId }) => {
           return;
         }
 
-        // Extract date and time from scheduledDateTime
-        if (singleSubjectData.scheduledDateTime) {
+        // MULTI_STUDENT: use subject.scheduledDateTime; MULTI_PACKAGE: use first topic's scheduledAt for display (or leave empty)
+        if (singleSubjectData.courseType === 'MULTI_STUDENT' && singleSubjectData.scheduledDateTime) {
           const scheduledDate = new Date(singleSubjectData.scheduledDateTime);
-          const dateString = scheduledDate.toISOString().split('T')[0]; // YYYY-MM-DD
-          const timeString = scheduledDate.toTimeString().split(' ')[0].slice(0, 5); // HH:MM
-          
-          setSelectedBookingDate(dateString);
-          setSelectedBookingTime(timeString);
-          // Show booking summary modal directly (payment page) - skip BookingCalendar
-          setShowBookingSummary(true);
-        } else {
+          setSelectedBookingDate(scheduledDate.toISOString().split('T')[0]);
+          setSelectedBookingTime(scheduledDate.toTimeString().split(' ')[0].slice(0, 5));
+        } else if (singleSubjectData.courseType === 'MULTI_PACKAGE' && singleSubjectData.subjectTopics?.length) {
+          const first = singleSubjectData.subjectTopics.find((t: SubjectTopic) => t.scheduledAt);
+          if (first?.scheduledAt) {
+            const d = new Date(first.scheduledAt);
+            setSelectedBookingDate(d.toISOString().split('T')[0]);
+            setSelectedBookingTime(d.toTimeString().split(' ')[0].slice(0, 5));
+          } else {
+            setSelectedBookingDate('');
+            setSelectedBookingTime('');
+          }
+        } else if (singleSubjectData.courseType === 'MULTI_STUDENT') {
           alert('Course schedule information is missing. Please contact support.');
+          return;
+        } else {
+          setSelectedBookingDate('');
+          setSelectedBookingTime('');
         }
+        setShowBookingSummary(true);
       } catch (error) {
         console.error('Error checking capacity:', error);
         alert('Failed to check course availability. Please try again.');
       }
+    } else if (singleSubjectData.courseType === 'SINGLE_PACKAGE') {
+      // SINGLE_PACKAGE: open per-topic booking flow (calendar per topic)
+      setIsBookingModalVisible(true);
     } else {
-      // Single student course - show booking calendar for date/time selection
+      // SINGLE_STUDENT: show single-session booking calendar
       setIsBookingModalVisible(true);
     }
   };
@@ -795,23 +817,18 @@ const SubjectPage = ({ subjectId }) => {
         )}
 
         <Animated.View style={[styles.contentContainer, contentStyle]}>
-          {/* Status Bar */}
+          {/* Status Bar - Save only */}
           <View style={styles.statusBar}>
-            <View style={styles.statusIndicator}>
-              <Ionicons name="star" size={24} color="#FFA000" />
-              <Text style={[styles.statusText, {color: "#FFA000"}]}>
-                Premium Course
-              </Text>
-            </View>
-              <TouchableOpacity 
-              style={[styles.saveButton, isSaved && styles.savedButton]} 
+            <View style={styles.statusBarSpacer} />
+            <TouchableOpacity
+              style={[styles.saveButton, isSaved && styles.savedButton]}
               onPress={handleSaveSubject}
               disabled={isSaving}
             >
-              <Ionicons 
-                name={isSaved ? "bookmark" : "bookmark-outline"} 
-                size={24} 
-                color={isSaved ? "#FFFFFF" : "#FFFFFF"} 
+              <Ionicons
+                name={isSaved ? "bookmark" : "bookmark-outline"}
+                size={24}
+                color="#FFFFFF"
               />
               <Text style={styles.saveButtonText}>
                 {isSaved ? "Saved" : "Save"}
@@ -920,6 +937,70 @@ const SubjectPage = ({ subjectId }) => {
             </View>
           )}
 
+          {/* Package course (Single/Multi): topic blocks with name, hours, and date/time for multi */}
+          {(singleSubjectData.courseType === 'SINGLE_PACKAGE' || singleSubjectData.courseType === 'MULTI_PACKAGE') &&
+            singleSubjectData.subjectTopics &&
+            singleSubjectData.subjectTopics.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Course Topics</Text>
+              <View style={styles.topicList}>
+                {singleSubjectData.subjectTopics
+                  .slice()
+                  .sort((a, b) => a.orderIndex - b.orderIndex)
+                  .map((topic, index) => (
+                    <View key={topic.id} style={styles.topicCard}>
+                      <View style={styles.topicCardHeader}>
+                        <View style={styles.topicNumberBadge}>
+                          <Text style={styles.topicNumberText}>{index + 1}</Text>
+                        </View>
+                        <Text style={styles.topicTitleText}>{topic.topicTitle}</Text>
+                      </View>
+                      <View style={styles.topicMetaRow}>
+                        <View style={styles.topicMetaItem}>
+                          <Ionicons name="hourglass-outline" size={18} color="#1976D2" />
+                          <Text style={styles.topicMetaText}>{topic.hours} {topic.hours === 1 ? 'hour' : 'hours'}</Text>
+                        </View>
+                        {singleSubjectData.courseType === 'MULTI_PACKAGE' && topic.scheduledAt && (
+                          <>
+                            <View style={styles.topicMetaItem}>
+                              <Ionicons name="calendar-outline" size={18} color="#1976D2" />
+                              <Text style={styles.topicMetaText}>
+                                {new Date(topic.scheduledAt).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })}
+                              </Text>
+                            </View>
+                            <View style={styles.topicMetaItem}>
+                              <Ionicons name="time-outline" size={18} color="#1976D2" />
+                              <Text style={styles.topicMetaText}>
+                                {new Date(topic.scheduledAt).toLocaleTimeString('en-US', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  hour12: true
+                                })}
+                              </Text>
+                            </View>
+                          </>
+                        )}
+                      </View>
+                    </View>
+                  ))}
+              </View>
+              {singleSubjectData.courseType === 'MULTI_PACKAGE' && capacityInfo && (
+                <View style={[styles.scheduleInfo, { marginTop: 12 }]}>
+                  <View style={styles.scheduleItem}>
+                    <Ionicons name="people-outline" size={20} color="#1976D2" />
+                    <Text style={styles.scheduleText}>
+                      {capacityInfo.availableSpots} of {singleSubjectData.maxCapacity} spots available
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </View>
+          )}
+
           {/* Description Section */}
           {singleSubjectData.subjectDescription && (
             <View style={styles.section}>
@@ -975,7 +1056,7 @@ const SubjectPage = ({ subjectId }) => {
           style={[
             styles.primaryButton,
             isUserType === 'TEACHER' && styles.disabledButton,
-            singleSubjectData.courseType === 'MULTI_STUDENT' && purchaseStatus && styles.disabledButton
+            (singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && purchaseStatus && styles.disabledButton
           ]} 
           onPress={() => {
             handleButtonPress();
@@ -983,7 +1064,7 @@ const SubjectPage = ({ subjectId }) => {
           }}
           disabled={
             isUserType === 'TEACHER' ||
-            (singleSubjectData.courseType === 'MULTI_STUDENT' && purchaseStatus)
+            ((singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && purchaseStatus)
           }
         >
           <Ionicons name="cart" size={24} color="white" />
@@ -992,19 +1073,19 @@ const SubjectPage = ({ subjectId }) => {
               <Text style={styles.primaryButtonText}>
                 {isUserType === 'TEACHER' 
                   ? "Please login as student to purchase" 
-                  : singleSubjectData.courseType === 'MULTI_STUDENT' && purchaseStatus
+                  : (singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && purchaseStatus
                   ? "Already Enrolled"
-                  : singleSubjectData.courseType === 'MULTI_STUDENT' && capacityInfo?.isFull
+                  : (singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && capacityInfo?.isFull
                   ? "Course Full"
                   : "Enroll Now"}
               </Text>
               {isUserType !== 'TEACHER' 
-                && !(singleSubjectData.courseType === 'MULTI_STUDENT' && capacityInfo?.isFull) 
-                && !(singleSubjectData.courseType === 'MULTI_STUDENT' && purchaseStatus) && (
+                && !((singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && capacityInfo?.isFull) 
+                && !((singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && purchaseStatus) && (
                 <Text style={styles.priceText}>AED {(singleSubjectData.subjectPrice) / 100}</Text>
               )}
             </View>
-            {singleSubjectData.courseType === 'MULTI_STUDENT' && capacityInfo && !capacityInfo.isFull && !purchaseStatus && (
+            {(singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && capacityInfo && !capacityInfo.isFull && !purchaseStatus && (
               <Text style={styles.capacityText}>
                 {capacityInfo.availableSpots} of {singleSubjectData.maxCapacity} spots available
               </Text>
@@ -1030,18 +1111,20 @@ const SubjectPage = ({ subjectId }) => {
         </TouchableOpacity>
       </Animated.View>
 
-      {/* Only show BookingCalendar for single-student courses */}
-      {singleSubjectData.courseType !== 'MULTI_STUDENT' && (
+      {/* Show BookingCalendar for single-student and single-package (per-topic booking) */}
+      {(singleSubjectData.courseType === 'SINGLE_STUDENT' || singleSubjectData.courseType === 'SINGLE_PACKAGE') && (
         <BookingCalendar
           teacherId={teacherId}
           subjectId={subjectId}
           visible={isBookingModalVisible}
           onClose={() => setIsBookingModalVisible(false)}
+          courseType={singleSubjectData.courseType}
+          subjectTopics={singleSubjectData.subjectTopics}
         />
       )}
 
-      {/* BookingSummaryModal for multi-student courses (direct payment) */}
-      {singleSubjectData.courseType === 'MULTI_STUDENT' && (
+      {/* BookingSummaryModal for multi-student and multi-package (slots/capacity, direct payment) */}
+      {(singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && (
         <BookingSummaryModal
           visible={showBookingSummary}
           onClose={() => setShowBookingSummary(false)}
@@ -1051,7 +1134,6 @@ const SubjectPage = ({ subjectId }) => {
           time={selectedBookingTime}
           onConfirm={() => {
             setShowBookingSummary(false);
-            // Refresh the page or navigate
             router.replace('/(tabs)/home');
           }}
         />
@@ -1124,19 +1206,13 @@ const styles = StyleSheet.create({
   },
   statusBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     marginBottom: verticalScale(20),
     paddingTop: verticalScale(10),
   },
-  statusIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: horizontalScale(6),
-  },
-  statusText: {
-    fontSize: moderateScale(14),
-    fontWeight: '600',
+  statusBarSpacer: {
+    flex: 1,
   },
   dateText: {
     color: '#666',
@@ -1604,6 +1680,57 @@ const styles = StyleSheet.create({
   scheduleText: {
     fontSize: moderateScale(16),
     color: '#1a1a1a',
+    fontFamily: FONT.medium,
+  },
+  topicList: {
+    gap: verticalScale(12),
+  },
+  topicCard: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: moderateScale(12),
+    padding: moderateScale(16),
+    borderLeftWidth: 4,
+    borderLeftColor: '#1976D2',
+  },
+  topicCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: horizontalScale(12),
+    marginBottom: verticalScale(10),
+  },
+  topicNumberBadge: {
+    width: horizontalScale(28),
+    height: verticalScale(28),
+    borderRadius: moderateScale(14),
+    backgroundColor: '#1976D2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  topicNumberText: {
+    color: '#fff',
+    fontSize: moderateScale(14),
+    fontWeight: '600',
+  },
+  topicTitleText: {
+    flex: 1,
+    fontSize: moderateScale(16),
+    fontWeight: '600',
+    color: '#1a1a1a',
+  },
+  topicMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: horizontalScale(16),
+  },
+  topicMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: horizontalScale(6),
+  },
+  topicMetaText: {
+    fontSize: moderateScale(14),
+    color: '#666',
     fontFamily: FONT.medium,
   },
 });

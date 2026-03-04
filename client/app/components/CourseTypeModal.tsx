@@ -17,6 +17,8 @@ interface CourseTypeModalProps {
   onClose: () => void;
   onSelectSingle: () => void;
   onSelectMulti: () => void;
+  onSelectSinglePackage: () => void;
+  onSelectMultiPackage: () => void;
 }
 
 const CourseTypeModal: React.FC<CourseTypeModalProps> = ({
@@ -24,6 +26,8 @@ const CourseTypeModal: React.FC<CourseTypeModalProps> = ({
   onClose,
   onSelectSingle,
   onSelectMulti,
+  onSelectSinglePackage,
+  onSelectMultiPackage,
 }) => {
   return (
     <Modal
@@ -37,7 +41,7 @@ const CourseTypeModal: React.FC<CourseTypeModalProps> = ({
           <View style={styles.header}>
             <Text style={styles.title}>Choose Course Type</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={COLORS.primary} />
+              <Ionicons name="close" size={20} color={COLORS.primary} />
             </TouchableOpacity>
           </View>
 
@@ -55,11 +59,11 @@ const CourseTypeModal: React.FC<CourseTypeModalProps> = ({
               }}
             >
               <View style={styles.optionIconContainer}>
-                <Ionicons name="person" size={32} color={COLORS.primary} />
+                <Ionicons name="person" size={22} color={COLORS.primary} />
               </View>
               <Text style={styles.optionTitle}>Single Student Course</Text>
               <Text style={styles.optionDescription}>
-                One-on-one sessions with individual students. Free to create.
+                One-on-one sessions with individual students. Hours cap at 2.
               </Text>
               <View style={styles.freeBadge}>
                 <Text style={styles.freeBadgeText}>FREE</Text>
@@ -75,14 +79,56 @@ const CourseTypeModal: React.FC<CourseTypeModalProps> = ({
               }}
             >
               <View style={styles.optionIconContainer}>
-                <Ionicons name="people" size={32} color={COLORS.primary} />
+                <Ionicons name="people" size={22} color={COLORS.primary} />
               </View>
               <Text style={styles.optionTitle}>Multi Student Course</Text>
               <Text style={styles.optionDescription}>
-                Host courses for multiple students at once. Requires subscription.
+                Host courses for multiple students at once. Hours cap at 2. Requires subscription.
               </Text>
               <View style={styles.premiumBadge}>
-                <Ionicons name="lock-closed" size={16} color="#FFA500" />
+                <Ionicons name="lock-closed" size={12} color="#FFA500" />
+                <Text style={styles.premiumBadgeText}>PREMIUM</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Single Course Package Option */}
+            <TouchableOpacity
+              style={styles.optionCard}
+              onPress={() => {
+                onSelectSinglePackage();
+                onClose();
+              }}
+            >
+              <View style={styles.optionIconContainer}>
+                <Ionicons name="person" size={22} color={COLORS.primary} />
+              </View>
+              <Text style={styles.optionTitle}>Single Course Package</Text>
+              <Text style={styles.optionDescription}>
+                Duration 3–20 hours. You set topics and hours per topic (max 3h each). Student chooses when to book.
+              </Text>
+              <View style={styles.premiumBadge}>
+                <Ionicons name="lock-closed" size={12} color="#FFA500" />
+                <Text style={styles.premiumBadgeText}>PREMIUM</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Multi Course Package Option */}
+            <TouchableOpacity
+              style={styles.optionCard}
+              onPress={() => {
+                onSelectMultiPackage();
+                onClose();
+              }}
+            >
+              <View style={styles.optionIconContainer}>
+                <Ionicons name="people" size={22} color={COLORS.primary} />
+              </View>
+              <Text style={styles.optionTitle}>Multi Course Package</Text>
+              <Text style={styles.optionDescription}>
+                Duration 3–20 hours. You set topics and assign date & time for each (max 3h per topic).
+              </Text>
+              <View style={styles.premiumBadge}>
+                <Ionicons name="lock-closed" size={12} color="#FFA500" />
                 <Text style={styles.premiumBadgeText}>PREMIUM</Text>
               </View>
             </TouchableOpacity>
@@ -103,10 +149,10 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     backgroundColor: 'white',
-    borderRadius: moderateScale(20),
+    borderRadius: moderateScale(16),
     width: '100%',
-    maxWidth: moderateScale(400),
-    padding: moderateScale(24),
+    maxWidth: moderateScale(360),
+    padding: moderateScale(16),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -117,10 +163,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: verticalScale(12),
+    marginBottom: verticalScale(8),
   },
   title: {
-    fontSize: moderateScale(24),
+    fontSize: moderateScale(20),
     fontFamily: FONT.bold,
     color: COLORS.primary,
   },
@@ -128,53 +174,53 @@ const styles = StyleSheet.create({
     padding: moderateScale(4),
   },
   subtitle: {
-    fontSize: moderateScale(14),
+    fontSize: moderateScale(12),
     color: '#666',
-    marginBottom: verticalScale(24),
+    marginBottom: verticalScale(16),
     textAlign: 'center',
   },
   optionsContainer: {
-    gap: verticalScale(16),
+    gap: verticalScale(10),
   },
   optionCard: {
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: '#e0e0e0',
-    borderRadius: moderateScale(16),
-    padding: moderateScale(20),
+    borderRadius: moderateScale(12),
+    padding: moderateScale(12),
     backgroundColor: '#fafafa',
     position: 'relative',
   },
   optionIconContainer: {
-    width: moderateScale(60),
-    height: moderateScale(60),
-    borderRadius: moderateScale(30),
+    width: moderateScale(40),
+    height: moderateScale(40),
+    borderRadius: moderateScale(20),
     backgroundColor: COLORS.primary + '20',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: verticalScale(12),
-  },
-  optionTitle: {
-    fontSize: moderateScale(18),
-    fontFamily: FONT.bold,
-    color: COLORS.primary,
     marginBottom: verticalScale(8),
   },
+  optionTitle: {
+    fontSize: moderateScale(15),
+    fontFamily: FONT.bold,
+    color: COLORS.primary,
+    marginBottom: verticalScale(4),
+  },
   optionDescription: {
-    fontSize: moderateScale(14),
+    fontSize: moderateScale(12),
     color: '#666',
-    lineHeight: moderateScale(20),
-    marginBottom: verticalScale(12),
+    lineHeight: moderateScale(16),
+    marginBottom: verticalScale(8),
   },
   freeBadge: {
     alignSelf: 'flex-start',
     backgroundColor: '#4CAF50',
-    paddingHorizontal: moderateScale(12),
-    paddingVertical: verticalScale(6),
-    borderRadius: moderateScale(12),
+    paddingHorizontal: moderateScale(8),
+    paddingVertical: verticalScale(4),
+    borderRadius: moderateScale(8),
   },
   freeBadgeText: {
     color: 'white',
-    fontSize: moderateScale(12),
+    fontSize: moderateScale(10),
     fontFamily: FONT.bold,
     fontWeight: '700',
   },
@@ -183,14 +229,14 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     alignItems: 'center',
     backgroundColor: '#FFF3E0',
-    paddingHorizontal: moderateScale(12),
-    paddingVertical: verticalScale(6),
-    borderRadius: moderateScale(12),
-    gap: horizontalScale(6),
+    paddingHorizontal: moderateScale(8),
+    paddingVertical: verticalScale(4),
+    borderRadius: moderateScale(8),
+    gap: horizontalScale(4),
   },
   premiumBadgeText: {
     color: '#FFA500',
-    fontSize: moderateScale(12),
+    fontSize: moderateScale(10),
     fontFamily: FONT.bold,
     fontWeight: '700',
   },

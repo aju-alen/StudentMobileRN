@@ -94,10 +94,14 @@ const LoginPage = () => {
         // Returning user - redirect to home
         router.replace('/(tabs)/home');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.log(err);
-      const msg = err.response?.data?.message;
-      setError(msg && typeof msg === 'string' ? msg : 'Unable to sign in. Please check your email and password and try again.');
+      const data = err.response?.data;
+      const msg =
+        (data?.message && typeof data.message === 'string' && data.message) ||
+        (data?.error && typeof data.error === 'string' && data.error) ||
+        null;
+      setError(msg || 'Unable to sign in. Please check your email and password and try again.');
     } finally {
       setIsLoading(false);
     }

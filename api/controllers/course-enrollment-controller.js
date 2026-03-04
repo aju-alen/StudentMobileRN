@@ -26,8 +26,8 @@ export const createEnrollment = async (req, res, next) => {
       return res.status(404).json({ error: 'Subject not found' });
     }
 
-    if (subject.courseType !== 'MULTI_STUDENT') {
-      return res.status(400).json({ error: 'This subject is not a multi-student course' });
+    if (subject.courseType !== 'MULTI_STUDENT' && subject.courseType !== 'MULTI_PACKAGE') {
+      return res.status(400).json({ error: 'This subject is not a multi-student or multi-package course' });
     }
 
     if (!subject.subjectVerification) {
