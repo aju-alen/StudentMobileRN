@@ -57,8 +57,15 @@ const ChangePasswordPage = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>   
-     
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Change Password</Text>
+      </View>
+
+      <ScrollView>   
 
       <View style={styles.form}>
         <View style={styles.inputContainer}>
@@ -140,7 +147,8 @@ const ChangePasswordPage = () => {
           </Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 

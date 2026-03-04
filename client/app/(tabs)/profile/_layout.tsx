@@ -10,7 +10,7 @@ const ProfileLayout = () => {
     <Stack.Screen name="reports" options={{ headerShown: false }} />
     <Stack.Screen name="your-reviews" options={{ headerShown: false }} />
     <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
-    <Stack.Screen name="change-password" options={{ headerShown: true, headerTitle:'Change Password' }} />
+    <Stack.Screen name="change-password" options={{ headerShown: false, headerTitle:'Change Password' }} />
     <Stack.Screen name="delete-account" options={{ headerShown: true, headerTitle:'Delete Account' }} />
     <Stack.Screen name="blocked-users" options={{ headerShown: false }} />
     <Stack.Screen name="help-center" options={{ headerShown:false }} />
