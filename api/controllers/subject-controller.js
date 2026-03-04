@@ -171,6 +171,32 @@ export const createSubject = async (req, res, next) => {
             return subject;
         });
 
+            // Escape for safe HTML in email
+            const esc = (s) => (s == null ? '' : String(s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const courseTypeLabel = { SINGLE_STUDENT: 'Single student', MULTI_STUDENT: 'Multi-student', SINGLE_PACKAGE: 'Single package', MULTI_PACKAGE: 'Multi package' }[newSubject.courseType] || newSubject.courseType;
+            const priceDisplay = (Number(newSubject.subjectPrice) / 100).toFixed(2);
+            const detailsRows = [
+                ['Name', esc(newSubject.subjectName)],
+                ['Description', esc((newSubject.subjectDescription || '').slice(0, 300)) + ((newSubject.subjectDescription || '').length > 300 ? '…' : '')],
+                ['Board', esc(newSubject.subjectBoard)],
+                ['Grade', newSubject.subjectGrade],
+                ['Language', esc(newSubject.subjectLanguage || '—')],
+                ['Duration', `${newSubject.subjectDuration} hour(s)`],
+                ['Price', `$${priceDisplay}`],
+                ['Course type', courseTypeLabel],
+                ['Max capacity', newSubject.maxCapacity],
+            ];
+            if (newSubject.subjectNameSubHeading) detailsRows.push(['Sub-heading', esc(newSubject.subjectNameSubHeading)]);
+            if (newSubject.subjectSearchHeading) detailsRows.push(['Search heading', esc(newSubject.subjectSearchHeading)]);
+            if (newSubject.scheduledDateTime) detailsRows.push(['Scheduled', new Date(newSubject.scheduledDateTime).toLocaleString()]);
+            detailsRows.push(['Created by', esc(user?.name || '') + (user?.email ? ` (${esc(user.email)})` : '')]);
+            const detailsTableRows = detailsRows.map(([label, value]) =>
+                `<tr><td style="padding:8px 12px;color:#64748B;font-size:13px;border-bottom:1px solid #F1F5F9;">${esc(label)}</td><td style="padding:8px 12px;color:#1A2B4B;font-size:14px;border-bottom:1px solid #F1F5F9;">${value}</td></tr>`
+            ).join('');
+            const topicsHtml = Array.isArray(topics) && topics.length > 0
+                ? `<div style="margin-top:16px;"><h4 style="color:#1A2B4B;font-size:14px;margin:0 0 8px;text-transform:uppercase;">Topics</h4><ul style="margin:0;padding-left:20px;color:#64748B;font-size:14px;">${topics.map((t, i) => `<li>${esc(String(t.topicTitle || '').trim())} – ${t.hours}h</li>`).join('')}</ul></div>`
+                : '';
+
             const emailHtml = `
                 <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #ffffff;">
                     <!-- Bauhaus Header -->
@@ -188,8 +214,17 @@ export const createSubject = async (req, res, next) => {
                             <div style="width: 80px; height: 80px; background-color: #1A2B4B; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; transform: rotate(45deg);">
                                 <span style="color: #ffffff; font-size: 40px; transform: rotate(-45deg);">✓</span>
                             </div>
-                            <h2 style="color: #1A2B4B; font-size: 24px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1px;">${subjectName}</h2>
+                            <h2 style="color: #1A2B4B; font-size: 24px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: 1px;">${esc(subjectName)}</h2>
                             <p style="color: #64748B; font-size: 16px; line-height: 1.6; margin: 0;">Your subject has been created and is now pending verification.</p>
+                        </div>
+
+                        <!-- Subject details -->
+                        <div style="background-color: #F8FAFC; padding: 24px; margin-bottom: 24px; border-left: 4px solid #1A2B4B;">
+                            <h3 style="color: #1A2B4B; font-size: 16px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px;">Subject details</h3>
+                            <table style="width:100%; border-collapse: collapse;">
+                                ${detailsTableRows}
+                            </table>
+                            ${topicsHtml}
                         </div>
 
                         <!-- Bauhaus Info Box -->
