@@ -1,5 +1,5 @@
 import express from "express";
-import {  register, verifyEmail,login,singleUser,updateMetadata,getTeacherProfile,changePassword,forgotPassword,resetPassword,deleteAccount,updateProfileImage,verifyPurchase,getActiveStudentCourses,updateUserHasSeenOnboarding,registerSuperAdmin,loginSuperAdmin,zoomTest,verificationCheck,updateOrganizationTradeLicense,updateOrganizationCapacity,getOrganizationMembers,inviteTeacherToOrganization,getOrganizationInviteCode,refreshOrganizationInviteCode,createOrganization,deleteOrganization,joinOrganizationByInvite,removeTeacherFromOrganization } from "../controllers/auth-controller.js";
+import {  register, verifyEmail,login,singleUser,updateMetadata,getTeacherProfile,changePassword,forgotPassword,resetPassword,deleteAccount,updateProfileImage,verifyPurchase,getActiveStudentCourses,updateUserHasSeenOnboarding,registerSuperAdmin,loginSuperAdmin,zoomTest,verificationCheck,resendZoomInviteEmail,updateOrganizationTradeLicense,updateOrganizationCapacity,getOrganizationMembers,inviteTeacherToOrganization,getOrganizationInviteCode,refreshOrganizationInviteCode,createOrganization,deleteOrganization,joinOrganizationByInvite,removeTeacherFromOrganization } from "../controllers/auth-controller.js";
 import { verifyToken } from "../middlewares/jwt.js";
 const router = express.Router()
 
@@ -20,6 +20,7 @@ router.put(`/update-profile/:uploadImage`,updateProfileImage)
 router.get('/student/active-courses',verifyToken, getActiveStudentCourses )
 router.put('/update-user-has-seen-onboarding', updateUserHasSeenOnboarding)
 router.get('/verification-check', verifyToken, verificationCheck);
+router.post('/resend-zoom-invite', verifyToken, resendZoomInviteEmail);
 // Allow both authenticated and unauthenticated requests for trade license update
 router.put('/organization/trade-license', updateOrganizationTradeLicense);
 // Also support authenticated requests

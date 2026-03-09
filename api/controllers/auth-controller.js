@@ -7,7 +7,7 @@ import dotenv from "dotenv";
 import { Resend } from 'resend';
 dotenv.config();
 import { sendEmailService } from "../services/emailService.js";
-import { createZoomAccountForTeacher } from "../services/zoomService.js";
+import { createZoomAccountForTeacher, deleteZoomUser } from "../services/zoomService.js";
 const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
 
 
@@ -1067,6 +1067,16 @@ export const deleteAccount = async (req, res, next) => {
       return res.status(400).json({ message: "Incorrect password" });
     }
 
+    // Delete teacher's Zoom user if they have one
+    if (user.userType === 'TEACHER' && user.email) {
+      try {
+        await deleteZoomUser(user.email);
+      } catch (zoomErr) {
+        console.warn('Could not delete Zoom user on account deletion:', zoomErr.message);
+        // Continue with account deletion - don't block if Zoom fails
+      }
+    }
+
     // Delete the user - all related records will be deleted automatically due to onDelete: Cascade
     await prisma.user.delete({
       where: { id: userId },
@@ -1172,6 +1182,80 @@ export const zoomTest = async (req, res, next) => {
     next(err);
   }
 }
+
+export const resendZoomInviteEmail = async (req, res, next) => {
+  const userId = req.userId;
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        teacherProfile: {
+          select: {
+            zoomAccountCreated: true,
+            zoomUserAcceptedInvite: true,
+          },
+        },
+      },
+    });
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+    if (user.userType !== 'TEACHER') {
+      return res.status(400).json({ message: 'Only teachers can request Zoom invite resend' });
+    }
+    const zoomVerified = user.teacherProfile?.zoomUserAcceptedInvite || user.teacherProfile?.zoomAccountCreated;
+    if (zoomVerified) {
+      return res.status(400).json({ message: 'Zoom account is already verified' });
+    }
+
+    // Try to create Zoom account again in case it was never created
+    try {
+      await createZoomAccountForTeacher(user.email, user.name);
+    } catch (zoomErr) {
+      // If user already exists (409), Zoom won't resend - we'll send our reminder email instead
+      if (zoomErr.response?.status !== 409 && zoomErr.response?.data?.code !== 1001) {
+        console.warn('Zoom account creation/retry had an issue:', zoomErr.message);
+      }
+    }
+
+    // Send reminder email from our app (Zoom has no API to resend their activation email)
+    await resend.emails.send({
+      from: `Support <${process.env.COACH_ACADEM_RESEND_EMAIL}>`,
+      to: user.email,
+      subject: 'Complete your Zoom setup – Coach Academ',
+      html: `
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #ffffff;">
+          <div style="background-color: #1A2B4B; padding: 40px 20px; text-align: center; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.1;">
+              <div style="position: absolute; top: 20px; left: 20px; width: 60px; height: 60px; border: 4px solid #ffffff; transform: rotate(45deg);"></div>
+              <div style="position: absolute; bottom: 20px; right: 20px; width: 40px; height: 40px; border: 4px solid #ffffff; border-radius: 50%;"></div>
+            </div>
+            <h1 style="color: #ffffff; font-size: 32px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 2px;">Zoom Setup Reminder</h1>
+          </div>
+          <div style="padding: 40px 20px; background-color: #ffffff;">
+            <p style="font-size: 20px; color: #1A2B4B; font-weight: 700;">Hello ${user.name},</p>
+            <p style="font-size: 16px; margin-top: 20px; color: #64748B;">Your Zoom account has not been verified yet. To create courses on Coach Academ, you need to complete Zoom setup.</p>
+            <p style="font-size: 16px; margin-top: 20px; color: #64748B;"><strong>What to do:</strong></p>
+            <ul style="font-size: 16px; line-height: 1.6; color: #64748B;">
+              <li>Check your inbox for an email from Zoom (subject may include "Activate your Zoom account" or similar)</li>
+              <li>Check your spam or junk folder if you don't see it</li>
+              <li>Click the activation link in that email to verify your Zoom account</li>
+            </ul>
+            <p style="font-size: 16px; margin-top: 20px; color: #64748B;">The Zoom invite was sent to <strong>${user.email}</strong>. Once you accept it, you'll be able to create courses.</p>
+            <p style="font-size: 16px; margin-top: 20px; color: #64748B;">If you still can't find the email, contact us at <a href="mailto:support@coachacadem.ae" style="color: #1A2B4B; text-decoration: underline;">support@coachacadem.ae</a>.</p>
+            <div style="text-align: center; padding-top: 30px; border-top: 2px solid #F8FAFC;">
+              <p style="color: #64748B; font-size: 14px; margin: 0;">The Coach Academ Team</p>
+            </div>
+          </div>
+        </div>
+      `,
+    });
+
+    return res.status(200).json({ message: 'Reminder email sent. Please check your inbox and spam folder.' });
+  } catch (err) {
+    next(err);
+  }
+};
 
 export const verificationCheck = async (req, res, next) => {
   const userId = req.userId;

@@ -127,7 +127,25 @@ const ProfilePage = () => {
         return;
       }
       if ( !zoomVerified ) {
-        Alert.alert('Zoom required', 'Please complete Zoom setup: create your Zoom account and accept the invite sent to your email. After that you can create courses.');
+        Alert.alert(
+          'Zoom Account Not Verified',
+          'Your Zoom account has not been verified yet. Please check your email (including spam folder) for the Zoom activation link and accept the invite. After that you can create courses.',
+          [
+            { text: 'OK', style: 'cancel' },
+            {
+              text: 'Resend Email',
+              onPress: async () => {
+                try {
+                  await axiosWithAuth.post(`${ipURL}/api/auth/resend-zoom-invite`);
+                  Alert.alert('Email Sent', 'A reminder has been sent to your email. Please check your inbox and spam folder.');
+                } catch (err) {
+                  const msg = err.response?.data?.message || 'Failed to resend email. Please try again.';
+                  Alert.alert('Error', msg);
+                }
+              },
+            },
+          ]
+        );
         return;
       }
       

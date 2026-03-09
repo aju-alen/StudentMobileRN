@@ -98,6 +98,25 @@ export const deleteZoomMeeting = async (meetingId) => {
   return { deleted: true };
 };
 
+// Delete a Zoom user (userId can be email or Zoom user id)
+export const deleteZoomUser = async (userId) => {
+  const token = await getZoomAccessToken();
+  try {
+    await axios.delete(`https://api.zoom.us/v2/users/${encodeURIComponent(userId)}`, {
+      params: { action: 'delete' },
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return { deleted: true };
+  } catch (error) {
+    // 404 = user not found in Zoom (e.g. never activated), treat as success
+    if (error.response?.status === 404) {
+      return { deleted: true };
+    }
+    console.error('Error deleting Zoom user:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
 // Helper function to retry with exponential backoff
 const retryWithBackoff = async (fn, maxRetries = 3, baseDelay = 1000) => {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
