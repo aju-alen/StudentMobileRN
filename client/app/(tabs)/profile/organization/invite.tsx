@@ -65,12 +65,15 @@ const InviteTeacherPage = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <StatusBarComponent />
-
-  
-
-      <View style={styles.content}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Invite Teacher</Text>
+      </View>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.description}>
           Enter the email address of a teacher to invite them to your organization.
         </Text>
@@ -117,8 +120,8 @@ const InviteTeacherPage = () => {
             The teacher must already have an account and not be part of another organization.
           </Text>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -130,9 +133,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: verticalScale(60),
-    paddingBottom: verticalScale(20),
     paddingHorizontal: horizontalScale(20),
+    paddingTop: verticalScale(60),
+    paddingBottom: verticalScale(16),
     backgroundColor: '#FFFFFF',
     borderBottomLeftRadius: moderateScale(30),
     borderBottomRightRadius: moderateScale(30),
@@ -144,14 +147,18 @@ const styles = StyleSheet.create({
   backButton: {
     marginRight: horizontalScale(15),
   },
-  title: {
+  headerTitle: {
     fontFamily: FONT.bold,
     fontSize: moderateScale(24),
     color: '#1A2B4B',
   },
+  scrollView: {
+    flex: 1,
+  },
   content: {
-    padding: horizontalScale(20),
-    marginTop: verticalScale(20),
+    paddingHorizontal: horizontalScale(24),
+    paddingTop: verticalScale(32),
+    paddingBottom: verticalScale(48),
   },
   description: {
     fontFamily: FONT.regular,

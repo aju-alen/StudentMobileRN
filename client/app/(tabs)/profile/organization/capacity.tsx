@@ -39,13 +39,10 @@ const CapacitySubscriptionPage = () => {
       <View style={styles.container}>
         <StatusBarComponent />
         <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
           </TouchableOpacity>
-          <Text style={styles.title}>Increase Capacity</Text>
+          <Text style={styles.headerTitle}>Increase Capacity</Text>
         </View>
         <View style={styles.loadingContainer}>
           <Text style={styles.errorText}>RevenueCat not initialized</Text>
@@ -266,11 +263,15 @@ const CapacitySubscriptionPage = () => {
   const availablePlans = getAvailablePlans();
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
       <StatusBarComponent />
-
-
-      <View style={styles.content}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Increase Capacity</Text>
+      </View>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.currentCapacitySection}>
           <Text style={styles.currentCapacityLabel}>Current Capacity</Text>
           <Text style={styles.currentCapacityValue}>{currentCapacity} members</Text>
@@ -439,8 +440,8 @@ const CapacitySubscriptionPage = () => {
             Subscriptions are managed through your App Store account and will auto-renew unless cancelled.
           </Text>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -452,9 +453,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: verticalScale(60),
-    paddingBottom: verticalScale(20),
     paddingHorizontal: horizontalScale(20),
+    paddingTop: verticalScale(60),
+    paddingBottom: verticalScale(16),
     backgroundColor: '#FFFFFF',
     borderBottomLeftRadius: moderateScale(30),
     borderBottomRightRadius: moderateScale(30),
@@ -466,14 +467,18 @@ const styles = StyleSheet.create({
   backButton: {
     marginRight: horizontalScale(15),
   },
-  title: {
+  headerTitle: {
     fontFamily: FONT.bold,
     fontSize: moderateScale(24),
     color: '#1A2B4B',
+  },
+  scrollView: {
     flex: 1,
   },
   content: {
-    padding: moderateScale(20),
+    paddingHorizontal: horizontalScale(24),
+    paddingTop: verticalScale(32),
+    paddingBottom: verticalScale(48),
   },
   currentCapacitySection: {
     backgroundColor: '#F1F5F9',
