@@ -1,5 +1,5 @@
 import express from "express";
-import {  register, verifyEmail,login,singleUser,updateMetadata,getTeacherProfile,changePassword,forgotPassword,resetPassword,deleteAccount,updateProfileImage,verifyPurchase,getActiveStudentCourses,updateUserHasSeenOnboarding,registerSuperAdmin,loginSuperAdmin,zoomTest,verificationCheck,resendZoomInviteEmail,updateOrganizationTradeLicense,updateOrganizationCapacity,getOrganizationMembers,inviteTeacherToOrganization,getOrganizationInviteCode,refreshOrganizationInviteCode,createOrganization,deleteOrganization,joinOrganizationByInvite,removeTeacherFromOrganization } from "../controllers/auth-controller.js";
+import {  register, verifyEmail,login,singleUser,updateMetadata,getTeacherProfile,changePassword,forgotPassword,resetPassword,deleteAccount,updateProfileImage,verifyPurchase,getActiveStudentCourses,updateUserHasSeenOnboarding,registerSuperAdmin,loginSuperAdmin,registerPushToken,zoomTest,verificationCheck,resendZoomInviteEmail,updateOrganizationTradeLicense,updateOrganizationCapacity,getOrganizationMembers,inviteTeacherToOrganization,getOrganizationInviteCode,refreshOrganizationInviteCode,createOrganization,deleteOrganization,joinOrganizationByInvite,removeTeacherFromOrganization } from "../controllers/auth-controller.js";
 import { verifyToken } from "../middlewares/jwt.js";
 const router = express.Router()
 
@@ -36,5 +36,6 @@ router.post('/organization/remove-teacher', verifyToken, removeTeacherFromOrgani
 router.put('/organization/capacity', verifyToken, updateOrganizationCapacity);
 
 router.post('/zoom-test', verifyToken, zoomTest);
+router.put('/push-token', verifyToken, registerPushToken);
 
 export default router;

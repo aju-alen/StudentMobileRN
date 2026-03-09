@@ -3,6 +3,7 @@ dotenv.config();
 import { PrismaClient } from "@prisma/client";
 import { sendEmailService } from "../services/emailService.js";
 import { Resend } from "resend";
+import { sendNotificationByType } from "../services/pushNotificationService.js";
 
 const prisma = new PrismaClient();
 const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
@@ -261,6 +262,15 @@ export const createSubject = async (req, res, next) => {
                 console.error("Error sending admin subject notification email", emailErr);
             }
 
+            try {
+                await sendNotificationByType('NEW_COURSE', {
+                    subjectName,
+                    teacherName: user?.name,
+                    subjectId: newSubject.id,
+                });
+            } catch (pushErr) {
+                console.error("Admin push notification error", pushErr);
+            }
 
             return res.status(202).json({ message: "Subject Created", newSubject });
     } catch (err) {

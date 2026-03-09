@@ -683,6 +683,31 @@ export const verifyEmail = async (req, res, next) => {
     } 
   };
 
+  export const registerPushToken = async (req, res, next) => {
+    try {
+      const userId = req.userId;
+      const { pushToken } = req.body;
+
+      if (!pushToken || typeof pushToken !== 'string' || !pushToken.trim()) {
+        return res.status(400).json({ message: "Push token is required" });
+      }
+
+      if (req.userType !== 'ADMIN') {
+        return res.status(403).json({ message: "Only admins can register push tokens" });
+      }
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: { pushToken: pushToken.trim() },
+      });
+
+      res.status(200).json({ message: "Push token registered" });
+    } catch (err) {
+      console.error("Error registering push token:", err);
+      next(err);
+    }
+  };
+
   export const singleUser = async (req, res, next) => {
     try {
       const { userId } = req;

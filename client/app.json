@@ -81,6 +81,7 @@
           "launchMode": "most-recent"
         }
       ],
+      "expo-notifications",
       "expo-web-browser"
     ],
     "experiments": {

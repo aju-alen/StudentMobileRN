@@ -6,6 +6,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { ipURL } from '../../utils/utils'
 import { router } from 'expo-router'
 import { Ionicons } from "@expo/vector-icons"
+import { axiosWithAuth } from '../../utils/customAxios'
+import { registerForPushNotificationsAsync, isPushSupported } from '../../utils/pushNotifications'
 
 const VerificationIndex = () => {
   const [verifySubjects, setVerifySubjects] = useState([]);
@@ -15,6 +17,20 @@ const VerificationIndex = () => {
   const handleItemPress = (itemId: { id: any }) => {
     router.push(`/(tabs)/verification/${itemId.id}`);
   };
+
+  useEffect(() => {
+    if (!isPushSupported()) return;
+    const register = async () => {
+      const token = await registerForPushNotificationsAsync();
+      if (!token) return;
+      try {
+        await axiosWithAuth.put(`${ipURL}/api/auth/push-token`, { pushToken: token });
+      } catch (e) {
+        console.error('Failed to register push token', e);
+      }
+    };
+    register();
+  }, []);
 
   useEffect(() => {
     const getUser = async () => {

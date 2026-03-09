@@ -70,6 +70,7 @@ model User {
   userDescription     String   @default("No description provided")
   hasSeenOnboarding   Boolean  @default(false)
   userType            UserType
+  pushToken           String?
   createdAt           DateTime @default(now())
   
   // Relations - one of these will be populated based on userType
