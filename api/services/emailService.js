@@ -18,7 +18,7 @@ export const sendEmailService = async (
         }
     })
     const mailOptions = {
-        from: process.env.NAMECHEAP_EMAIL,
+        from: `Support <${process.env.NAMECHEAP_EMAIL}>`,
         to: receiverEmail,
         subject: subjectText,
         html: messageText

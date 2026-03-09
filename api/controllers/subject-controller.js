@@ -252,7 +252,7 @@ export const createSubject = async (req, res, next) => {
                 const adminEmail ="mickeygenerale@gmail.com";
 
                 await resend.emails.send({
-                    from: process.env.COACH_ACADEM_RESEND_EMAIL,
+                    from: `Support <${process.env.COACH_ACADEM_RESEND_EMAIL}>`,
                     to: adminEmail,
                     subject: `New Subject Created: ${subjectName}`,
                     html: emailHtml,

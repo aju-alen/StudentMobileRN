@@ -200,7 +200,7 @@ export const zoomWebhook = async (req, res) => {
               console.log('Updated zoomUserAcceptedInvite for user:', user.id);
 
               await resend.emails.send({
-                from: process.env.COACH_ACADEM_RESEND_EMAIL,
+                from: `Support <${process.env.COACH_ACADEM_RESEND_EMAIL}>`,
                 to: user.email,
                 subject: 'Your Zoom account is ready – start creating courses',
                 html: `

@@ -683,7 +683,7 @@ export const stripeWebhook = async (req, res, next) => {
 
                 try {
                     await resend.emails.send({
-                        from: process.env.COACH_ACADEM_RESEND_EMAIL,
+                        from: `Support <${process.env.COACH_ACADEM_RESEND_EMAIL}>`,
                         to: chargeSucceeded.metadata.userEmail,
                         subject: 'Course Booking Success',
                         html: `
@@ -736,7 +736,7 @@ export const stripeWebhook = async (req, res, next) => {
 
                 try {
                     await resend.emails.send({
-                        from: process.env.COACH_ACADEM_RESEND_EMAIL,
+                        from: `Support <${process.env.COACH_ACADEM_RESEND_EMAIL}>`,
                         to: chargeSucceeded.metadata.teacherEmail,
                         subject: 'You have a new booking',
                         html: `

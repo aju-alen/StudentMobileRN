@@ -365,7 +365,7 @@ const sendVerificationEmail = async (email, verificationToken, name, isTeacher) 
     try {
         // const response = await transporter.sendMail(mailOptions);
         const response = await resend.emails.send({
-            from: process.env.COACH_ACADEM_RESEND_EMAIL,
+            from: `Support <${process.env.COACH_ACADEM_RESEND_EMAIL}>`,
             to: email,
             subject: mailOptions.subject,
             html: mailOptions.html,
@@ -924,7 +924,7 @@ export const changePassword = async (req, res, next) => {
     });
 
     await resend.emails.send({
-      from: process.env.COACH_ACADEM_RESEND_EMAIL,
+      from: `Support <${process.env.COACH_ACADEM_RESEND_EMAIL}>`,
       to: user.email,
       subject: "Password Changed Successfully",
       html: `
@@ -978,7 +978,7 @@ export const forgotPassword = async (req, res, next) => {
       },
     });
     await resend.emails.send({
-      from: process.env.COACH_ACADEM_RESEND_EMAIL,
+      from: `Support <${process.env.COACH_ACADEM_RESEND_EMAIL}>`,
       to: user.email,
       subject: "Your Password Reset Code",
       html: `
@@ -1381,7 +1381,7 @@ const sendOrganizationInviteEmail = async (teacherEmail, teacherName, orgName, t
 
   try {
     await resend.emails.send({
-      from: process.env.COACH_ACADEM_RESEND_EMAIL,
+      from: `Support <${process.env.COACH_ACADEM_RESEND_EMAIL}>`,
       to: teacherEmail,
       subject: `You've been invited to join ${orgName}`,
       html: emailHtml,
