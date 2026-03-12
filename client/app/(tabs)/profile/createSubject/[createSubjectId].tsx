@@ -33,6 +33,7 @@ import { axiosWithAuth } from "../../../utils/customAxios";
 import * as Sentry from '@sentry/react-native';
 import * as Crypto from 'expo-crypto';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { Calendar } from 'react-native-calendars';
 import { useRevenueCat } from '../../../providers/RevenueCatProvider';
 
 // Add type definition for file object
@@ -81,6 +82,15 @@ const CreateSubject = () => {
   const [showTopicDatePicker, setShowTopicDatePicker] = useState<number | null>(null);
   const [showTopicTimePicker, setShowTopicTimePicker] = useState<number | null>(null);
 
+  // Teacher availability for MULTI_STUDENT / MULTI_PACKAGE (only book when teacher is free)
+  const [teacherBookedSlots, setTeacherBookedSlots] = useState<string[]>([]);
+  const [teacherUnavailableDates, setTeacherUnavailableDates] = useState<string[]>([]);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [selectedAvailDate, setSelectedAvailDate] = useState('');
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<{ time: string; available: boolean }[]>([]);
+  const [editingTopicIndex, setEditingTopicIndex] = useState<number | null>(null);
+  const [topicCalendarDate, setTopicCalendarDate] = useState('');
+
   // Topic hours sum must match duration (package courses); computed once per topicBlocks change for performance
   const topicHoursSum = useMemo(
     () => topicBlocks.reduce((sum, b) => sum + parseInt(b.hours || '0', 10), 0),
@@ -103,8 +113,8 @@ const CreateSubject = () => {
         setCurrentCourseType(courseType as string);
       }
 
-      // Get max capacity from params for multi-student and multi-package
-      if (courseType === 'MULTI_STUDENT' || courseType === 'MULTI_PACKAGE') {
+      // Get max capacity from params for multi-student
+      if (courseType === 'MULTI_STUDENT') {
         if (maxCapacity) {
           const cap = parseInt(maxCapacity as string, 10);
           setCurrentMaxCapacity(Number.isNaN(cap) ? 10 : cap);
@@ -160,6 +170,67 @@ const CreateSubject = () => {
       );
     }
   }, [createSubjectId, courseType, maxCapacity]);
+
+  // Generate time slots 09:00–17:00 (HH:mm)
+  const generateTimeSlots = (): { time: string; available: boolean }[] => {
+    const slots: { time: string; available: boolean }[] = [];
+    for (let hour = 9; hour <= 17; hour++) {
+      slots.push({ time: `${hour.toString().padStart(2, '0')}:00`, available: true });
+    }
+    return slots;
+  };
+
+  const normalizeTime = (t: string): string => {
+    const parts = String(t || '').trim().split(':');
+    const h = parseInt(parts[0], 10);
+    const m = parts[1] != null ? parseInt(parts[1], 10) : 0;
+    return `${(isNaN(h) ? 0 : h).toString().padStart(2, '0')}:${(isNaN(m) ? 0 : m).toString().padStart(2, '0')}`;
+  };
+
+  const fetchTeacherAvailability = async (dateStr: string, durationHours: number, sessionBlockedSlots: string[] = []) => {
+    if (!dateStr) return;
+    setAvailabilityLoading(true);
+    try {
+      const res = await axiosWithAuth.get(`${ipURL}/api/bookings/teacher/my-availability`, {
+        params: { date: dateStr },
+      });
+      const booked = (res.data.bookedSlots || []).map(normalizeTime);
+      const unavailable = res.data.unavailableDates || [];
+      setTeacherBookedSlots(booked);
+      setTeacherUnavailableDates(unavailable);
+      const allBlocked = [...new Set([...booked, ...sessionBlockedSlots.map(normalizeTime)])];
+      const baseSlots = generateTimeSlots();
+      const duration = Math.max(1, Math.min(3, durationHours));
+      const updated = baseSlots.map((slot) => {
+        const normalized = normalizeTime(slot.time);
+        const [h] = normalized.split(':').map(Number);
+        if (duration === 1) {
+          return { ...slot, available: !allBlocked.includes(normalized) };
+        }
+        let allFree = true;
+        for (let i = 0; i < duration; i++) {
+          const checkHour = h + i;
+          if (checkHour > 17) {
+            allFree = false;
+            break;
+          }
+          const checkTime = `${checkHour.toString().padStart(2, '0')}:00`;
+          if (allBlocked.includes(checkTime)) {
+            allFree = false;
+            break;
+          }
+        }
+        return { ...slot, available: allFree };
+      });
+      setAvailableTimeSlots(updated);
+    } catch (err) {
+      console.error('Failed to fetch teacher availability', err);
+      Alert.alert('Error', 'Failed to load your availability. Please try again.');
+      setAvailableTimeSlots(generateTimeSlots());
+    } finally {
+      setAvailabilityLoading(false);
+    }
+  };
 
   console.log(pdf1, 'pdf1');
   console.log(pdf2, 'pdf2');
@@ -563,10 +634,6 @@ const CreateSubject = () => {
         subject.maxCapacity = currentMaxCapacity;
         console.log('inside multi');
       }
-      // Add maxCapacity for MULTI_PACKAGE (capacity/slots like MULTI_STUDENT)
-      if (currentCourseType === 'MULTI_PACKAGE') {
-        subject.maxCapacity = currentMaxCapacity;
-      }
 
       // Add package course topics: hours per topic; multi = scheduledDateTime per topic
       if (isPackageCourse && topicBlocks.length > 0) {
@@ -851,292 +918,186 @@ const CreateSubject = () => {
                           />
                           {currentCourseType === 'MULTI_PACKAGE' && (
                             <View style={styles.topicBlockDateTime}>
-                              <TouchableOpacity style={styles.dateTimeButton} onPress={() => setShowTopicDatePicker(index)}>
+                              <TouchableOpacity
+                                style={styles.dateTimeButton}
+                                onPress={() => {
+                                  setEditingTopicIndex(index);
+                                  const d = block.scheduledDateTime;
+                                  setTopicCalendarDate(d ? d.toISOString().split('T')[0] : '');
+                                  if (!d) setAvailableTimeSlots(generateTimeSlots());
+                                }}
+                              >
                                 <Ionicons name="calendar-outline" size={18} color={COLORS.primary} />
                                 <Text style={styles.dateTimeText}>
-                                  {block.scheduledDateTime ? block.scheduledDateTime.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Date'}
-                                </Text>
-                              </TouchableOpacity>
-                              <TouchableOpacity style={styles.dateTimeButton} onPress={() => setShowTopicTimePicker(index)}>
-                                <Ionicons name="time-outline" size={18} color={COLORS.primary} />
-                                <Text style={styles.dateTimeText}>
-                                  {block.scheduledDateTime ? block.scheduledDateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : 'Time'}
+                                  {block.scheduledDateTime ? `${block.scheduledDateTime.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} ${block.scheduledDateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}` : 'Pick Date & Time'}
                                 </Text>
                               </TouchableOpacity>
                             </View>
                           )}
                         </View>
+                        {currentCourseType === 'MULTI_PACKAGE' && editingTopicIndex === index && (
+                          <View style={styles.topicCalendarSection}>
+                            <Text style={styles.topicBlocksTitle}>Pick date & time for Topic {index + 1} (only available slots)</Text>
+                            <Calendar
+                              onDayPress={(day) => {
+                                setTopicCalendarDate(day.dateString);
+                                const topicHours = parseInt(topicBlocks[index]?.hours || '1', 10);
+                                const sessionBlocked: string[] = [];
+                                topicBlocks.forEach((b, j) => {
+                                  if (j === index || !b.scheduledDateTime) return;
+                                  const bDate = b.scheduledDateTime.toISOString().split('T')[0];
+                                  if (bDate !== day.dateString) return;
+                                  const h = b.scheduledDateTime.getUTCHours();
+                                  const dur = parseInt(b.hours || '1', 10);
+                                  for (let k = 0; k < dur; k++) {
+                                    sessionBlocked.push(`${(h + k).toString().padStart(2, '0')}:00`);
+                                  }
+                                });
+                                fetchTeacherAvailability(day.dateString, topicHours, sessionBlocked);
+                              }}
+                              markedDates={{
+                                ...teacherUnavailableDates.reduce((acc, d) => {
+                                  acc[d] = { disabled: true, disableTouchEvent: true };
+                                  return acc;
+                                }, {} as Record<string, { disabled: boolean; disableTouchEvent: boolean }>),
+                                ...(topicCalendarDate ? {
+                                  [topicCalendarDate]: { selected: true, selectedColor: COLORS.primary },
+                                } : {}),
+                              }}
+                              minDate={new Date().toISOString().split('T')[0]}
+                              theme={{
+                                todayTextColor: COLORS.primary,
+                                selectedDayBackgroundColor: COLORS.primary,
+                                selectedDayTextColor: '#ffffff',
+                                textDayFontSize: moderateScale(14),
+                                textMonthFontSize: moderateScale(16),
+                              }}
+                            />
+                            {topicCalendarDate && (
+                              <View style={styles.timeSlotsSection}>
+                                <Text style={styles.timeSlotsSectionTitle}>Available slots</Text>
+                                {availabilityLoading ? (
+                                  <View style={styles.availabilityLoadingContainer}>
+                                    <ActivityIndicator size="small" color={COLORS.primary} />
+                                  </View>
+                                ) : (
+                                  <View style={styles.timeSlotsGrid}>
+                                    {availableTimeSlots.map((slot, idx) => (
+                                      <TouchableOpacity
+                                        key={idx}
+                                        style={[styles.timeSlotChip, !slot.available && styles.timeSlotChipUnavailable]}
+                                        onPress={() => {
+                                          if (!slot.available) return;
+                                          const [h, m] = slot.time.split(':').map(Number);
+                                          const d = new Date(topicCalendarDate + 'T00:00:00');
+                                          d.setHours(h, m || 0, 0, 0);
+                                          setTopicBlocks(prev => {
+                                            const p = [...prev];
+                                            p[index] = { ...p[index], scheduledDateTime: d };
+                                            return p;
+                                          });
+                                          setEditingTopicIndex(null);
+                                          setTopicCalendarDate('');
+                                        }}
+                                        disabled={!slot.available}
+                                      >
+                                        <Text style={[styles.timeSlotChipText, !slot.available && styles.timeSlotChipTextUnavailable]}>{slot.time}</Text>
+                                      </TouchableOpacity>
+                                    ))}
+                                  </View>
+                                )}
+                              </View>
+                            )}
+                            <TouchableOpacity style={styles.cancelTopicTimeButton} onPress={() => { setEditingTopicIndex(null); setTopicCalendarDate(''); }}>
+                              <Text style={styles.cancelTopicTimeButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
                       </View>
                       ))}
-                      {showTopicDatePicker !== null && Platform.OS === 'ios' && (
-                        <Modal visible transparent animationType="slide" onRequestClose={() => setShowTopicDatePicker(null)}>
-                          <View style={styles.pickerModalContainer}>
-                            <View style={styles.pickerModalContent}>
-                              <View style={styles.iosPickerHeader}>
-                                <TouchableOpacity onPress={() => setShowTopicDatePicker(null)}><Text style={styles.iosPickerCancelText}>Cancel</Text></TouchableOpacity>
-                                <Text style={styles.iosPickerTitle}>Topic {showTopicDatePicker + 1} – Date</Text>
-                                <TouchableOpacity onPress={() => setShowTopicDatePicker(null)}><Text style={styles.iosPickerDoneText}>Done</Text></TouchableOpacity>
-                              </View>
-                              <DateTimePicker
-                                value={topicBlocks[showTopicDatePicker]?.scheduledDateTime || new Date()}
-                                mode="date"
-                                display="spinner"
-                                minimumDate={new Date()}
-                                textColor="#222222"
-                                onChange={(_, selectedDate) => {
-                                  if (selectedDate && showTopicDatePicker !== null) {
-                                    const current = topicBlocks[showTopicDatePicker]?.scheduledDateTime || new Date();
-                                    const next = new Date(selectedDate);
-                                    next.setHours(current.getHours(), current.getMinutes());
-                                    setTopicBlocks(prev => {
-                                      const p = [...prev];
-                                      p[showTopicDatePicker] = { ...p[showTopicDatePicker], scheduledDateTime: next };
-                                      return p;
-                                    });
-                                  }
-                                }}
-                                style={styles.iosPicker}
-                              />
-                            </View>
-                          </View>
-                        </Modal>
-                      )}
-                      {showTopicTimePicker !== null && Platform.OS === 'ios' && (
-                        <Modal visible transparent animationType="slide" onRequestClose={() => setShowTopicTimePicker(null)}>
-                          <View style={styles.pickerModalContainer}>
-                            <View style={styles.pickerModalContent}>
-                              <View style={styles.iosPickerHeader}>
-                                <TouchableOpacity onPress={() => setShowTopicTimePicker(null)}><Text style={styles.iosPickerCancelText}>Cancel</Text></TouchableOpacity>
-                                <Text style={styles.iosPickerTitle}>Topic {showTopicTimePicker + 1} – Time</Text>
-                                <TouchableOpacity onPress={() => setShowTopicTimePicker(null)}><Text style={styles.iosPickerDoneText}>Done</Text></TouchableOpacity>
-                              </View>
-                              <DateTimePicker
-                                value={topicBlocks[showTopicTimePicker]?.scheduledDateTime || new Date()}
-                                mode="time"
-                                display="spinner"
-                                textColor="#222222"
-                                onChange={(_, selectedTime) => {
-                                  if (selectedTime && showTopicTimePicker !== null) {
-                                    const current = topicBlocks[showTopicTimePicker]?.scheduledDateTime || new Date();
-                                    const next = new Date(current);
-                                    next.setHours(selectedTime.getHours(), selectedTime.getMinutes());
-                                    setTopicBlocks(prev => {
-                                      const p = [...prev];
-                                      p[showTopicTimePicker] = { ...p[showTopicTimePicker], scheduledDateTime: next };
-                                      return p;
-                                    });
-                                  }
-                                }}
-                                style={styles.iosPicker}
-                              />
-                            </View>
-                          </View>
-                        </Modal>
-                      )}
-                      {showTopicDatePicker !== null && Platform.OS !== 'ios' && (
-                        <DateTimePicker
-                          value={topicBlocks[showTopicDatePicker]?.scheduledDateTime || new Date()}
-                          mode="date"
-                          display="default"
-                          minimumDate={new Date()}
-                          onChange={(event, selectedDate) => {
-                            setShowTopicDatePicker(null);
-                            if (event.type === 'set' && selectedDate && showTopicDatePicker !== null) {
-                              const current = topicBlocks[showTopicDatePicker]?.scheduledDateTime || new Date();
-                              const next = new Date(selectedDate);
-                              next.setHours(current.getHours(), current.getMinutes());
-                              setTopicBlocks(prev => { const p = [...prev]; p[showTopicDatePicker] = { ...p[showTopicDatePicker], scheduledDateTime: next }; return p; });
-                            }
-                          }}
-                        />
-                      )}
-                      {showTopicTimePicker !== null && Platform.OS !== 'ios' && (
-                        <DateTimePicker
-                          value={topicBlocks[showTopicTimePicker]?.scheduledDateTime || new Date()}
-                          mode="time"
-                          display="default"
-                          onChange={(event, selectedTime) => {
-                            setShowTopicTimePicker(null);
-                            if (event.type === 'set' && selectedTime && showTopicTimePicker !== null) {
-                              const current = topicBlocks[showTopicTimePicker]?.scheduledDateTime || new Date();
-                              const next = new Date(current);
-                              next.setHours(selectedTime.getHours(), selectedTime.getMinutes());
-                              setTopicBlocks(prev => { const p = [...prev]; p[showTopicTimePicker] = { ...p[showTopicTimePicker], scheduledDateTime: next }; return p; });
-                            }
-                          }}
-                        />
-                      )}
                     </View>
                   )}
                 </View>
               )}
-              {/* Multi-Student Course Date/Time Picker */}
+              {/* Multi-Student Course: calendar + availability-based time slots */}
               {currentCourseType === 'MULTI_STUDENT' && (
                 <View style={styles.inputWrapper}>
                   <View style={styles.labelContainer}>
                     <Text style={styles.inputLabel}>Scheduled Date & Time</Text>
                     <TouchableOpacity 
-                      onPress={() => Alert.alert('Scheduled Date & Time', 'Select the date and time when this multi-student course will take place. This will be the same for all enrolled students.')}
+                      onPress={() => Alert.alert('Scheduled Date & Time', 'Select a date and an available time slot. Only times when you are not already booked are shown.')}
                       style={styles.infoButton}
                     >
                       <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
                     </TouchableOpacity>
                   </View>
-                  <View style={styles.dateTimeContainer}>
-                    <TouchableOpacity
-                      style={styles.dateTimeButton}
-                      onPress={() => setShowDatePicker(true)}
-                    >
-                      <Ionicons name="calendar-outline" size={20} color={COLORS.primary} />
-                      <Text style={styles.dateTimeText}>
-                        {scheduledDateTime 
-                          ? scheduledDateTime.toLocaleDateString('en-US', { 
-                              year: 'numeric', 
-                              month: 'short', 
-                              day: 'numeric' 
-                            })
-                          : 'Select Date'}
+                  <Calendar
+                    onDayPress={(day) => {
+                      setSelectedAvailDate(day.dateString);
+                      fetchTeacherAvailability(day.dateString, durationNum || 1, []);
+                    }}
+                    markedDates={{
+                      ...teacherUnavailableDates.reduce((acc, d) => {
+                        acc[d] = { disabled: true, disableTouchEvent: true };
+                        return acc;
+                      }, {} as Record<string, { disabled: boolean; disableTouchEvent: boolean }>),
+                      ...(selectedAvailDate ? {
+                        [selectedAvailDate]: {
+                          selected: true,
+                          selectedColor: COLORS.primary,
+                        },
+                      } : {}),
+                    }}
+                    minDate={new Date().toISOString().split('T')[0]}
+                    theme={{
+                      todayTextColor: COLORS.primary,
+                      selectedDayBackgroundColor: COLORS.primary,
+                      selectedDayTextColor: '#ffffff',
+                      textDayFontFamily: FONT.regular,
+                      textMonthFontFamily: FONT.bold,
+                      textDayHeaderFontFamily: FONT.medium,
+                      textDayFontSize: moderateScale(14),
+                      textMonthFontSize: moderateScale(16),
+                      textDayHeaderFontSize: moderateScale(14),
+                    }}
+                  />
+                  {selectedAvailDate && (
+                    <View style={styles.timeSlotsSection}>
+                      <Text style={styles.timeSlotsSectionTitle}>Available Time Slots</Text>
+                      {availabilityLoading ? (
+                        <View style={styles.availabilityLoadingContainer}>
+                          <ActivityIndicator size="large" color={COLORS.primary} />
+                        </View>
+                      ) : (
+                        <View style={styles.timeSlotsGrid}>
+                          {availableTimeSlots.map((slot, idx) => (
+                            <TouchableOpacity
+                              key={idx}
+                              style={[styles.timeSlotChip, !slot.available && styles.timeSlotChipUnavailable]}
+                              onPress={() => {
+                                if (!slot.available) return;
+                                const [h, m] = slot.time.split(':').map(Number);
+                                const d = new Date(selectedAvailDate + 'T00:00:00');
+                                d.setHours(h, m || 0, 0, 0);
+                                setScheduledDateTime(d);
+                              }}
+                              disabled={!slot.available}
+                            >
+                              <Text style={[styles.timeSlotChipText, !slot.available && styles.timeSlotChipTextUnavailable]}>
+                                {slot.time}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+                  )}
+                  {scheduledDateTime && (
+                    <View style={styles.scheduledSummary}>
+                      <Text style={styles.scheduledSummaryText}>
+                        Scheduled: {scheduledDateTime.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} at {scheduledDateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
                       </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.dateTimeButton}
-                      onPress={() => setShowTimePicker(true)}
-                    >
-                      <Ionicons name="time-outline" size={20} color={COLORS.primary} />
-                      <Text style={styles.dateTimeText}>
-                        {scheduledDateTime
-                          ? scheduledDateTime.toLocaleTimeString('en-US', { 
-                              hour: '2-digit', 
-                              minute: '2-digit',
-                              hour12: true
-                            })
-                          : 'Select Time'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  {Platform.OS === 'ios' ? (
-                    <>
-                      {showDatePicker && (
-                        <Modal
-                          visible={showDatePicker}
-                          transparent={true}
-                          animationType="slide"
-                          onRequestClose={() => setShowDatePicker(false)}
-                        >
-                          <View style={styles.pickerModalContainer}>
-                            <View style={styles.pickerModalContent}>
-                              <View style={styles.iosPickerHeader}>
-                                <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                                  <Text style={styles.iosPickerCancelText}>Cancel</Text>
-                                </TouchableOpacity>
-                                <Text style={styles.iosPickerTitle}>Select Date</Text>
-                                <TouchableOpacity
-                                  onPress={() => setShowDatePicker(false)}
-                                >
-                                  <Text style={styles.iosPickerDoneText}>Done</Text>
-                                </TouchableOpacity>
-                              </View>
-                              <DateTimePicker
-                                value={scheduledDateTime || new Date()}
-                                mode="date"
-                                display="spinner"
-                                minimumDate={new Date()}
-                                textColor="#222222"
-                                onChange={(event, selectedDate) => {
-                                  if (selectedDate) {
-                                    const currentTime = scheduledDateTime || new Date();
-                                    const newDateTime = new Date(selectedDate);
-                                    newDateTime.setHours(currentTime.getHours());
-                                    newDateTime.setMinutes(currentTime.getMinutes());
-                                    setScheduledDateTime(newDateTime);
-                                    
-                                  }
-                                }}
-                                style={styles.iosPicker}
-                              />
-                            </View>
-                          </View>
-                        </Modal>
-                      )}
-                      {showTimePicker && (
-                        <Modal
-                          visible={showTimePicker}
-                          transparent={true}
-                          animationType="slide"
-                          onRequestClose={() => setShowTimePicker(false)}
-                        >
-                          <View style={styles.pickerModalContainer}>
-                            <View style={styles.pickerModalContent}>
-                              <View style={styles.iosPickerHeader}>
-                                <TouchableOpacity onPress={() => setShowTimePicker(false)}>
-                                  <Text style={styles.iosPickerCancelText}>Cancel</Text>
-                                </TouchableOpacity>
-                                <Text style={styles.iosPickerTitle}>Select Time</Text>
-                                <TouchableOpacity
-                                  onPress={() => setShowTimePicker(false)}
-                                >
-                                  <Text style={styles.iosPickerDoneText}>Done</Text>
-                                </TouchableOpacity>
-                              </View>
-                              <DateTimePicker
-                                value={scheduledDateTime || new Date()}
-                                mode="time"
-                                display="spinner"
-                                textColor="#222222"
-                                onChange={(event, selectedTime) => {
-                                  if (selectedTime) {
-                                    const currentDate = scheduledDateTime || new Date();
-                                    const newDateTime = new Date(currentDate);
-                                    newDateTime.setHours(selectedTime.getHours());
-                                    newDateTime.setMinutes(selectedTime.getMinutes());
-                                    setScheduledDateTime(newDateTime);
-                                  }
-                                }}
-                                style={styles.iosPicker}
-                              />
-                            </View>
-                          </View>
-                        </Modal>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      {showDatePicker && (
-                        <DateTimePicker
-                          value={scheduledDateTime || new Date()}
-                          mode="date"
-                          display="default"
-                          minimumDate={new Date()}
-                          onChange={(event, selectedDate) => {
-                            setShowDatePicker(false);
-                            if (event.type === 'set' && selectedDate) {
-                              const currentTime = scheduledDateTime || new Date();
-                              const newDateTime = new Date(selectedDate);
-                              newDateTime.setHours(currentTime.getHours());
-                              newDateTime.setMinutes(currentTime.getMinutes());
-                              setScheduledDateTime(newDateTime);
-                            }
-                          }}
-                        />
-                      )}
-                      {showTimePicker && (
-                        <DateTimePicker
-                          value={scheduledDateTime || new Date()}
-                          mode="time"
-                          display="default"
-                          onChange={(event, selectedTime) => {
-                            setShowTimePicker(false);
-                            if (event.type === 'set' && selectedTime) {
-                              const currentDate = scheduledDateTime || new Date();
-                              const newDateTime = new Date(currentDate);
-                              newDateTime.setHours(selectedTime.getHours());
-                              newDateTime.setMinutes(selectedTime.getMinutes());
-                              setScheduledDateTime(newDateTime);
-                            }
-                          }}
-                        />
-                      )}
-                    </>
+                    </View>
                   )}
                   <View style={styles.capacityInfo}>
                     <Text style={styles.capacityText}>
@@ -1772,6 +1733,58 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontFamily: FONT.medium,
   },
+  timeSlotsSection: {
+    marginTop: verticalScale(16),
+  },
+  timeSlotsSectionTitle: {
+    fontSize: moderateScale(16),
+    fontFamily: FONT.bold,
+    color: welcomeCOLOR.black,
+    marginBottom: verticalScale(12),
+  },
+  availabilityLoadingContainer: {
+    paddingVertical: verticalScale(24),
+    alignItems: 'center',
+  },
+  timeSlotsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: horizontalScale(10),
+  },
+  timeSlotChip: {
+    paddingVertical: verticalScale(10),
+    paddingHorizontal: horizontalScale(14),
+    borderRadius: moderateScale(10),
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#e1e1e1',
+    minWidth: horizontalScale(72),
+    alignItems: 'center',
+  },
+  timeSlotChipUnavailable: {
+    backgroundColor: '#E8E8E8',
+    borderColor: '#D1D5DB',
+    opacity: 0.6,
+  },
+  timeSlotChipText: {
+    fontSize: moderateScale(14),
+    fontFamily: FONT.medium,
+    color: welcomeCOLOR.black,
+  },
+  timeSlotChipTextUnavailable: {
+    color: '#999',
+  },
+  scheduledSummary: {
+    marginTop: verticalScale(10),
+    padding: moderateScale(10),
+    backgroundColor: '#E8F5E9',
+    borderRadius: moderateScale(8),
+  },
+  scheduledSummaryText: {
+    fontSize: moderateScale(13),
+    color: '#2E7D32',
+    fontFamily: FONT.medium,
+  },
   topicBlocksSection: {
     marginTop: verticalScale(12),
     gap: verticalScale(10),
@@ -1835,6 +1848,24 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(12),
     color: '#555',
     marginBottom: verticalScale(8),
+    fontFamily: FONT.medium,
+  },
+  topicCalendarSection: {
+    marginTop: verticalScale(12),
+    padding: moderateScale(12),
+    backgroundColor: '#f0f7ff',
+    borderRadius: moderateScale(10),
+    borderWidth: 1,
+    borderColor: '#e1e8f0',
+  },
+  cancelTopicTimeButton: {
+    marginTop: verticalScale(10),
+    paddingVertical: verticalScale(8),
+    alignItems: 'center',
+  },
+  cancelTopicTimeButtonText: {
+    fontSize: moderateScale(14),
+    color: '#666',
     fontFamily: FONT.medium,
   },
   pickerModalContainer: {

@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import { sendEmailService } from "../services/emailService.js";
 import { Resend } from "resend";
 import { sendNotificationByType } from "../services/pushNotificationService.js";
+import { getTeacherBlockedSlotsForDate } from "./bookingController.js";
 
 const prisma = new PrismaClient();
 const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
@@ -119,6 +120,57 @@ export const createSubject = async (req, res, next) => {
         }
 
         const teacherProfileId = user.teacherProfile.id;
+
+        // Server-side availability check: teacher must not be double-booked
+        if (courseType === 'MULTI_STUDENT' && scheduledDateTime) {
+            const d = new Date(scheduledDateTime);
+            const dateStr = d.toISOString().split('T')[0];
+            const startHour = d.getUTCHours();
+            const duration = Math.max(1, Math.min(2, parseInt(subjectDuration, 10) || 1));
+            const blocked = await getTeacherBlockedSlotsForDate(teacherProfileId, dateStr);
+            for (let i = 0; i < duration; i++) {
+                const h = (startHour + i) % 24;
+                const slot = `${h.toString().padStart(2, '0')}:00`;
+                if (blocked.includes(slot)) {
+                    return res.status(409).json({
+                        message: "You already have a booking or course at this date and time. Please choose another slot.",
+                    });
+                }
+            }
+        }
+        if (courseType === 'MULTI_PACKAGE' && Array.isArray(topics)) {
+            for (let i = 0; i < topics.length; i++) {
+                const t = topics[i];
+                if (!t.scheduledDateTime) continue;
+                const d = new Date(t.scheduledDateTime);
+                const dateStr = d.toISOString().split('T')[0];
+                const startHour = d.getUTCHours();
+                const duration = Math.max(1, Math.min(3, parseInt(t.hours, 10) || 1));
+                let blocked = await getTeacherBlockedSlotsForDate(teacherProfileId, dateStr);
+                // Also block slots taken by other topics in this same request
+                const requestBlocked = [];
+                for (let j = 0; j < topics.length; j++) {
+                    if (j === i || !topics[j].scheduledDateTime) continue;
+                    const other = new Date(topics[j].scheduledDateTime);
+                    if (other.toISOString().split('T')[0] !== dateStr) continue;
+                    const oh = other.getUTCHours();
+                    const odur = Math.max(1, Math.min(3, parseInt(topics[j].hours, 10) || 1));
+                    for (let k = 0; k < odur; k++) {
+                        requestBlocked.push(`${(oh + k).toString().padStart(2, '0')}:00`);
+                    }
+                }
+                blocked = [...new Set([...blocked, ...requestBlocked])];
+                for (let j = 0; j < duration; j++) {
+                    const h = (startHour + j) % 24;
+                    const slot = `${h.toString().padStart(2, '0')}:00`;
+                    if (blocked.includes(slot)) {
+                        return res.status(409).json({
+                            message: `Topic ${i + 1} overlaps with an existing booking or course. Please choose another date/time.`,
+                        });
+                    }
+                }
+            }
+        }
 
         // Prepare subject data
         const subjectData = {

@@ -138,6 +138,41 @@ const ReviewForm = React.memo(({ onSubmit, isSubmitting, purchaseStatus }: Revie
   );
 });
 
+interface CapacityCardProps {
+  availableSpots: number;
+  maxCapacity: number;
+  isFull: boolean;
+}
+
+const CapacityCard = React.memo(({ availableSpots, maxCapacity, isFull }: CapacityCardProps) => {
+  const filledPercent = maxCapacity > 0 ? Math.min(100, ((maxCapacity - availableSpots) / maxCapacity) * 100) : 0;
+  const isLow = availableSpots <= 3 && !isFull;
+  const progressColor = isFull ? COLORS.danger : isLow ? COLORS.warning : COLORS.success;
+  return (
+    <View style={styles.capacityCard}>
+      <View style={styles.capacityCardContent}>
+        <View style={styles.capacityIconWrap}>
+          <Ionicons name={isFull ? "close-circle" : "people"} size={22} color={COLORS.primary} />
+        </View>
+        <View style={styles.capacityTextWrap}>
+          <Text style={styles.capacityTitle}>
+            {isFull ? "Course Full" : `${availableSpots} of ${maxCapacity} spots available`}
+          </Text>
+          {isLow && !isFull && (
+            <View style={styles.urgencyBadge}>
+              <Ionicons name="warning" size={14} color={COLORS.warning} />
+              <Text style={styles.urgencyBadgeText}>Only {availableSpots} spots left!</Text>
+            </View>
+          )}
+        </View>
+      </View>
+      <View style={styles.capacityProgressBar}>
+        <View style={[styles.capacityProgressFill, { width: `${filledPercent}%`, backgroundColor: progressColor }]} />
+      </View>
+    </View>
+  );
+});
+
 const SubjectPage = ({ subjectId }) => {
   const [singleSubjectData, setSingleSubjectData] = React.useState<SubjectData>({});
   const [capacityInfo, setCapacityInfo] = React.useState<{
@@ -164,6 +199,7 @@ const SubjectPage = ({ subjectId }) => {
   const [purchaseStatus, setPurchaseStatus] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializingChat, setIsInitializingChat] = useState(false);
+  const [showAllTopics, setShowAllTopics] = useState(false);
 
   // Animation values
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -787,13 +823,35 @@ const SubjectPage = ({ subjectId }) => {
             contentFit='fill'
             transition={300}
           />
-          <TouchableOpacity 
+          <View style={styles.headerImageOverlay}>
+            <TouchableOpacity
+              style={[styles.saveButtonHeader, isSaved && styles.savedButton]}
+              onPress={handleSaveSubject}
+              disabled={isSaving}
+            >
+              <Ionicons
+                name={isSaved ? "bookmark" : "bookmark-outline"}
+                size={22}
+                color="#FFFFFF"
+              />
+              <Text style={styles.saveButtonText}>{isSaved ? "Saved" : "Save"}</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity
             style={styles.menuButton}
             onPress={handleMenuPress}
           >
             <Ionicons name="ellipsis-vertical" size={24} color="white" />
           </TouchableOpacity>
         </Animated.View>
+
+        {showMenu && (
+          <TouchableOpacity
+            style={styles.menuBackdrop}
+            activeOpacity={1}
+            onPress={handleMenuPress}
+          />
+        )}
 
         {showMenu && (
           <Animated.View style={[styles.menuContainer, menuStyle]}>
@@ -818,54 +876,61 @@ const SubjectPage = ({ subjectId }) => {
         )}
 
         <Animated.View style={[styles.contentContainer, contentStyle]}>
-          {/* Status Bar - Save only */}
-          <View style={styles.statusBar}>
-            <View style={styles.statusBarSpacer} />
-            <TouchableOpacity
-              style={[styles.saveButton, isSaved && styles.savedButton]}
-              onPress={handleSaveSubject}
-              disabled={isSaving}
-            >
-              <Ionicons
-                name={isSaved ? "bookmark" : "bookmark-outline"}
-                size={24}
-                color="#FFFFFF"
-              />
-              <Text style={styles.saveButtonText}>
-                {isSaved ? "Saved" : "Save"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
           {/* Subject Header */}
           <View style={styles.headerContainer}>
-            <View style={styles.titleContainer}>
-              <Text style={styles.subjectName}>{singleSubjectData.subjectName}</Text>
-              <View style={styles.badgeContainer}>
-                <View style={styles.badge}>
-                  <Ionicons name="school" size={16} color="#0066cc" />
-                  <Text style={styles.badgeText}>{singleSubjectData.subjectBoard}</Text>
-                </View>
-                <View style={[styles.badge, styles.gradeBadge]}>
-                  <Ionicons name="bookmark" size={16} color="#f57c00" />
-                  <Text style={[styles.badgeText, {color: '#f57c00'}]}>
-                    Grade {singleSubjectData.subjectGrade}
+            <Text style={styles.subjectName}>{singleSubjectData.subjectName}</Text>
+            {singleSubjectData.subjectNameSubHeading ? (
+              <Text style={styles.subjectNameSubHeading}>{singleSubjectData.subjectNameSubHeading}</Text>
+            ) : null}
+            <View style={styles.badgeRow}>
+              {singleSubjectData.courseType && (
+                <View style={[styles.badge, styles.courseTypeBadge]}>
+                  <Ionicons
+                    name={
+                      singleSubjectData.courseType === 'SINGLE_STUDENT' ? 'person' :
+                      singleSubjectData.courseType === 'MULTI_STUDENT' ? 'people' :
+                      singleSubjectData.courseType === 'SINGLE_PACKAGE' ? 'layers' : 'albums'
+                    }
+                    size={14}
+                    color={COLORS.primary}
+                  />
+                  <Text style={[styles.badgeText, styles.courseTypeBadgeText]}>
+                    {singleSubjectData.courseType === 'SINGLE_STUDENT' ? '1-on-1' :
+                     singleSubjectData.courseType === 'MULTI_STUDENT' ? 'Group Class' :
+                     singleSubjectData.courseType === 'SINGLE_PACKAGE' ? 'Package' : 'Group Package'}
                   </Text>
                 </View>
+              )}
+              <View style={styles.badge}>
+                <Ionicons name="school" size={16} color="#0066cc" />
+                <Text style={styles.badgeText}>{singleSubjectData.subjectBoard}</Text>
+              </View>
+              <View style={[styles.badge, styles.gradeBadge]}>
+                <Ionicons name="bookmark" size={16} color="#f57c00" />
+                <Text style={[styles.badgeText, { color: '#f57c00' }]}>
+                  Grade {singleSubjectData.subjectGrade}
+                </Text>
               </View>
             </View>
-            <View style={styles.priceContainer}>
-              <Text style={styles.priceLabel}>Course Fee</Text>
-              <Text style={styles.price}>AED {(singleSubjectData.subjectPrice) / 100}</Text>
-              <Text style={styles.durationText}>
-                {singleSubjectData.subjectDuration} hours
-              </Text>
-            </View>
+            {singleSubjectData.subjectTags && singleSubjectData.subjectTags.length > 0 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.tagsScroll}
+                contentContainerStyle={styles.tagsRow}
+              >
+                {singleSubjectData.subjectTags.map((tag: string, idx: number) => (
+                  <View key={idx} style={styles.tagChip}>
+                    <Text style={styles.tagChipText}>{tag}</Text>
+                  </View>
+                ))}
+              </ScrollView>
+            ) : null}
           </View>
 
           {/* Teacher Info */}
           {singleSubjectData?.user && teacherId && (
-            <TouchableOpacity  
+            <TouchableOpacity
               style={styles.teacherCard}
               onPress={() => router.push(`/(tabs)/home/singleProfile/${teacherId}`)}
             >
@@ -877,14 +942,29 @@ const SubjectPage = ({ subjectId }) => {
                 transition={100}
               />
               <View style={styles.teacherInfo}>
-                <Text style={styles.teacherName}>{singleSubjectData.user?.name || 'Teacher'}</Text>  
+                <Text style={styles.teacherName}>{singleSubjectData.user?.name || 'Teacher'}</Text>
                 <Text style={styles.teacherRole}>
                   {singleSubjectData.user?.userType}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={24} color="#1A4C6E" />
+              <Text style={styles.viewProfileText}>View Profile</Text>
+              <Ionicons name="chevron-forward" size={20} color={COLORS.primary} />
             </TouchableOpacity>
           )}
+
+          {/* Pricing Card */}
+          <View style={styles.pricingCard}>
+            <Text style={styles.priceLabel}>Course Fee</Text>
+            <Text style={styles.price}>{singleSubjectData.subjectPrice != null ? `AED ${Number(singleSubjectData.subjectPrice) / 100}` : '—'}</Text>
+            <Text style={styles.durationText}>
+              {singleSubjectData.subjectDuration} hours
+            </Text>
+            {(singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && capacityInfo && !capacityInfo.isFull && (
+              <Text style={styles.spotsText}>
+                {capacityInfo.availableSpots} of {singleSubjectData.maxCapacity} spots available
+              </Text>
+            )}
+          </View>
 
           {/* Quick Info Cards */}
           <View style={styles.quickInfoContainer}>
@@ -903,10 +983,13 @@ const SubjectPage = ({ subjectId }) => {
           {/* Multi-Student Course Schedule Info */}
           {singleSubjectData.courseType === 'MULTI_STUDENT' && singleSubjectData.scheduledDateTime && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Course Schedule</Text>
+              <View style={styles.sectionTitleRow}>
+                <View style={styles.sectionTitleAccent} />
+                <Text style={[styles.sectionTitle, styles.sectionTitleInRow]}>Course Schedule</Text>
+              </View>
               <View style={styles.scheduleInfo}>
-                <View style={styles.scheduleItem}>
-                  <Ionicons name="calendar-outline" size={20} color="#1976D2" />
+                  <View style={styles.scheduleItem}>
+                  <Ionicons name="calendar-outline" size={16} color={COLORS.primary} />
                   <Text style={styles.scheduleText}>
                     {new Date(singleSubjectData.scheduledDateTime).toLocaleDateString('en-US', {
                       weekday: 'long',
@@ -917,7 +1000,7 @@ const SubjectPage = ({ subjectId }) => {
                   </Text>
                 </View>
                 <View style={styles.scheduleItem}>
-                  <Ionicons name="time-outline" size={20} color="#1976D2" />
+                  <Ionicons name="time-outline" size={16} color={COLORS.primary} />
                   <Text style={styles.scheduleText}>
                     {new Date(singleSubjectData.scheduledDateTime).toLocaleTimeString('en-US', {
                       hour: '2-digit',
@@ -927,55 +1010,54 @@ const SubjectPage = ({ subjectId }) => {
                   </Text>
                 </View>
                 {capacityInfo && (
-                  <View style={styles.scheduleItem}>
-                    <Ionicons name="people-outline" size={20} color="#1976D2" />
-                    <Text style={styles.scheduleText}>
-                      {capacityInfo.availableSpots} of {singleSubjectData.maxCapacity} spots available
-                    </Text>
-                  </View>
+                  <CapacityCard
+                    availableSpots={capacityInfo.availableSpots}
+                    maxCapacity={singleSubjectData.maxCapacity ?? 0}
+                    isFull={capacityInfo.isFull}
+                  />
                 )}
               </View>
             </View>
           )}
 
-          {/* Package course (Single/Multi): topic blocks with name, hours, and date/time for multi */}
+          {/* Package course (Single/Multi): topic blocks with timeline + capacity above for multi */}
           {(singleSubjectData.courseType === 'SINGLE_PACKAGE' || singleSubjectData.courseType === 'MULTI_PACKAGE') &&
             singleSubjectData.subjectTopics &&
-            singleSubjectData.subjectTopics.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Course Topics</Text>
-              <View style={styles.topicList}>
-                {singleSubjectData.subjectTopics
-                  .slice()
-                  .sort((a, b) => a.orderIndex - b.orderIndex)
-                  .map((topic, index) => (
-                    <View key={topic.id} style={styles.topicCard}>
-                      <View style={styles.topicCardHeader}>
-                        <View style={styles.topicNumberBadge}>
-                          <Text style={styles.topicNumberText}>{index + 1}</Text>
-                        </View>
+            singleSubjectData.subjectTopics.length > 0 && (() => {
+              const sortedTopics = [...singleSubjectData.subjectTopics].sort((a, b) => a.orderIndex - b.orderIndex);
+              const topicCount = sortedTopics.length;
+              const showExpand = topicCount > 4;
+              const displayedTopics = showExpand && !showAllTopics ? sortedTopics.slice(0, 3) : sortedTopics;
+              const isMultiPackage = singleSubjectData.courseType === 'MULTI_PACKAGE';
+              return (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Course Topics</Text>
+                  {isMultiPackage && capacityInfo && (
+                    <CapacityCard
+                      availableSpots={capacityInfo.availableSpots}
+                      maxCapacity={singleSubjectData.maxCapacity ?? 0}
+                      isFull={capacityInfo.isFull}
+                    />
+                  )}
+                  <View style={styles.topicList}>
+                    {displayedTopics.map((topic) => (
+                      <View key={topic.id} style={styles.topicRow}>
                         <Text style={styles.topicTitleText}>{topic.topicTitle}</Text>
-                      </View>
-                      <View style={styles.topicMetaRow}>
-                        <View style={styles.topicMetaItem}>
-                          <Ionicons name="hourglass-outline" size={18} color="#1976D2" />
-                          <Text style={styles.topicMetaText}>{topic.hours} {topic.hours === 1 ? 'hour' : 'hours'}</Text>
-                        </View>
-                        {singleSubjectData.courseType === 'MULTI_PACKAGE' && topic.scheduledAt && (
-                          <>
+                        <View style={styles.topicMetaRow}>
                             <View style={styles.topicMetaItem}>
-                              <Ionicons name="calendar-outline" size={18} color="#1976D2" />
+                              <Ionicons name="hourglass-outline" size={14} color={COLORS.primary} />
+                              <Text style={styles.topicMetaText}>{topic.hours} {topic.hours === 1 ? 'hour' : 'hours'}</Text>
+                            </View>
+                            {isMultiPackage && topic.scheduledAt && (
+                              <View style={styles.topicMetaItem}>
+                                <Ionicons name="calendar-outline" size={14} color={COLORS.primary} />
                               <Text style={styles.topicMetaText}>
                                 {new Date(topic.scheduledAt).toLocaleDateString('en-US', {
                                   month: 'short',
                                   day: 'numeric',
                                   year: 'numeric'
                                 })}
-                              </Text>
-                            </View>
-                            <View style={styles.topicMetaItem}>
-                              <Ionicons name="time-outline" size={18} color="#1976D2" />
-                              <Text style={styles.topicMetaText}>
+                                {' · '}
                                 {new Date(topic.scheduledAt).toLocaleTimeString('en-US', {
                                   hour: '2-digit',
                                   minute: '2-digit',
@@ -983,24 +1065,20 @@ const SubjectPage = ({ subjectId }) => {
                                 })}
                               </Text>
                             </View>
-                          </>
-                        )}
+                          )}
+                        </View>
                       </View>
-                    </View>
-                  ))}
-              </View>
-              {singleSubjectData.courseType === 'MULTI_PACKAGE' && capacityInfo && (
-                <View style={[styles.scheduleInfo, { marginTop: 12 }]}>
-                  <View style={styles.scheduleItem}>
-                    <Ionicons name="people-outline" size={20} color="#1976D2" />
-                    <Text style={styles.scheduleText}>
-                      {capacityInfo.availableSpots} of {singleSubjectData.maxCapacity} spots available
-                    </Text>
+                    ))}
                   </View>
+                  {showExpand && !showAllTopics && (
+                    <TouchableOpacity style={styles.showAllTopicsButton} onPress={() => setShowAllTopics(true)}>
+                      <Text style={styles.showAllTopicsButtonText}>Show all {topicCount} topics</Text>
+                      <Ionicons name="chevron-down" size={16} color={COLORS.primary} />
+                    </TouchableOpacity>
+                  )}
                 </View>
-              )}
-            </View>
-          )}
+              );
+            })()}
 
           {/* Description Section */}
           {singleSubjectData.subjectDescription && (
@@ -1072,19 +1150,14 @@ const SubjectPage = ({ subjectId }) => {
           <View style={styles.buttonTextContainer}>
             <View style={styles.buttonMainRow}>
               <Text style={styles.primaryButtonText}>
-                {isUserType === 'TEACHER' 
-                  ? "Please login as student to purchase" 
+                {isUserType === 'TEACHER'
+                  ? "Please login as student to purchase"
                   : (singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && purchaseStatus
                   ? "Already Enrolled"
                   : (singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && capacityInfo?.isFull
                   ? "Course Full"
                   : "Enroll Now"}
               </Text>
-              {isUserType !== 'TEACHER' 
-                && !((singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && capacityInfo?.isFull) 
-                && !((singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && purchaseStatus) && (
-                <Text style={styles.priceText}>AED {(singleSubjectData.subjectPrice) / 100}</Text>
-              )}
             </View>
             {(singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && capacityInfo && !capacityInfo.isFull && !purchaseStatus && (
               <Text style={styles.capacityText}>
@@ -1122,6 +1195,7 @@ const SubjectPage = ({ subjectId }) => {
           onClose={() => setIsBookingModalVisible(false)}
           courseType={singleSubjectData.courseType}
           subjectTopics={singleSubjectData.subjectTopics}
+          subjectDuration={parseInt(singleSubjectData.subjectDuration || '1', 10)}
         />
       )}
 
@@ -1196,8 +1270,34 @@ const styles = StyleSheet.create({
   },
   headerImage: {
     width: width,
-    height: verticalScale(400),
+    height: verticalScale(300),
     backgroundColor: '#e0e0e0',
+  },
+  headerImageOverlay: {
+    position: 'absolute',
+    bottom: verticalScale(16),
+    right: horizontalScale(16),
+    left: horizontalScale(16),
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  saveButtonHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: horizontalScale(12),
+    paddingVertical: verticalScale(6),
+    borderRadius: moderateScale(20),
+    gap: horizontalScale(6),
+  },
+  menuBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+    zIndex: 999,
   },
   contentContainer: {
     padding: moderateScale(16),
@@ -1206,39 +1306,56 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
   },
-  statusBar: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    marginBottom: verticalScale(20),
-    paddingTop: verticalScale(10),
-  },
-  statusBarSpacer: {
-    flex: 1,
-  },
   dateText: {
-    color: '#666',
+    color: COLORS.textMuted,
     fontSize: moderateScale(12),
   },
   headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: verticalScale(24),
-  },
-  titleContainer: {
-    flex: 1,
-    marginRight: horizontalScale(16),
+    marginBottom: verticalScale(20),
   },
   subjectName: {
     fontSize: moderateScale(22),
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: moderateScale(12),
+    fontFamily: FONT.bold,
+    color: COLORS.textDark,
+    marginBottom: moderateScale(6),
   },
-  badgeContainer: {
+  subjectNameSubHeading: {
+    fontSize: moderateScale(14),
+    fontFamily: FONT.medium,
+    color: COLORS.textMuted,
+    marginBottom: verticalScale(12),
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: horizontalScale(8),
+    marginBottom: verticalScale(12),
+  },
+  courseTypeBadge: {
+    backgroundColor: '#e8f4fd',
+  },
+  courseTypeBadgeText: {
+    color: COLORS.primary,
+  },
+  tagsScroll: {
+    marginHorizontal: -moderateScale(16),
+  },
+  tagsRow: {
     flexDirection: 'row',
     gap: horizontalScale(8),
+    paddingHorizontal: moderateScale(16),
+    paddingBottom: verticalScale(4),
+  },
+  tagChip: {
+    backgroundColor: '#f0f7ff',
+    paddingHorizontal: horizontalScale(12),
+    paddingVertical: verticalScale(6),
+    borderRadius: moderateScale(20),
+  },
+  tagChipText: {
+    fontSize: moderateScale(12),
+    fontFamily: FONT.medium,
+    color: COLORS.primary,
   },
   badge: {
     backgroundColor: '#f0f7ff',
@@ -1260,20 +1377,36 @@ const styles = StyleSheet.create({
   priceContainer: {
     alignItems: 'flex-end',
   },
+  pricingCard: {
+    backgroundColor: '#f0fdf4',
+    padding: moderateScale(16),
+    borderRadius: moderateScale(16),
+    marginBottom: verticalScale(24),
+    borderWidth: 1,
+    borderColor: 'rgba(45, 203, 99, 0.2)',
+  },
+  spotsText: {
+    fontSize: moderateScale(12),
+    color: COLORS.primary,
+    marginTop: verticalScale(8),
+    fontFamily: FONT.medium,
+  },
   priceLabel: {
     fontSize: moderateScale(12),
-    color: '#666',
+    color: COLORS.textMuted,
     marginBottom: verticalScale(4),
+    fontFamily: FONT.medium,
   },
   price: {
     fontSize: moderateScale(24),
-    fontWeight: '700',
-    color: '#2e7d32',
+    fontFamily: FONT.bold,
+    color: COLORS.success,
   },
   durationText: {
     fontSize: moderateScale(12),
-    color: '#666',
+    color: COLORS.textMuted,
     marginTop: verticalScale(4),
+    fontFamily: FONT.medium,
   },
   teacherCard: {
     flexDirection: 'row',
@@ -1281,7 +1414,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
     padding: moderateScale(16),
     borderRadius: moderateScale(12),
-    marginBottom: verticalScale(24),
+    marginBottom: verticalScale(16),
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
   },
   teacherImage: {
     width: moderateScale(50),
@@ -1294,13 +1429,19 @@ const styles = StyleSheet.create({
   },
   teacherName: {
     fontSize: moderateScale(16),
-    fontWeight: '600',
-    color: '#1a1a1a',
+    fontFamily: FONT.semiBold,
+    color: COLORS.textDark,
   },
   teacherRole: {
     fontSize: moderateScale(14),
-    color: '#666',
+    color: COLORS.textMuted,
     marginTop: verticalScale(4),
+  },
+  viewProfileText: {
+    fontSize: moderateScale(12),
+    fontFamily: FONT.medium,
+    color: COLORS.primary,
+    marginRight: horizontalScale(4),
   },
   quickInfoContainer: {
     flexDirection: 'row',
@@ -1336,9 +1477,162 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: moderateScale(18),
-    fontWeight: '600',
-    color: '#1a1a1a',
+    fontFamily: FONT.bold,
+    color: COLORS.textDark,
     marginBottom: verticalScale(16),
+  },
+  sectionTitleInRow: {
+    marginBottom: 0,
+    flex: 1,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: verticalScale(16),
+    gap: horizontalScale(10),
+  },
+  sectionTitleAccent: {
+    width: 4,
+    height: moderateScale(22),
+    borderRadius: 2,
+    backgroundColor: COLORS.primary,
+  },
+  sectionCountBadge: {
+    backgroundColor: '#e8f4fd',
+    paddingHorizontal: horizontalScale(10),
+    paddingVertical: verticalScale(4),
+    borderRadius: moderateScale(12),
+    marginLeft: 'auto',
+  },
+  sectionCountBadgeText: {
+    fontSize: moderateScale(12),
+    fontFamily: FONT.medium,
+    color: COLORS.primary,
+  },
+  capacityCard: {
+    backgroundColor: '#f8fafc',
+    borderRadius: moderateScale(12),
+    padding: moderateScale(16),
+    marginTop: verticalScale(8),
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  capacityCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  capacityIconWrap: {
+    width: horizontalScale(48),
+    height: verticalScale(48),
+    borderRadius: moderateScale(24),
+    backgroundColor: '#e8f4fd',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: horizontalScale(14),
+  },
+  capacityTextWrap: {
+    flex: 1,
+  },
+  capacityTitle: {
+    fontSize: moderateScale(16),
+    fontFamily: FONT.bold,
+    color: COLORS.textDark,
+  },
+  urgencyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: verticalScale(6),
+    gap: horizontalScale(6),
+    alignSelf: 'flex-start',
+  },
+  urgencyBadgeText: {
+    fontSize: moderateScale(12),
+    fontFamily: FONT.semiBold,
+    color: COLORS.warning,
+  },
+  capacityProgressBar: {
+    height: 6,
+    backgroundColor: '#e2e8f0',
+    borderRadius: 3,
+    marginTop: verticalScale(12),
+    overflow: 'hidden',
+  },
+  capacityProgressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  topicTimelineContainer: {
+    marginTop: verticalScale(8),
+  },
+  topicTimelineRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: verticalScale(12),
+  },
+  topicTimelineLeft: {
+    width: horizontalScale(36),
+    alignItems: 'center',
+  },
+  topicTimelineNode: {
+    width: horizontalScale(28),
+    height: verticalScale(28),
+    borderRadius: moderateScale(14),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  topicTimelineNodeText: {
+    color: '#fff',
+    fontSize: moderateScale(12),
+    fontFamily: FONT.bold,
+  },
+  topicTimelineLine: {
+    position: 'absolute',
+    top: verticalScale(28),
+    left: horizontalScale(13),
+    width: 2,
+    bottom: -verticalScale(12),
+    backgroundColor: '#e2e8f0',
+  },
+  topicCard: {
+    flex: 1,
+    borderRadius: moderateScale(12),
+    padding: moderateScale(14),
+    marginLeft: horizontalScale(8),
+  },
+  topicCardNeutral: {
+    backgroundColor: '#f8f9fa',
+  },
+  topicCardCompleted: {
+    backgroundColor: '#f0fdf4',
+  },
+  topicCardUpcoming: {
+    backgroundColor: '#e8f4fd',
+  },
+  topicList: {
+    marginTop: 0,
+    gap: verticalScale(12),
+  },
+  topicRow: {
+    marginBottom: verticalScale(12),
+  },
+  showAllTopicsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: verticalScale(12),
+    marginTop: verticalScale(8),
+    gap: horizontalScale(8),
+  },
+  showAllTopicsButtonText: {
+    fontSize: moderateScale(14),
+    fontFamily: FONT.semiBold,
+    color: COLORS.primary,
+  },
+  topicTitleText: {
+    fontSize: moderateScale(16),
+    fontFamily: FONT.semiBold,
+    color: COLORS.textDark,
+    marginBottom: verticalScale(8),
   },
   description: {
     fontSize: moderateScale(14),
@@ -1680,19 +1974,9 @@ const styles = StyleSheet.create({
     paddingVertical: verticalScale(8),
   },
   scheduleText: {
-    fontSize: moderateScale(16),
-    color: '#1a1a1a',
+    fontSize: moderateScale(14),
+    color: COLORS.textDark,
     fontFamily: FONT.medium,
-  },
-  topicList: {
-    gap: verticalScale(12),
-  },
-  topicCard: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: moderateScale(12),
-    padding: moderateScale(16),
-    borderLeftWidth: 4,
-    borderLeftColor: '#1976D2',
   },
   topicCardHeader: {
     flexDirection: 'row',
@@ -1711,13 +1995,7 @@ const styles = StyleSheet.create({
   topicNumberText: {
     color: '#fff',
     fontSize: moderateScale(14),
-    fontWeight: '600',
-  },
-  topicTitleText: {
-    flex: 1,
-    fontSize: moderateScale(16),
-    fontWeight: '600',
-    color: '#1a1a1a',
+    fontFamily: FONT.semiBold,
   },
   topicMetaRow: {
     flexDirection: 'row',
@@ -1731,8 +2009,8 @@ const styles = StyleSheet.create({
     gap: horizontalScale(6),
   },
   topicMetaText: {
-    fontSize: moderateScale(14),
-    color: '#666',
+    fontSize: moderateScale(12),
+    color: COLORS.textMuted,
     fontFamily: FONT.medium,
   },
 });

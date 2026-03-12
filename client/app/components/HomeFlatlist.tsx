@@ -146,7 +146,6 @@ const HomeFlatlist = ({ homeData, handleItemPress }) => {
         )}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.flatListContent}
-        scrollEnabled={false}
       />
     </View>
   );

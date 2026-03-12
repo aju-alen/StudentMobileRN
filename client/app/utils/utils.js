@@ -5,8 +5,8 @@
 // export const ipURL = "http://10.65.2.125:3000";
 // export const ipURL = portConfig;
 
-// export const ipURL = "https://api.coachacadem.ae";
-export const ipURL = "http://10.65.2.16:3000";
+export const ipURL = "https://api.coachacadem.ae";
+// export const ipURL = "http://10.65.2.144:3000";
 
  //http://10.65.0.215:3000
 

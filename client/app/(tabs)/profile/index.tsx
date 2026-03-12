@@ -222,12 +222,12 @@ const ProfilePage = () => {
         } else {
           // No entitlement, navigate to paywall page
           console.log('no entitlement, navigating to paywall');
-          router.push(`/(tabs)/profile/multi-student-paywall?userEmail=${encodeURIComponent(user.email || '')}`);
+          router.push(`/(tabs)/profile/course-paywall?courseType=MULTI_STUDENT&userEmail=${encodeURIComponent(user.email || '')}`);
         }
       } else {
         // RevenueCat not ready, navigate to paywall page
         console.log('revenue cat not ready, navigating to paywall');
-        router.push(`/(tabs)/profile/multi-student-paywall?userEmail=${encodeURIComponent(user.email || '')}`);
+        router.push(`/(tabs)/profile/course-paywall?courseType=MULTI_STUDENT&userEmail=${encodeURIComponent(user.email || '')}`);
       }
     } catch (error) {
       console.error('Error in handleSelectMultiStudent:', error);
@@ -237,6 +237,18 @@ const ProfilePage = () => {
 
   const handleSelectSinglePackage = async () => {
     try {
+      if (!revenueCatContext?.checkSinglePackageEntitlement) {
+        router.push(`/(tabs)/profile/course-paywall?courseType=SINGLE_PACKAGE&userEmail=${encodeURIComponent(user.email || '')}`);
+        return;
+      }
+
+      const entitled = await revenueCatContext.checkSinglePackageEntitlement();
+
+      if (!entitled) {
+        router.push(`/(tabs)/profile/course-paywall?courseType=SINGLE_PACKAGE&userEmail=${encodeURIComponent(user.email || '')}`);
+        return;
+      }
+
       const userverificationCheck = await axiosWithAuth.get(`${ipURL}/api/auth/verification-check`);
       const { id } = userverificationCheck.data.userDetail;
 
@@ -259,32 +271,33 @@ const ProfilePage = () => {
 
   const handleSelectMultiPackage = async () => {
     try {
-      if (revenueCatContext && revenueCatContext.getMultiStudentCapacity) {
-        const capacity = await revenueCatContext.getMultiStudentCapacity();
-
-        if (capacity && capacity > 0) {
-          const userverificationCheck = await axiosWithAuth.get(`${ipURL}/api/auth/verification-check`);
-          const { id } = userverificationCheck.data.userDetail;
-
-          Sentry.addBreadcrumb({
-            category: 'navigation',
-            message: 'Creating multi course package',
-            level: 'info',
-            data: {
-              userId: id,
-              courseType: 'MULTI_PACKAGE',
-              maxHours: 20,
-              capacity,
-            },
-          });
-
-          router.push(`/(tabs)/profile/createSubject/${id}?courseType=MULTI_PACKAGE&maxHours=20&maxCapacity=${capacity}`);
-        } else {
-          router.push(`/(tabs)/profile/multi-student-paywall?userEmail=${encodeURIComponent(user.email || '')}`);
-        }
-      } else {
-        router.push(`/(tabs)/profile/multi-student-paywall?userEmail=${encodeURIComponent(user.email || '')}`);
+      if (!revenueCatContext?.checkMultiPackageEntitlement) {
+        router.push(`/(tabs)/profile/course-paywall?courseType=MULTI_PACKAGE&userEmail=${encodeURIComponent(user.email || '')}`);
+        return;
       }
+
+      const entitled = await revenueCatContext.checkMultiPackageEntitlement();
+
+      if (!entitled) {
+        router.push(`/(tabs)/profile/course-paywall?courseType=MULTI_PACKAGE&userEmail=${encodeURIComponent(user.email || '')}`);
+        return;
+      }
+
+      const userverificationCheck = await axiosWithAuth.get(`${ipURL}/api/auth/verification-check`);
+      const { id } = userverificationCheck.data.userDetail;
+
+      Sentry.addBreadcrumb({
+        category: 'navigation',
+        message: 'Creating multi course package',
+        level: 'info',
+        data: {
+          userId: id,
+          courseType: 'MULTI_PACKAGE',
+          maxHours: 20,
+        },
+      });
+
+      router.push(`/(tabs)/profile/createSubject/${id}?courseType=MULTI_PACKAGE&maxHours=20`);
     } catch (error) {
       console.error('Error in handleSelectMultiPackage:', error);
       Alert.alert('Error', 'Failed to navigate to course creation.');

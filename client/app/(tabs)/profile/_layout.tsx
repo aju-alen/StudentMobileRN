@@ -33,6 +33,7 @@ const ProfileLayout = () => {
       <Ionicons name="arrow-back" size={24} color="black" onPress={()=>router.back()} style={{ marginLeft: 0 }} />
     ),}}/>
     <Stack.Screen name="multi-student-paywall" options={{  headerShown: false, headerTitle: 'Multi-Student Subscription' }} />
+    <Stack.Screen name="course-paywall" options={{  headerShown: false, headerTitle: 'Course Paywall' }} />
     
     
     

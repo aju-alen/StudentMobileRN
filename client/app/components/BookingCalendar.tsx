@@ -21,11 +21,13 @@ interface SubjectTopic {
 
 interface BookingCalendarProps {
   teacherId: string;
+  teacherProfileId?: string;
   subjectId: string;
   onClose: () => void;
   visible: boolean;
   courseType?: 'SINGLE_STUDENT' | 'SINGLE_PACKAGE';
   subjectTopics?: SubjectTopic[];
+  subjectDuration?: number;
 }
 
 interface TimeSlot {
@@ -33,7 +35,7 @@ interface TimeSlot {
   available: boolean;
 }
 
-const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, subjectId, onClose, visible, courseType = 'SINGLE_STUDENT', subjectTopics }) => {
+const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, teacherProfileId, subjectId, onClose, visible, courseType = 'SINGLE_STUDENT', subjectTopics, subjectDuration }) => {
   const isPackage = courseType === 'SINGLE_PACKAGE' && subjectTopics && subjectTopics.length > 0;
   const sortedTopics = isPackage ? [...(subjectTopics || [])].sort((a, b) => a.orderIndex - b.orderIndex) : [];
   const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
@@ -46,15 +48,12 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, subjectId,
   const [selectedTime, setSelectedTime] = useState('');
   const [summaryTopicSlots, setSummaryTopicSlots] = useState<{ subjectTopicId: string; date: string; time: string }[]>([]);
 
-  console.log(markedDates,'---markedDates');
-  
-
-  // Generate time slots from 9 AM to 5 PM
+  // Generate time slots from 9 AM to 5 PM (HH:mm format to match backend)
   const generateTimeSlots = () => {
     const slots: TimeSlot[] = [];
     for (let hour = 9; hour <= 17; hour++) {
       slots.push({
-        time: `${hour}:00`,
+        time: `${hour.toString().padStart(2, '0')}:00`,
         available: true
       });
     }
@@ -65,36 +64,96 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, subjectId,
     if (selectedDate) {
       fetchTeacherAvailability();
     }
-  }, [selectedDate]);
+  }, [selectedDate, isPackage ? currentTopicIndex : -1, topicSlots]);
 
   const fetchTeacherAvailability = async () => {
     try {
       setLoading(true);
-      console.log(selectedDate);
-      
-
-      
-      const response = await axiosWithAuth.get(`${ipURL}/api/bookings/available/${teacherId}`, {
+      const availabilityTeacherId = teacherProfileId || teacherId;
+      const response = await axiosWithAuth.get(`${ipURL}/api/bookings/available/${availabilityTeacherId}`, {
         params: { date: selectedDate }
       });
 
       // Mark unavailable dates in the calendar
       const unavailableDates = response.data.unavailableDates || [];
       const marked = {};
-      unavailableDates.forEach(date => {
-        marked[date] = { disabled: true, disableTouchEvent: true, fullBooked: false };
+      unavailableDates.forEach((d: string) => {
+        marked[d] = { disabled: true, disableTouchEvent: true, fullBooked: false };
       });
       setMarkedDates(marked);
 
-      // Update time slots based on availability
+      // Update time slots based on availability (bookedSlots use HH:mm format)
       const availableSlots = generateTimeSlots();
-      const bookedSlots = response.data.bookedSlots || [];
-      const updatedSlots = availableSlots.map(slot => ({
-        ...slot,
-        available: !bookedSlots.includes(slot.time)
-      }));
+      const backendBookedSlots: string[] = response.data.bookedSlots || [];
+
+      // Normalize times to HH:mm for consistent comparison (handles "9:00" vs "09:00", "1:00" vs "01:00")
+      const normalizeTime = (t: string) => {
+        const parts = String(t || '').trim().split(':');
+        const h = parseInt(parts[0], 10);
+        const m = parts[1] != null ? parseInt(parts[1], 10) : 0;
+        return `${(isNaN(h) ? 0 : h).toString().padStart(2, '0')}:${(isNaN(m) ? 0 : m).toString().padStart(2, '0')}`;
+      };
+
+      // 1) Backend-booked slots (teacher + student existing bookings)
+      const normalizedBackend = backendBookedSlots.map(normalizeTime);
+
+      // 2) Session temp: slots blocked by topics already chosen in THIS booking flow (not sent to backend yet)
+      const sessionBlockedSlots: string[] = [];
+      if (isPackage && selectedDate && Object.keys(topicSlots).length > 0) {
+        Object.entries(topicSlots).forEach(([topicId, slot]) => {
+          if (!slot?.date || slot.date !== selectedDate) return;
+          const topic = sortedTopics.find(t => t.id === topicId);
+          if (!topic) return;
+          const normalizedStart = normalizeTime(slot.time);
+          const [startHour] = normalizedStart.split(':').map(Number);
+          const topicDuration = Math.min(3, Math.max(1, topic.hours));
+          for (let i = 0; i < topicDuration; i++) {
+            const hour = startHour + i;
+            if (hour >= 0 && hour <= 23) {
+              sessionBlockedSlots.push(`${hour.toString().padStart(2, '0')}:00`);
+            }
+          }
+        });
+      }
+
+      // Merge backend + session blocked slots
+      const allBlockedTimes = [...normalizedBackend, ...sessionBlockedSlots];
+      const bookedSet = new Set(allBlockedTimes);
+
+      // For SINGLE_PACKAGE: slot is available only if full duration fits (topic hours 1-3)
+      // AND none of the hours in that block overlap any blocked time (backend bookings or previous topics)
+      const durationHours = isPackage && sortedTopics[currentTopicIndex]
+        ? Math.min(3, Math.max(1, sortedTopics[currentTopicIndex].hours))
+        : Math.min(2, Math.max(1, subjectDuration ?? 1));
+
+      const updatedSlots = availableSlots.map(slot => {
+        const normalizedSlotTime = normalizeTime(slot.time);
+        const [h] = normalizedSlotTime.split(':').map(Number);
+
+        // For 1-hour topics just ensure this exact slot is not blocked
+        if (durationHours === 1) {
+          return { ...slot, available: !bookedSet.has(normalizedSlotTime) };
+        }
+
+        // For multi-hour topics: every hour in the block must be free (no overlap at all)
+        // Example: existing booking 10–12 blocks 10:00 and 11:00.
+        // A 3h topic starting at 09:00 needs 09:00,10:00,11:00 -> overlaps 10:00 and 11:00 -> NOT allowed.
+        let allFree = true;
+        for (let i = 0; i < durationHours; i++) {
+          const checkHour = h + i;
+          if (checkHour > 17) {
+            allFree = false;
+            break;
+          }
+          const checkTime = `${checkHour.toString().padStart(2, '0')}:00`;
+          if (bookedSet.has(checkTime)) {
+            allFree = false;
+            break;
+          }
+        }
+        return { ...slot, available: allFree };
+      });
       setTimeSlots(updatedSlots);
-      setLoading(false);
     } catch (error) {
       console.error('Error fetching teacher availability:', error);
       Alert.alert('Error', 'Failed to fetch teacher availability');
@@ -162,7 +221,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, subjectId,
   return (
     <>
       <Modal
-        visible={visible}
+        visible={visible && !showSummary}
         animationType="slide"
         transparent={true}
         onRequestClose={onClose}

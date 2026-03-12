@@ -5,7 +5,8 @@ import {
   updateBookingStatus, 
   updatePaymentStatus,
   getUpcomingClasses,
-  getStudentTeacherAvailability
+  getStudentTeacherAvailability,
+  getMyTeacherAvailability
 } from '../controllers/bookingController.js';
 import { verifyToken } from '../middlewares/jwt.js';
 
@@ -23,6 +24,8 @@ router.patch('/:bookingId/status', verifyToken, updateBookingStatus);
 
 // Update payment status
 router.patch('/:bookingId/payment', verifyToken, updatePaymentStatus);
+
+router.get('/teacher/my-availability', verifyToken, getMyTeacherAvailability);
 
 router.get('/teacher/availability/:teacherId', verifyToken, getTeacherAvailability);
 

@@ -12,12 +12,18 @@ const APIKeys = {
 interface RevenueCatProps {
   plan: number | null;
   multiStudentCapacity: number | null;
+  hasSinglePackage: boolean;
+  hasMultiPackage: boolean;
   isReady: boolean;
   identifyUser: (email: string) => Promise<void>;
   getOfferings: () => Promise<PurchasesOffering | null>;
   getStudentZoomCapacityOffering: () => Promise<PurchasesOffering | null>;
+  getSinglePackageOffering: () => Promise<PurchasesOffering | null>;
+  getMultiPackageOffering: () => Promise<PurchasesOffering | null>;
   purchasePackage: (packageToPurchase: PurchasesPackage) => Promise<CustomerInfo>;
   getMultiStudentCapacity: () => Promise<number | null>;
+  checkSinglePackageEntitlement: () => Promise<boolean>;
+  checkMultiPackageEntitlement: () => Promise<boolean>;
 }
 
 const RevenueCatContext = createContext<RevenueCatProps | null>(null);
@@ -27,6 +33,8 @@ const RevenueCatContext = createContext<RevenueCatProps | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [plan, setPlan] = useState<number | null>(null);
   const [multiStudentCapacity, setMultiStudentCapacity] = useState<number | null>(null);
+  const [hasSinglePackage, setHasSinglePackage] = useState(false);
+  const [hasMultiPackage, setHasMultiPackage] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -122,6 +130,14 @@ const RevenueCatContext = createContext<RevenueCatProps | null>(null);
     } else {
       setMultiStudentCapacity(null);
     }
+
+    // Check single course package entitlement
+    const singlePackageEntitlement = customerInfo?.entitlements.active['single_course_package'];
+    setHasSinglePackage(singlePackageEntitlement !== undefined);
+
+    // Check multi course package entitlement
+    const multiPackageEntitlement = customerInfo?.entitlements.active['multi_course_package'];
+    setHasMultiPackage(multiPackageEntitlement !== undefined);
   };
 
   // Identify user by email
@@ -173,6 +189,28 @@ const RevenueCatContext = createContext<RevenueCatProps | null>(null);
     }
   };
 
+  const getSinglePackageOffering = async (): Promise<PurchasesOffering | null> => {
+    try {
+      const offerings = await Purchases.getOfferings();
+      const offering = offerings.all['single_course_package'];
+      return offering ?? offerings.current;
+    } catch (error) {
+      console.error('Error fetching single_course_package offering:', error);
+      return null;
+    }
+  };
+
+  const getMultiPackageOffering = async (): Promise<PurchasesOffering | null> => {
+    try {
+      const offerings = await Purchases.getOfferings();
+      const offering = offerings.all['multi_course_package'];
+      return offering ?? offerings.current;
+    } catch (error) {
+      console.error('Error fetching multi_course_package offering:', error);
+      return null;
+    }
+  };
+
   // Purchase a package
   const purchasePackage = async (packageToPurchase: PurchasesPackage): Promise<CustomerInfo> => {
     try {
@@ -217,15 +255,47 @@ const RevenueCatContext = createContext<RevenueCatProps | null>(null);
     }
   };
 
+  const checkSinglePackageEntitlement = async (): Promise<boolean> => {
+    try {
+      if (hasSinglePackage) return true;
+      const customerInfo = await Purchases.getCustomerInfo();
+      const entitled = customerInfo?.entitlements.active['single_course_package'] !== undefined;
+      setHasSinglePackage(entitled);
+      return entitled;
+    } catch (error) {
+      console.error('Error checking single_course_package entitlement:', error);
+      return false;
+    }
+  };
+
+  const checkMultiPackageEntitlement = async (): Promise<boolean> => {
+    try {
+      if (hasMultiPackage) return true;
+      const customerInfo = await Purchases.getCustomerInfo();
+      const entitled = customerInfo?.entitlements.active['multi_course_package'] !== undefined;
+      setHasMultiPackage(entitled);
+      return entitled;
+    } catch (error) {
+      console.error('Error checking multi_course_package entitlement:', error);
+      return false;
+    }
+  };
+
   const value = {
     plan,
     multiStudentCapacity,
+    hasSinglePackage,
+    hasMultiPackage,
     isReady,
     identifyUser,
     getOfferings,
     getStudentZoomCapacityOffering,
+    getSinglePackageOffering,
+    getMultiPackageOffering,
     purchasePackage,
     getMultiStudentCapacity,
+    checkSinglePackageEntitlement,
+    checkMultiPackageEntitlement,
   };
 
   // Return empty fragment if provider is not ready (Purchase not yet initialised)
