@@ -190,6 +190,11 @@ export const getUpcomingClasses = async (req, res) => {
     } else {
       whereClause.studentId = profileId;
     }
+
+    // Only consider bookings from today onward (then filter by date+time in JS)
+    const now = new Date();
+    const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+    whereClause.bookingDate = { gte: startOfToday };
     
     const upcomingClasses = await prisma.booking.findMany({
       where: whereClause,
@@ -225,14 +230,29 @@ export const getUpcomingClasses = async (req, res) => {
           }
         }
       },
-      take: limit,
       orderBy: {
         bookingDate: 'asc'
       }
     });
 
+    // Build start datetime (date + time) and keep only future classes
+    const getStartDatetime = (bookingDate, bookingTime) => {
+      if (!bookingDate) return null;
+      const d = new Date(bookingDate);
+      if (!bookingTime) return d;
+      const parts = String(bookingTime).trim().split(':').map(Number);
+      const h = Number.isNaN(parts[0]) ? 0 : parts[0];
+      const m = parts[1] != null && !Number.isNaN(parts[1]) ? parts[1] : 0;
+      d.setUTCHours(h, m, 0, 0);
+      return d;
+    };
+    const futureClasses = upcomingClasses.filter(
+      (b) => getStartDatetime(b.bookingDate, b.bookingTime) > now
+    );
+    const limited = limit != null ? futureClasses.slice(0, limit) : futureClasses;
+
     // Transform response to match expected format
-    const transformedClasses = upcomingClasses.map(booking => ({
+    const transformedClasses = limited.map(booking => ({
       id: booking.id,
       bookingDate: booking.bookingDate,
       bookingTime: booking.bookingTime,
@@ -256,110 +276,127 @@ export const getUpcomingClasses = async (req, res) => {
   }
 }
 
+/**
+ * Resolve teacherId param (User.id or TeacherProfile.id) to TeacherProfile.id
+ */
+async function resolveTeacherProfileId(teacherIdParam) {
+  if (!teacherIdParam) return null;
+  const teacherProfile = await prisma.teacherProfile.findUnique({
+    where: { id: teacherIdParam },
+    select: { id: true },
+  });
+  if (teacherProfile) return teacherProfile.id;
+  const user = await prisma.user.findUnique({
+    where: { id: teacherIdParam },
+    include: { teacherProfile: { select: { id: true } } },
+  });
+  return user?.teacherProfile?.id ?? null;
+}
+
+/**
+ * Resolve User.id to StudentProfile.id
+ */
+async function resolveStudentProfileId(userId) {
+  if (!userId) return null;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { studentProfile: { select: { id: true } } },
+  });
+  return user?.studentProfile?.id ?? null;
+}
+
+/**
+ * Generate blocked time slots for a booking. Uses HH:mm format.
+ * For SINGLE_STUDENT: 1-2 hours. Blocks start + (duration - 1) subsequent slots.
+ */
+function getBlockedSlotsForBooking(booking) {
+  const slots = [];
+  if (!booking?.bookingTime) return slots;
+  const parts = String(booking.bookingTime).trim().split(':').map(Number);
+  const startHour = Number.isNaN(parts[0]) ? 0 : parts[0];
+  const durationHours = Math.max(1, booking.bookingHours ?? 1);
+  for (let i = 0; i < durationHours; i++) {
+    const hour = (startHour + i) % 24;
+    slots.push(`${hour.toString().padStart(2, '0')}:00`);
+  }
+  return slots;
+}
+
 export const getStudentTeacherAvailability = async (req, res) => {
   try {
-    const { teacherId } = req.params;
-    const studentId = req.userId;
+    const { teacherId: teacherIdParam } = req.params;
+    const userId = req.userId;
     const { date } = req.query;
-    
+
     if (!date) {
       return res.status(400).json({ error: 'Date is required' });
     }
 
-    // Convert date string to start and end of day
-    const startDate = new Date(date);
-    startDate.setHours(0, 0, 0, 0);
-    
-    const endDate = new Date(date);
-    endDate.setHours(23, 59, 59, 999);
+    const teacherProfileId = await resolveTeacherProfileId(teacherIdParam);
+    const studentProfileId = await resolveStudentProfileId(userId);
 
-    // Get all bookings for the teacher on the specified date
-    const teacherBookings = await prisma.booking.findMany({
-      where: {
-        teacherId,
-        bookingDate: {
-          gte: startDate,
-          lte: endDate
+    if (!teacherProfileId) {
+      return res.status(404).json({ error: 'Teacher not found' });
+    }
+    if (!studentProfileId) {
+      return res.status(400).json({ error: 'Student profile not found. Please ensure you are logged in as a student.' });
+    }
+
+    // Parse date explicitly (YYYY-MM-DD) to avoid timezone issues from new Date(date)
+    const dateStr = String(date || '').trim().split('T')[0];
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+    }
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const startOfDay = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+    const endOfDay = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+    // Wider range to catch timezone edge cases when DB stores in local time
+    const startWide = new Date(Date.UTC(year, month - 1, day, -12, 0, 0, 0));
+    const endWide = new Date(Date.UTC(year, month - 1, day, 36, 0, 0, 0));
+
+    const [teacherBookingsRaw, studentBookingsRaw] = await Promise.all([
+      prisma.booking.findMany({
+        where: {
+          teacherId: teacherProfileId,
+          bookingDate: { gte: startWide, lte: endWide },
+          bookingStatus: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
         },
-        bookingStatus: {
-          in: [BookingStatus.CONFIRMED, BookingStatus.PENDING]
-        }
-      },
-      select: {
-        bookingTime: true,
-        bookingHours: true
-      }
-    });
-
-    // Get all bookings for the student on the specified date
-    const studentBookings = await prisma.booking.findMany({
-      where: {
-        studentId,
-        bookingDate: {
-          gte: startDate,
-          lte: endDate
+        select: { bookingTime: true, bookingHours: true, bookingDate: true },
+      }),
+      prisma.booking.findMany({
+        where: {
+          studentId: studentProfileId,
+          bookingDate: { gte: startWide, lte: endWide },
+          bookingStatus: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
         },
-        bookingStatus: {
-          in: [BookingStatus.CONFIRMED, BookingStatus.PENDING]
-        }
-      },
-      select: {
-        bookingTime: true,
-        bookingHours: true
-      }
-    });
+        select: { bookingTime: true, bookingHours: true, bookingDate: true },
+      }),
+    ]);
 
-    // Helper function to generate all time slots for a booking
-    const generateTimeSlots = (booking) => {
-      const slots = [];
-      const [startHour, startMinute] = booking.bookingTime.split(':').map(Number);
-      
-      // Include the end hour in the blocked slots
-      for (let i = 0; i <= booking.bookingHours; i++) {
-        const hour = (startHour + i) % 24;
-        const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
-        slots.push(timeSlot);
-      }
+    // Filter to exact date by string comparison (handles any timezone storage)
+    const onDate = (b) => b.bookingDate && b.bookingDate.toISOString().split('T')[0] === dateStr;
+    const teacherBookings = teacherBookingsRaw.filter(onDate);
+    const studentBookings = studentBookingsRaw.filter(onDate);
 
-      // Also block slots that would overlap with this booking
-      // For example, if booking is 3 hours starting at 16:00, block 13:00, 14:00, 15:00
-      for (let i = 1; i < booking.bookingHours; i++) {
-        const hour = (startHour - i + 24) % 24; // Add 24 before modulo to handle negative numbers
-        const timeSlot = `${hour.toString().padStart(2, '0')}:00`;
-        slots.push(timeSlot);
-      }
-      
-      return slots;
-    };
-
-    // Generate all booked slots for both teacher and student
-    const teacherBookedSlots = teacherBookings.flatMap(generateTimeSlots);
-    const studentBookedSlots = studentBookings.flatMap(generateTimeSlots);
-
-    // Combine both sets of booked slots and remove duplicates
+    const teacherBookedSlots = teacherBookings.flatMap(getBlockedSlotsForBooking);
+    const studentBookedSlots = studentBookings.flatMap(getBlockedSlotsForBooking);
     const bookedSlots = [...new Set([...teacherBookedSlots, ...studentBookedSlots])];
 
-    // Get all dates where the teacher has bookings
-    const teacherBookedDates = await prisma.booking.findMany({
+    const teacherBookedDatesResult = await prisma.booking.findMany({
       where: {
-        teacherId,
-        bookingStatus: {
-          in: [BookingStatus.CONFIRMED]
-        }
+        teacherId: teacherProfileId,
+        bookingStatus: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
       },
-      select: {
-        bookingDate: true
-      },
-      distinct: ['bookingDate']
+      select: { bookingDate: true },
+      distinct: ['bookingDate'],
     });
-
-    // Format unavailable dates
-    const unavailableDates = teacherBookedDates.map(booking => 
-      booking.bookingDate.toISOString().split('T')[0]
+    const unavailableDates = teacherBookedDatesResult.map((b) =>
+      b.bookingDate.toISOString().split('T')[0]
     );
 
     res.status(200).json({
       bookedSlots,
+      unavailableDates,
     });
   } catch (error) {
     console.error('Error in getStudentTeacherAvailability:', error);

@@ -571,6 +571,7 @@ export const getOneSubject = async (req, res, next) => {
                 profileImage: subject.teacherProfile?.user?.profileImage,
                 userType: subject.teacherProfile?.user?.userType,
             },
+            teacherProfileId: subject.teacherId,
         };
 
         res.status(200).json(response);

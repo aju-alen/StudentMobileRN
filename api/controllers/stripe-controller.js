@@ -8,6 +8,14 @@ import { Resend } from 'resend';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const prisma = new PrismaClient();
+
+/** Parse YYYY-MM-DD to UTC midnight for consistent DB storage/query */
+function parseDateUTC(dateStr) {
+  const s = String(dateStr || '').trim().split('T')[0];
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(dateStr);
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0));
+}
 const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
 export const getPublisherKey = async (req, res, next) => {
     try {
@@ -523,6 +531,71 @@ export const stripeWebhook = async (req, res, next) => {
                             }
                         }
 
+                        // Re-check availability for each topic slot (race-condition protection)
+                        const getBlockedSlotsForTopic = (b) => {
+                            if (!b?.bookingTime) return [];
+                            const parts = b.bookingTime.split(':').map(Number);
+                            const h = Number.isNaN(parts[0]) ? 0 : parts[0];
+                            const dur = Math.max(1, b.bookingHours ?? 1);
+                            const slots = [];
+                            for (let i = 0; i < dur; i++) slots.push(`${(h + i).toString().padStart(2, '0')}:00`);
+                            return slots;
+                        };
+
+                        let singlePackageSlotConflict = false;
+                        for (const slot of topicSlotsParsed) {
+                            const topic = topicMap.get(slot.subjectTopicId);
+                            const durationHours = Math.min(3, Math.max(1, topic.hours));
+                            const timeParts = slot.time.split(':').map(Number);
+                            const startHour = Number.isNaN(timeParts[0]) ? 0 : timeParts[0];
+                            const requestedSlots = [];
+                            for (let i = 0; i < durationHours; i++) {
+                                requestedSlots.push(`${(startHour + i).toString().padStart(2, '0')}:00`);
+                            }
+
+                            const startOfDay = new Date(slot.date);
+                            startOfDay.setHours(0, 0, 0, 0);
+                            const endOfDay = new Date(slot.date);
+                            endOfDay.setHours(23, 59, 59, 999);
+
+                            const [teacherBookings, studentBookings] = await Promise.all([
+                                prisma.booking.findMany({
+                                    where: {
+                                        teacherId: teacherProfileId,
+                                        bookingDate: { gte: startOfDay, lte: endOfDay },
+                                        bookingStatus: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
+                                    },
+                                    select: { bookingTime: true, bookingHours: true },
+                                }),
+                                prisma.booking.findMany({
+                                    where: {
+                                        studentId: studentProfileId,
+                                        bookingDate: { gte: startOfDay, lte: endOfDay },
+                                        bookingStatus: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
+                                    },
+                                    select: { bookingTime: true, bookingHours: true },
+                                }),
+                            ]);
+
+                            const teacherBlocked = teacherBookings.flatMap(getBlockedSlotsForTopic);
+                            const studentBlocked = studentBookings.flatMap(getBlockedSlotsForTopic);
+                            const allBlocked = new Set([...teacherBlocked, ...studentBlocked]);
+                            const slotTaken = requestedSlots.some((s) => allBlocked.has(s));
+
+                            if (slotTaken) {
+                                singlePackageSlotConflict = true;
+                                try {
+                                    await stripe.refunds.create({ charge: chargeSucceeded.id, reason: 'requested_by_customer' });
+                                } catch (refundErr) {
+                                    console.error('Stripe refund failed after SINGLE_PACKAGE slot conflict:', refundErr);
+                                }
+                                console.error(`SINGLE_PACKAGE booking failed: slot no longer available. topic=${topic.topicTitle} date=${slot.date} time=${slot.time}. chargeId=${chargeSucceeded.id}`);
+                                break;
+                            }
+                        }
+
+                        if (singlePackageSlotConflict) break;
+
                         // Create one Zoom meeting per topic and one booking per topic
                         const bookingsToCreate = [];
                         for (const slot of topicSlotsParsed) {
@@ -602,8 +675,72 @@ export const stripeWebhook = async (req, res, next) => {
                         }
                     } else {
                         // Handle single-student course booking (existing flow)
+                        // Re-check availability before creating (race-condition protection)
+                        const bookingDateStr = chargeSucceeded.metadata.date;
+                        const bookingTime = chargeSucceeded.metadata.time || '';
+                        const durationHours = Math.min(2, Math.max(1, parseInt(chargeSucceeded.metadata.subjectDuration, 10) || 1));
+                        const timeParts = bookingTime.split(':').map(Number);
+                        const startHour = Number.isNaN(timeParts[0]) ? 0 : timeParts[0];
+                        const requestedSlots = [];
+                        for (let i = 0; i < durationHours; i++) {
+                            requestedSlots.push(`${(startHour + i).toString().padStart(2, '0')}:00`);
+                        }
+
+                        const dateStr = String(bookingDateStr || '').trim().split('T')[0];
+                        const [y, m, d] = dateStr.split('-').map(Number);
+                        const startWide = new Date(Date.UTC(y, m - 1, d, -12, 0, 0, 0));
+                        const endWide = new Date(Date.UTC(y, m - 1, d, 36, 0, 0, 0));
+                        const onDate = (b) => b.bookingDate && b.bookingDate.toISOString().split('T')[0] === dateStr;
+
+                        const [teacherBookingsRaw, studentBookingsRaw] = await Promise.all([
+                            prisma.booking.findMany({
+                                where: {
+                                    teacherId: teacherProfileId,
+                                    bookingDate: { gte: startWide, lte: endWide },
+                                    bookingStatus: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
+                                },
+                                select: { bookingTime: true, bookingHours: true, bookingDate: true },
+                            }),
+                            prisma.booking.findMany({
+                                where: {
+                                    studentId: studentProfileId,
+                                    bookingDate: { gte: startWide, lte: endWide },
+                                    bookingStatus: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
+                                },
+                                select: { bookingTime: true, bookingHours: true, bookingDate: true },
+                            }),
+                        ]);
+                        const teacherBookings = teacherBookingsRaw.filter(onDate);
+                        const studentBookings = studentBookingsRaw.filter(onDate);
+
+                        const getBlockedSlots = (b) => {
+                            if (!b?.bookingTime) return [];
+                            const parts = b.bookingTime.split(':').map(Number);
+                            const h = Number.isNaN(parts[0]) ? 0 : parts[0];
+                            const dur = Math.max(1, b.bookingHours ?? 1);
+                            const slots = [];
+                            for (let i = 0; i < dur; i++) slots.push(`${(h + i).toString().padStart(2, '0')}:00`);
+                            return slots;
+                        };
+
+                        const teacherBlocked = teacherBookings.flatMap(getBlockedSlots);
+                        const studentBlocked = studentBookings.flatMap(getBlockedSlots);
+                        const allBlocked = new Set([...teacherBlocked, ...studentBlocked]);
+                        const slotTaken = requestedSlots.some((s) => allBlocked.has(s));
+
+                        if (slotTaken) {
+                            try {
+                                await stripe.refunds.create({ charge: chargeSucceeded.id, reason: 'requested_by_customer' });
+                            } catch (refundErr) {
+                                console.error('Stripe refund failed after slot conflict:', refundErr);
+                            }
+                            console.error(`SINGLE_STUDENT booking failed: slot no longer available. chargeId=${chargeSucceeded.id}`);
+                            break;
+                        }
+
                         // create meeting for teacher
-                        const meeting = await createZoomMeeting(chargeSucceeded.metadata.teacherEmail, chargeSucceeded.metadata.subjectName, new Date(chargeSucceeded.metadata.date), parseInt(chargeSucceeded.metadata.subjectDuration) * 60);
+                        const bookingDateParsed = parseDateUTC(chargeSucceeded.metadata.date);
+                        const meeting = await createZoomMeeting(chargeSucceeded.metadata.teacherEmail, chargeSucceeded.metadata.subjectName, bookingDateParsed, parseInt(chargeSucceeded.metadata.subjectDuration) * 60);
                         
                     
                         const singleStudentResult = await prisma.$transaction(async (tx) => {
@@ -613,7 +750,7 @@ export const stripeWebhook = async (req, res, next) => {
                                     subjectId: chargeSucceeded.metadata.subjectId,
                                     teacherId: teacherProfileId,
                                     studentId: studentProfileId,
-                                    bookingDate: new Date(chargeSucceeded.metadata.date),
+                                    bookingDate: bookingDateParsed,
                                     bookingTime: chargeSucceeded.metadata.time,
                                     bookingStatus: BookingStatus.CONFIRMED,
                                     bookingPrice: chargeSucceeded.amount,

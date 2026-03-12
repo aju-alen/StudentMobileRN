@@ -71,6 +71,7 @@ interface SubjectData {
   subjectTopics?: SubjectTopic[];
   zoomMeetingUrl?: string;
   zoomMeetingPassword?: string;
+  teacherProfileId?: string;
 }
 
 interface User {
@@ -1115,6 +1116,7 @@ const SubjectPage = ({ subjectId }) => {
       {(singleSubjectData.courseType === 'SINGLE_STUDENT' || singleSubjectData.courseType === 'SINGLE_PACKAGE') && (
         <BookingCalendar
           teacherId={teacherId}
+          teacherProfileId={singleSubjectData.teacherProfileId}
           subjectId={subjectId}
           visible={isBookingModalVisible}
           onClose={() => setIsBookingModalVisible(false)}
