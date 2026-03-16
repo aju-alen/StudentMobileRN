@@ -102,8 +102,6 @@ const CreateSubject = () => {
   // Add initialization error tracking
   useEffect(() => {
     try {
-      console.log('Initializing CreateSubject with ID:', createSubjectId);
-      
       if (!createSubjectId) {
         throw new Error('createSubjectId is undefined');
       }
@@ -200,12 +198,33 @@ const CreateSubject = () => {
       setTeacherUnavailableDates(unavailable);
       const allBlocked = [...new Set([...booked, ...sessionBlockedSlots.map(normalizeTime)])];
       const baseSlots = generateTimeSlots();
+
+      // Prevent creating courses in past times for *today*:
+      // - Compare selected calendar date to today's date
+      // - Ceil current time to the next whole hour (10:10 → 11:00).
+      //   If already at an exact hour (10:00), use that hour as the minimum.
+      const todayStr = new Date().toISOString().split('T')[0];
+      const isToday = dateStr === todayStr;
+      let minAllowedHourForToday = 0;
+      if (isToday) {
+        const now = new Date();
+        let hour = now.getHours();
+        if (now.getMinutes() > 0 || now.getSeconds() > 0 || now.getMilliseconds() > 0) {
+          hour += 1;
+        }
+        minAllowedHourForToday = hour;
+      }
+
       const duration = Math.max(1, Math.min(3, durationHours));
       const updated = baseSlots.map((slot) => {
         const normalized = normalizeTime(slot.time);
         const [h] = normalized.split(':').map(Number);
         if (duration === 1) {
-          return { ...slot, available: !allBlocked.includes(normalized) };
+          let available = !allBlocked.includes(normalized);
+          if (isToday && h < minAllowedHourForToday) {
+            available = false;
+          }
+          return { ...slot, available };
         }
         let allFree = true;
         for (let i = 0; i < duration; i++) {
@@ -220,7 +239,11 @@ const CreateSubject = () => {
             break;
           }
         }
-        return { ...slot, available: allFree };
+        let available = allFree;
+        if (isToday && h < minAllowedHourForToday) {
+          available = false;
+        }
+        return { ...slot, available };
       });
       setAvailableTimeSlots(updated);
     } catch (err) {
@@ -232,12 +255,8 @@ const CreateSubject = () => {
     }
   };
 
-  console.log(pdf1, 'pdf1');
-  console.log(pdf2, 'pdf2');
-  
-  
+ 
   const awsId = Crypto.randomUUID();
-  console.log(awsId, 'awsId');
 
   const pickPdf = async (pdfName) => {
     try {
@@ -251,7 +270,6 @@ const CreateSubject = () => {
         // User canceled the picker
         return;
       }
-      console.log('Selected PDF:', result.assets[0]['uri']);
   
       // Store the PDF URI depending on which PDF was picked
       if (pdfName === 'pdf1') {
@@ -261,8 +279,7 @@ const CreateSubject = () => {
       }
   
       // Optionally get file info
-      const fileInfo = await FileSystem.getInfoAsync(result.assets[0]['uri']);
-      console.log('File info:', fileInfo);
+      await FileSystem.getInfoAsync(result.assets[0]['uri']);
   
     } catch (error) {
       Sentry.captureException(error, {
@@ -286,8 +303,6 @@ const CreateSubject = () => {
     }
     
     try {
-      console.log(awsId, 'awsIdinUploadPdf');
-      
       const uriParts1 = pdf1.split('.');
       const fileType1 = uriParts1[uriParts1.length - 1];
     
@@ -312,8 +327,6 @@ const CreateSubject = () => {
       formData.append('uploadKey', 'pdfId');
       formData.append('awsId', awsId);
     
-      console.log('Form Data to be sent:', formData);
-    
       const response = await axios.post(
         `${ipURL}/api/s3/upload-to-aws/pdf-verify/${createSubjectId}`,
         formData,
@@ -323,8 +336,6 @@ const CreateSubject = () => {
           },
         }
       );
-    
-      console.log('PDFs uploaded successfully:', response.data);
     
       // Handle response locations for both PDFs
       setPdf1(response['data']['data1']['Location']);
@@ -438,8 +449,8 @@ const CreateSubject = () => {
   };
 
   const handleCreateSubject = async () => {
-
     setIsLoading(true);
+
     if (!isDocumentsConfirmed) {
       Alert.alert('Please confirm your documents first.');
       setIsLoading(false);
@@ -450,7 +461,7 @@ const CreateSubject = () => {
     
     try {
       // Validate all required fields
-      const validationErrors = [];
+      const validationErrors: string[] = [];
       
       if (!subjectName.trim()) {
         validationErrors.push("Subject name is required");
@@ -495,8 +506,6 @@ const CreateSubject = () => {
 
       // Validate multi-student course requirements
       if (currentCourseType === 'MULTI_STUDENT') {
-        console.log(scheduledDateTime, 'scheduledDateTime');
-        
         if (!scheduledDateTime) {
           validationErrors.push("Scheduled date and time is required for multi-student courses");
           setIsLoading(false);
@@ -625,14 +634,11 @@ const CreateSubject = () => {
         teacherVerification:[pdf1, pdf2],
         courseType: currentCourseType,
       };
-      console.log(currentCourseType, 'currentCourseType');
-      
 
       // Add multi-student specific fields
       if (currentCourseType === 'MULTI_STUDENT') {
         subject.scheduledDateTime = scheduledDateTime?.toISOString();
         subject.maxCapacity = currentMaxCapacity;
-        console.log('inside multi');
       }
 
       // Add package course topics: hours per topic; multi = scheduledDateTime per topic
@@ -645,10 +651,14 @@ const CreateSubject = () => {
             : {}),
         }));
       }
+
+      // For MULTI_PACKAGE, send a fixed maxCapacity of 10 to the API
+      if (currentCourseType === 'MULTI_PACKAGE') {
+        subject.maxCapacity = 10;
+      }
       
-      console.log("subject", subject);
       const token = await AsyncStorage.getItem("authToken");
-      
+
       const response = await axiosWithAuth.post(
         `${ipURL}/api/subjects/create`, 
         subject,
@@ -658,7 +668,7 @@ const CreateSubject = () => {
           },
         }
       );
-      
+
       if (response.status === 200 || response.status === 202) {
         Alert.alert(
           "Success",
@@ -666,18 +676,18 @@ const CreateSubject = () => {
           [
             {
               text: "OK",
-              onPress: () => router.back()
+              onPress: () => {
+                router.back();
+              }
             }
           ]
         );
       }
       setIsLoading(false);
-    } catch (err) {
-    
-      console.log("error", err);
+    } catch (err: any) {
       Alert.alert(
         "Error",
-        err.response?.data?.message || "Failed to create subject. Please try again.",
+        err?.response?.data?.message || "Failed to create subject. Please try again.",
         [{ text: "OK" }]
       );
       setIsLoading(false);
@@ -686,14 +696,6 @@ const CreateSubject = () => {
       setIsLoading(false);
     }
   };
-  console.log(
-    subjectName,
-    subjectDescription,
-    subjectPrice,
-    subjectBoard,
-    subjectGrade,
-    teacherVerification
-  );
 
   const [inputText, setInputText] = useState("");
 
@@ -707,9 +709,20 @@ const CreateSubject = () => {
       setInputText("");
     }
   };
-  console.log("dataArray", subjectPoints);
-  console.log(image, "imageeee in the end");
-  
+
+  const getHeaderTitleByCourseType = (type: string) => {
+    switch (type) {
+      case 'MULTI_STUDENT':
+        return 'Create Multi Student Course';
+      case 'SINGLE_PACKAGE':
+        return 'Create Single Student Package';
+      case 'MULTI_PACKAGE':
+        return 'Create Multi Student Package';
+      case 'SINGLE_STUDENT':
+      default:
+        return 'Create Single Student Course';
+    }
+  };
   
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -719,7 +732,7 @@ const CreateSubject = () => {
       >
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.headerContainer}>
-            <Text style={styles.headerText}>Create New Subject</Text>
+            <Text style={styles.headerText}>{getHeaderTitleByCourseType(currentCourseType)}</Text>
             <Text style={styles.subHeaderText}>Fill in the details to create your subject</Text>
           </View>
 
@@ -1176,7 +1189,7 @@ const CreateSubject = () => {
                   >
                     <View style={styles.uploadDocsButtonContent}>
                       <Ionicons name="cloud-upload" size={24} color="white" />
-                      <Text style={styles.uploadDocsText}>Confirm Documents</Text>
+                      <Text style={styles.uploadDocsText}>Upload Documents</Text>
                     </View>
                   </TouchableOpacity>
                 )}

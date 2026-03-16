@@ -21,11 +21,11 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "36"
+      "buildNumber": "40"
     },
     "android": {
       "edgeToEdgeEnabled": true,
-      "versionCode": 12,
+      "versionCode": 20,
       "icon": "./assets/images/playstore-icon.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/playstore-icon.png",

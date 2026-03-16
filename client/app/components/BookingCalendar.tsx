@@ -126,13 +126,33 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, teacherPro
         ? Math.min(3, Math.max(1, sortedTopics[currentTopicIndex].hours))
         : Math.min(2, Math.max(1, subjectDuration ?? 1));
 
+      // For the selected date, prevent booking past times on *today*:
+      // - Find current local time
+      // - Ceil to the next full hour (10:10 → 11:00). If already at an exact hour (10:00),
+      //   allow from that hour onward.
+      const todayStr = new Date().toISOString().split('T')[0];
+      const isToday = selectedDate === todayStr;
+      let minAllowedHourForToday = 0;
+      if (isToday) {
+        const now = new Date();
+        let hour = now.getHours();
+        if (now.getMinutes() > 0 || now.getSeconds() > 0 || now.getMilliseconds() > 0) {
+          hour += 1;
+        }
+        minAllowedHourForToday = hour;
+      }
+
       const updatedSlots = availableSlots.map(slot => {
         const normalizedSlotTime = normalizeTime(slot.time);
         const [h] = normalizedSlotTime.split(':').map(Number);
 
         // For 1-hour topics just ensure this exact slot is not blocked
         if (durationHours === 1) {
-          return { ...slot, available: !bookedSet.has(normalizedSlotTime) };
+          let available = !bookedSet.has(normalizedSlotTime);
+          if (isToday && h < minAllowedHourForToday) {
+            available = false;
+          }
+          return { ...slot, available };
         }
 
         // For multi-hour topics: every hour in the block must be free (no overlap at all)
@@ -151,7 +171,11 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, teacherPro
             break;
           }
         }
-        return { ...slot, available: allFree };
+        let available = allFree;
+        if (isToday && h < minAllowedHourForToday) {
+          available = false;
+        }
+        return { ...slot, available };
       });
       setTimeSlots(updatedSlots);
     } catch (error) {

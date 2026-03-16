@@ -29,7 +29,7 @@ const ProfileLayout = () => {
       ),
     }}/>
     <Stack.Screen name="editSubject/[editSubjectId]" options={{presentation:'modal'}}/>
-    <Stack.Screen name="createSubject/[createSubjectId]" options={{presentation:'modal', headerShown:true, headerTitle:'Create Subject', headerLeft: () => (
+    <Stack.Screen name="createSubject/[createSubjectId]" options={{presentation:'modal', headerShown:true, headerTitle:'', headerLeft: () => (
       <Ionicons name="arrow-back" size={24} color="black" onPress={()=>router.back()} style={{ marginLeft: 0 }} />
     ),}}/>
     <Stack.Screen name="multi-student-paywall" options={{  headerShown: false, headerTitle: 'Multi-Student Subscription' }} />

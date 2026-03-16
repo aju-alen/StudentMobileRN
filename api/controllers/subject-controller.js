@@ -53,6 +53,7 @@ export const createSubject = async (req, res, next) => {
         }
         if (courseType === 'MULTI_PACKAGE') {
             const cap = parseInt(maxCapacity, 10);
+
             if (!cap || cap < 1) {
                 return res.status(400).json({ message: "Max capacity must be at least 1 for multi-package courses" });
             }

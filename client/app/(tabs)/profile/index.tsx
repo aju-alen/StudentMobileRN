@@ -65,6 +65,10 @@ const ProfilePage = () => {
   const [profileImageVersion, setProfileImageVersion] = useState<string>('0');
   const revenueCatContext = useRevenueCat();
 
+  const isMultiStudentSubscribed = !!revenueCatContext?.multiStudentCapacity;
+  const isSinglePackageSubscribed = !!revenueCatContext?.hasSinglePackage;
+  const isMultiPackageSubscribed = !!revenueCatContext?.hasMultiPackage;
+
   const getUser = async () => {
     try {
       const apiUser = await axiosWithAuth.get(`${ipURL}/api/auth/metadata`);
@@ -471,6 +475,9 @@ const ProfilePage = () => {
         onSelectMulti={handleSelectMultiStudent}
         onSelectSinglePackage={handleSelectSinglePackage}
         onSelectMultiPackage={handleSelectMultiPackage}
+        isMultiStudentSubscribed={isMultiStudentSubscribed}
+        isSinglePackageSubscribed={isSinglePackageSubscribed}
+        isMultiPackageSubscribed={isMultiPackageSubscribed}
       />
     </View>
   );
@@ -520,7 +527,7 @@ const styles = StyleSheet.create({
   profileSection: {
     flexDirection: 'row',
     paddingHorizontal: horizontalScale(20),
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   profileImage: {
     width: horizontalScale(72),
@@ -530,12 +537,15 @@ const styles = StyleSheet.create({
   },
   profileInfo: {
     flex: 1,
+    paddingTop: 0,
+    marginTop: 0,
   },
   name: {
     fontFamily: FONT.bold,
     fontSize: moderateScale(18),
     color: '#1A2B4B',
     marginBottom: verticalScale(2),
+    marginTop: 0,
   },
   role: {
     fontFamily: FONT.medium,

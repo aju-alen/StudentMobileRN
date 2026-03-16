@@ -79,10 +79,12 @@ const TabsLayout = () => {
           );
         },
         tabBarLabelStyle: {
-          fontSize: moderateScale(12),
+          fontSize: moderateScale(11),
           fontWeight: '500',
           marginBottom: Platform.OS === 'ios' ? 0 : verticalScale(4),
           color: COLORS.primary || '#000',
+          textAlign: 'center',
+          flexWrap: 'wrap',
         },
         tabBarStyle: isChatDetailRoute || isCommunityDetailRoute ? { display: 'none' } : defaultTabBarStyle,
         tabBarItemStyle: {
@@ -124,7 +126,7 @@ const TabsLayout = () => {
         name="verification"
         options={{
           headerShown: false,
-          tabBarLabel: "Verification",
+          tabBarLabel: "Verify",
           href: userDetails.isAdmin ? "/verification" : null,
         }}
       />

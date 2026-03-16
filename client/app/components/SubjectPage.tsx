@@ -682,6 +682,16 @@ const SubjectPage = ({ subjectId }) => {
     transform: [{ scale: menuScale }]
   };
 
+  const getCourseTypeHeaderLabel = () => {
+    if (singleSubjectData.courseType === 'SINGLE_STUDENT') {
+      return 'Single Student Course';
+    }
+    if (singleSubjectData.courseType) {
+      return 'Multi Student Course';
+    }
+    return '';
+  };
+
   const handleSubmitReview = useCallback(async (reviewData) => {
     if (!reviewData.title || !reviewData.description) {
       alert('Please fill in all fields');
@@ -879,6 +889,9 @@ const SubjectPage = ({ subjectId }) => {
           {/* Subject Header */}
           <View style={styles.headerContainer}>
             <Text style={styles.subjectName}>{singleSubjectData.subjectName}</Text>
+            {getCourseTypeHeaderLabel() ? (
+              <Text style={styles.courseTypeHeaderText}>{getCourseTypeHeaderLabel()}</Text>
+            ) : null}
             {singleSubjectData.subjectNameSubHeading ? (
               <Text style={styles.subjectNameSubHeading}>{singleSubjectData.subjectNameSubHeading}</Text>
             ) : null}
@@ -1318,6 +1331,12 @@ const styles = StyleSheet.create({
     fontFamily: FONT.bold,
     color: COLORS.textDark,
     marginBottom: moderateScale(6),
+  },
+  courseTypeHeaderText: {
+    fontSize: moderateScale(14),
+    fontFamily: FONT.medium,
+    color: COLORS.textMuted,
+    marginBottom: verticalScale(4),
   },
   subjectNameSubHeading: {
     fontSize: moderateScale(14),
