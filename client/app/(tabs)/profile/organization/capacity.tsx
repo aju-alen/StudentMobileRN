@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
+import { PurchasesPackage } from 'react-native-purchases';
 import { useRevenueCat } from '../../../providers/RevenueCatProvider';
 import { axiosWithAuth } from '../../../utils/customAxios';
 import { ipURL } from '../../../utils/utils';
@@ -29,7 +29,7 @@ const CapacitySubscriptionPage = () => {
   const userEmail = (params.userEmail as string) || '';
 
   const revenueCatContext = useRevenueCat();
-  const [offerings, setOfferings] = useState<PurchasesOffering | null>(null);
+  const [packages, setPackages] = useState<PurchasesPackage[]>([]);
   const [loading, setLoading] = useState(false);
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [error, setError] = useState<string>('');
@@ -51,7 +51,7 @@ const CapacitySubscriptionPage = () => {
     );
   }
 
-  const { identifyUser, getOfferings, purchasePackage, isReady } = revenueCatContext;
+  const { identifyUser, getTeacherCapacityPackages, purchasePackage, isReady } = revenueCatContext;
 
   useEffect(() => {
     if (isReady) {
@@ -69,8 +69,9 @@ const CapacitySubscriptionPage = () => {
         await identifyUser(userEmail);
       }
       
-      const currentOffering = await getOfferings();
-      setOfferings(currentOffering);
+      const teacherCapacityPackages = await getTeacherCapacityPackages();
+      console.log('teacher capacity packages:', teacherCapacityPackages);
+      setPackages(teacherCapacityPackages);
     } catch (err: any) {
       console.error('Error fetching offerings:', err);
       setError('Failed to load subscription plans. Please try again.');
@@ -84,7 +85,7 @@ const CapacitySubscriptionPage = () => {
     const match = packageIdentifier.match(/(\d+)/);
     if (match) {
       const capacity = parseInt(match[1], 10);
-      if (capacity === 10 || capacity === 15 || capacity === 30) {
+      if (!Number.isNaN(capacity) && capacity > 0) {
         return capacity;
       }
     }
@@ -212,12 +213,24 @@ const CapacitySubscriptionPage = () => {
   };
 
   const getAvailablePlans = (): Array<{ package: PurchasesPackage; capacity: number }> => {
-    if (!offerings) return [];
+    if (!packages || packages.length === 0) return [];
 
     const plans: Array<{ package: PurchasesPackage; capacity: number }> = [];
     
     // Check available packages
-    const availablePackages = offerings.availablePackages || [];
+    const availablePackages = packages;
+
+    console.log(
+      'RevenueCat available capacity packages----:', availablePackages
+    );
+
+    console.log(
+      'RevenueCat teacher_capacity packages:',
+      availablePackages.map((pkg) => ({
+        packageIdentifier: pkg.identifier,
+        productIdentifier: pkg.product.identifier,
+      }))
+    );
     
     for (const pkg of availablePackages) {
       // Use product.identifier instead of package.identifier

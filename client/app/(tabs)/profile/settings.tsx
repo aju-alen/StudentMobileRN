@@ -38,6 +38,11 @@ const SettingsPage = () => {
     };
     fetchUser();
   }, []);
+
+  const handleEditSubject = () => {
+    Alert.alert('Edit Subject', 'To edit your subject, please contact support.');
+  };
+
   const handleLogout = async () => {
     Alert.alert(
       "Logout",
@@ -124,6 +129,13 @@ const SettingsPage = () => {
           onPress={() => router.push('/(tabs)/profile/change-password')}
         >
           <Text style={styles.settingText}>Change Password</Text>
+          <Ionicons name="chevron-forward" size={24} color="#64748B" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.settingItem}
+          onPress={handleEditSubject}
+        >
+          <Text style={styles.settingText}>Edit Subject</Text>
           <Ionicons name="chevron-forward" size={24} color="#64748B" />
         </TouchableOpacity>
         {/* <TouchableOpacity style={styles.settingItem}>

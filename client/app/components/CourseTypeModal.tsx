@@ -23,6 +23,10 @@ interface CourseTypeModalProps {
   isMultiStudentSubscribed?: boolean;
   isSinglePackageSubscribed?: boolean;
   isMultiPackageSubscribed?: boolean;
+  hasSingleStudentDraft?: boolean;
+  hasMultiStudentDraft?: boolean;
+  hasSinglePackageDraft?: boolean;
+  hasMultiPackageDraft?: boolean;
 }
 
 const CourseTypeModal: React.FC<CourseTypeModalProps> = ({
@@ -35,6 +39,10 @@ const CourseTypeModal: React.FC<CourseTypeModalProps> = ({
   isMultiStudentSubscribed = false,
   isSinglePackageSubscribed = false,
   isMultiPackageSubscribed = false,
+  hasSingleStudentDraft = false,
+  hasMultiStudentDraft = false,
+  hasSinglePackageDraft = false,
+  hasMultiPackageDraft = false,
 }) => {
   return (
     <Modal
@@ -79,6 +87,11 @@ const CourseTypeModal: React.FC<CourseTypeModalProps> = ({
                 <Text style={styles.optionDescription}>
                   Teach one student in a single live session. Choose between 1–2 hours. No subscription required.
                 </Text>
+                {hasSingleStudentDraft && (
+                  <View style={styles.draftBadge}>
+                    <Text style={styles.draftBadgeText}>Draft saved</Text>
+                  </View>
+                )}
                 <View style={styles.freeBadge}>
                   <Text style={styles.freeBadgeText}>FREE</Text>
                 </View>
@@ -102,6 +115,11 @@ const CourseTypeModal: React.FC<CourseTypeModalProps> = ({
                 <Text style={styles.optionDescription}>
                   Teach many students together in one live session (1–2 hours). Requires subscription.
                 </Text>
+                {hasMultiStudentDraft && (
+                  <View style={styles.draftBadge}>
+                    <Text style={styles.draftBadgeText}>Draft saved</Text>
+                  </View>
+                )}
                 {isMultiStudentSubscribed ? (
                   <View style={styles.subscribedBadge}>
                     <Text style={styles.subscribedBadgeText}>SUBSCRIBED</Text>
@@ -136,6 +154,11 @@ const CourseTypeModal: React.FC<CourseTypeModalProps> = ({
                 <Text style={styles.optionDescription}>
                   Create a package for one student between 3–20 total hours. You set the topics and hours per topic (max 3h each). Student chooses when to book sessions.
                 </Text>
+                {hasSinglePackageDraft && (
+                  <View style={styles.draftBadge}>
+                    <Text style={styles.draftBadgeText}>Draft saved</Text>
+                  </View>
+                )}
                 {isSinglePackageSubscribed ? (
                   <View style={styles.subscribedBadge}>
                     <Text style={styles.subscribedBadgeText}>SUBSCRIBED</Text>
@@ -166,6 +189,11 @@ const CourseTypeModal: React.FC<CourseTypeModalProps> = ({
                 <Text style={styles.optionDescription}>
                   Create a package for multiple students between 3–20 total hours. You set the topics and assign date & time for each (max 3h per topic).
                 </Text>
+                {hasMultiPackageDraft && (
+                  <View style={styles.draftBadge}>
+                    <Text style={styles.draftBadgeText}>Draft saved</Text>
+                  </View>
+                )}
                 {isMultiPackageSubscribed ? (
                   <View style={styles.subscribedBadge}>
                     <Text style={styles.subscribedBadgeText}>SUBSCRIBED</Text>
@@ -330,6 +358,20 @@ const styles = StyleSheet.create({
   },
   premiumBadgeText: {
     color: '#FFA500',
+    fontSize: moderateScale(10),
+    fontFamily: FONT.bold,
+    fontWeight: '700',
+  },
+  draftBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: moderateScale(8),
+    paddingVertical: verticalScale(4),
+    borderRadius: moderateScale(8),
+    marginTop: verticalScale(4),
+  },
+  draftBadgeText: {
+    color: COLORS.primary,
     fontSize: moderateScale(10),
     fontFamily: FONT.bold,
     fontWeight: '700',

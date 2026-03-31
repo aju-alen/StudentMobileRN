@@ -17,6 +17,8 @@ interface RevenueCatProps {
   isReady: boolean;
   identifyUser: (email: string) => Promise<void>;
   getOfferings: () => Promise<PurchasesOffering | null>;
+  getTeacherCapacityOffering: () => Promise<PurchasesOffering | null>;
+  getTeacherCapacityPackages: () => Promise<PurchasesPackage[]>;
   getStudentZoomCapacityOffering: () => Promise<PurchasesOffering | null>;
   getSinglePackageOffering: () => Promise<PurchasesOffering | null>;
   getMultiPackageOffering: () => Promise<PurchasesOffering | null>;
@@ -164,6 +166,34 @@ const RevenueCatContext = createContext<RevenueCatProps | null>(null);
   };
 
   // Get student_zoom_capacity offering specifically
+  const getTeacherCapacityOffering = async (): Promise<PurchasesOffering | null> => {
+    try {
+      const offerings = await Purchases.getOfferings();
+      const offering = offerings.all['teacher_capacity'];
+      return offering ?? offerings.current;
+    } catch (error) {
+      console.error('Error fetching teacher_capacity offering:', error);
+      return null;
+    }
+  };
+
+  // Get student_zoom_capacity offering specifically
+  const getTeacherCapacityPackages = async (): Promise<PurchasesPackage[]> => {
+    try {
+      const offerings = await Purchases.getOfferings();
+      const teacherCapacityOffering = offerings.all['teacher_capacity'];
+      if (!teacherCapacityOffering) {
+        return [];
+      }
+
+      return teacherCapacityOffering.availablePackages || [];
+    } catch (error) {
+      console.error('Error fetching teacher capacity packages:', error);
+      return [];
+    }
+  };
+
+  // Get student_zoom_capacity offering specifically
   const getStudentZoomCapacityOffering = async (): Promise<PurchasesOffering | null> => {
     try {
       const offerings = await Purchases.getOfferings();
@@ -289,6 +319,8 @@ const RevenueCatContext = createContext<RevenueCatProps | null>(null);
     isReady,
     identifyUser,
     getOfferings,
+    getTeacherCapacityOffering,
+    getTeacherCapacityPackages,
     getStudentZoomCapacityOffering,
     getSinglePackageOffering,
     getMultiPackageOffering,

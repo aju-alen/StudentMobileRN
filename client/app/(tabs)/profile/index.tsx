@@ -65,6 +65,11 @@ const ProfilePage = () => {
   const [profileImageVersion, setProfileImageVersion] = useState<string>('0');
   const revenueCatContext = useRevenueCat();
 
+  const [hasSingleStudentDraft, setHasSingleStudentDraft] = useState(false);
+  const [hasMultiStudentDraft, setHasMultiStudentDraft] = useState(false);
+  const [hasSinglePackageDraft, setHasSinglePackageDraft] = useState(false);
+  const [hasMultiPackageDraft, setHasMultiPackageDraft] = useState(false);
+
   const isMultiStudentSubscribed = !!revenueCatContext?.multiStudentCapacity;
   const isSinglePackageSubscribed = !!revenueCatContext?.hasSinglePackage;
   const isMultiPackageSubscribed = !!revenueCatContext?.hasMultiPackage;
@@ -75,6 +80,9 @@ const ProfilePage = () => {
       
       setUser(apiUser.data);
       setUserDetails(apiUser.data);
+      if (apiUser.data?.id) {
+        await refreshDraftFlags(apiUser.data.id);
+      }
     } catch (error) {
       console.error("Error fetching user profile:", error);
     } finally {
@@ -86,6 +94,24 @@ const ProfilePage = () => {
   useEffect(() => {
     getUser();
   }, []);
+
+  const refreshDraftFlags = async (userId: string) => {
+    try {
+      const keys = [
+        `subjectDraft:${userId}:SINGLE_STUDENT`,
+        `subjectDraft:${userId}:MULTI_STUDENT`,
+        `subjectDraft:${userId}:SINGLE_PACKAGE`,
+        `subjectDraft:${userId}:MULTI_PACKAGE`,
+      ];
+      const results = await AsyncStorage.multiGet(keys);
+      setHasSingleStudentDraft(!!results[0][1]);
+      setHasMultiStudentDraft(!!results[1][1]);
+      setHasSinglePackageDraft(!!results[2][1]);
+      setHasMultiPackageDraft(!!results[3][1]);
+    } catch (e) {
+      console.error('Failed to read subject draft flags', e);
+    }
+  };
 
   // Refetch user when screen is focused (e.g. returning from edit-profile after updating photo)
   useFocusEffect(
@@ -156,7 +182,7 @@ const ProfilePage = () => {
       if (!id) {
         throw new Error('User ID not found in user details');
       }
-      
+      await refreshDraftFlags(id);
       // Show course type selection modal
       setShowCourseTypeModal(true);
     } catch (error) {
@@ -478,6 +504,10 @@ const ProfilePage = () => {
         isMultiStudentSubscribed={isMultiStudentSubscribed}
         isSinglePackageSubscribed={isSinglePackageSubscribed}
         isMultiPackageSubscribed={isMultiPackageSubscribed}
+        hasSingleStudentDraft={hasSingleStudentDraft}
+        hasMultiStudentDraft={hasMultiStudentDraft}
+        hasSinglePackageDraft={hasSinglePackageDraft}
+        hasMultiPackageDraft={hasMultiPackageDraft}
       />
     </View>
   );

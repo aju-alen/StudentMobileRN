@@ -99,6 +99,9 @@ const CreateSubject = () => {
   const durationNum = useMemo(() => parseInt(subjectDuration, 10) || 0, [subjectDuration]);
   const topicHoursMatchDuration = isPackageCourse && topicBlocks.length > 0 && topicHoursSum === durationNum;
 
+  const getDraftKey = (userId: string | string[] | undefined, courseType: string) =>
+    `subjectDraft:${userId}:${courseType}`;
+
   // Add initialization error tracking
   useEffect(() => {
     try {
@@ -168,6 +171,66 @@ const CreateSubject = () => {
       );
     }
   }, [createSubjectId, courseType, maxCapacity]);
+
+  // Load draft (if any) on mount
+  useEffect(() => {
+    const loadDraftIfExists = async () => {
+      if (!createSubjectId || !currentCourseType) return;
+      try {
+        const key = getDraftKey(createSubjectId, currentCourseType);
+        const stored = await AsyncStorage.getItem(key);
+        if (!stored) return;
+
+        const draft = JSON.parse(stored);
+
+        setSubjectName(draft.subjectName ?? "");
+        setSubjectDescription(draft.subjectDescription ?? "");
+        setSubjectPrice(draft.subjectPrice ?? "");
+        setSubjectBoard(draft.subjectBoard ?? "");
+        setSubjectGrade(draft.subjectGrade ?? "");
+        setSubjectLanguage(draft.subjectLanguage ?? "");
+        setSubjectNameSubHeading(draft.subjectNameSubHeading ?? "");
+        setSubjectSearchHeading(draft.subjectSearchHeading ?? "");
+        setSubjectDuration(draft.subjectDuration ?? "");
+        setsubjectPoints(draft.subjectPoints ?? []);
+        // Do not restore image or PDFs from draft to avoid heavy data in storage
+        setIsEulaAccepted(!!draft.isEulaAccepted);
+        setIsDocumentsConfirmed(!!draft.isDocumentsConfirmed);
+
+        if (draft.currentMaxCapacity != null) {
+          setCurrentMaxCapacity(draft.currentMaxCapacity);
+        }
+
+        if (draft.scheduledDateTime) {
+          try {
+            setScheduledDateTime(new Date(draft.scheduledDateTime));
+          } catch {
+            setScheduledDateTime(null);
+          }
+        }
+
+        if (draft.numberOfTopics != null) {
+          setNumberOfTopics(draft.numberOfTopics);
+        }
+
+        if (Array.isArray(draft.topicBlocks)) {
+          const hydratedBlocks = draft.topicBlocks.map((b: any) => ({
+            topicTitle: b.topicTitle ?? "",
+            hours: b.hours ?? "1",
+            ...(b.scheduledDateTime
+              ? { scheduledDateTime: new Date(b.scheduledDateTime) as Date }
+              : { scheduledDateTime: null as Date | null }),
+          }));
+          setTopicBlocks(hydratedBlocks);
+        }
+      } catch (e) {
+        console.error("Failed to load subject draft", e);
+      }
+    };
+
+    loadDraftIfExists();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [createSubjectId, currentCourseType]);
 
   // Generate time slots 09:00–17:00 (HH:mm)
   const generateTimeSlots = (): { time: string; available: boolean }[] => {
@@ -670,6 +733,11 @@ const CreateSubject = () => {
       );
 
       if (response.status === 200 || response.status === 202) {
+        try {
+          await AsyncStorage.removeItem(getDraftKey(createSubjectId, currentCourseType));
+        } catch (e) {
+          console.error("Failed to remove subject draft", e);
+        }
         Alert.alert(
           "Success",
           "Subject created successfully! The subject will be verified by the admin and will be live soon.",
@@ -723,7 +791,69 @@ const CreateSubject = () => {
         return 'Create Single Student Course';
     }
   };
-  
+
+  // Auto-save draft to AsyncStorage as user edits
+  useEffect(() => {
+    if (!createSubjectId || !currentCourseType) return;
+
+    const timeout = setTimeout(() => {
+      const key = getDraftKey(createSubjectId, currentCourseType);
+      const draft = {
+        subjectName,
+        subjectDescription,
+        subjectPrice,
+        subjectBoard,
+        subjectGrade,
+        subjectLanguage,
+        subjectNameSubHeading,
+        subjectSearchHeading,
+        subjectDuration,
+        subjectPoints,
+        // Intentionally exclude image and PDFs from draft to avoid heavy storage
+        isEulaAccepted,
+        isDocumentsConfirmed,
+        scheduledDateTime: scheduledDateTime ? scheduledDateTime.toISOString() : null,
+        currentMaxCapacity,
+        numberOfTopics,
+        topicBlocks: topicBlocks.map((b) => ({
+          topicTitle: b.topicTitle,
+          hours: b.hours,
+          scheduledDateTime: b.scheduledDateTime ? b.scheduledDateTime.toISOString() : null,
+        })),
+        courseType: currentCourseType,
+        updatedAt: new Date().toISOString(),
+      };
+
+      AsyncStorage.setItem(key, JSON.stringify(draft)).catch((e) => {
+        console.error("Failed to save subject draft", e);
+      });
+    }, 1000);
+
+    return () => clearTimeout(timeout);
+  }, [
+    createSubjectId,
+    currentCourseType,
+    subjectName,
+    subjectDescription,
+    image,
+    subjectPrice,
+    subjectBoard,
+    subjectGrade,
+    subjectLanguage,
+    subjectNameSubHeading,
+    subjectSearchHeading,
+    subjectDuration,
+    subjectPoints,
+    pdf1,
+    pdf2,
+    isEulaAccepted,
+    isDocumentsConfirmed,
+    scheduledDateTime,
+    currentMaxCapacity,
+    numberOfTopics,
+    topicBlocks,
+  ]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView 
