@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, TextInput, SafeAreaView, StyleSheet, TouchableOpacity, Text, Pressable, Alert, ScrollView, Modal, ActivityIndicator, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, TextInput, SafeAreaView, StyleSheet, TouchableOpacity, Text, Pressable, Alert, ScrollView, Modal, ActivityIndicator, Platform, KeyboardAvoidingView, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import axios from 'axios';
@@ -13,6 +13,12 @@ import useSafeAreaInsets, { addBasePaddingToTopInset, addBasePaddingToInset } fr
 
 const UserTypeScreen = ({ onSelect }) => {
     const [expandedCard, setExpandedCard] = useState<string | null>(null);
+    const insets = useSafeAreaInsets();
+
+    const userTypeScrollInsetStyle = {
+        paddingTop: Math.max(addBasePaddingToTopInset(6, insets.top), verticalScale(6)),
+        paddingBottom: Math.max(addBasePaddingToInset(20, insets.bottom), verticalScale(20)),
+    };
 
     const toggleExpand = (cardType: string) => {
         setExpandedCard(expandedCard === cardType ? null : cardType);
@@ -20,7 +26,10 @@ const UserTypeScreen = ({ onSelect }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[styles.scrollContent, userTypeScrollInsetStyle]}
+        >
             <View style={styles.content}>
                 <TouchableOpacity
                     style={styles.backButton}
@@ -171,6 +180,24 @@ const UserTypeScreen = ({ onSelect }) => {
 
 const CustomDropdown = ({ label, value, options, onSelect, placeholder, isMultiSelect = false, selectedValues = [], multiSelectValueType = 'number', hasError = false, errorMessage = '' }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const insets = useSafeAreaInsets();
+    const { height } = useWindowDimensions();
+
+    const modalOverlayInsetStyle = {
+        paddingTop: Math.max(addBasePaddingToTopInset(8, insets.top), moderateScale(16)),
+        paddingBottom: Math.max(addBasePaddingToInset(8, insets.bottom), moderateScale(16)),
+        paddingHorizontal: moderateScale(16),
+    };
+
+    const modalContentResponsiveStyle = {
+        width: '100%' as const,
+        maxWidth: moderateScale(520),
+        maxHeight: Math.max(verticalScale(280), height - (insets.top + insets.bottom + verticalScale(40))),
+    };
+
+    const optionsListInsetStyle = {
+        paddingBottom: Math.max(addBasePaddingToInset(6, insets.bottom), verticalScale(10)),
+    };
 
     const handleSelect = (optionValue) => {
         if (isMultiSelect) {
@@ -225,18 +252,18 @@ const CustomDropdown = ({ label, value, options, onSelect, placeholder, isMultiS
                 onRequestClose={() => setIsOpen(false)}
             >
                 <TouchableOpacity 
-                    style={styles.modalOverlay}
+                    style={[styles.modalOverlay, modalOverlayInsetStyle]}
                     activeOpacity={1}
                     onPress={() => setIsOpen(false)}
                 >
-                    <View style={styles.modalContent}>
+                    <View style={[styles.modalContent, modalContentResponsiveStyle]}>
                         <View style={styles.modalHeader}>
                             <Text style={styles.modalTitle}>{label}</Text>
                             <TouchableOpacity onPress={() => setIsOpen(false)}>
                                 <Ionicons name="close" size={24} color="#666" />
                             </TouchableOpacity>
                         </View>
-                        <ScrollView style={styles.optionsList}>
+                        <ScrollView style={styles.optionsList} contentContainerStyle={optionsListInsetStyle}>
                             {options.map((option, index) => (
                                 <TouchableOpacity
                                     key={index}
@@ -636,10 +663,13 @@ const RegisterPage = () => {
                     ref={scrollViewRef}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
-                    contentContainerStyle={styles.scrollContent}
+                    contentContainerStyle={[
+                        styles.scrollContent,
+                        { paddingBottom: Math.max(addBasePaddingToInset(20, insets.bottom), verticalScale(20)) }
+                    ]}
                     keyboardDismissMode="on-drag"
                 >
-                <View style={[styles.content, { paddingBottom: Platform.OS === 'android' ? addBasePaddingToInset(20, insets.bottom) : undefined }]}>
+                <View style={styles.content}>
                     <TouchableOpacity 
                         style={[styles.backButton, { paddingTop: Platform.OS === 'android' ? addBasePaddingToTopInset(6, insets.top) : undefined }]}
                         onPress={handleGoBack}
@@ -1147,7 +1177,6 @@ const styles = StyleSheet.create({
     modalContent: {
         backgroundColor: '#FFF',
         borderRadius: moderateScale(16),
-        width: '90%',
         maxHeight: '80%',
         padding: moderateScale(16),
     },

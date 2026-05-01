@@ -5,9 +5,10 @@ import {
   StyleSheet,
   Modal,
   TouchableOpacity,
-  Alert,
   ScrollView,
+  useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
@@ -44,6 +45,43 @@ const CourseTypeModal: React.FC<CourseTypeModalProps> = ({
   hasSinglePackageDraft = false,
   hasMultiPackageDraft = false,
 }) => {
+  const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const isSmallDisplay = width < 360;
+  const isLargeDisplay = width >= 768;
+
+  const modalSizingStyle = {
+    maxWidth: isLargeDisplay ? 520 : isSmallDisplay ? width - 24 : 380,
+    maxHeight: height < 700 ? '88%' : '82%',
+    padding: isSmallDisplay ? moderateScale(12) : moderateScale(16),
+  } as const;
+
+  const overlayInsetStyle = {
+    paddingTop: Math.max(insets.top + moderateScale(8), moderateScale(20)),
+    paddingBottom: Math.max(insets.bottom + moderateScale(8), moderateScale(20)),
+  } as const;
+
+  const scrollInsetStyle = {
+    paddingBottom: Math.max(insets.bottom + verticalScale(8), verticalScale(16)),
+  } as const;
+
+  const titleStyle = {
+    fontSize: isSmallDisplay ? moderateScale(18) : moderateScale(20),
+  } as const;
+
+  const subtitleStyle = {
+    fontSize: isSmallDisplay ? moderateScale(11) : moderateScale(12),
+  } as const;
+
+  const optionTitleStyle = {
+    fontSize: isSmallDisplay ? moderateScale(14) : moderateScale(15),
+  } as const;
+
+  const optionDescriptionStyle = {
+    fontSize: isSmallDisplay ? moderateScale(11) : moderateScale(12),
+    lineHeight: isSmallDisplay ? moderateScale(14) : moderateScale(16),
+  } as const;
+
   return (
     <Modal
       visible={visible}
@@ -51,10 +89,10 @@ const CourseTypeModal: React.FC<CourseTypeModalProps> = ({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
+      <View style={[styles.overlay, overlayInsetStyle]}>
+        <View style={[styles.modalContainer, modalSizingStyle]}>
           <View style={styles.header}>
-            <Text style={styles.title}>Choose Course Type</Text>
+            <Text style={[styles.title, titleStyle]}>Choose Course Type</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Ionicons name="close" size={20} color={COLORS.primary} />
             </TouchableOpacity>
@@ -62,9 +100,9 @@ const CourseTypeModal: React.FC<CourseTypeModalProps> = ({
 
           <ScrollView
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, scrollInsetStyle]}
           >
-            <Text style={styles.subtitle}>
+            <Text style={[styles.subtitle, subtitleStyle]}>
               Choose how you want to teach: quick 1–2 hour live sessions or longer 3–20 hour packages.
             </Text>
 
@@ -83,8 +121,8 @@ const CourseTypeModal: React.FC<CourseTypeModalProps> = ({
                   <Ionicons name="person" size={22} color={COLORS.primary} />
                 </View>
                 <Text style={styles.planTypeFree}>Free plan</Text>
-                <Text style={styles.optionTitle}>Single Student (1–2h Live)</Text>
-                <Text style={styles.optionDescription}>
+                <Text style={[styles.optionTitle, optionTitleStyle]}>Single Student (1–2h Live)</Text>
+                <Text style={[styles.optionDescription, optionDescriptionStyle]}>
                   Teach one student in a single live session. Choose between 1–2 hours. No subscription required.
                 </Text>
                 {hasSingleStudentDraft && (
@@ -111,8 +149,8 @@ const CourseTypeModal: React.FC<CourseTypeModalProps> = ({
                 <Text style={styles.planTypePremium}>
                   {isMultiStudentSubscribed ? 'Subscribed plan' : 'Premium plan'}
                 </Text>
-                <Text style={styles.optionTitle}>Multi Student (1–2h Live)</Text>
-                <Text style={styles.optionDescription}>
+                <Text style={[styles.optionTitle, optionTitleStyle]}>Multi Student (1–2h Live)</Text>
+                <Text style={[styles.optionDescription, optionDescriptionStyle]}>
                   Teach many students together in one live session (1–2 hours). Requires subscription.
                 </Text>
                 {hasMultiStudentDraft && (
@@ -150,8 +188,8 @@ const CourseTypeModal: React.FC<CourseTypeModalProps> = ({
                 <Text style={styles.planTypePremium}>
                   {isSinglePackageSubscribed ? 'Subscribed plan' : 'Premium plan'}
                 </Text>
-                <Text style={styles.optionTitle}>Single Student Package (3–20h)</Text>
-                <Text style={styles.optionDescription}>
+                <Text style={[styles.optionTitle, optionTitleStyle]}>Single Student Package (3–20h)</Text>
+                <Text style={[styles.optionDescription, optionDescriptionStyle]}>
                   Create a package for one student between 3–20 total hours. You set the topics and hours per topic (max 3h each). Student chooses when to book sessions.
                 </Text>
                 {hasSinglePackageDraft && (
@@ -185,8 +223,8 @@ const CourseTypeModal: React.FC<CourseTypeModalProps> = ({
                 <Text style={styles.planTypePremium}>
                   {isMultiPackageSubscribed ? 'Subscribed plan' : 'Premium plan'}
                 </Text>
-                <Text style={styles.optionTitle}>Multi Student Package (3–20h)</Text>
-                <Text style={styles.optionDescription}>
+                <Text style={[styles.optionTitle, optionTitleStyle]}>Multi Student Package (3–20h)</Text>
+                <Text style={[styles.optionDescription, optionDescriptionStyle]}>
                   Create a package for multiple students between 3–20 total hours. You set the topics and assign date & time for each (max 3h per topic).
                 </Text>
                 {hasMultiPackageDraft && (
@@ -244,15 +282,15 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(8),
   },
   title: {
-    fontSize: moderateScale(20),
     fontFamily: FONT.bold,
     color: COLORS.primary,
+    flex: 1,
+    paddingRight: horizontalScale(10),
   },
   closeButton: {
     padding: moderateScale(4),
   },
   subtitle: {
-    fontSize: moderateScale(12),
     color: '#666',
     marginBottom: verticalScale(10),
     textAlign: 'center',
@@ -294,15 +332,12 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(8),
   },
   optionTitle: {
-    fontSize: moderateScale(15),
     fontFamily: FONT.bold,
     color: COLORS.primary,
     marginBottom: verticalScale(4),
   },
   optionDescription: {
-    fontSize: moderateScale(12),
     color: '#666',
-    lineHeight: moderateScale(16),
     marginBottom: verticalScale(6),
   },
   planTypeFree: {
