@@ -7,7 +7,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ipURL } from '../utils/utils';
 import { useStripe } from '@stripe/stripe-react-native';
-import ConfettiCannon from 'react-native-confetti-cannon';
+
 
 interface TopicSlot {
   subjectTopicId: string;
@@ -215,15 +215,7 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
           }
         ]}
       >
-        <ConfettiCannon
-          ref={confettiRef}
-          count={200}
-          origin={{ x: -10, y: 0 }}
-          autoStart={false}
-          fadeOut={true}
-          fallSpeed={3000}
-          colors={['#2DCB63', '#1A4C6E', '#F1A568', '#FFFFFF']}
-        />
+        
         <Animated.View 
           style={[
             styles.successContent,

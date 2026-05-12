@@ -7,7 +7,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { ipURL } from "../../utils/utils";
 import {
   Text,
-  SafeAreaView,
   TextInput,
   View,
   StyleSheet,
@@ -19,6 +18,7 @@ import {
   Animated,
   TouchableOpacity,
 } from "react-native";
+import {SafeAreaView} from "react-native-safe-area-context";
 import { socket } from "../../utils/socket";
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
 import { COLORS, FONT } from "../../../constants";
@@ -34,6 +34,7 @@ interface User {
 interface Community {
   messages: Message[];
   communityName: string;
+  communityProfileImage?: string;
   users?: User[];
 }
 
@@ -217,6 +218,9 @@ const CommunityId = () => {
     );
   }, [user, formatTime, fadeAnim]);
 
+  const memberCount = allMessages.users?.length || 0;
+  const messageCount = allMessages.messages?.length || 0;
+
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen
@@ -250,6 +254,35 @@ const CommunityId = () => {
         </View>
       ) : (
         <View style={styles.chatWrapper}>
+          <View style={styles.communityHeader}>
+            <TouchableOpacity onPress={handleLeaveRoom} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
+            </TouchableOpacity>
+
+            {allMessages.communityProfileImage ? (
+              <Image
+                source={{ uri: allMessages.communityProfileImage }}
+                style={styles.communityAvatar}
+              />
+            ) : (
+              <View style={styles.communityAvatarPlaceholder}>
+                <Ionicons name="people" size={20} color={COLORS.primary} />
+              </View>
+            )}
+
+            <View style={styles.communityHeaderContent}>
+              <Text style={styles.communityHeaderTitle} numberOfLines={1}>
+                {allMessages.communityName || 'Community'}
+              </Text>
+              <Text style={styles.communityHeaderSubtitle} numberOfLines={1}>
+                {memberCount} {memberCount === 1 ? 'member' : 'members'} · {messageCount} {messageCount === 1 ? 'message' : 'messages'}
+              </Text>
+              <Text style={styles.communityHeaderMeta} numberOfLines={1}>
+                {isTeacher ? 'You can post in this community' : 'Teachers only can send messages'}
+              </Text>
+            </View>
+          </View>
+
           <ScrollView
             style={styles.chatContainer}
             ref={scrollViewRef}
@@ -352,6 +385,51 @@ const styles = StyleSheet.create({
   chatWrapper: {
     flex: 1,
     backgroundColor: "#F8F9FA",
+  },
+  communityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: moderateScale(16),
+    paddingVertical: verticalScale(12),
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  communityAvatar: {
+    width: moderateScale(44),
+    height: moderateScale(44),
+    borderRadius: moderateScale(22),
+    marginLeft: horizontalScale(4),
+  },
+  communityAvatarPlaceholder: {
+    width: moderateScale(44),
+    height: moderateScale(44),
+    borderRadius: moderateScale(22),
+    marginLeft: horizontalScale(4),
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F0F4F8',
+  },
+  communityHeaderContent: {
+    flex: 1,
+    marginLeft: horizontalScale(12),
+  },
+  communityHeaderTitle: {
+    fontSize: moderateScale(16),
+    fontFamily: FONT.bold,
+    color: COLORS.primary,
+    marginBottom: verticalScale(2),
+  },
+  communityHeaderSubtitle: {
+    fontSize: moderateScale(12),
+    fontFamily: FONT.regular,
+    color: COLORS.gray,
+  },
+  communityHeaderMeta: {
+    fontSize: moderateScale(11),
+    fontFamily: FONT.medium,
+    color: '#7F8C8D',
+    marginTop: verticalScale(2),
   },
   chatContainer: {
     flex: 1,
