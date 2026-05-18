@@ -185,7 +185,7 @@ const OrganizationMembersPage = () => {
                   })}
                 >
                   <Ionicons name="trending-up-outline" size={20} color="#FFFFFF" />
-                  <Text style={styles.increaseCapacityButtonText}>Purchase Capacity</Text>
+                  <Text style={styles.increaseCapacityButtonText}>Increase Teacher Capacity</Text>
                 </TouchableOpacity>
               )}
             </View>

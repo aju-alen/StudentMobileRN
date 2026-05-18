@@ -80,15 +80,48 @@ const CapacitySubscriptionPage = () => {
     }
   };
 
-  const extractPlanCapacity = (packageIdentifier: string): number | null => {
-    // Extract number from product identifier (e.g., "capacity_10" -> 10)
-    const match = packageIdentifier.match(/(\d+)/);
-    if (match) {
-      const capacity = parseInt(match[1], 10);
-      if (!Number.isNaN(capacity) && capacity > 0) {
-        return capacity;
+  const extractPlanCapacity = (value: string): number | null => {
+    if (!value) return null;
+
+    // Prefer numbers that appear next to capacity/plan keywords.
+    const contextualMatch = value.match(/(?:capacity|member|members|plan|teacher)[^\d]{0,10}(\d{1,4})/i);
+    const fallbackMatch = value.match(/(\d{1,4})/);
+    const match = contextualMatch ?? fallbackMatch;
+
+    if (!match) return null;
+
+    const capacity = parseInt(match[1], 10);
+    if (Number.isNaN(capacity) || capacity <= 0) return null;
+
+    return capacity;
+  };
+
+  const getPlanCapacityFromPackage = (pkg: PurchasesPackage): number | null => {
+    const product = pkg.product as any;
+    const candidates: string[] = [
+      pkg.product?.identifier,
+      pkg.identifier,
+      product?.id,
+      product?.sku,
+      product?.title,
+      product?.description,
+      product?.defaultOption?.id,
+    ].filter(Boolean);
+
+    if (Array.isArray(product?.subscriptionOptions)) {
+      for (const option of product.subscriptionOptions) {
+        if (option?.id) candidates.push(option.id);
+        if (option?.basePlanId) candidates.push(option.basePlanId);
       }
     }
+
+    for (const candidate of candidates) {
+      const parsed = extractPlanCapacity(String(candidate));
+      if (parsed) {
+        return parsed;
+      }
+    }
+
     return null;
   };
 
@@ -168,7 +201,7 @@ const CapacitySubscriptionPage = () => {
       const customerInfo = await purchasePackage(packageToPurchase);
       
       // Extract plan capacity from product identifier (e.g., "capacity_10")
-      const planCapacity = extractPlanCapacity(packageToPurchase.product.identifier);
+      const planCapacity = getPlanCapacityFromPackage(packageToPurchase);
       
       if (!planCapacity) {
         throw new Error('Could not determine plan capacity from package identifier');
@@ -233,9 +266,7 @@ const CapacitySubscriptionPage = () => {
     );
     
     for (const pkg of availablePackages) {
-      // Use product.identifier instead of package.identifier
-      // Product identifier contains the actual product name (e.g., "capacity_10")
-      const capacity = extractPlanCapacity(pkg.product.identifier);
+      const capacity = getPlanCapacityFromPackage(pkg);
       if (capacity) {
         plans.push({ package: pkg, capacity });
       }

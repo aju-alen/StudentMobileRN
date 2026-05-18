@@ -12,7 +12,7 @@ import {
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import { File } from 'expo-file-system';
 import axios from 'axios';
 import { FONT } from '../../../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../../../utils/metrics';
@@ -52,8 +52,8 @@ const CreateOrganizationPage = () => {
   const uploadTradeLicenseToAws = async (pdfUri: string, uid: string): Promise<string> => {
     const uriParts = pdfUri.split('.');
     const fileType = uriParts[uriParts.length - 1];
-    const fileInfo = await FileSystem.getInfoAsync(pdfUri);
-    if (!fileInfo.exists) throw new Error('File does not exist');
+    const file = new File(pdfUri);
+    if (!file.exists) throw new Error('File does not exist');
 
     const fileName = `trade-license-${Date.now()}.${fileType}`;
     const formData = new FormData();

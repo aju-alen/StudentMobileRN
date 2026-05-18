@@ -2,7 +2,6 @@ import {
   StyleSheet,
   Text,
   View,
-  SafeAreaView,
   FlatList,
   TouchableOpacity,
   StatusBar,
@@ -27,6 +26,7 @@ import { socket } from "../../utils/socket";
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
 import { COLORS } from "../../../constants";
 import useSafeAreaInsets, { addBasePaddingToTopInset } from "../../hooks/useSafeAreaInsets";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width } = Dimensions.get('window');
 

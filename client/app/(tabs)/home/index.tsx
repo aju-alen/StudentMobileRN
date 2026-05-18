@@ -16,6 +16,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
+import * as Updates from "expo-updates";
 import axios from "axios";
 import { ipURL } from '../../utils/utils';
 import { Ionicons } from "@expo/vector-icons";
@@ -157,12 +158,31 @@ const HomePage = () => {
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const { isUpdateAvailable, isUpdatePending } = Updates.useUpdates();
+  const [isUpdatingApp, setIsUpdatingApp] = useState(false);
+  const [hasShownUpdateAlert, setHasShownUpdateAlert] = useState(false);
 
-  const videoData = [
-    { id: '1', videoUrl: 'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4' },
-    { id: '2', videoUrl: 'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4' },
-    { id: '3', videoUrl: 'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4' },
-    { id: '4', videoUrl: 'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4' },
+  const communityVideos = [
+    {
+      id: "welcome-splash",
+      title: "Mathematics",
+      videoUrl: "https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/1f.mp4",
+    },
+    {
+      id: "community-reel",
+      title: "Mathematics",
+      videoUrl: "https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/2f.mp4",
+    },
+    {
+      id: "highlights",
+      title: "Mathematics",
+      videoUrl: "https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/3f.mp4",
+    },
+    {
+      id: "high",
+      title: "Mathematics",
+      videoUrl: "https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/4f.mp4",
+    },
   ];
 
   // Updated Header animation for smoother transition
@@ -471,6 +491,73 @@ const HomePage = () => {
     router.push(`/(tabs)/home/${itemId.id}`);
   };
 
+  const applyOtaUpdate = useCallback(async () => {
+    if (__DEV__) {
+      Alert.alert("Unavailable in development", "OTA updates are available in release builds.");
+      return;
+    }
+
+    setIsUpdatingApp(true);
+    try {
+      if (!isUpdatePending) {
+        const update = await Updates.checkForUpdateAsync();
+        if (update.isAvailable) {
+          await Updates.fetchUpdateAsync();
+        } else {
+          Alert.alert("No update found", "You are already on the latest version.");
+          return;
+        }
+      }
+
+      await Updates.reloadAsync();
+    } catch (error) {
+      console.error("Failed to apply OTA update:", error);
+      Alert.alert("Update failed", "Could not install the update right now. Please try again.");
+    } finally {
+      setIsUpdatingApp(false);
+    }
+  }, [isUpdatePending]);
+
+  useEffect(() => {
+    if (!isUpdateAvailable) {
+      setHasShownUpdateAlert(false);
+      return;
+    }
+
+    if (!hasShownUpdateAlert) {
+      setHasShownUpdateAlert(true);
+      Alert.alert(
+        "Update available",
+        "A new app update is ready to install.",
+        [
+          { text: "Later", style: "cancel" },
+          {
+            text: "Update now",
+            onPress: () => {
+              void applyOtaUpdate();
+            },
+          },
+        ]
+      );
+    }
+  }, [applyOtaUpdate, hasShownUpdateAlert, isUpdateAvailable]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (__DEV__) return;
+
+      const checkForUpdate = async () => {
+        try {
+          await Updates.checkForUpdateAsync();
+        } catch (error) {
+          console.error("Failed to check OTA update:", error);
+        }
+      };
+
+      void checkForUpdate();
+    }, [])
+  );
+
   if (!isDataLoaded) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
@@ -591,6 +678,31 @@ const HomePage = () => {
           />
         </View>
 
+        {isUpdateAvailable && (
+          <View style={styles.updateBanner}>
+            <View style={styles.updateMessage}>
+              <Ionicons name="cloud-download-outline" size={20} color="#1A4C6E" />
+              <View style={styles.updateTextContainer}>
+                <Text style={styles.updateTitle}>Update available</Text>
+                <Text style={styles.updateSubtitle}>Install the latest fixes and improvements.</Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={[styles.updateButton, isUpdatingApp && styles.updateButtonDisabled]}
+              onPress={() => {
+                void applyOtaUpdate();
+              }}
+              disabled={isUpdatingApp}
+            >
+              {isUpdatingApp ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.updateButtonText}>Update now</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Study Tools Section */}
         {/* <View style={styles.studyToolsSection}>
           <SectionHeader title="Study Tools" />
@@ -709,32 +821,23 @@ const HomePage = () => {
           />
         </View>
 
-        {/* Video Section */}
-       {/* 
-          <View style={[styles.section, styles.lastSection]}>
-          <SectionHeader title="Recommended Videos" />
-          <ScrollView 
-            horizontal 
+        <View style={[styles.section, styles.lastSection]}>
+          <SectionHeader title="Community Videos" />
+          <ScrollView
+            horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.videoScrollContainer}
           >
-            <VideoPlayer 
-              videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/VIDEO-2024-02-06-19-22-24+(1).mp4'} 
-            />
-            <VideoPlayer 
-              videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/VIDEO-2025-06-04-12-53-18.mp4'} 
-            />
-            <VideoPlayer 
-              videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/VIDEO-2025-06-04-12-54-39.mp4'} 
-            />
-            <VideoPlayer 
-              videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/VIDEO-2025-06-04-12-51-14.mp4'} 
-            />
-            <VideoPlayer 
-              videoUrl={'https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/VIDEO-2025-06-04-12-54-20.mp4'} 
-            />
+            {communityVideos.map((item) => (
+              <View key={item.id} style={styles.videoCard}>
+                <VideoPlayer videoUrl={item.videoUrl} />
+                <Text style={styles.videoTitle} numberOfLines={1}>
+                  {item.title}
+                </Text>
+              </View>
+            ))}
           </ScrollView>
-        </View> */}
+        </View>
       </Animated.ScrollView>
     </View>
   );
@@ -879,6 +982,52 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: horizontalScale(20),
     marginTop: verticalScale(20),
+  },
+  updateBanner: {
+    marginTop: verticalScale(16),
+    marginHorizontal: horizontalScale(20),
+    padding: moderateScale(14),
+    borderRadius: moderateScale(14),
+    backgroundColor: '#E9F2F8',
+    borderWidth: 1,
+    borderColor: '#BFD7E8',
+  },
+  updateMessage: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  updateTextContainer: {
+    marginLeft: horizontalScale(10),
+    flex: 1,
+  },
+  updateTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(14),
+    color: '#1A4C6E',
+  },
+  updateSubtitle: {
+    marginTop: verticalScale(2),
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(12),
+    color: '#355D7A',
+  },
+  updateButton: {
+    marginTop: verticalScale(12),
+    alignSelf: 'flex-start',
+    backgroundColor: '#1A4C6E',
+    borderRadius: moderateScale(10),
+    paddingVertical: verticalScale(8),
+    paddingHorizontal: horizontalScale(14),
+    minWidth: horizontalScale(110),
+    alignItems: 'center',
+  },
+  updateButtonDisabled: {
+    opacity: 0.7,
+  },
+  updateButtonText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(12),
+    color: '#FFFFFF',
   },
   continueCard: {
     backgroundColor: '#F1A568',
@@ -1410,7 +1559,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
-  videoPlayer: {
+  videoCard: {
     marginRight: 12,
+  },
+  videoTitle: {
+    marginTop: verticalScale(8),
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(13),
+    color: '#1A4C6E',
+    maxWidth: screenWidth * 0.8,
   },
 });
