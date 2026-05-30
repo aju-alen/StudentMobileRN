@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, SafeAreaView, TextInput, TouchableOpacity, FlatList } from "react-native";
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef } from "react";
@@ -6,7 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { ipURL } from "../utils/utils";
 import React from "react";
-
+import { SafeAreaView } from "react-native-safe-area-context";
 interface User {
   userId?: string;
  isTeacher?: boolean;

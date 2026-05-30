@@ -5,13 +5,13 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { FONT } from '../../../constants/theme';
 import { horizontalScale, verticalScale, moderateScale } from '../../utils/metrics';
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const HelpItem = () => {
   const { title, content } = useLocalSearchParams();

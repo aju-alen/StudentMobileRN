@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  SafeAreaView,
   StatusBar,
   Alert,
   KeyboardAvoidingView,
@@ -17,6 +16,7 @@ import { router } from 'expo-router';
 import { FONT } from '../../../constants/theme';
 import { horizontalScale, verticalScale, moderateScale } from '../../utils/metrics';
 import * as Linking from 'expo-linking';
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const ContactUs = () => {
   const [formData, setFormData] = useState({

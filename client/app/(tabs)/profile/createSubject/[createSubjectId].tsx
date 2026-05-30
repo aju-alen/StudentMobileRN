@@ -9,7 +9,6 @@ import {
   Text,
   Image,
   ScrollView,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   Linking,
@@ -35,7 +34,7 @@ import * as Crypto from 'expo-crypto';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Calendar } from 'react-native-calendars';
 import { useRevenueCat } from '../../../providers/RevenueCatProvider';
-
+import { SafeAreaView } from "react-native-safe-area-context";
 // Add type definition for file object
 type FileObject = {
   uri: string;

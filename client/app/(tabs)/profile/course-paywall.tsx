@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
-  SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -18,6 +17,7 @@ import { horizontalScale, moderateScale, verticalScale } from '../../utils/metri
 import { FONT } from '../../../constants';
 import { axiosWithAuth } from '../../utils/customAxios';
 import { ipURL } from '../../utils/utils';
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type PaidCourseType = 'MULTI_STUDENT' | 'SINGLE_PACKAGE' | 'MULTI_PACKAGE';
 

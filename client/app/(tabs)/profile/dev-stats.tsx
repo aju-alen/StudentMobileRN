@@ -4,7 +4,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   Animated,
 } from 'react-native';
@@ -12,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { FONT } from '../../../constants/theme';
 import { horizontalScale, verticalScale, moderateScale } from '../../utils/metrics';
-
+import { SafeAreaView } from "react-native-safe-area-context";
 const DevStats = () => {
   const clickCountRef = useRef(0);
   const [showCredit, setShowCredit] = useState(false);

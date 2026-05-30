@@ -1,5 +1,4 @@
 import {
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
@@ -15,6 +14,7 @@ import { ipURL } from "../../../utils/utils";
 import { useLocalSearchParams, router } from "expo-router";
 import { horizontalScale, verticalScale, moderateScale } from '../../../utils/metrics';
 import { FONT } from "../../../../constants";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';

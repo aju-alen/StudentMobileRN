@@ -4,7 +4,6 @@ import {
   Text, 
   TextInput, 
   ScrollView, 
-  SafeAreaView,
   StyleSheet, 
   KeyboardAvoidingView, 
   Platform,
@@ -26,6 +25,7 @@ import { router } from 'expo-router';
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
 import { COLORS, FONT } from "../../../constants";
 import useSafeAreaInsets, { addBasePaddingToInset } from "../../hooks/useSafeAreaInsets";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 // Types moved to separate interfaces for better organization
 interface Message {

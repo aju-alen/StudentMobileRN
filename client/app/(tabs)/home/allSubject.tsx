@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, RefreshControl, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Platform, RefreshControl, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
 import { COLORS, FONT } from '../../../constants';
 import StatusBarComponent from '../../components/StatusBarComponent';
@@ -10,6 +10,7 @@ import useSafeAreaInsets, { addBasePaddingToTopInset } from '../../hooks/useSafe
 import { axiosWithAuth } from '../../utils/customAxios';
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
 import { ipURL } from '../../utils/utils';
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface Subject {
   id: string;

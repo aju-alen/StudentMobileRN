@@ -1,4 +1,4 @@
-import { SafeAreaView, StyleSheet, Text, View, ActivityIndicator } from 'react-native'
+import { StyleSheet, Text, View, ActivityIndicator } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import HomeFlatlist from '../../components/HomeFlatlist'
 import axios from 'axios'
@@ -8,7 +8,7 @@ import { router } from 'expo-router'
 import { Ionicons } from "@expo/vector-icons"
 import { axiosWithAuth } from '../../utils/customAxios'
 import { registerForPushNotificationsAsync, isPushSupported } from '../../utils/pushNotifications'
-
+import { SafeAreaView } from "react-native-safe-area-context";
 const VerificationIndex = () => {
   const [verifySubjects, setVerifySubjects] = useState([]);
   const [loading, setLoading] = useState(true);

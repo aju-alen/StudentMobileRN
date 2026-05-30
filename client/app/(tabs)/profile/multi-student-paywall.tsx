@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
-  SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -19,7 +18,7 @@ import { FONT } from '../../../constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { axiosWithAuth } from '../../utils/customAxios';
 import { ipURL } from '../../utils/utils';
-
+import { SafeAreaView } from "react-native-safe-area-context";
 // Configure product identifiers in RevenueCat dashboard
 // Entitlement identifier: "student_zoom_capacity"
 // Product identifiers: "zoom_capacity_10", "zoom_capacity_15", etc.

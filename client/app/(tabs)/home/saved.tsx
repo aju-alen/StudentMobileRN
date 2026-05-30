@@ -1,4 +1,4 @@
-import { SafeAreaView, StyleSheet, Text, View, ActivityIndicator, ScrollView, Image, TouchableOpacity, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, ScrollView, Image, TouchableOpacity, Dimensions } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -9,6 +9,7 @@ import { FONT, COLORS } from '../../../constants';
 import { Ionicons } from '@expo/vector-icons';
 import StatusBarComponent from '../../components/StatusBarComponent';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface Subject {
   id: string;

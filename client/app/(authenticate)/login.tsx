@@ -4,10 +4,8 @@ import axios from 'axios';
 import { router } from 'expo-router';
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Alert,
   Keyboard,
   Pressable,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
@@ -21,6 +19,7 @@ import {
 import { COLORS } from '../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
 import { ipURL } from '../utils/utils';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');

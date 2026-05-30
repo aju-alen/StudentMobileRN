@@ -1,5 +1,4 @@
 import {
-  SafeAreaView,
   StyleSheet,
   Text,
   View,
@@ -26,7 +25,7 @@ import { socket } from '../utils/socket';
 import BookingCalendar from './BookingCalendar';
 import BookingSummaryModal from './BookingSummaryModal';
 import { axiosWithAuth } from "../utils/customAxios";
-
+import { SafeAreaView } from "react-native-safe-area-context";
 interface Review {
   id: string;
   title: string;

@@ -1,9 +1,10 @@
-import { SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import React from 'react'
 import { Ionicons } from "@expo/vector-icons";
 import { router } from 'expo-router';
 import { COLORS, FONT, SIZES } from '../../../constants';
 import { horizontalScale, verticalScale, moderateScale } from '../../utils/metrics';
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const Filter = () => {
   const [grade, setGrade] = React.useState('');
@@ -70,7 +71,7 @@ const Filter = () => {
           style={styles.searchButton}
           onPress={() => {
             router.replace({
-              pathname: "/(tabs)/home/",
+              pathname: "/(tabs)/home/allSubject",
               params: {
                 ...(grade && { subjectGrade: grade }),
                 ...(board && { subjectBoard: board }),

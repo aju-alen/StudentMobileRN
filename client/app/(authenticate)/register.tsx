@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, TextInput, SafeAreaView, StyleSheet, TouchableOpacity, Text, Pressable, Alert, ScrollView, Modal, ActivityIndicator, Platform, KeyboardAvoidingView, useWindowDimensions } from 'react-native';
+import { View, TextInput, StyleSheet, TouchableOpacity, Text, Pressable, ScrollView, Modal, ActivityIndicator, Platform, KeyboardAvoidingView, useWindowDimensions, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import axios from 'axios';
@@ -8,8 +8,8 @@ import { COLORS } from '../../constants/theme';
 import { verticalScale, horizontalScale, moderateScale } from '../utils/metrics';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import useSafeAreaInsets, { addBasePaddingToTopInset, addBasePaddingToInset } from '../hooks/useSafeAreaInsets';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const UserTypeScreen = ({ onSelect }) => {
     const [expandedCard, setExpandedCard] = useState<string | null>(null);

@@ -1,8 +1,9 @@
-import { SafeAreaView, StyleSheet, Text, View, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, ScrollView } from 'react-native';
 import React from 'react';
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
 import { FONT, COLORS } from '../../../constants';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface ProgressData {
   totalSubjects: number;

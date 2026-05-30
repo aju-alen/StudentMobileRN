@@ -6,7 +6,6 @@ import {
   ActivityIndicator,
   Keyboard,
   Pressable,
-  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
@@ -17,6 +16,7 @@ import {
 import { COLORS } from '../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
 import { ipURL } from '../utils/utils';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const ResetPasswordPage = () => {
   const params = useLocalSearchParams<{ email?: string }>();

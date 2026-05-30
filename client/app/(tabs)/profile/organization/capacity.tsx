@@ -98,22 +98,51 @@ const CapacitySubscriptionPage = () => {
 
   const getPlanCapacityFromPackage = (pkg: PurchasesPackage): number | null => {
     const product = pkg.product as any;
-    const candidates: string[] = [
-      pkg.product?.identifier,
-      pkg.identifier,
-      product?.id,
-      product?.sku,
-      product?.title,
-      product?.description,
-      product?.defaultOption?.id,
-    ].filter(Boolean);
 
+    // RevenueCat package id (e.g. tc_3_monthly, tc_5_monthly, tc_10_monthly)
+    const packageMatch = pkg.identifier.match(/(?:^|[_-])(\d+)(?:[_-]|$)/);
+    if (packageMatch) {
+      const capacity = parseInt(packageMatch[1], 10);
+      if (capacity > 0) return capacity;
+    }
+
+    // Android: single Play product with multiple base plans (capacity3, capacity5, capacity10)
+    const basePlanIds: string[] = [];
+    if (product?.defaultOption?.id) basePlanIds.push(product.defaultOption.id);
     if (Array.isArray(product?.subscriptionOptions)) {
       for (const option of product.subscriptionOptions) {
-        if (option?.id) candidates.push(option.id);
-        if (option?.basePlanId) candidates.push(option.basePlanId);
+        if (option?.id) basePlanIds.push(option.id);
+        if (option?.basePlanId) basePlanIds.push(option.basePlanId);
       }
     }
+    for (const basePlanId of basePlanIds) {
+      const basePlanMatch = String(basePlanId).match(/capacity(\d+)$/i);
+      if (basePlanMatch) {
+        const capacity = parseInt(basePlanMatch[1], 10);
+        if (capacity > 0) return capacity;
+      }
+    }
+
+    // Android store product id suffix (e.g. capacity_10:capacity3)
+    const storeProductId =
+      product?.identifier ||
+      product?.defaultOption?.storeProductId ||
+      product?.sku;
+    if (storeProductId && String(storeProductId).includes(':')) {
+      const suffix = String(storeProductId).split(':').pop() ?? '';
+      const suffixMatch = suffix.match(/capacity(\d+)$/i) ?? suffix.match(/(\d+)$/);
+      if (suffixMatch) {
+        const capacity = parseInt(suffixMatch[1], 10);
+        if (capacity > 0) return capacity;
+      }
+    }
+
+    // iOS: separate products (capacity_3, capacity_5, capacity_10)
+    const candidates: string[] = [
+      pkg.product?.identifier,
+      product?.id,
+      product?.sku,
+    ].filter(Boolean);
 
     for (const candidate of candidates) {
       const parsed = extractPlanCapacity(String(candidate));
@@ -272,7 +301,6 @@ const CapacitySubscriptionPage = () => {
       }
     }
 
-    // Sort by capacity (10, 15, 30)
     return plans.sort((a, b) => a.capacity - b.capacity);
   };
 

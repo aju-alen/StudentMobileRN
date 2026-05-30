@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   TextInput,
   FlatList,
-  SafeAreaView,
   RefreshControl,
   StatusBar,
   ActivityIndicator,
@@ -24,6 +23,7 @@ import { horizontalScale, verticalScale, moderateScale } from "../../utils/metri
 import { socket } from "../../utils/socket";
 import useSafeAreaInsets, { addBasePaddingToTopInset } from "../../hooks/useSafeAreaInsets";
 import { FONT } from "../../../constants/theme";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
