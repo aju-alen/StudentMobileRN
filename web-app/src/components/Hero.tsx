@@ -51,14 +51,15 @@ const Hero = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center h-[600px]">
           {/* Left Column - Content */}
           <div className="text-left flex flex-col justify-center">
-            <h1 className="text-4xl md:text-5xl lg:text-5xl font-[900] mb-2 lg:leading-tight mt-36 font-montserrat ">
-             Learn from the comfort of your home with the best tutors in the UAE.
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-[900] mb-2 lg:leading-tight mt-36 font-sans ">
+            Find expert online tutors across the UAE
               {/* <div className="bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent"> 
                  Coach Academ
               </div> */}
             </h1>
-            <p className="text-[1.1rem] text-gray-600 mb-8 md:max-w-xl lg:leading-8">
-              Coach Academ is an online tutoring platform that helps students find and connect with the best online tutors in the UAE.
+            <p className="text-[1.3rem] text-gray-600 mb-8  lg:leading-8">
+            Connect with qualified tutors for IGCSE, IB, A-Level, American, CBSE, and more. Compare tutor
+            profiles, book lessons, and learn online.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 mb-8 items-center">
               {/* QR Code Download Section - Styled like reference */}

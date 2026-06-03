@@ -8,17 +8,21 @@ import LoveLessonsBanner from '../components/LoveLessonsBanner';
 import QRCodeFloater from '../components/QRCodeFloater';
 import SEO from '../components/SEO';
 import TutorLanguages from '../components/TutorLanguages';
+import TrustScore from '../components/TrustScore';
+import HowCoachacademWorks from '../components/HowCoachacademWorks';
 
 function Home() {
   return (
     <div className="min-h-screen bg-white">
       <Header />
       <SEO
-        title="Online Tutoring Platform in the UAE"
-        description="CoachAcadem is a leading online tutoring platform that provides personalized and effective learning solutions for students of all ages and levels. Find qualified tutors, schedule sessions, and achieve your academic goals."
+        title="Find Online Tutors in the UAE | IGCSE, IB, A-Level & More | CoachAcadem"
+        description="Find qualified online tutors across the UAE for IGCSE, IB, A-Level, American Curriculum, CBSE
+and more. Compare tutor profiles, book lessons, and learn with confidence through CoachAcadem."
         name="Coach Academ"
         type="website"
-        keywords="online tutoring, UAE tutors, private tutors, academic coaching, math tutors, science tutors, English tutors, homework help, exam preparation"
+        keywords="Online Tutors UAE, Private Tutors UAE, Find Tutors UAE, IGCSE Tutors UAE, IB Tutors UAE,
+A-Level Tutors UAE."
         author="Coach Academ"
         tags={["online tutoring", "education", "UAE", "private tutors", "academic support"]}
         schema={{
@@ -77,11 +81,16 @@ function Home() {
         appleTouchIcon="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png"
         themeColor="#3B82F6"
       />
+      
       <Hero />
-      <TutorLanguages />
+      <TrustScore />
+      {/* Search bar here for subjects and Cirricula */}
       <HowItWorks />
+      <TutorLanguages />
+      <HowCoachacademWorks />
+
       {/* <Features /> */}
-      <LoveLessonsBanner />
+      {/* <LoveLessonsBanner /> */}
       
       {/* <AppPromotion /> */}
       <BecomeTutor />
