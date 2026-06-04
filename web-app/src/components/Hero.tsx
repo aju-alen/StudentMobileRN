@@ -48,7 +48,7 @@ const Hero = () => {
       className="home-section !py-0 pt-28 pb-10 sm:pt-32 sm:pb-16 md:pt-28 md:pb-20 relative overflow-hidden bg-gradient-to-b from-indigo-50 to-white h-full"
     >
       <div className="home-section-inner relative z-10 h-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-0 lg:min-h-[720px] xl:min-h-[760px]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-0 lg:min-h-[760px] xl:min-h-[800px]">
           {/* Left Column - Content */}
           <div className="order-2 lg:order-1 text-left flex flex-col justify-center">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-[600] mb-3 lg:mb-2 lg:leading-tight mt-0 lg:mt-36 font-sans">
@@ -95,10 +95,14 @@ const Hero = () => {
           </div>
 
           {/* Right Column - App Screenshot */}
-          <div className="order-1 lg:order-2 relative h-[260px] sm:h-[320px] md:h-[380px] lg:h-full lg:min-h-[720px] -mx-2 sm:mx-0">
+          <div className="order-1 lg:order-2 relative h-[300px] sm:h-[360px] md:h-[420px] lg:h-full lg:min-h-[760px] xl:min-h-[800px] max-lg:mt-6 max-lg:overflow-visible -mx-2 sm:mx-0">
             {/* Main device mockup */}
-            <div className="absolute inset-0 flex items-center justify-center px-2 sm:px-0">
-             <img src="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/hero-screenshot-left.png" alt="App Screenshot" className="w-full h-full max-h-full object-contain object-center" />
+            <div className="absolute inset-0 flex max-lg:items-start max-lg:justify-center max-lg:pt-4 lg:items-center justify-center px-2 sm:px-0">
+             <img
+               src="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/hero-screenshot-left.png"
+               alt="App Screenshot"
+               className="w-full h-full max-h-full object-contain max-lg:object-top lg:object-center"
+             />
             </div>
 
             {/* Floating elements — desktop only */}

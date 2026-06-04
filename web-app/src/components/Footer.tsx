@@ -1,11 +1,24 @@
 import { frontendURL } from '../common/ipUrl';
-import appStoreBadge from '../assets/app-store.png';
-import playStoreBadge from '../assets/app.png';
+import downloadCoachAcademGoogle from '../assets/download_coach_android.svg';
+import downloadCoachAcademAppStore from '../assets/download_coach_apple.svg';
 
 const APP_STORE_URL =
   'https://apps.apple.com/in/app/coach-academ/id6745173635';
 const PLAY_STORE_URL =
   'https://play.google.com/store/apps/details?id=com.rise.coachacadem&hl=en';
+
+const storeButtons = [
+  {
+    img: downloadCoachAcademAppStore,
+    label: 'App Store',
+    href: APP_STORE_URL,
+  },
+  {
+    img: downloadCoachAcademGoogle,
+    label: 'Google Play',
+    href: PLAY_STORE_URL,
+  },
+];
 
 type FooterLink = { label: string; href: string };
 
@@ -103,18 +116,18 @@ const isExternalHref = (href: string) =>
   !href.startsWith('mailto:');
 
 const FooterNavColumn = ({ label, items }: FooterColumn) => (
-  <div className="w-full">
-    <h3 className="text-[1.3rem] font-semibold text-white mb-4 uppercase tracking-wide">
+  <div className="w-full min-w-0">
+    <h3 className="text-[1.3rem] max-md:text-base font-semibold text-white mb-4 max-md:mb-3 uppercase tracking-wide">
       {label}
     </h3>
-    <ul className="space-y-2.5">
+    <ul className="space-y-2.5 max-md:space-y-2">
       {items.map((item) => (
         <li key={`${label}-${item.label}`}>
           <a
             href={item.href}
             target={isExternalHref(item.href) ? '_blank' : undefined}
             rel={isExternalHref(item.href) ? 'noopener noreferrer' : undefined}
-            className=" text-gray-400 hover:text-white transition-colors hover:underline text-[1.1rem]"
+            className="text-gray-400 hover:text-white transition-colors hover:underline text-[1.1rem] max-md:text-base leading-snug"
           >
             {item.label}
           </a>
@@ -127,77 +140,66 @@ const FooterNavColumn = ({ label, items }: FooterColumn) => (
 const Footer = () => {
   return (
     <footer className="bg-gray-900 text-gray-300">
-      <div className="container mx-auto px-4 md:px-6 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+      <div className="home-section home-section-spacing max-md:!py-12">
+        <div className="home-section-inner">
+        <div className="home-section-stack gap-8 sm:gap-10 lg:gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
           <div className="lg:col-span-3">
-            <div className="flex items-center mb-6">
+            <div className="flex items-center mb-4 max-md:mb-4 lg:mb-6">
               <img
                 src="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png"
                 alt="Logo"
-                className="h-8 w-8"
+                className="h-8 w-8 flex-shrink-0"
               />
-              <span className="ml-2 text-2xl font-bold text-white">
+              <span className="ml-2 text-xl sm:text-2xl font-bold text-white">
                 Coach Academ
               </span>
             </div>
-            <p className="text-gray-400 leading-relaxed">
+            <p className="text-gray-400 leading-relaxed text-base max-md:text-base sm:text-[1.1rem] mb-5 max-md:mb-4">
               Learn and grow with CoachAcadem.
             </p>
+            <div className="flex flex-col sm:flex-row justify-start gap-5 md:gap-6 max-md:items-start max-md:gap-4">
+              {storeButtons.map((store) => (
+                <a
+                  key={store.label}
+                  href={store.href}
+                  target={store.href.startsWith('http') ? '_blank' : undefined}
+                  rel={
+                    store.href.startsWith('http')
+                      ? 'noopener noreferrer'
+                      : undefined
+                  }
+                  className="inline-block transition-transform hover:scale-105 max-md:flex max-md:justify-start"
+                  aria-label={store.label}
+                >
+                  <img
+                    src={store.img}
+                    alt={store.label}
+                    className="h-12 sm:h-14 md:h-16 lg:h-[4.5rem] w-auto max-md:h-11"
+                  />
+                </a>
+              ))}
+            </div>
           </div>
 
           <div className="lg:col-span-8">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
-              {footerRowPrimary.map((column) =>
-                column.label === 'Company' ? (
-                  <div key={column.label} className="w-full">
-                    <FooterNavColumn {...column} />
-                    <div className="flex items-center gap-3 mt-5">
-                      <a
-                        href={APP_STORE_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="transition-opacity hover:opacity-80"
-                        aria-label="Download on the App Store"
-                      >
-                        <img
-                          src={appStoreBadge}
-                          alt="Download on the App Store"
-                          className="h-10 w-auto"
-                        />
-                      </a>
-                      <a
-                        href={PLAY_STORE_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="transition-opacity hover:opacity-80"
-                        aria-label="Get it on Google Play"
-                      >
-                        <img
-                          src={playStoreBadge}
-                          alt="Get it on Google Play"
-                          className="h-10 w-auto"
-                        />
-                      </a>
-                    </div>
-                  </div>
-                ) : (
-                  <FooterNavColumn key={column.label} {...column} />
-                )
-              )}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
+              {footerRowPrimary.map((column) => (
+                <FooterNavColumn key={column.label} {...column} />
+              ))}
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mt-6 pt-8 border-t border-gray-800">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 md:gap-8 pt-6 sm:pt-8 border-t border-gray-800">
               {footerRowSecondary.map((column) => (
                 <FooterNavColumn key={column.label} {...column} />
               ))}
             </div>
           </div>
 
-        
         </div>
 
-        <div className="border-t border-gray-800 mt-12 pt-8">
-          <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-3 sm:gap-4 text-sm text-gray-500">
+        <div className="border-t border-gray-800 pt-6 sm:pt-8">
+          <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-3 sm:gap-4 text-sm max-md:text-xs text-gray-500">
             <p className="text-center sm:text-left">
               © {new Date().getFullYear()} CoachAcadem. All rights reserved.
             </p>
@@ -224,6 +226,8 @@ const Footer = () => {
               </a>
             </div>
           </div>
+        </div>
+        </div>
         </div>
       </div>
     </footer>
