@@ -25,7 +25,7 @@ const QRCodeFloater = () => {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 rounded-2xl p-4 pt-7 md:p-6 flex flex-col items-center shadow-xl border border-[#205072] bg-[#205072] min-w-[11rem] max-md:min-w-0">
+    <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 flex-col items-center rounded-2xl border border-[#205072] bg-[#205072] p-4 pt-7 shadow-xl max-md:min-w-0 md:left-auto md:right-6 md:min-w-[9rem] md:translate-x-0 md:p-4">
       <button
         className="absolute top-2 right-2.5 text-white/80 hover:text-white text-2xl font-bold leading-none focus:outline-none"
         onClick={() => setVisible(false)}
@@ -33,9 +33,13 @@ const QRCodeFloater = () => {
       >
         ×
       </button>
-      <div className="hidden md:block rounded-xl border border-white/30 bg-white p-3 mb-3 shadow-md">
-        <img src={AppDownloadQR} alt="Scan to download app" className="w-36 h-36" />
+      <span className="hidden md:block text-sm font-semibold text-white mb-2">
+        Get the app
+      </span>
+      <div className="hidden md:block rounded-lg border border-white/30 bg-white p-2 shadow-md">
+        <img src={AppDownloadQR} alt="Scan to download app" className="w-24 h-24" />
       </div>
+
       <a
         href={downloadUrl}
         target="_blank"
@@ -44,9 +48,7 @@ const QRCodeFloater = () => {
       >
         Get the app
       </a>
-      <span className="hidden md:block text-base font-semibold text-white">
-        Get the app
-      </span>
+      
     </div>
   );
 };
