@@ -12,26 +12,26 @@ const logos = [
 
 const TrustScore = () => {
   return (
-    <section className="bg-white  px-4 md:px-32 mt-32 mb-32">
-      <div className="max-w-4xl mx-auto text-center mb-10 md:mb-14 ">
-        <h2 className="text-4xl md:text-4xl font-bold text-gray-900 mb-4">
-        Find trusted tutors for your child's curriculum
+    <section className="home-section home-section-spacing bg-white">
+      <div className="home-section-inner">
+        <h2 className="home-section-title text-gray-900 text-3xl sm:text-4xl md:text-5xl !mb-6 sm:!mb-8 md:!mb-10 leading-tight px-1 sm:px-0">
+          Find trusted tutors for your child's curriculum
         </h2>
-      </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 items-center justify-items-center max-w-5xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 lg:gap-12 items-center justify-items-center max-w-5xl mx-auto w-full">
         {logos.map((logo) => (
           <div
             key={logo.name}
-            className="flex h-24 w-full  items-center justify-center rounded-xl border border-gray-100 pt-14 transition-shadow hover:shadow-sm"
+            className="flex h-20 sm:h-24 w-full min-w-0 items-center justify-center rounded-lg sm:rounded-xl border border-gray-100 p-2.5 sm:p-4 transition-shadow hover:shadow-sm"
           >
             <img
               src={logo.src}
               alt={logo.alt}
-              className="max-h-28 w-auto object-contain opacity-80 hover:opacity-100 transition-all duration-300"
+              className="max-h-14 sm:max-h-20 md:max-h-28 w-full max-w-full object-contain opacity-80 hover:opacity-100 transition-all duration-300"
             />
           </div>
         ))}
+        </div>
       </div>
     </section>
   );

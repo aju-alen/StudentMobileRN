@@ -93,9 +93,10 @@ const getSubjectSlug = (name: string) =>
 const getCtaLabel = (name: string) =>
   name.endsWith('Tutors') ? `Find ${name}` : `Find ${name} Tutors`;
 
-const TutorLanguages = () => {
+const SubjectCards = () => {
   return (
-    <section className="py-12 px-4 md:px-32">
+    <section className="home-section home-section-spacing bg-white">
+      <div className="home-section-inner">
       {/* <div className="flex flex-wrap justify-between items-center gap-6 sm:gap-8 md:gap-12 mb-8 md:mb-16 min-h-[120px] sm:min-h-[160px] md:min-h-[200px] py-8 sm:py-10 md:py-12 lg:py-16">
         {stats.map((stat, i) => (
           <div
@@ -125,24 +126,29 @@ const TutorLanguages = () => {
           </div>
         ))}
       </div> */}
-      <h2 className="text-4xl md:text-5xl font-bold text-center mb-14">Explore Tutors by Subject</h2>
-      <p className="text-center text-gray-600 mb-6 text-[1.5rem] pb-16">Browse tutors across the most requested subjects on CoachAcadem.</p>
+      <h2 className="home-section-title text-3xl sm:text-4xl md:text-5xl !mb-6 sm:!mb-8 md:!mb-10 leading-tight px-1 sm:px-0">
+        Explore tutors by subject
+      </h2>
+      <p className="home-section-lead text-lg sm:text-[1.5rem] !-mt-2 sm:!-mt-4 !mb-6 sm:!mb-8 md:!mb-10 leading-relaxed">
+        Browse tutors across the most requested subjects on CoachAcadem.
+      </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 items-stretch">
+      <div className="home-section-stack gap-6 sm:gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-6 items-stretch w-full">
         {languages.map((lang, i) => (
           <div
             key={i}
-            className="flex flex-col p-6 bg-gray-50 rounded-xl shadow border h-full min-h-[10rem]"
+            className="flex flex-col p-5 sm:p-6 bg-gray-50 rounded-xl shadow border h-full min-h-0 sm:min-h-[10rem] w-full min-w-0"
           >
-            <div className="text-2xl font-semibold text-gray-900 mb-2 break-words">
+            <div className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2 break-words">
               {lang.name}
             </div>
-            <div className="text-gray-600 text-[1.3rem] break-words text-left flex-grow mb-4">
+            <div className="text-gray-600 text-base sm:text-[1.3rem] break-words text-left flex-grow mb-4 leading-relaxed">
               {lang.description}
             </div>
             <a
               href={`#${getSubjectSlug(lang.name)}-tutors`}
-              className="inline-block self-start bg-[#205072] hover:bg-[#24bcc7] text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              className="w-full sm:w-auto sm:self-start text-center bg-[#205072] hover:bg-[#24bcc7] text-white px-4 py-2.5 sm:py-2 rounded-lg font-medium transition-colors text-sm sm:text-base"
             >
               {getCtaLabel(lang.name)}
             </a>
@@ -150,16 +156,19 @@ const TutorLanguages = () => {
         ))}
       </div>
 
-      <div className="flex justify-start mt-8">
+      <div className="flex justify-start">
         <a
           href="#"
-          className="flex items-center text-lg font-medium text-gray-900 hover:underline"
+          className="flex items-center text-base sm:text-lg font-medium text-gray-900 hover:underline"
         >
-          <span className="text-2xl mr-2">+</span> Show more
+          <span className="text-xl sm:text-2xl mr-2">+</span> Show more
         </a>
+      </div>
+      </div>
       </div>
     </section>
   );
 };
 
-export default TutorLanguages;
+export default SubjectCards;
+

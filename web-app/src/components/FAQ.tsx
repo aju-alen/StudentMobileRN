@@ -3,32 +3,32 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 
 const faqs = [
   {
-    question: "How do the live Zoom sessions work?",
-    answer: "After you purchase a course, you will receive a link to the live session. You can join the session by clicking the link and entering the password. It's that simple!"
+    question: "How do I find a tutor on CoachAcadem?",
+    answer: "You can search for tutors by name, subject, curriculum, and academic level. You can also filter your search results by location, availability, and price."
   },
   {
-    question: "Can I download courses for offline viewing?",
-    answer: "No, we do not offer offline viewing as this is a live only session but we do intend to bring live recordings to be available very soon."
+    question: "Are tutors verified?",
+    answer: "Yes, all tutors are verified by our team and only those who are certified and verified by KHDA are allowed to teach on our platform. You do not have to worry."
   },
   {
-    question: "How do I get help if I'm stuck on a topic?",
-    answer: "We have a chat service which can be availed after you purchase a course. You can then ask your questions to the instructor and get help or get help during the live session."
+    question: "Can I read tutor reviews before booking?",
+    answer: "Yes, you can read tutor reviews before booking. You can also read reviews from other parents who have booked the tutor."
   },
   {
-    question: "How can I contact Coach Academ for any queries and feedback?",
-    answer: "You can contact us at support@coachacadem.ae and we also plan to bring in other support services soon."
+    question: "Do tutors support different curricula?",
+    answer: "Yes, tutors support different curricula. You can search for tutors by curriculum and academic level."
   },
   {
-    question: "What payment methods do you accept?",
-    answer: "We accept all major credit and debit cards. We also accept payment via link as well."
+    question: "Can lessons be booked instantly?",
+    answer: "Yes, lessons can be booked instantly. You can book a lesson by clicking the book button and selecting the date and time."
   },
   {
-    question: "Are the instructors certified and verified?",
-    answer: "Yes, all our instructors are certified and verified by our team and only those who are certified and verified by KHDA are allowed to teach on our platform. You do not have to worry."
+    question: "How do I communicate with tutors?",
+    answer: "You can communicate with tutors by clicking the chat button and sending a message. You can also call the tutor by clicking the call button and entering the phone number."
   },
   {
-    question:"How can I block or report any content on the platform?",
-    answer:"You can block or report any content on Coach Academ by clicking the three dots on the course page and selecting the option to block or report. We will review the content and take appropriate action."
+    question:"Can students in Dubai, Abu Dhabi, Sharjah, Ajman, Fujairah, Ras Al Khaimah and Umm Al Quwain use CoachAcadem?",
+    answer:"Yes, students in Dubai, Abu Dhabi, Sharjah, Ajman, Fujairah, Ras Al Khaimah and Umm Al Quwain can use CoachAcadem. We are currently available in the UAE and we are working to expand to other countries soon."
   }
 ];
 
@@ -40,51 +40,47 @@ const FAQ = () => {
   };
   
   return (
-    <section id="faq" className="py-20 bg-gwhite">
-      <div className="container mx-auto px-4 md:px-6">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Frequently Asked 
-            <span className="bg-gradient-to-r pl-2 from-indigo-600 to-blue-500 bg-clip-text text-transparent"> 
-              Questions
-            </span>
-          </h2>
-          <p className="text-xl text-gray-600">
-            Find answers to common questions about Coach Academ and our learning platform.
-          </p>
-        </div>
-        
-        <div className="max-w-3xl mx-auto">
+    <section id="faq" className="home-section home-section-spacing max-md:!py-12 bg-white">
+      <div className="home-section-inner">
+        <h2 className="home-section-title max-md:text-3xl max-md:!mb-6 max-md:leading-tight max-md:px-1">
+          Q&A for the curious
+        </h2>
+
+        <div className="max-md:-mx-1">
           {faqs.map((faq, index) => (
             <div 
               key={index} 
               className={`border-b border-gray-200 ${index === 0 ? 'border-t' : ''}`}
             >
               <button
-                className="w-full py-6 text-left flex justify-between items-center focus:outline-none"
+                type="button"
+                className="w-full max-md:py-4 md:py-6 text-left flex justify-between max-md:items-start md:items-center gap-3 focus:outline-none"
                 onClick={() => toggleFAQ(index)}
+                aria-expanded={openIndex === index}
               >
-                <span className="text-lg font-medium text-gray-900">{faq.question}</span>
+                <span className="text-[1.5rem] max-md:text-lg font-medium text-gray-900 max-md:leading-snug min-w-0 flex-1">
+                  {faq.question}
+                </span>
                 {openIndex === index ? (
-                  <ChevronUp className="flex-shrink-0 ml-4 text-indigo-600" size={20} />
+                  <ChevronUp className="flex-shrink-0 max-md:ml-0 md:ml-4 max-md:mt-0.5 text-indigo-600 max-md:!h-4 max-md:!w-4" size={20} />
                 ) : (
-                  <ChevronDown className="flex-shrink-0 ml-4 text-gray-400" size={20} />
+                  <ChevronDown className="flex-shrink-0 max-md:ml-0 md:ml-4 max-md:mt-0.5 text-gray-400 max-md:!h-4 max-md:!w-4" size={20} />
                 )}
               </button>
               
               <div 
                 className={`overflow-hidden transition-all duration-300 ${
-                  openIndex === index ? 'max-h-96 pb-6' : 'max-h-0'
+                  openIndex === index ? 'max-h-96 max-md:pb-4 pb-6' : 'max-h-0'
                 }`}
               >
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 leading-relaxed text-[1.3rem] max-md:text-base max-md:leading-relaxed">
                   {faq.answer}
                 </p>
               </div>
             </div>
           ))}
         </div>
-        
+
         {/* <div className="text-center mt-12">
           <p className="text-gray-600 mb-4">
             Still have questions?

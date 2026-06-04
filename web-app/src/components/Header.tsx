@@ -31,7 +31,7 @@ const mainNav: NavItem[] = [
       { label: 'GCSE Tutors' },
       { label: 'A-Level Tutors' },
       { label: 'IB Tutors' },
-      { label: 'American Cirriculam Tutors' },
+      { label: 'American Curriculum Tutors' },
       { label: 'CBSE Tutors' },
     ],
   },
@@ -111,17 +111,18 @@ const Header = () => {
         isScrolled ? 'bg-white shadow-md py-3' : 'bg-white py-5'
       }`}
     >
-      <div className="container mx-auto px-4 md:px-28">
+      <div className="home-section">
+        <div className="home-section-inner pl-0 pr-4 md:px-0">
         <div className="flex justify-between items-center">
-          <div className="flex items-center">
+          <div className="flex items-center min-w-0 gap-6 md:gap-10 lg:gap-14">
             <img
               src="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo.png"
               alt="Logo"
-              className="h-20 w-20"
+              className="h-20 w-20 shrink-0"
             />
             <nav
               ref={navRef}
-              className="hidden md:flex items-center space-x-8 md:ml-10"
+              className="hidden md:flex items-center space-x-8 md:mt-4 md:ml-10 lg:ml-16"
             >
               {mainNav.map((item) =>
                 item.type === 'dropdown' ? (
@@ -168,7 +169,7 @@ const Header = () => {
             </nav>
           </div>
 
-          <div className="hidden md:block">
+          <div className="hidden md:block shrink-0">
             <button
               className="bg-[#205072] hover:bg-[#24bcc7] text-white text-lg px-5 py-2 rounded-full font-medium transition-colors"
               onClick={() =>
@@ -247,6 +248,7 @@ const Header = () => {
             </nav>
           </div>
         )}
+        </div>
       </div>
     </header>
   );

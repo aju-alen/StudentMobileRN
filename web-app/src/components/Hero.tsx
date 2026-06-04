@@ -45,28 +45,38 @@ const Hero = () => {
   return (
     <section 
       id="home" 
-      className="pt-32 pb-20 md:pt-28 md:pb-32 px-4 md:px-32 relative overflow-hidden bg-gradient-to-b from-indigo-50 to-white h-full"
+      className="home-section !py-0 pt-28 pb-10 sm:pt-32 sm:pb-16 md:pt-28 md:pb-20 relative overflow-hidden bg-gradient-to-b from-indigo-50 to-white h-full"
     >
-      <div className="container mx-auto relative z-10 h-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center h-[600px]">
+      <div className="home-section-inner relative z-10 h-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-0 lg:min-h-[720px] xl:min-h-[760px]">
           {/* Left Column - Content */}
-          <div className="text-left flex flex-col justify-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-[900] mb-2 lg:leading-tight mt-36 font-sans ">
+          <div className="order-2 lg:order-1 text-left flex flex-col justify-center">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-[600] mb-3 lg:mb-2 lg:leading-tight mt-0 lg:mt-36 font-sans">
             Find expert online tutors across the UAE
               {/* <div className="bg-gradient-to-r from-indigo-600 to-blue-500 bg-clip-text text-transparent"> 
                  Coach Academ
               </div> */}
             </h1>
-            <p className="text-[1.3rem] text-gray-600 mb-8  lg:leading-8">
+            <p className="text-lg sm:text-[1.3rem] text-gray-600 mb-6 sm:mb-8 lg:leading-8">
             Connect with qualified tutors for IGCSE, IB, A-Level, American, CBSE, and more. Compare tutor
             profiles, book lessons, and learn online.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 mb-8 items-center">
-              {/* QR Code Download Section - Styled like reference */}
-              <div className="flex flex-row items-center border border-gray-300 rounded-2xl px-6 py-4 bg-[#205072] shadow-md gap-6">
-                <span className="text-lg font-semibold text-white whitespace-nowrap">Get the app.</span>
-                <div className="flex items-center justify-center border border-gray-300 rounded-2xl p-2">
-                  <img src={AppDownloadQR} alt="Scan to download app" className="w-24 h-24" />
+            <div className="mb-6 sm:mb-8">
+              <div className="flex w-full flex-row items-center justify-between gap-4 rounded-2xl bg-[#205072] px-4 py-4 shadow-xl sm:px-6 sm:py-5 lg:inline-flex lg:w-auto lg:justify-start lg:gap-6">
+                <div className="flex flex-col justify-center gap-1 min-w-0 flex-1 sm:pr-2">
+                  <span className="text-base sm:text-lg lg:text-xl font-semibold text-white">
+                    Get the app
+                  </span>
+                  <span className="text-xs sm:text-sm text-white/85 leading-snug">
+                    Scan to download on iOS or Android
+                  </span>
+                </div>
+                <div className="rounded-xl border border-white/30 bg-white p-2 sm:p-3 shadow-md shrink-0">
+                  <img
+                    src={AppDownloadQR}
+                    alt="Scan to download app"
+                    className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32"
+                  />
                 </div>
               </div>
             </div>
@@ -85,46 +95,48 @@ const Hero = () => {
           </div>
 
           {/* Right Column - App Screenshot */}
-          <div className="relative h-[600px]">
+          <div className="order-1 lg:order-2 relative h-[260px] sm:h-[320px] md:h-[380px] lg:h-full lg:min-h-[720px] -mx-2 sm:mx-0">
             {/* Main device mockup */}
-            <div className="absolute  flex items-center justify-center">
-             <img src="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/hero-screenshot-left.png" alt="App Screenshot" className="w-full h-full object-contain" />
+            <div className="absolute inset-0 flex items-center justify-center px-2 sm:px-0">
+             <img src="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/hero-screenshot-left.png" alt="App Screenshot" className="w-full h-full max-h-full object-contain object-center" />
             </div>
 
-            {/* Floating elements */}
-            <FloatingElement className="top-20 -left-8">
+            {/* Floating elements — desktop only */}
+            <FloatingElement className="hidden lg:block top-20 -left-8">
               <div className="bg-white p-4 rounded-2xl shadow-lg">
                 <BookOpen size={32} className="text-indigo-600" />
               </div>
             </FloatingElement>
             
-            <FloatingElement className="top-40 -right-4">
+            <FloatingElement className="hidden lg:block top-40 -right-4">
               <div className="bg-white p-4 rounded-2xl shadow-lg">
                 <LampDesk size={32} className="text-yellow-500" />
               </div>
             </FloatingElement>
             
-            <FloatingElement className="bottom-32 -left-12">
+            <FloatingElement className="hidden lg:block bottom-32 -left-12">
               <div className="bg-white p-4 rounded-2xl shadow-lg">
                 <GraduationCap size={32} className="text-green-500" />
               </div>
             </FloatingElement>
             
-            <FloatingElement className="top-1/4 right-1/4">
+            <FloatingElement className="hidden lg:block top-1/4 right-1/4">
               <div className="bg-white p-4 rounded-2xl shadow-lg">
                 <Presentation size={32} className="text-blue-500" />
               </div>
             </FloatingElement>
             
-            <FloatingElement className="bottom-1/4 -right-8">
+            <FloatingElement className="hidden lg:block bottom-1/4 -right-8">
               <div className="bg-white p-4 rounded-2xl shadow-lg">
                 <Video size={32} className="text-purple-500" />
               </div>
             </FloatingElement>
 
+
+
             {/* Background decorative elements */}
-            <div className="absolute -top-10 -right-10 w-64 h-64 bg-indigo-100 rounded-full blur-3xl opacity-30"></div>
-            <div className="absolute -bottom-10 -left-10 w-64 h-64 bg-blue-100 rounded-full blur-3xl opacity-30"></div>
+            <div className="absolute -top-10 -right-10 w-40 h-40 sm:w-64 sm:h-64 bg-indigo-100 rounded-full blur-3xl opacity-20 lg:opacity-30"></div>
+            <div className="absolute -bottom-10 -left-10 w-40 h-40 sm:w-64 sm:h-64 bg-blue-100 rounded-full blur-3xl opacity-20 lg:opacity-30"></div>
           </div>
         </div>
       </div>

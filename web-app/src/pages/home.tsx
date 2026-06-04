@@ -1,15 +1,19 @@
 import BecomeTutor from '../components/BecomeTutor';
-import CallToAction from '../components/CallToAction';
+import DownloadApp from '../components/DownloadApp';
 import FAQ from '../components/FAQ';
 import Header from '../components/Header';
 import Hero from '../components/Hero';
-import HowItWorks from '../components/HowItWorks';
+import CirriculamCards from '../components/HowItWorks';
 import LoveLessonsBanner from '../components/LoveLessonsBanner';
 import QRCodeFloater from '../components/QRCodeFloater';
 import SEO from '../components/SEO';
-import TutorLanguages from '../components/TutorLanguages';
+import SubjectCards from '../components/TutorLanguages';
 import TrustScore from '../components/TrustScore';
 import HowCoachacademWorks from '../components/HowCoachacademWorks';
+import SearchSubjectCirricula from '../components/SearchSubjectCirricula';
+import TopTutorCards from '../components/TopTutorCards';
+import WhyParentsChooseCA from '../components/WhyParentsChooseCA';
+import Testimonials from '../components/Testimonials';
 
 function Home() {
   return (
@@ -85,19 +89,23 @@ A-Level Tutors UAE."
       <Hero />
       <TrustScore />
       {/* Search bar here for subjects and Cirricula */}
-      <HowItWorks />
-      <TutorLanguages />
+      <SearchSubjectCirricula />
+      <CirriculamCards />
+      <SubjectCards />
       <HowCoachacademWorks />
+      <TopTutorCards />
+      <WhyParentsChooseCA />
+      <Testimonials />
+      <DownloadApp />
+      
 
       {/* <Features /> */}
       {/* <LoveLessonsBanner /> */}
       
       {/* <AppPromotion /> */}
-      <BecomeTutor />
+      {/* <BecomeTutor /> */}
       {/* <Courses /> */}
-      {/* <Testimonials /> */}
       <FAQ />
-      <CallToAction />
       {/* <Footer /> */}
       <QRCodeFloater />
     </div>
