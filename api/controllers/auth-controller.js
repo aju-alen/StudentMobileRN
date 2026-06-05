@@ -1394,11 +1394,12 @@ export const updateOrganizationCapacity = async (req, res, next) => {
       return res.status(400).json({ message: "New capacity is required" });
     }
 
-    // Validate capacity is one of the allowed values (13, 18, or 33)
-    const validCapacities = [13, 18, 33];
-    if (!validCapacities.includes(newCapacity)) {
-      return res.status(400).json({ 
-        message: "Invalid capacity. Allowed values are 13, 18, or 33" 
+    // Validate capacity: 3 free members + purchased tier (3, 5, or 10)
+    const purchasedCapacity = newCapacity - 3;
+    const validPurchasedCapacities = [3, 5, 10];
+    if (!validPurchasedCapacities.includes(purchasedCapacity)) {
+      return res.status(400).json({
+        message: "Invalid capacity. Allowed total values are 6, 8, or 13 members",
       });
     }
 
