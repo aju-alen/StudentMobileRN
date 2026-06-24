@@ -1,0 +1,271 @@
+{
+  "slug": "business-studies-tutors",
+  "subjectName": "Business Studies",
+  "seo": {
+    "title": "Business Studies Tutors in the UAE | Verified Online Tutors | CoachAcadem",
+    "description": "Browse verified Business Studies tutors across the UAE. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons through CoachAcadem.",
+    "primaryKeywords": ["Business Studies Tutors UAE"],
+    "secondaryKeywords": [
+      "Online Business Studies Tutors UAE",
+      "IGCSE Business Studies Tutors UAE",
+      "IB Business Management Tutors UAE",
+      "A-Level Business Studies Tutors UAE"
+    ]
+  },
+  "hero": {
+    "h1": "Business Studies Tutors in the UAE",
+    "supportingCopy": "Browse verified Business Studies tutors on CoachAcadem. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons online.",
+    "primaryCta": "Find Tutors",
+    "primaryCtaHref": "#featured-tutors",
+    "secondaryCta": "Get the App",
+    "secondaryCtaHref": "#download-app"
+  },
+  "featuredTutors": {
+    "title": "Featured Business Studies Tutors",
+    "lead": "Compare experienced Business Studies tutors supporting students across leading international curricula. Review qualifications, ratings, teaching experience, and student feedback before exploring individual tutor profiles.",
+    "tutors": [
+      {
+        "id": "daniel-foster",
+        "name": "Daniel Foster",
+        "photo": "https://randomuser.me/api/portraits/men/43.jpg",
+        "qualification": "MBA, London Business School",
+        "subjects": ["Business Studies", "Economics"],
+        "curricula": ["IGCSE", "A-Level", "IB"],
+        "rating": 4.9,
+        "reviewCount": 87,
+        "yearsExperience": 8,
+        "profileHref": "/tutors/daniel-foster"
+      },
+      {
+        "id": "sara-al-mazrouei",
+        "name": "Sara Al Mazrouei",
+        "photo": "https://randomuser.me/api/portraits/women/50.jpg",
+        "qualification": "BBA, American University of Sharjah",
+        "subjects": ["Business Studies", "Business Management"],
+        "curricula": ["American Curriculum", "IGCSE", "CBSE"],
+        "rating": 4.8,
+        "reviewCount": 72,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/sara-al-mazrouei"
+      },
+      {
+        "id": "james-patterson",
+        "name": "James Patterson",
+        "photo": "https://randomuser.me/api/portraits/men/61.jpg",
+        "qualification": "MSc Management, University of Warwick",
+        "subjects": ["Business Studies"],
+        "curricula": ["IGCSE", "A-Level"],
+        "rating": 4.9,
+        "reviewCount": 65,
+        "yearsExperience": 7,
+        "profileHref": "/tutors/james-patterson"
+      },
+      {
+        "id": "amira-hassan",
+        "name": "Amira Hassan",
+        "photo": "https://randomuser.me/api/portraits/women/44.jpg",
+        "qualification": "BA Business Administration, UAE University",
+        "subjects": ["Business Studies", "Business Management"],
+        "curricula": ["IB", "IGCSE", "CBSE"],
+        "rating": 4.8,
+        "reviewCount": 58,
+        "yearsExperience": 5,
+        "profileHref": "/tutors/amira-hassan"
+      },
+      {
+        "id": "lucas-bergmann",
+        "name": "Lucas Bergmann",
+        "photo": "https://randomuser.me/api/portraits/men/37.jpg",
+        "qualification": "MSc International Business, INSEAD",
+        "subjects": ["Business Studies", "Economics"],
+        "curricula": ["IB", "A-Level", "IGCSE"],
+        "rating": 5.0,
+        "reviewCount": 49,
+        "yearsExperience": 9,
+        "profileHref": "/tutors/lucas-bergmann"
+      },
+      {
+        "id": "priya-menon",
+        "name": "Priya Menon",
+        "photo": "https://randomuser.me/api/portraits/women/58.jpg",
+        "qualification": "PGCE Business Studies, University of Nottingham",
+        "subjects": ["Business Studies"],
+        "curricula": ["IGCSE", "CBSE", "American Curriculum"],
+        "rating": 4.9,
+        "reviewCount": 54,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/priya-menon"
+      }
+    ]
+  },
+  "howTutorsHelp": {
+    "title": "How Business Studies Tutors Can Help",
+    "paragraphs": [
+      "Business Studies introduces you to the way organisations operate, make decisions, manage resources, and respond to changing markets. While the subject may appear straightforward at first, many students discover that success depends on more than remembering definitions. You are expected to analyse situations, evaluate business decisions, interpret case studies, and justify recommendations using evidence.",
+      "One of the most common challenges students face is applying theory to real business scenarios. A student may understand concepts such as marketing, finance, operations, or human resources, but struggle when asked to evaluate a company's choices or explain the consequences of a business decision.",
+      "A Business Studies tutor helps you move beyond memorisation. Tutors can help you develop stronger analytical skills, improve case-study responses, structure longer answers, and understand what examiners expect in high-mark questions. Support may also include revision planning, coursework guidance, examination preparation, and curriculum-specific assessment techniques.",
+      "If your child needs support understanding business concepts, improving written responses, or preparing for important examinations, targeted tutoring can provide practical guidance and consistent feedback. The skills developed through Business Studies often extend beyond the classroom and can support future academic and professional goals."
+    ]
+  },
+  "curriculum": {
+    "title": "Find Business Studies Tutors by Curriculum",
+    "lead": "Business-related subjects vary across curricula. Explore tutors who understand the curriculum your child studies.",
+    "cards": [
+      {
+        "title": "IGCSE Business Studies Tutors",
+        "description": "Support for marketing, finance, operations, human resources, business strategy, examination preparation, and revision planning.",
+        "href": "/igcse-business-studies-tutors",
+        "cta": "Explore IGCSE Business Studies Tutors",
+        "tutorCount": 32
+      },
+      {
+        "title": "IB Business Management Tutors",
+        "description": "Guidance across business management concepts, case-study analysis, internal assessments, and examination preparation.",
+        "href": "/ib-business-management-tutors",
+        "cta": "Explore IB Business Management Tutors",
+        "tutorCount": 24
+      },
+      {
+        "title": "A-Level Business Studies Tutors",
+        "description": "Support for advanced business concepts, analytical thinking, evaluation skills, examination preparation, and coursework requirements.",
+        "href": "/a-level-business-studies-tutors",
+        "cta": "Explore A-Level Business Studies Tutors",
+        "tutorCount": 26
+      },
+      {
+        "title": "American Curriculum Business Tutors",
+        "description": "Assistance with coursework, business concepts, assessments, and curriculum progression.",
+        "href": "/american-curriculum-business-tutors",
+        "cta": "Explore American Curriculum Business Tutors",
+        "tutorCount": 18
+      },
+      {
+        "title": "CBSE Business Studies Tutors",
+        "description": "Support aligned with CBSE Business Studies requirements, conceptual understanding, case-study analysis, and examination preparation.",
+        "href": "/cbse-business-studies-tutors",
+        "cta": "Explore CBSE Business Studies Tutors",
+        "tutorCount": 21
+      }
+    ]
+  },
+  "whyParentsChoose": {
+    "title": "Why Parents Choose CoachAcadem",
+    "lead": "A trusted way to find qualified tutors, compare options, and book with confidence.",
+    "reasons": [
+      {
+        "title": "Verified Tutor Profiles",
+        "description": "Every tutor on CoachAcadem undergoes a verification process before appearing on the platform, helping parents make informed decisions with greater confidence."
+      },
+      {
+        "title": "Ratings and Reviews",
+        "description": "Read feedback from students and parents who have previously worked with a tutor to better understand teaching style, communication, and learning outcomes."
+      },
+      {
+        "title": "Curriculum Expertise",
+        "description": "Find tutors with experience supporting students across leading curricula including IGCSE, IB, A-Level, American Curriculum, and CBSE."
+      },
+      {
+        "title": "Instant and Scheduled Booking",
+        "description": "Book lessons immediately or schedule sessions around academic commitments and family routines."
+      },
+      {
+        "title": "Built-In Communication",
+        "description": "Stay connected through CoachAcadem's integrated communication tools after booking, helping coordinate lessons efficiently."
+      },
+      {
+        "title": "Access Across the UAE",
+        "description": "Connect with tutors through online lessons from anywhere in the UAE, expanding access to subject specialists regardless of location."
+      }
+    ]
+  },
+  "reviews": {
+    "title": "Student and Parent Reviews",
+    "lead": "Choosing a tutor is an important decision. Reviews from students and parents can provide valuable insight into teaching style, communication, reliability, and overall learning experience.",
+    "items": [
+      {
+        "content": "Our son struggled with case-study analysis in IGCSE Business Studies. His CoachAcadem tutor helped him structure answers and apply theory to real scenarios, which improved his exam performance significantly.",
+        "author": "Omar Al Falasi",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "IB Business Management required so much more than memorising definitions. My tutor helped me develop stronger evaluation skills and confidence with internal assessments.",
+        "author": "Chloe Anderson",
+        "role": "IB Student",
+        "avatar": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "We compared several Business Studies tutors and read verified reviews before booking. The tutor we chose was excellent at explaining concepts clearly and preparing our daughter for her exams.",
+        "author": "Rebecca Turner",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      }
+    ]
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "items": [
+      {
+        "question": "How do I find a Business Studies tutor?",
+        "answer": "Browse Business Studies tutor profiles on CoachAcadem, compare qualifications, reviews, teaching experience, and curriculum expertise, then choose the tutor who best matches your academic goals."
+      },
+      {
+        "question": "Are Business Studies tutors verified?",
+        "answer": "Yes. Tutors appearing on CoachAcadem complete the platform's verification requirements before becoming visible to students and parents."
+      },
+      {
+        "question": "Can I read tutor reviews before booking?",
+        "answer": "Yes. Public ratings and reviews allow you to evaluate previous learning experiences before choosing a tutor."
+      },
+      {
+        "question": "Do Business Studies tutors support IGCSE Business Studies?",
+        "answer": "Many tutors support IGCSE Business Studies, including case-study analysis, examination preparation, and revision planning."
+      },
+      {
+        "question": "Do tutors support IB Business Management?",
+        "answer": "Yes. Tutors may support Business Management coursework, internal assessments, case studies, and examination preparation."
+      },
+      {
+        "question": "Can lessons be booked instantly?",
+        "answer": "Depending on tutor availability, lessons may be booked instantly or scheduled for a future date and time."
+      },
+      {
+        "question": "Can students across the UAE use CoachAcadem?",
+        "answer": "Yes. Students throughout the UAE can connect with tutors through the platform."
+      }
+    ]
+  },
+  "downloadApp": {
+    "title": "CoachAcadem in Your Pocket",
+    "supportingCopy": "Search tutors, manage bookings, communicate with tutors, and continue learning through one platform."
+  },
+  "relatedSubjects": {
+    "title": "Related Subjects",
+    "subjects": [
+      {
+        "name": "Economics Tutors",
+        "description": "Business and Economics frequently overlap in areas such as markets, decision-making, competition, and organisational strategy.",
+        "href": "/economics-tutors",
+        "cta": "Explore Economics Tutors"
+      },
+      {
+        "name": "English Tutors",
+        "description": "Strong communication, report writing, analysis, and argument development are valuable skills in both Business Studies and English.",
+        "href": "/english-tutors",
+        "cta": "Explore English Tutors"
+      },
+      {
+        "name": "Mathematics Tutors",
+        "description": "Business calculations, financial analysis, data interpretation, and quantitative reasoning often benefit from strong Mathematics skills.",
+        "href": "/mathematics-tutors",
+        "cta": "Explore Mathematics Tutors"
+      },
+      {
+        "name": "Computer Science Tutors",
+        "description": "Technology, digital transformation, data analysis, and innovation increasingly connect Business Studies with Computer Science.",
+        "href": "/computer-science-tutors",
+        "cta": "Explore Computer Science Tutors"
+      }
+    ]
+  }
+}

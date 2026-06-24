@@ -1,0 +1,271 @@
+{
+  "slug": "arabic-tutors",
+  "subjectName": "Arabic",
+  "seo": {
+    "title": "Arabic Tutors in the UAE | Verified Online Tutors | CoachAcadem",
+    "description": "Browse verified Arabic tutors across the UAE. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons through CoachAcadem.",
+    "primaryKeywords": ["Arabic Tutors UAE"],
+    "secondaryKeywords": [
+      "Online Arabic Tutors UAE",
+      "IGCSE Arabic Tutors UAE",
+      "IB Arabic Tutors UAE",
+      "Arabic Language Tutors UAE"
+    ]
+  },
+  "hero": {
+    "h1": "Arabic Tutors in the UAE",
+    "supportingCopy": "Browse verified Arabic tutors on CoachAcadem. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons online.",
+    "primaryCta": "Find Tutors",
+    "primaryCtaHref": "#featured-tutors",
+    "secondaryCta": "Get the App",
+    "secondaryCtaHref": "#download-app"
+  },
+  "featuredTutors": {
+    "title": "Featured Arabic Tutors",
+    "lead": "Compare experienced Arabic tutors supporting students across leading international curricula. Review qualifications, ratings, teaching experience, and student feedback before exploring individual tutor profiles.",
+    "tutors": [
+      {
+        "id": "mariam-al-hashimi",
+        "name": "Mariam Al Hashimi",
+        "photo": "https://randomuser.me/api/portraits/women/47.jpg",
+        "qualification": "MA Arabic Language & Literature, UAE University",
+        "subjects": ["Arabic"],
+        "curricula": ["IGCSE", "CBSE", "Ministry Curriculum"],
+        "rating": 4.9,
+        "reviewCount": 98,
+        "yearsExperience": 9,
+        "profileHref": "/tutors/mariam-al-hashimi"
+      },
+      {
+        "id": "khalid-benali",
+        "name": "Khalid Benali",
+        "photo": "https://randomuser.me/api/portraits/men/39.jpg",
+        "qualification": "BA Arabic Studies, American University of Cairo",
+        "subjects": ["Arabic", "Islamic Studies"],
+        "curricula": ["IB", "IGCSE", "A-Level"],
+        "rating": 4.8,
+        "reviewCount": 74,
+        "yearsExperience": 7,
+        "profileHref": "/tutors/khalid-benali"
+      },
+      {
+        "id": "layla-abbas",
+        "name": "Layla Abbas",
+        "photo": "https://randomuser.me/api/portraits/women/61.jpg",
+        "qualification": "MEd Arabic Education, Zayed University",
+        "subjects": ["Arabic"],
+        "curricula": ["American Curriculum", "Ministry Curriculum", "IGCSE"],
+        "rating": 4.9,
+        "reviewCount": 86,
+        "yearsExperience": 8,
+        "profileHref": "/tutors/layla-abbas"
+      },
+      {
+        "id": "omar-said",
+        "name": "Omar Said",
+        "photo": "https://randomuser.me/api/portraits/men/76.jpg",
+        "qualification": "BA Arabic Language, Sorbonne University",
+        "subjects": ["Arabic"],
+        "curricula": ["IB", "A-Level", "IGCSE"],
+        "rating": 4.8,
+        "reviewCount": 62,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/omar-said"
+      },
+      {
+        "id": "noor-al-dhaheri",
+        "name": "Noor Al Dhaheri",
+        "photo": "https://randomuser.me/api/portraits/women/35.jpg",
+        "qualification": "PGCE Arabic, University of Exeter",
+        "subjects": ["Arabic", "ESL"],
+        "curricula": ["IGCSE", "CBSE", "American Curriculum"],
+        "rating": 5.0,
+        "reviewCount": 53,
+        "yearsExperience": 5,
+        "profileHref": "/tutors/noor-al-dhaheri"
+      },
+      {
+        "id": "hassan-rahimi",
+        "name": "Hassan Rahimi",
+        "photo": "https://randomuser.me/api/portraits/men/64.jpg",
+        "qualification": "MA Applied Linguistics, King Saud University",
+        "subjects": ["Arabic"],
+        "curricula": ["Ministry Curriculum", "IGCSE", "IB"],
+        "rating": 4.9,
+        "reviewCount": 71,
+        "yearsExperience": 10,
+        "profileHref": "/tutors/hassan-rahimi"
+      }
+    ]
+  },
+  "howTutorsHelp": {
+    "title": "How Arabic Tutors Can Help",
+    "paragraphs": [
+      "Arabic is a subject that develops over time through regular reading, writing, listening, and speaking. Many students understand classroom lessons but find it difficult to apply grammar rules confidently, expand vocabulary, analyse texts, or express ideas clearly in written and spoken Arabic.",
+      "For some students, the challenge comes from balancing Modern Standard Arabic with curriculum requirements. Others struggle with reading comprehension, essay writing, language structure, or examination technique. These challenges can affect confidence and make the subject feel more difficult than it needs to be.",
+      "An Arabic tutor helps you strengthen the practical language skills that support academic success. This may include reading comprehension, writing development, grammar, vocabulary building, oral communication, literary analysis, and examination preparation. Tutors can also help students develop greater confidence using Arabic in academic settings.",
+      "If your child needs support improving language skills, preparing for assessments, or building stronger communication abilities, targeted tutoring can provide structured guidance and consistent feedback. Strong Arabic skills can support success both inside and outside the classroom."
+    ]
+  },
+  "curriculum": {
+    "title": "Find Arabic Tutors by Curriculum",
+    "lead": "Arabic requirements vary across schools and curricula. Explore tutors with experience supporting the curriculum your child studies.",
+    "cards": [
+      {
+        "title": "IGCSE Arabic Tutors",
+        "description": "Support for reading comprehension, writing tasks, vocabulary development, language structure, examination preparation, and revision planning.",
+        "href": "/igcse-arabic-tutors",
+        "cta": "Explore IGCSE Arabic Tutors",
+        "tutorCount": 36
+      },
+      {
+        "title": "IB Arabic Tutors",
+        "description": "Guidance across language acquisition and literature pathways, including oral assessments, written tasks, and examination preparation.",
+        "href": "/ib-arabic-tutors",
+        "cta": "Explore IB Arabic Tutors",
+        "tutorCount": 24
+      },
+      {
+        "title": "A-Level Arabic Tutors",
+        "description": "Support for advanced language development, cultural understanding, essay writing, literary analysis, and examination preparation.",
+        "href": "/a-level-arabic-tutors",
+        "cta": "Explore A-Level Arabic Tutors",
+        "tutorCount": 18
+      },
+      {
+        "title": "American Curriculum Arabic Tutors",
+        "description": "Assistance with language development, reading, writing, assessments, and curriculum progression.",
+        "href": "/american-curriculum-arabic-tutors",
+        "cta": "Explore American Curriculum Arabic Tutors",
+        "tutorCount": 22
+      },
+      {
+        "title": "Ministry Curriculum Arabic Tutors",
+        "description": "Support aligned with UAE Arabic language requirements, literacy development, communication skills, and examination preparation.",
+        "href": "/ministry-curriculum-arabic-tutors",
+        "cta": "Explore Ministry Curriculum Arabic Tutors",
+        "tutorCount": 30
+      }
+    ]
+  },
+  "whyParentsChoose": {
+    "title": "Why Parents Choose CoachAcadem",
+    "lead": "A trusted way to find qualified tutors, compare options, and book with confidence.",
+    "reasons": [
+      {
+        "title": "Verified Tutor Profiles",
+        "description": "Every tutor on CoachAcadem undergoes a verification process before appearing on the platform, helping parents make informed decisions with greater confidence."
+      },
+      {
+        "title": "Ratings and Reviews",
+        "description": "Read feedback from students and parents who have previously worked with a tutor to better understand teaching style, communication, and learning outcomes."
+      },
+      {
+        "title": "Curriculum Expertise",
+        "description": "Find tutors with experience supporting students across leading curricula and UAE education requirements."
+      },
+      {
+        "title": "Instant and Scheduled Booking",
+        "description": "Book lessons immediately or schedule sessions around academic commitments and family routines."
+      },
+      {
+        "title": "Built-In Communication",
+        "description": "Stay connected through CoachAcadem's integrated communication tools after booking, helping coordinate lessons efficiently."
+      },
+      {
+        "title": "Access Across the UAE",
+        "description": "Connect with tutors through online lessons from anywhere in the UAE."
+      }
+    ]
+  },
+  "reviews": {
+    "title": "Student and Parent Reviews",
+    "lead": "Choosing a tutor is an important decision. Reviews from students and parents can provide valuable insight into teaching style, communication, reliability, and overall learning experience.",
+    "items": [
+      {
+        "content": "Our daughter's Arabic reading and writing improved significantly with her CoachAcadem tutor. The structured approach to grammar and vocabulary made the subject feel much more manageable.",
+        "author": "Salma Al Qasimi",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "I was struggling with IGCSE Arabic comprehension and essay writing. My tutor helped me build confidence and develop a clearer approach to exam questions.",
+        "author": "Yusuf Ahmed",
+        "role": "IGCSE Student",
+        "avatar": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "We appreciated being able to find a tutor experienced with UAE curriculum requirements. The lessons were well structured and our son looked forward to each session.",
+        "author": "Hana Al Suwaidi",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      }
+    ]
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "items": [
+      {
+        "question": "How do I find an Arabic tutor?",
+        "answer": "Browse Arabic tutor profiles on CoachAcadem, compare qualifications, reviews, teaching experience, and curriculum expertise, then choose the tutor who best matches your academic goals."
+      },
+      {
+        "question": "Are Arabic tutors verified?",
+        "answer": "Yes. Tutors appearing on CoachAcadem complete the platform's verification requirements before becoming visible to students and parents."
+      },
+      {
+        "question": "Can I read tutor reviews before booking?",
+        "answer": "Yes. Public ratings and reviews allow you to evaluate previous learning experiences before choosing a tutor."
+      },
+      {
+        "question": "Do Arabic tutors support school curricula in the UAE?",
+        "answer": "Yes. Many tutors support Arabic requirements across international curricula as well as UAE-specific language requirements."
+      },
+      {
+        "question": "Can tutors help with reading and writing skills?",
+        "answer": "Yes. Tutors can support reading comprehension, grammar, vocabulary development, writing skills, and oral communication."
+      },
+      {
+        "question": "Can lessons be booked instantly?",
+        "answer": "Depending on tutor availability, lessons may be booked instantly or scheduled for a future date and time."
+      },
+      {
+        "question": "Can students across the UAE use CoachAcadem?",
+        "answer": "Yes. Students throughout the UAE can connect with tutors through the platform."
+      }
+    ]
+  },
+  "downloadApp": {
+    "title": "CoachAcadem in Your Pocket",
+    "supportingCopy": "Search tutors, manage bookings, communicate with tutors, and continue learning through one platform."
+  },
+  "relatedSubjects": {
+    "title": "Related Subjects",
+    "subjects": [
+      {
+        "name": "English Tutors",
+        "description": "Developing strong language skills across both Arabic and English can improve reading comprehension, writing ability, communication, and academic confidence.",
+        "href": "/english-tutors",
+        "cta": "Explore English Tutors"
+      },
+      {
+        "name": "History Tutors",
+        "description": "History often requires reading source materials, understanding context, and communicating ideas clearly through written responses.",
+        "href": "/history-tutors",
+        "cta": "Explore History Tutors"
+      },
+      {
+        "name": "Islamic Studies Tutors",
+        "description": "Students studying Islamic Studies frequently benefit from stronger Arabic language skills, particularly when working with texts, terminology, and interpretation.",
+        "href": "/islamic-studies-tutors",
+        "cta": "Explore Islamic Studies Tutors"
+      },
+      {
+        "name": "Business Studies Tutors",
+        "description": "Clear communication, reading comprehension, and analytical writing skills developed through language study can support success in Business Studies.",
+        "href": "/business-studies-tutors",
+        "cta": "Explore Business Studies Tutors"
+      }
+    ]
+  }
+}

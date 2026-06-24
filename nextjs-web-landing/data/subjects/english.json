@@ -1,0 +1,271 @@
+{
+  "slug": "english-tutors",
+  "subjectName": "English",
+  "seo": {
+    "title": "English Tutors in the UAE | Verified Online Tutors | CoachAcadem",
+    "description": "Browse verified English tutors across the UAE. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons through CoachAcadem.",
+    "primaryKeywords": ["English Tutors UAE"],
+    "secondaryKeywords": [
+      "Online English Tutors UAE",
+      "IGCSE English Tutors UAE",
+      "IB English Tutors UAE",
+      "A-Level English Tutors UAE"
+    ]
+  },
+  "hero": {
+    "h1": "English Tutors in the UAE",
+    "supportingCopy": "Browse verified English tutors on CoachAcadem. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons online.",
+    "primaryCta": "Find Tutors",
+    "primaryCtaHref": "#featured-tutors",
+    "secondaryCta": "Get the App",
+    "secondaryCtaHref": "#download-app"
+  },
+  "featuredTutors": {
+    "title": "Featured English Tutors",
+    "lead": "Compare experienced English tutors supporting students across leading international curricula. Review qualifications, ratings, teaching experience, and student feedback before exploring individual tutor profiles.",
+    "tutors": [
+      {
+        "id": "fatima-al-zaabi",
+        "name": "Fatima Al Zaabi",
+        "photo": "https://randomuser.me/api/portraits/women/68.jpg",
+        "qualification": "BA English Literature, UAE University",
+        "subjects": ["English", "Creative Writing"],
+        "curricula": ["IGCSE", "CBSE", "A-Level"],
+        "rating": 4.8,
+        "reviewCount": 84,
+        "yearsExperience": 5,
+        "profileHref": "/tutors/fatima-al-zaabi"
+      },
+      {
+        "id": "oliver-hughes",
+        "name": "Oliver Hughes",
+        "photo": "https://randomuser.me/api/portraits/men/28.jpg",
+        "qualification": "MA English Literature, University of Oxford",
+        "subjects": ["English", "English Literature"],
+        "curricula": ["IGCSE", "A-Level", "IB"],
+        "rating": 4.9,
+        "reviewCount": 102,
+        "yearsExperience": 8,
+        "profileHref": "/tutors/oliver-hughes"
+      },
+      {
+        "id": "priya-nair",
+        "name": "Priya Nair",
+        "photo": "https://randomuser.me/api/portraits/women/42.jpg",
+        "qualification": "MEd English Education, University of Melbourne",
+        "subjects": ["English", "Creative Writing"],
+        "curricula": ["IB", "IGCSE", "American Curriculum"],
+        "rating": 4.9,
+        "reviewCount": 76,
+        "yearsExperience": 7,
+        "profileHref": "/tutors/priya-nair"
+      },
+      {
+        "id": "william-carter",
+        "name": "William Carter",
+        "photo": "https://randomuser.me/api/portraits/men/54.jpg",
+        "qualification": "BA English & Drama, University of Bristol",
+        "subjects": ["English"],
+        "curricula": ["A-Level", "IGCSE"],
+        "rating": 4.8,
+        "reviewCount": 68,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/william-carter"
+      },
+      {
+        "id": "aisha-mohammed",
+        "name": "Aisha Mohammed",
+        "photo": "https://randomuser.me/api/portraits/women/74.jpg",
+        "qualification": "MA Applied Linguistics, American University of Sharjah",
+        "subjects": ["English", "ESL"],
+        "curricula": ["American Curriculum", "CBSE", "IGCSE"],
+        "rating": 4.9,
+        "reviewCount": 91,
+        "yearsExperience": 9,
+        "profileHref": "/tutors/aisha-mohammed"
+      },
+      {
+        "id": "charlotte-evans",
+        "name": "Charlotte Evans",
+        "photo": "https://randomuser.me/api/portraits/women/19.jpg",
+        "qualification": "PGCE English, University of Cambridge",
+        "subjects": ["English", "English Literature"],
+        "curricula": ["IB", "A-Level", "IGCSE"],
+        "rating": 5.0,
+        "reviewCount": 58,
+        "yearsExperience": 10,
+        "profileHref": "/tutors/charlotte-evans"
+      }
+    ]
+  },
+  "howTutorsHelp": {
+    "title": "How English Tutors Can Help",
+    "paragraphs": [
+      "English is different from many other school subjects. Success is not based on memorising formulas or recalling facts. Instead, you are expected to read critically, write clearly, analyse texts, communicate ideas effectively, and adapt your writing to different audiences and purposes.",
+      "Many students understand what they want to say but struggle to express it in a way that meets curriculum expectations. Others find essay writing difficult, lose marks because of weak structure, or lack confidence when analysing literature and unseen texts. These challenges can affect performance even when a student understands the material.",
+      "An English tutor helps you develop the skills that sit behind strong results. This may include improving reading comprehension, essay structure, literary analysis, grammar, vocabulary, examination technique, and written communication. Tutors can also provide guidance on coursework, assignments, revision planning, and curriculum-specific assessment requirements.",
+      "If your child needs support building confidence in reading, writing, speaking, or analytical thinking, targeted tutoring can provide structured guidance and consistent feedback. Whether the goal is improving grades, strengthening communication skills, or preparing for important examinations, English tutoring offers support that extends beyond the classroom."
+    ]
+  },
+  "curriculum": {
+    "title": "Find English Tutors by Curriculum",
+    "lead": "English requirements vary significantly across curricula. Explore tutors who understand the expectations of the curriculum your child studies.",
+    "cards": [
+      {
+        "title": "IGCSE English Tutors",
+        "description": "Support for English Language, English Literature, reading comprehension, essay writing, textual analysis, examination preparation, and revision planning.",
+        "href": "/igcse-english-tutors",
+        "cta": "Explore IGCSE English Tutors",
+        "tutorCount": 44
+      },
+      {
+        "title": "IB English Tutors",
+        "description": "Guidance across Language and Literature, Literature, textual analysis, oral assessments, internal assessments, and examination preparation.",
+        "href": "/ib-english-tutors",
+        "cta": "Explore IB English Tutors",
+        "tutorCount": 32
+      },
+      {
+        "title": "A-Level English Tutors",
+        "description": "Support for advanced literary analysis, essay development, critical thinking, coursework requirements, and examination preparation.",
+        "href": "/a-level-english-tutors",
+        "cta": "Explore A-Level English Tutors",
+        "tutorCount": 28
+      },
+      {
+        "title": "American Curriculum English Tutors",
+        "description": "Assistance with reading comprehension, writing assignments, literary analysis, assessments, and curriculum progression.",
+        "href": "/american-curriculum-english-tutors",
+        "cta": "Explore American Curriculum English Tutors",
+        "tutorCount": 23
+      },
+      {
+        "title": "CBSE English Tutors",
+        "description": "Support aligned with CBSE English requirements, reading skills, writing tasks, language development, and examination preparation.",
+        "href": "/cbse-english-tutors",
+        "cta": "Explore CBSE English Tutors",
+        "tutorCount": 26
+      }
+    ]
+  },
+  "whyParentsChoose": {
+    "title": "Why Parents Choose CoachAcadem",
+    "lead": "A trusted way to find qualified tutors, compare options, and book with confidence.",
+    "reasons": [
+      {
+        "title": "Verified Tutor Profiles",
+        "description": "Every tutor on CoachAcadem undergoes a verification process before appearing on the platform, helping parents make informed decisions with greater confidence."
+      },
+      {
+        "title": "Ratings and Reviews",
+        "description": "Read feedback from students and parents who have previously worked with a tutor to better understand teaching style, communication, and learning outcomes."
+      },
+      {
+        "title": "Curriculum Expertise",
+        "description": "Find tutors with experience supporting students across leading curricula including IGCSE, IB, A-Level, American Curriculum, and CBSE."
+      },
+      {
+        "title": "Instant and Scheduled Booking",
+        "description": "Book lessons immediately or schedule sessions around academic commitments and family routines."
+      },
+      {
+        "title": "Built-In Communication",
+        "description": "Stay connected through CoachAcadem's integrated communication tools after booking, helping coordinate lessons efficiently."
+      },
+      {
+        "title": "Access Across the UAE",
+        "description": "Connect with tutors through online lessons from anywhere in the UAE, expanding access to subject specialists regardless of location."
+      }
+    ]
+  },
+  "reviews": {
+    "title": "Student and Parent Reviews",
+    "lead": "Choosing a tutor is an important decision. Reviews from students and parents can provide valuable insight into teaching style, communication, reliability, and overall learning experience.",
+    "items": [
+      {
+        "content": "Our son's essay writing improved dramatically after working with an English tutor through CoachAcadem. The structured feedback on structure and analysis made a real difference to his IGCSE results.",
+        "author": "Rashid Al Maktoum",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "IB English Language and Literature felt overwhelming until I found a tutor on CoachAcadem. Clear guidance on textual analysis and oral assessments helped me feel prepared for my exams.",
+        "author": "Zara Khan",
+        "role": "IB Student",
+        "avatar": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "We compared several English tutors and read honest reviews before booking. The tutor we chose was excellent at building our daughter's confidence in reading and writing.",
+        "author": "Jennifer Walsh",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      }
+    ]
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "items": [
+      {
+        "question": "How do I find an English tutor?",
+        "answer": "Browse English tutor profiles on CoachAcadem, compare qualifications, reviews, teaching experience, and curriculum expertise, then choose the tutor who best matches your academic goals."
+      },
+      {
+        "question": "Are English tutors verified?",
+        "answer": "Yes. Tutors appearing on CoachAcadem complete the platform's verification requirements before becoming visible to students and parents."
+      },
+      {
+        "question": "Can I read tutor reviews before booking?",
+        "answer": "Yes. Public ratings and reviews allow you to evaluate previous learning experiences before choosing a tutor."
+      },
+      {
+        "question": "Do English tutors support IGCSE English?",
+        "answer": "Many tutors support IGCSE English Language and English Literature, including coursework guidance, textual analysis, examination preparation, and revision planning."
+      },
+      {
+        "question": "Do English tutors support IB English?",
+        "answer": "Yes. Tutors may support IB Language and Literature as well as Literature courses, including oral assessments and examination preparation."
+      },
+      {
+        "question": "Can lessons be booked instantly?",
+        "answer": "Depending on tutor availability, lessons may be booked instantly or scheduled for a future date and time."
+      },
+      {
+        "question": "Can students across the UAE use CoachAcadem?",
+        "answer": "Yes. Students throughout the UAE can connect with tutors through the platform."
+      }
+    ]
+  },
+  "downloadApp": {
+    "title": "CoachAcadem in Your Pocket",
+    "supportingCopy": "Search tutors, manage bookings, communicate with tutors, and continue learning through one platform."
+  },
+  "relatedSubjects": {
+    "title": "Related Subjects",
+    "subjects": [
+      {
+        "name": "Arabic Tutors",
+        "description": "Language skills developed in English often complement learning in Arabic, particularly in reading comprehension, writing, communication, and analytical thinking.",
+        "href": "/arabic-tutors",
+        "cta": "Explore Arabic Tutors"
+      },
+      {
+        "name": "History Tutors",
+        "description": "Strong reading, analysis, and essay-writing skills are valuable in both English and History, especially when working with source material and extended responses.",
+        "href": "/history-tutors",
+        "cta": "Explore History Tutors"
+      },
+      {
+        "name": "Economics Tutors",
+        "description": "Economics students are often required to analyse information, structure arguments, and communicate ideas clearly—skills that are strengthened through English study.",
+        "href": "/economics-tutors",
+        "cta": "Explore Economics Tutors"
+      },
+      {
+        "name": "Business Studies Tutors",
+        "description": "Business Studies frequently requires report writing, case-study analysis, and effective communication, making it a natural companion subject to English.",
+        "href": "/business-studies-tutors",
+        "cta": "Explore Business Studies Tutors"
+      }
+    ]
+  }
+}

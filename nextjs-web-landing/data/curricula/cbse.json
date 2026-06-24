@@ -1,0 +1,315 @@
+{
+  "slug": "cbse-tutors",
+  "curriculumName": "CBSE",
+  "seo": {
+    "title": "CBSE Tutors in the UAE | Verified Online Tutors | CoachAcadem",
+    "description": "Browse verified CBSE tutors across the UAE. Compare qualifications, reviews, experience, and subject expertise before booking lessons through CoachAcadem.",
+    "primaryKeywords": ["CBSE Tutors UAE"],
+    "secondaryKeywords": [
+      "Online CBSE Tutors UAE",
+      "CBSE Tuition UAE",
+      "CBSE Teachers UAE",
+      "CBSE Exam Preparation UAE",
+      "CBSE Subject Tutors UAE"
+    ]
+  },
+  "hero": {
+    "h1": "CBSE Tutors in the UAE",
+    "supportingCopy": "Browse verified CBSE tutors on CoachAcadem. Compare qualifications, reviews, experience, and subject expertise before booking lessons online. The Central Board of Secondary Education (CBSE) is one of the most widely followed curricula in the world and is studied by thousands of students across the UAE. As students progress through the curriculum, subjects become more detailed, assessments become more demanding, and examination performance takes on greater importance. CoachAcadem helps you find tutors who understand CBSE requirements and the subjects your child studies.",
+    "primaryCta": "Find Tutors",
+    "primaryCtaHref": "#featured-tutors",
+    "secondaryCta": "Get the App",
+    "secondaryCtaHref": "#download-app"
+  },
+  "featuredTutors": {
+    "title": "Featured CBSE Tutors",
+    "lead": "Compare experienced CBSE tutors supporting students across a range of subject areas. Review qualifications, ratings, teaching experience, and student feedback before exploring individual tutor profiles.",
+    "tutors": [
+      {
+        "id": "ahmed-khan",
+        "name": "Ahmed Khan",
+        "photo": "https://randomuser.me/api/portraits/men/75.jpg",
+        "qualification": "BSc Mathematics, American University of Sharjah",
+        "subjects": ["Mathematics", "Statistics"],
+        "curricula": ["CBSE"],
+        "rating": 4.9,
+        "reviewCount": 112,
+        "yearsExperience": 7,
+        "profileHref": "/tutors/ahmed-khan"
+      },
+      {
+        "id": "vikram-patel",
+        "name": "Vikram Patel",
+        "photo": "https://randomuser.me/api/portraits/men/58.jpg",
+        "qualification": "MSc Chemistry, IIT Bombay",
+        "subjects": ["Chemistry", "Science"],
+        "curricula": ["CBSE"],
+        "rating": 4.9,
+        "reviewCount": 85,
+        "yearsExperience": 8,
+        "profileHref": "/tutors/vikram-patel"
+      },
+      {
+        "id": "amit-verma",
+        "name": "Amit Verma",
+        "photo": "https://randomuser.me/api/portraits/men/48.jpg",
+        "qualification": "MSc Life Sciences, IIT Delhi",
+        "subjects": ["Biology", "Science"],
+        "curricula": ["CBSE"],
+        "rating": 4.9,
+        "reviewCount": 77,
+        "yearsExperience": 8,
+        "profileHref": "/tutors/amit-verma"
+      },
+      {
+        "id": "anita-sharma",
+        "name": "Anita Sharma",
+        "photo": "https://randomuser.me/api/portraits/women/45.jpg",
+        "qualification": "MCom, Chartered Accountant",
+        "subjects": ["Accounting"],
+        "curricula": ["CBSE"],
+        "rating": 4.9,
+        "reviewCount": 76,
+        "yearsExperience": 8,
+        "profileHref": "/tutors/anita-sharma"
+      },
+      {
+        "id": "aisha-mohammed",
+        "name": "Aisha Mohammed",
+        "photo": "https://randomuser.me/api/portraits/women/74.jpg",
+        "qualification": "MA Applied Linguistics, American University of Sharjah",
+        "subjects": ["English", "ESL"],
+        "curricula": ["CBSE"],
+        "rating": 4.9,
+        "reviewCount": 91,
+        "yearsExperience": 9,
+        "profileHref": "/tutors/aisha-mohammed"
+      },
+      {
+        "id": "sana-kapoor",
+        "name": "Sana Kapoor",
+        "photo": "https://randomuser.me/api/portraits/women/53.jpg",
+        "qualification": "BSc Software Engineering, BITS Pilani",
+        "subjects": ["Computer Science"],
+        "curricula": ["CBSE"],
+        "rating": 4.8,
+        "reviewCount": 73,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/sana-kapoor"
+      }
+    ]
+  },
+  "understanding": {
+    "title": "Understanding the CBSE Curriculum",
+    "paragraphs": [
+      "The CBSE curriculum provides students with a structured academic framework that emphasises conceptual understanding, subject mastery, and consistent progression from one grade level to the next. It is recognised internationally and is followed by many schools throughout the UAE.",
+      "As you move through the curriculum, subjects become increasingly interconnected and build upon knowledge gained in previous years. Strong foundations are particularly important in Mathematics and Science, where later topics often depend on a clear understanding of earlier concepts.",
+      "Many students seek tutoring support when preparing for examinations, strengthening difficult subject areas, improving problem-solving skills, or working toward specific academic goals. Some students need help closing knowledge gaps, while others seek additional challenge and academic enrichment beyond classroom instruction.",
+      "A tutor familiar with the CBSE curriculum can help provide structured guidance, reinforce classroom learning, strengthen examination preparation, and support long-term academic development. Whether your child requires support in a single subject or across multiple subjects, working with a tutor who understands the curriculum can help create a more focused and effective learning experience."
+    ]
+  },
+  "subjects": {
+    "title": "Find CBSE Tutors by Subject",
+    "lead": "The CBSE curriculum includes a wide range of subjects across sciences, mathematics, languages, humanities, and commerce-related disciplines. Explore tutors by subject area.",
+    "cards": [
+      {
+        "name": "Mathematics Tutors",
+        "description": "Support for arithmetic, algebra, geometry, trigonometry, statistics, problem-solving, and examination preparation.",
+        "href": "/cbse-mathematics-tutors",
+        "cta": "Explore Mathematics Tutors",
+        "tutorCount": 40
+      },
+      {
+        "name": "Physics Tutors",
+        "description": "Support for mechanics, electricity, magnetism, energy, modern physics, calculations, and examination preparation.",
+        "href": "/cbse-physics-tutors",
+        "cta": "Explore Physics Tutors",
+        "tutorCount": 34
+      },
+      {
+        "name": "Chemistry Tutors",
+        "description": "Support for physical chemistry, organic chemistry, inorganic chemistry, calculations, laboratory concepts, and examination preparation.",
+        "href": "/cbse-chemistry-tutors",
+        "cta": "Explore Chemistry Tutors",
+        "tutorCount": 32
+      },
+      {
+        "name": "Biology Tutors",
+        "description": "Support for genetics, physiology, ecology, biological processes, data interpretation, and examination preparation.",
+        "href": "/cbse-biology-tutors",
+        "cta": "Explore Biology Tutors",
+        "tutorCount": 30
+      },
+      {
+        "name": "English Tutors",
+        "description": "Support for reading comprehension, writing skills, grammar, communication, literature, and examination preparation.",
+        "href": "/cbse-english-tutors",
+        "cta": "Explore English Tutors",
+        "tutorCount": 36
+      },
+      {
+        "name": "Computer Science Tutors",
+        "description": "Support for programming concepts, computational thinking, databases, technology systems, and examination preparation.",
+        "href": "/cbse-computer-science-tutors",
+        "cta": "Explore Computer Science Tutors",
+        "tutorCount": 24
+      },
+      {
+        "name": "Business Studies Tutors",
+        "description": "Support for management principles, business operations, organisational structures, and examination preparation.",
+        "href": "/cbse-business-studies-tutors",
+        "cta": "Explore Business Studies Tutors",
+        "tutorCount": 22
+      },
+      {
+        "name": "Economics Tutors",
+        "description": "Support for economic concepts, markets, national income, development, and examination preparation.",
+        "href": "/cbse-economics-tutors",
+        "cta": "Explore Economics Tutors",
+        "tutorCount": 20
+      },
+      {
+        "name": "Accounting Tutors",
+        "description": "Support for bookkeeping, financial statements, accounting principles, financial analysis, and examination preparation.",
+        "href": "/cbse-accounting-tutors",
+        "cta": "Explore Accounting Tutors",
+        "tutorCount": 22
+      },
+      {
+        "name": "Geography Tutors",
+        "description": "Support for physical geography, human geography, environmental studies, map skills, and examination preparation.",
+        "href": "/cbse-geography-tutors",
+        "cta": "Explore Geography Tutors",
+        "tutorCount": 18
+      },
+      {
+        "name": "History Tutors",
+        "description": "Support for historical understanding, source interpretation, analytical thinking, and examination preparation.",
+        "href": "/cbse-history-tutors",
+        "cta": "Explore History Tutors",
+        "tutorCount": 16
+      }
+    ]
+  },
+  "whyParentsChoose": {
+    "title": "Why Parents Choose CoachAcadem",
+    "lead": "Choosing a tutor involves more than finding subject expertise. Parents want confidence that tutors understand the curriculum their child studies and can provide reliable academic support.",
+    "reasons": [
+      {
+        "title": "Verified Tutor Profiles",
+        "description": "Review qualifications, experience, and tutor information through verified profiles."
+      },
+      {
+        "title": "Ratings and Reviews",
+        "description": "Read feedback from students and parents before making a decision."
+      },
+      {
+        "title": "Curriculum Expertise",
+        "description": "Identify tutors who specifically support CBSE students and subject requirements."
+      },
+      {
+        "title": "Instant and Scheduled Booking",
+        "description": "Book lessons immediately or schedule sessions around academic commitments."
+      },
+      {
+        "title": "Built-In Communication",
+        "description": "Coordinate lessons through CoachAcadem after booking."
+      },
+      {
+        "title": "Access Across the UAE",
+        "description": "Connect with tutors online from anywhere in the UAE."
+      }
+    ]
+  },
+  "reviews": {
+    "title": "Student and Parent Reviews",
+    "lead": "Choosing a tutor is an important academic decision. Reviews can help you understand how tutors communicate, teach, and support student progress.",
+    "items": [
+      {
+        "content": "Our daughter's CBSE Mathematics and Science grades improved significantly after working with a CoachAcadem tutor. The structured approach to board examination preparation made a real difference.",
+        "author": "Rajesh Pillai",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "I was struggling with CBSE Physics numerical problems until I found a tutor through CoachAcadem. Step-by-step guidance helped me build confidence before my board exams.",
+        "author": "Priya Nair",
+        "role": "CBSE Student",
+        "avatar": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "We compared several CBSE tutors and read verified reviews before booking. The tutor we chose was excellent at reinforcing classroom learning and preparing our son for his examinations.",
+        "author": "Meera Shah",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      }
+    ]
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "items": [
+      {
+        "question": "What is the CBSE curriculum?",
+        "answer": "The Central Board of Secondary Education (CBSE) is a structured academic curriculum followed by schools in many countries, including the UAE. It emphasises conceptual understanding, subject progression, and academic preparation across multiple disciplines."
+      },
+      {
+        "question": "How do I find a CBSE tutor?",
+        "answer": "Browse tutor profiles on CoachAcadem, compare qualifications, reviews, experience, and subject expertise, then choose the tutor who best matches your child's academic needs."
+      },
+      {
+        "question": "Can I find tutors for individual CBSE subjects?",
+        "answer": "Yes. CoachAcadem allows you to explore tutors across Mathematics, Physics, Chemistry, Biology, English, Business Studies, Economics, Accounting, Geography, History, Computer Science, and more."
+      },
+      {
+        "question": "Are CBSE tutors verified?",
+        "answer": "Yes. Tutors must complete CoachAcadem's verification requirements before appearing on the platform."
+      },
+      {
+        "question": "Can I read tutor reviews before booking?",
+        "answer": "Yes. Ratings and reviews are publicly available to help families make informed decisions."
+      },
+      {
+        "question": "Can lessons be booked instantly?",
+        "answer": "Depending on tutor availability, lessons may be booked immediately or scheduled for a later time."
+      },
+      {
+        "question": "Can students across the UAE use CoachAcadem?",
+        "answer": "Yes. Students throughout the UAE can connect with tutors through the platform."
+      }
+    ]
+  },
+  "downloadApp": {
+    "title": "CoachAcadem in Your Pocket",
+    "supportingCopy": "Search tutors, manage bookings, communicate with tutors, and continue learning through one platform."
+  },
+  "relatedCurricula": {
+    "title": "Related Curricula",
+    "lead": "Families exploring the CBSE curriculum often compare it with other international programmes available in the UAE.",
+    "items": [
+      {
+        "name": "IGCSE Tutors",
+        "description": "Explore tutors supporting students studying the IGCSE curriculum.",
+        "href": "/igcse-tutors",
+        "cta": "Explore IGCSE Tutors"
+      },
+      {
+        "name": "IB Tutors",
+        "description": "Explore tutors supporting students studying the International Baccalaureate curriculum.",
+        "href": "/ib-tutors",
+        "cta": "Explore IB Tutors"
+      },
+      {
+        "name": "A-Level Tutors",
+        "description": "Explore tutors supporting students preparing for advanced secondary qualifications.",
+        "href": "/a-level-tutors",
+        "cta": "Explore A-Level Tutors"
+      },
+      {
+        "name": "American Curriculum Tutors",
+        "description": "Explore tutors supporting students following the American Curriculum pathway.",
+        "href": "/american-curriculum-tutors",
+        "cta": "Explore American Curriculum Tutors"
+      }
+    ]
+  }
+}

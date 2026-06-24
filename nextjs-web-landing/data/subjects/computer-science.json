@@ -1,0 +1,271 @@
+{
+  "slug": "computer-science-tutors",
+  "subjectName": "Computer Science",
+  "seo": {
+    "title": "Computer Science Tutors in the UAE | Verified Online Tutors | CoachAcadem",
+    "description": "Browse verified Computer Science tutors across the UAE. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons through CoachAcadem.",
+    "primaryKeywords": ["Computer Science Tutors UAE"],
+    "secondaryKeywords": [
+      "Online Computer Science Tutors UAE",
+      "IGCSE Computer Science Tutors UAE",
+      "IB Computer Science Tutors UAE",
+      "A-Level Computer Science Tutors UAE"
+    ]
+  },
+  "hero": {
+    "h1": "Computer Science Tutors in the UAE",
+    "supportingCopy": "Browse verified Computer Science tutors on CoachAcadem. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons online.",
+    "primaryCta": "Find Tutors",
+    "primaryCtaHref": "#featured-tutors",
+    "secondaryCta": "Get the App",
+    "secondaryCtaHref": "#download-app"
+  },
+  "featuredTutors": {
+    "title": "Featured Computer Science Tutors",
+    "lead": "Compare experienced Computer Science tutors supporting students across leading international curricula. Review qualifications, ratings, teaching experience, and student feedback before exploring individual tutor profiles.",
+    "tutors": [
+      {
+        "id": "alex-rivera",
+        "name": "Alex Rivera",
+        "photo": "https://randomuser.me/api/portraits/men/46.jpg",
+        "qualification": "MSc Computer Science, Stanford University",
+        "subjects": ["Computer Science", "Programming"],
+        "curricula": ["IGCSE", "IB", "A-Level"],
+        "rating": 4.9,
+        "reviewCount": 89,
+        "yearsExperience": 7,
+        "profileHref": "/tutors/alex-rivera"
+      },
+      {
+        "id": "sana-kapoor",
+        "name": "Sana Kapoor",
+        "photo": "https://randomuser.me/api/portraits/women/53.jpg",
+        "qualification": "BSc Software Engineering, BITS Pilani",
+        "subjects": ["Computer Science"],
+        "curricula": ["CBSE", "IGCSE", "American Curriculum"],
+        "rating": 4.8,
+        "reviewCount": 73,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/sana-kapoor"
+      },
+      {
+        "id": "michael-stone",
+        "name": "Michael Stone",
+        "photo": "https://randomuser.me/api/portraits/men/59.jpg",
+        "qualification": "MEng Computing, Imperial College London",
+        "subjects": ["Computer Science", "Mathematics"],
+        "curricula": ["A-Level", "IB", "IGCSE"],
+        "rating": 5.0,
+        "reviewCount": 67,
+        "yearsExperience": 9,
+        "profileHref": "/tutors/michael-stone"
+      },
+      {
+        "id": "fatima-yousef",
+        "name": "Fatima Yousef",
+        "photo": "https://randomuser.me/api/portraits/women/40.jpg",
+        "qualification": "BSc Computer Science, Khalifa University",
+        "subjects": ["Computer Science", "Programming"],
+        "curricula": ["American Curriculum", "IGCSE", "CBSE"],
+        "rating": 4.9,
+        "reviewCount": 58,
+        "yearsExperience": 5,
+        "profileHref": "/tutors/fatima-yousef"
+      },
+      {
+        "id": "liam-obrien",
+        "name": "Liam O'Brien",
+        "photo": "https://randomuser.me/api/portraits/men/34.jpg",
+        "qualification": "MSc Artificial Intelligence, University of Edinburgh",
+        "subjects": ["Computer Science"],
+        "curricula": ["IB", "A-Level"],
+        "rating": 4.8,
+        "reviewCount": 52,
+        "yearsExperience": 8,
+        "profileHref": "/tutors/liam-obrien"
+      },
+      {
+        "id": "nadia-hassan",
+        "name": "Nadia Hassan",
+        "photo": "https://randomuser.me/api/portraits/women/66.jpg",
+        "qualification": "BSc Information Technology, American University of Sharjah",
+        "subjects": ["Computer Science", "Programming"],
+        "curricula": ["IGCSE", "IB", "American Curriculum"],
+        "rating": 4.9,
+        "reviewCount": 64,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/nadia-hassan"
+      }
+    ]
+  },
+  "howTutorsHelp": {
+    "title": "How Computer Science Tutors Can Help",
+    "paragraphs": [
+      "Computer Science is often misunderstood as a subject that revolves entirely around programming. In reality, students are expected to develop logical thinking, problem-solving skills, computational reasoning, and an understanding of how computer systems work. Writing code is only one part of the picture.",
+      "Many students struggle because Computer Science introduces a different way of thinking. A small mistake in logic can lead to the wrong outcome, even when the student understands the topic. Others find algorithms, data structures, databases, networking, or programming concepts difficult to apply when completing assignments or examinations.",
+      "A Computer Science tutor helps you break complex topics into manageable steps. Instead of memorising definitions, you learn how concepts work in practice and how they connect to broader computing principles. Tutors can also help you improve problem-solving techniques, understand programming concepts more clearly, and develop confidence when approaching technical questions.",
+      "If your child needs support with coursework, examination preparation, coding concepts, or computational thinking, targeted tutoring can provide structured guidance and regular feedback. Whether the goal is improving grades, preparing for future studies, or building stronger technical skills, Computer Science tutoring provides support aligned with your curriculum and learning objectives."
+    ]
+  },
+  "curriculum": {
+    "title": "Find Computer Science Tutors by Curriculum",
+    "lead": "Computer Science is delivered differently across curricula. Explore tutors with experience supporting the curriculum your child studies.",
+    "cards": [
+      {
+        "title": "IGCSE Computer Science Tutors",
+        "description": "Support for programming concepts, algorithms, data representation, computer systems, examination preparation, and revision planning.",
+        "href": "/igcse-computer-science-tutors",
+        "cta": "Explore IGCSE Computer Science Tutors",
+        "tutorCount": 35
+      },
+      {
+        "title": "IB Computer Science Tutors",
+        "description": "Guidance across core Computer Science concepts, computational thinking, internal assessments, project work, and examination preparation.",
+        "href": "/ib-computer-science-tutors",
+        "cta": "Explore IB Computer Science Tutors",
+        "tutorCount": 26
+      },
+      {
+        "title": "A-Level Computer Science Tutors",
+        "description": "Support for advanced programming concepts, algorithms, computational theory, coursework requirements, and examination preparation.",
+        "href": "/a-level-computer-science-tutors",
+        "cta": "Explore A-Level Computer Science Tutors",
+        "tutorCount": 28
+      },
+      {
+        "title": "American Curriculum Computer Science Tutors",
+        "description": "Assistance with coursework, programming foundations, assessments, and curriculum progression.",
+        "href": "/american-curriculum-computer-science-tutors",
+        "cta": "Explore American Curriculum Computer Science Tutors",
+        "tutorCount": 19
+      },
+      {
+        "title": "CBSE Computer Science Tutors",
+        "description": "Support aligned with CBSE Computer Science requirements, programming concepts, practical applications, and examination preparation.",
+        "href": "/cbse-computer-science-tutors",
+        "cta": "Explore CBSE Computer Science Tutors",
+        "tutorCount": 24
+      }
+    ]
+  },
+  "whyParentsChoose": {
+    "title": "Why Parents Choose CoachAcadem",
+    "lead": "A trusted way to find qualified tutors, compare options, and book with confidence.",
+    "reasons": [
+      {
+        "title": "Verified Tutor Profiles",
+        "description": "Every tutor on CoachAcadem undergoes a verification process before appearing on the platform, helping parents make informed decisions with greater confidence."
+      },
+      {
+        "title": "Ratings and Reviews",
+        "description": "Read feedback from students and parents who have previously worked with a tutor to better understand teaching style, communication, and learning outcomes."
+      },
+      {
+        "title": "Curriculum Expertise",
+        "description": "Find tutors with experience supporting students across leading curricula including IGCSE, IB, A-Level, American Curriculum, and CBSE."
+      },
+      {
+        "title": "Instant and Scheduled Booking",
+        "description": "Book lessons immediately or schedule sessions around academic commitments and family routines."
+      },
+      {
+        "title": "Built-In Communication",
+        "description": "Stay connected through CoachAcadem's integrated communication tools after booking, helping coordinate lessons efficiently."
+      },
+      {
+        "title": "Access Across the UAE",
+        "description": "Connect with tutors through online lessons from anywhere in the UAE, expanding access to subject specialists regardless of location."
+      }
+    ]
+  },
+  "reviews": {
+    "title": "Student and Parent Reviews",
+    "lead": "Choosing a tutor is an important decision. Reviews from students and parents can provide valuable insight into teaching style, communication, reliability, and overall learning experience.",
+    "items": [
+      {
+        "content": "Our son was struggling with algorithms and programming logic in IGCSE Computer Science. His CoachAcadem tutor broke concepts down clearly and his confidence improved within weeks.",
+        "author": "Rajesh Pillai",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "IB Computer Science coursework felt overwhelming until I found a tutor through CoachAcadem. Step-by-step guidance on programming and internal assessments made a huge difference.",
+        "author": "Ethan Brooks",
+        "role": "IB Student",
+        "avatar": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "We compared several Computer Science tutors and read verified reviews before booking. The tutor we chose was patient, knowledgeable, and excellent at explaining complex topics simply.",
+        "author": "Anna Kowalski",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      }
+    ]
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "items": [
+      {
+        "question": "How do I find a Computer Science tutor?",
+        "answer": "Browse Computer Science tutor profiles on CoachAcadem, compare qualifications, reviews, teaching experience, and curriculum expertise, then choose the tutor who best matches your academic goals."
+      },
+      {
+        "question": "Are Computer Science tutors verified?",
+        "answer": "Yes. Tutors appearing on CoachAcadem complete the platform's verification requirements before becoming visible to students and parents."
+      },
+      {
+        "question": "Can I read tutor reviews before booking?",
+        "answer": "Yes. Public ratings and reviews allow you to evaluate previous learning experiences before choosing a tutor."
+      },
+      {
+        "question": "Do Computer Science tutors support IGCSE Computer Science?",
+        "answer": "Many tutors support IGCSE Computer Science, including programming concepts, algorithms, examination preparation, and revision planning."
+      },
+      {
+        "question": "Do Computer Science tutors support IB Computer Science?",
+        "answer": "Yes. Tutors may support coursework, internal assessments, programming concepts, and examination preparation."
+      },
+      {
+        "question": "Can lessons be booked instantly?",
+        "answer": "Depending on tutor availability, lessons may be booked instantly or scheduled for a future date and time."
+      },
+      {
+        "question": "Can students across the UAE use CoachAcadem?",
+        "answer": "Yes. Students throughout the UAE can connect with tutors through the platform."
+      }
+    ]
+  },
+  "downloadApp": {
+    "title": "CoachAcadem in Your Pocket",
+    "supportingCopy": "Search tutors, manage bookings, communicate with tutors, and continue learning through one platform."
+  },
+  "relatedSubjects": {
+    "title": "Related Subjects",
+    "subjects": [
+      {
+        "name": "Mathematics Tutors",
+        "description": "Many Computer Science topics rely on logical reasoning, problem-solving, patterns, and mathematical thinking. Strong Mathematics skills often support success in computing subjects.",
+        "href": "/mathematics-tutors",
+        "cta": "Explore Mathematics Tutors"
+      },
+      {
+        "name": "Physics Tutors",
+        "description": "Physics and Computer Science both encourage analytical thinking, structured problem-solving, and the application of theoretical concepts to practical situations.",
+        "href": "/physics-tutors",
+        "cta": "Explore Physics Tutors"
+      },
+      {
+        "name": "Chemistry Tutors",
+        "description": "Computer Science students often encounter data analysis, modelling, and technical problem-solving skills that overlap with scientific disciplines.",
+        "href": "/chemistry-tutors",
+        "cta": "Explore Chemistry Tutors"
+      },
+      {
+        "name": "Biology Tutors",
+        "description": "Emerging fields such as bioinformatics, genetics, health technology, and data science increasingly combine principles from Biology and Computer Science.",
+        "href": "/biology-tutors",
+        "cta": "Explore Biology Tutors"
+      }
+    ]
+  }
+}

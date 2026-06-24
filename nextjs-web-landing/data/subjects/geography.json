@@ -1,0 +1,273 @@
+{
+  "slug": "geography-tutors",
+  "subjectName": "Geography",
+  "seo": {
+    "title": "Geography Tutors in the UAE | Verified Online Tutors | CoachAcadem",
+    "description": "Browse verified Geography tutors across the UAE. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons through CoachAcadem.",
+    "primaryKeywords": ["Geography Tutors UAE"],
+    "secondaryKeywords": [
+      "Online Geography Tutors UAE",
+      "IGCSE Geography Tutors UAE",
+      "IB Geography Tutors UAE",
+      "A-Level Geography Tutors UAE",
+      "Geography Tuition UAE",
+      "Geography Teachers UAE"
+    ]
+  },
+  "hero": {
+    "h1": "Geography Tutors in the UAE",
+    "supportingCopy": "Browse verified Geography tutors on CoachAcadem. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons online.",
+    "primaryCta": "Find Tutors",
+    "primaryCtaHref": "#featured-tutors",
+    "secondaryCta": "Get the App",
+    "secondaryCtaHref": "#download-app"
+  },
+  "featuredTutors": {
+    "title": "Featured Geography Tutors",
+    "lead": "Compare experienced Geography tutors supporting students across leading international curricula. Review qualifications, ratings, teaching experience, and student feedback before exploring individual tutor profiles.",
+    "tutors": [
+      {
+        "id": "hannah-clarke",
+        "name": "Hannah Clarke",
+        "photo": "https://randomuser.me/api/portraits/women/41.jpg",
+        "qualification": "MA Geography, University of Manchester",
+        "subjects": ["Geography"],
+        "curricula": ["IGCSE", "A-Level", "IB"],
+        "rating": 4.9,
+        "reviewCount": 79,
+        "yearsExperience": 8,
+        "profileHref": "/tutors/hannah-clarke"
+      },
+      {
+        "id": "omar-al-suwaidi",
+        "name": "Omar Al Suwaidi",
+        "photo": "https://randomuser.me/api/portraits/men/56.jpg",
+        "qualification": "BSc Environmental Science, UAE University",
+        "subjects": ["Geography", "Science"],
+        "curricula": ["IGCSE", "CBSE", "American Curriculum"],
+        "rating": 4.8,
+        "reviewCount": 66,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/omar-al-suwaidi"
+      },
+      {
+        "id": "isabelle-dubois",
+        "name": "Isabelle Dubois",
+        "photo": "https://randomuser.me/api/portraits/women/52.jpg",
+        "qualification": "MSc Human Geography, Sorbonne University",
+        "subjects": ["Geography"],
+        "curricula": ["IB", "A-Level", "IGCSE"],
+        "rating": 4.9,
+        "reviewCount": 58,
+        "yearsExperience": 7,
+        "profileHref": "/tutors/isabelle-dubois"
+      },
+      {
+        "id": "james-mitchell",
+        "name": "James Mitchell",
+        "photo": "https://randomuser.me/api/portraits/men/33.jpg",
+        "qualification": "PGCE Geography, University of Exeter",
+        "subjects": ["Geography"],
+        "curricula": ["IGCSE", "A-Level"],
+        "rating": 4.8,
+        "reviewCount": 54,
+        "yearsExperience": 9,
+        "profileHref": "/tutors/james-mitchell"
+      },
+      {
+        "id": "priya-desai",
+        "name": "Priya Desai",
+        "photo": "https://randomuser.me/api/portraits/women/64.jpg",
+        "qualification": "BEd Geography, University of Delhi",
+        "subjects": ["Geography", "Economics"],
+        "curricula": ["CBSE", "IGCSE", "IB"],
+        "rating": 4.9,
+        "reviewCount": 47,
+        "yearsExperience": 5,
+        "profileHref": "/tutors/priya-desai"
+      },
+      {
+        "id": "thomas-eriksson",
+        "name": "Thomas Eriksson",
+        "photo": "https://randomuser.me/api/portraits/men/69.jpg",
+        "qualification": "MSc Physical Geography, University of Oslo",
+        "subjects": ["Geography", "Science"],
+        "curricula": ["IB", "IGCSE", "American Curriculum"],
+        "rating": 5.0,
+        "reviewCount": 42,
+        "yearsExperience": 10,
+        "profileHref": "/tutors/thomas-eriksson"
+      }
+    ]
+  },
+  "howTutorsHelp": {
+    "title": "How Geography Tutors Can Help",
+    "paragraphs": [
+      "Geography helps you understand how people, places, environments, and economies interact. It combines elements of science, social studies, environmental awareness, and real-world problem-solving, making it one of the most diverse subjects in the curriculum.",
+      "Many students initially enjoy Geography because the topics feel familiar. However, as the subject becomes more advanced, they are expected to analyse case studies, interpret data, explain physical processes, evaluate human activities, and connect local issues to global trends. This shift can make Geography more challenging than it first appears.",
+      "A Geography tutor helps you move beyond memorising facts and place names. Tutors can help you understand why geographical processes occur, how different topics connect, and how to structure stronger examination answers. Support may include case-study preparation, map interpretation, fieldwork concepts, data analysis, revision planning, and examination technique.",
+      "If your child struggles with lengthy case studies, interpreting graphs and geographical data, or writing analytical responses, targeted support can help build confidence and improve performance. Whether the goal is improving grades, preparing for examinations, strengthening environmental understanding, or building analytical skills, Geography tutoring provides structured support aligned with your child's curriculum and academic goals."
+    ]
+  },
+  "curriculum": {
+    "title": "Find Geography Tutors by Curriculum",
+    "lead": "Different curricula approach Geography from different perspectives. Explore tutors with experience supporting the curriculum your child studies.",
+    "cards": [
+      {
+        "title": "IGCSE Geography Tutors",
+        "description": "Support for physical geography, human geography, population studies, urbanisation, development, environmental management, case studies, examination preparation, and revision planning.",
+        "href": "/igcse-geography-tutors",
+        "cta": "Explore IGCSE Geography Tutors",
+        "tutorCount": 26
+      },
+      {
+        "title": "IB Geography Tutors",
+        "description": "Guidance across geographical perspectives, global interactions, environmental systems, development studies, internal assessments, fieldwork investigations, and examination preparation.",
+        "href": "/ib-geography-tutors",
+        "cta": "Explore IB Geography Tutors",
+        "tutorCount": 20
+      },
+      {
+        "title": "A-Level Geography Tutors",
+        "description": "Support for advanced geographical analysis, independent investigation, data interpretation, fieldwork, case studies, coursework requirements, and examination preparation.",
+        "href": "/a-level-geography-tutors",
+        "cta": "Explore A-Level Geography Tutors",
+        "tutorCount": 22
+      },
+      {
+        "title": "American Curriculum Geography Tutors",
+        "description": "Assistance with environmental systems, population studies, global issues, coursework, assessments, and curriculum progression.",
+        "href": "/american-curriculum-geography-tutors",
+        "cta": "Explore American Curriculum Geography Tutors",
+        "tutorCount": 15
+      },
+      {
+        "title": "CBSE Geography Tutors",
+        "description": "Support aligned with CBSE Geography requirements, map skills, environmental understanding, economic geography, human geography, and examination preparation.",
+        "href": "/cbse-geography-tutors",
+        "cta": "Explore CBSE Geography Tutors",
+        "tutorCount": 19
+      }
+    ]
+  },
+  "whyParentsChoose": {
+    "title": "Why Parents Choose CoachAcadem",
+    "lead": "Finding the right tutor is about more than subject knowledge. Parents want confidence that the tutor is qualified, reliable, and able to support their child's learning goals.",
+    "reasons": [
+      {
+        "title": "Verified Tutor Profiles",
+        "description": "Every tutor on CoachAcadem completes a verification process before appearing on the platform. Parents can review qualifications, experience, and teaching backgrounds with confidence."
+      },
+      {
+        "title": "Ratings and Reviews",
+        "description": "Verified ratings and reviews provide insight into how tutors communicate, teach, and support students. This helps families compare options based on real learning experiences."
+      },
+      {
+        "title": "Curriculum Expertise",
+        "description": "Find tutors who understand the specific curriculum your child follows, including IGCSE, IB, A-Level, American Curriculum, CBSE, and other international programmes."
+      },
+      {
+        "title": "Instant and Scheduled Booking",
+        "description": "Book lessons immediately when support is needed or schedule sessions in advance around school commitments, examinations, and family routines."
+      },
+      {
+        "title": "Built-In Communication",
+        "description": "Stay connected with tutors through CoachAcadem's integrated communication features after booking lessons, making coordination simple and efficient."
+      },
+      {
+        "title": "Access Across the UAE",
+        "description": "Students can connect with tutors online from anywhere in the UAE, making it easier to access subject specialists regardless of location."
+      }
+    ]
+  },
+  "reviews": {
+    "title": "Student and Parent Reviews",
+    "lead": "Choosing a tutor is an important decision. Reviews from students and parents can provide valuable insight into teaching style, communication, reliability, and overall learning experience.",
+    "items": [
+      {
+        "content": "Our daughter struggled with case studies and data interpretation in IGCSE Geography. Her CoachAcadem tutor helped her structure answers more effectively and her exam confidence improved significantly.",
+        "author": "Mariam Al Zaabi",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "IB Geography fieldwork and internal assessments were challenging until I found a tutor through CoachAcadem. Clear guidance on investigations and essay structure made a real difference.",
+        "author": "Lucas Bergmann",
+        "role": "IB Student",
+        "avatar": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "We compared several Geography tutors and read verified reviews before booking. The tutor we chose was excellent at connecting physical and human geography topics in a way our son could understand.",
+        "author": "Catherine Moore",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      }
+    ]
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "items": [
+      {
+        "question": "How do I find a Geography tutor?",
+        "answer": "Browse Geography tutor profiles on CoachAcadem, compare qualifications, reviews, teaching experience, and curriculum expertise, then choose the tutor who best matches your academic goals."
+      },
+      {
+        "question": "Are Geography tutors verified?",
+        "answer": "Yes. Tutors appearing on CoachAcadem complete the platform's verification requirements before becoming visible to students and parents."
+      },
+      {
+        "question": "Can I read tutor reviews before booking?",
+        "answer": "Yes. Public ratings and reviews allow you to evaluate previous learning experiences before choosing a tutor."
+      },
+      {
+        "question": "Do Geography tutors support IGCSE Geography?",
+        "answer": "Many tutors support IGCSE Geography, including physical geography, human geography, case studies, examination preparation, and revision planning."
+      },
+      {
+        "question": "Do Geography tutors support IB Geography?",
+        "answer": "Yes. Tutors may support geographical investigations, internal assessments, fieldwork requirements, global issues, and examination preparation."
+      },
+      {
+        "question": "Can lessons be booked instantly?",
+        "answer": "Depending on tutor availability, lessons may be booked instantly or scheduled for a future date and time."
+      },
+      {
+        "question": "Can students across the UAE use CoachAcadem?",
+        "answer": "Yes. Students throughout the UAE can connect with tutors through the platform."
+      }
+    ]
+  },
+  "downloadApp": {
+    "title": "CoachAcadem in Your Pocket",
+    "supportingCopy": "Search tutors, manage bookings, communicate with tutors, and continue learning through one platform."
+  },
+  "relatedSubjects": {
+    "title": "Related Subjects",
+    "subjects": [
+      {
+        "name": "History Tutors",
+        "description": "History and Geography frequently overlap through topics such as migration, development, conflict, population change, and the evolution of societies.",
+        "href": "/history-tutors",
+        "cta": "Explore History Tutors"
+      },
+      {
+        "name": "Economics Tutors",
+        "description": "Topics such as development, trade, population growth, resource allocation, sustainability, and globalisation create natural connections between Geography and Economics.",
+        "href": "/economics-tutors",
+        "cta": "Explore Economics Tutors"
+      },
+      {
+        "name": "Biology Tutors",
+        "description": "Environmental systems, ecosystems, biodiversity, conservation, and climate-related topics often connect Geography and Biology.",
+        "href": "/biology-tutors",
+        "cta": "Explore Biology Tutors"
+      },
+      {
+        "name": "Business Studies Tutors",
+        "description": "Global markets, resource management, international trade, and location decisions frequently connect Geography and Business Studies.",
+        "href": "/business-studies-tutors",
+        "cta": "Explore Business Studies Tutors"
+      }
+    ]
+  }
+}

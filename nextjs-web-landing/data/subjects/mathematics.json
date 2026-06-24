@@ -1,0 +1,270 @@
+{
+  "slug": "mathematics-tutors",
+  "subjectName": "Mathematics",
+  "seo": {
+    "title": "Mathematics Tutors in the UAE | Verified Online Tutors | CoachAcadem",
+    "description": "Browse verified Mathematics tutors across the UAE. Compare qualifications, reviews, experience, and curricula expertise before booking lessons through CoachAcadem.",
+    "primaryKeywords": ["Mathematics Tutors UAE"],
+    "secondaryKeywords": [
+      "Online Mathematics Tutors UAE",
+      "IGCSE Mathematics Tutors UAE",
+      "IB Mathematics Tutors UAE",
+      "A-Level Mathematics Tutors UAE"
+    ]
+  },
+  "hero": {
+    "h1": "Mathematics Tutors in the UAE",
+    "supportingCopy": "Browse verified Mathematics tutors on CoachAcadem. Compare qualifications, reviews, experience, and curricula expertise before booking lessons online.",
+    "primaryCta": "Find Tutors",
+    "primaryCtaHref": "#featured-tutors",
+    "secondaryCta": "Get the App",
+    "secondaryCtaHref": "#download-app"
+  },
+  "featuredTutors": {
+    "title": "Featured Mathematics Tutors",
+    "lead": "Compare experienced Mathematics tutors supporting students across leading international curricula. Review qualifications, ratings, teaching experience, and student feedback before exploring individual tutor profiles.",
+    "tutors": [
+      {
+        "id": "sarah-hassan",
+        "name": "Sarah Hassan",
+        "photo": "https://randomuser.me/api/portraits/women/44.jpg",
+        "qualification": "MSc Mathematics, University of Oxford",
+        "subjects": ["Mathematics", "Further Mathematics"],
+        "curricula": ["IGCSE", "A-Level", "IB"],
+        "rating": 4.9,
+        "reviewCount": 128,
+        "yearsExperience": 8,
+        "profileHref": "/tutors/sarah-hassan"
+      },
+      {
+        "id": "ahmed-khan",
+        "name": "Ahmed Khan",
+        "photo": "https://randomuser.me/api/portraits/men/75.jpg",
+        "qualification": "BSc Mathematics, American University of Sharjah",
+        "subjects": ["Mathematics", "Statistics"],
+        "curricula": ["IGCSE", "CBSE", "American Curriculum"],
+        "rating": 4.9,
+        "reviewCount": 112,
+        "yearsExperience": 7,
+        "profileHref": "/tutors/ahmed-khan"
+      },
+      {
+        "id": "priya-sharma",
+        "name": "Priya Sharma",
+        "photo": "https://randomuser.me/api/portraits/women/65.jpg",
+        "qualification": "MSc Applied Mathematics, Imperial College London",
+        "subjects": ["Mathematics", "Further Mathematics"],
+        "curricula": ["IB", "A-Level", "IGCSE"],
+        "rating": 4.8,
+        "reviewCount": 94,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/priya-sharma"
+      },
+      {
+        "id": "omar-al-mansoori",
+        "name": "Omar Al Mansoori",
+        "photo": "https://randomuser.me/api/portraits/men/52.jpg",
+        "qualification": "BSc Mathematics, UAE University",
+        "subjects": ["Mathematics"],
+        "curricula": ["CBSE", "IGCSE", "American Curriculum"],
+        "rating": 4.8,
+        "reviewCount": 87,
+        "yearsExperience": 5,
+        "profileHref": "/tutors/omar-al-mansoori"
+      },
+      {
+        "id": "elena-petrov",
+        "name": "Elena Petrov",
+        "photo": "https://randomuser.me/api/portraits/women/33.jpg",
+        "qualification": "PhD Mathematics Education, University of Cambridge",
+        "subjects": ["Mathematics", "Statistics"],
+        "curricula": ["IB", "A-Level"],
+        "rating": 5.0,
+        "reviewCount": 76,
+        "yearsExperience": 10,
+        "profileHref": "/tutors/elena-petrov"
+      },
+      {
+        "id": "david-wong",
+        "name": "David Wong",
+        "photo": "https://randomuser.me/api/portraits/men/41.jpg",
+        "qualification": "MEng Engineering Mathematics, NUS",
+        "subjects": ["Mathematics", "Further Mathematics"],
+        "curricula": ["IGCSE", "IB", "A-Level"],
+        "rating": 4.9,
+        "reviewCount": 103,
+        "yearsExperience": 9,
+        "profileHref": "/tutors/david-wong"
+      }
+    ]
+  },
+  "howTutorsHelp": {
+    "title": "How Mathematics Tutors Can Help",
+    "paragraphs": [
+      "Mathematics is a cumulative subject. Concepts introduced at one stage often form the foundation for more advanced topics later in a student's academic journey.",
+      "Mathematics tutors provide structured academic support tailored to a student's curriculum, learning pace, and goals. Support may focus on strengthening foundational concepts, improving problem-solving techniques, preparing for examinations, developing revision strategies, or addressing specific areas where additional guidance is required.",
+      "Students preparing for IGCSE, IB, A-Level, American Curriculum, CBSE, and other programmes often work with tutors to reinforce classroom learning, gain confidence approaching complex topics, and improve academic performance over time."
+    ]
+  },
+  "curriculum": {
+    "title": "Find Mathematics Tutors by Curriculum",
+    "lead": "Different curricula approach Mathematics with varying content depth, assessment methods, and learning objectives.",
+    "cards": [
+      {
+        "title": "IGCSE Mathematics Tutors",
+        "description": "Support for core and extended Mathematics topics, examination preparation, problem-solving skills, revision planning, and long-term subject mastery.",
+        "href": "/igcse-mathematics-tutors",
+        "cta": "Explore IGCSE Mathematics Tutors",
+        "tutorCount": 48
+      },
+      {
+        "title": "IB Mathematics Tutors",
+        "description": "Guidance for Analysis & Approaches and Applications & Interpretation, including coursework expectations, internal assessments, and examinations.",
+        "href": "/ib-mathematics-tutors",
+        "cta": "Explore IB Mathematics Tutors",
+        "tutorCount": 32
+      },
+      {
+        "title": "A-Level Mathematics Tutors",
+        "description": "Support for advanced mathematical concepts, examination preparation, and university pathway requirements.",
+        "href": "/a-level-mathematics-tutors",
+        "cta": "Explore A-Level Mathematics Tutors",
+        "tutorCount": 36
+      },
+      {
+        "title": "American Curriculum Mathematics Tutors",
+        "description": "Help with curriculum progression, assessments, homework support, and advanced Mathematics pathways.",
+        "href": "/american-curriculum-mathematics-tutors",
+        "cta": "Explore American Curriculum Mathematics Tutors",
+        "tutorCount": 24
+      },
+      {
+        "title": "CBSE Mathematics Tutors",
+        "description": "Structured support aligned with CBSE learning objectives, examination preparation, and conceptual understanding.",
+        "href": "/cbse-mathematics-tutors",
+        "cta": "Explore CBSE Mathematics Tutors",
+        "tutorCount": 28
+      }
+    ]
+  },
+  "whyParentsChoose": {
+    "title": "Why Parents Choose CoachAcadem",
+    "lead": "A trusted way to find qualified tutors, compare options, and book with confidence.",
+    "reasons": [
+      {
+        "title": "Verified Tutor Profiles",
+        "description": "Every tutor on CoachAcadem undergoes a verification process before appearing on the platform."
+      },
+      {
+        "title": "Ratings and Reviews",
+        "description": "Read feedback from students and parents who have previously worked with a tutor."
+      },
+      {
+        "title": "Curriculum Expertise",
+        "description": "Find tutors with experience supporting students across leading curricula."
+      },
+      {
+        "title": "Instant and Scheduled Booking",
+        "description": "Book lessons immediately or schedule sessions around academic commitments."
+      },
+      {
+        "title": "Built-In Communication",
+        "description": "Stay connected through CoachAcadem's integrated communication tools after booking."
+      },
+      {
+        "title": "Access Across the UAE",
+        "description": "Connect with tutors through online lessons from anywhere in the UAE."
+      }
+    ]
+  },
+  "reviews": {
+    "title": "Student and Parent Reviews",
+    "lead": "Feedback from students and parents provides valuable insight into a tutor's teaching approach, communication style, reliability, and ability to support academic progress.",
+    "items": [
+      {
+        "content": "Our daughter's Mathematics grades improved significantly after working with a CoachAcadem tutor. The structured approach to problem-solving and exam preparation made a real difference.",
+        "author": "Fatima Al Rashid",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "I was struggling with IB Mathematics Analysis & Approaches until I found a tutor through CoachAcadem. Clear explanations and consistent practice helped me gain confidence before my exams.",
+        "author": "Arjun Mehta",
+        "role": "IB Student",
+        "avatar": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "Being able to read reviews and compare Mathematics tutors before booking gave us peace of mind. The tutor we chose was professional, punctual, and genuinely invested in our son's progress.",
+        "author": "Sarah Mitchell",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      }
+    ]
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "items": [
+      {
+        "question": "How do I find a Mathematics tutor?",
+        "answer": "Browse Mathematics tutor profiles on CoachAcadem, compare qualifications, reviews, teaching experience, and curriculum expertise, then select the tutor that best matches your academic goals."
+      },
+      {
+        "question": "Are Mathematics tutors verified?",
+        "answer": "Yes. Tutors appearing on CoachAcadem complete the platform's verification requirements before becoming visible."
+      },
+      {
+        "question": "Can I read tutor reviews before booking?",
+        "answer": "Yes. Public ratings and reviews allow parents and students to evaluate previous learning experiences before choosing a tutor."
+      },
+      {
+        "question": "Do Mathematics tutors support IGCSE?",
+        "answer": "Many tutors support IGCSE Mathematics, including core and extended pathways."
+      },
+      {
+        "question": "Do Mathematics tutors support IB?",
+        "answer": "Yes. Tutors may support both Mathematics Analysis & Approaches and Mathematics Applications & Interpretation."
+      },
+      {
+        "question": "Can lessons be booked instantly?",
+        "answer": "Depending on tutor availability, lessons may be booked instantly or scheduled."
+      },
+      {
+        "question": "Can students across the UAE use CoachAcadem?",
+        "answer": "Yes. Students throughout the UAE can connect with tutors through the platform."
+      }
+    ]
+  },
+  "downloadApp": {
+    "title": "CoachAcadem in Your Pocket",
+    "supportingCopy": "Search tutors, manage bookings, communicate with tutors, and continue learning through one platform."
+  },
+  "relatedSubjects": {
+    "title": "Related Subjects",
+    "subjects": [
+      {
+        "name": "Physics Tutors",
+        "description": "Physics and Mathematics are closely connected across most curricula.",
+        "href": "/physics-tutors",
+        "cta": "Explore Physics Tutors"
+      },
+      {
+        "name": "Chemistry Tutors",
+        "description": "Many Chemistry topics involve calculations, data interpretation, ratios, equations, and analytical reasoning.",
+        "href": "/chemistry-tutors",
+        "cta": "Explore Chemistry Tutors"
+      },
+      {
+        "name": "Biology Tutors",
+        "description": "Biology students may require support interpreting data and analysing experimental results.",
+        "href": "/biology-tutors",
+        "cta": "Explore Biology Tutors"
+      },
+      {
+        "name": "Computer Science Tutors",
+        "description": "Mathematics and Computer Science share many foundational concepts including logical reasoning and algorithms.",
+        "href": "/computer-science-tutors",
+        "cta": "Explore Computer Science Tutors"
+      }
+    ]
+  }
+}

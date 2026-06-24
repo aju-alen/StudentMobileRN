@@ -1,0 +1,273 @@
+{
+  "slug": "french-tutors",
+  "subjectName": "French",
+  "seo": {
+    "title": "French Tutors in the UAE | Verified Online Tutors | CoachAcadem",
+    "description": "Browse verified French tutors across the UAE. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons through CoachAcadem.",
+    "primaryKeywords": ["French Tutors UAE"],
+    "secondaryKeywords": [
+      "Online French Tutors UAE",
+      "IGCSE French Tutors UAE",
+      "IB French Tutors UAE",
+      "A-Level French Tutors UAE",
+      "French Language Tutors UAE",
+      "French Tuition UAE"
+    ]
+  },
+  "hero": {
+    "h1": "French Tutors in the UAE",
+    "supportingCopy": "Browse verified French tutors on CoachAcadem. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons online.",
+    "primaryCta": "Find Tutors",
+    "primaryCtaHref": "#featured-tutors",
+    "secondaryCta": "Get the App",
+    "secondaryCtaHref": "#download-app"
+  },
+  "featuredTutors": {
+    "title": "Featured French Tutors",
+    "lead": "Compare experienced French tutors supporting students across leading international curricula. Review qualifications, ratings, teaching experience, and student feedback before exploring individual tutor profiles.",
+    "tutors": [
+      {
+        "id": "claire-fontaine",
+        "name": "Claire Fontaine",
+        "photo": "https://randomuser.me/api/portraits/women/27.jpg",
+        "qualification": "MA French Literature, Sorbonne University",
+        "subjects": ["French"],
+        "curricula": ["IGCSE", "A-Level", "IB"],
+        "rating": 4.9,
+        "reviewCount": 92,
+        "yearsExperience": 9,
+        "profileHref": "/tutors/claire-fontaine"
+      },
+      {
+        "id": "antoine-moreau",
+        "name": "Antoine Moreau",
+        "photo": "https://randomuser.me/api/portraits/men/38.jpg",
+        "qualification": "BA French & Linguistics, University of Lyon",
+        "subjects": ["French"],
+        "curricula": ["IB", "IGCSE", "American Curriculum"],
+        "rating": 4.8,
+        "reviewCount": 74,
+        "yearsExperience": 7,
+        "profileHref": "/tutors/antoine-moreau"
+      },
+      {
+        "id": "marie-laurent",
+        "name": "Marie Laurent",
+        "photo": "https://randomuser.me/api/portraits/women/49.jpg",
+        "qualification": "PGCE Modern Languages, University of Cambridge",
+        "subjects": ["French", "English"],
+        "curricula": ["A-Level", "IGCSE", "CBSE"],
+        "rating": 4.9,
+        "reviewCount": 68,
+        "yearsExperience": 8,
+        "profileHref": "/tutors/marie-laurent"
+      },
+      {
+        "id": "julien-dupont",
+        "name": "Julien Dupont",
+        "photo": "https://randomuser.me/api/portraits/men/57.jpg",
+        "qualification": "Diplôme d'Études Françaises, Alliance Française",
+        "subjects": ["French"],
+        "curricula": ["IGCSE", "American Curriculum"],
+        "rating": 4.8,
+        "reviewCount": 56,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/julien-dupont"
+      },
+      {
+        "id": "camille-rousseau",
+        "name": "Camille Rousseau",
+        "photo": "https://randomuser.me/api/portraits/women/60.jpg",
+        "qualification": "MEd French Language Teaching, University of Geneva",
+        "subjects": ["French"],
+        "curricula": ["IB", "A-Level", "IGCSE"],
+        "rating": 5.0,
+        "reviewCount": 51,
+        "yearsExperience": 10,
+        "profileHref": "/tutors/camille-rousseau"
+      },
+      {
+        "id": "nicolas-bernard",
+        "name": "Nicolas Bernard",
+        "photo": "https://randomuser.me/api/portraits/men/65.jpg",
+        "qualification": "BA Applied French, University of Montreal",
+        "subjects": ["French"],
+        "curricula": ["CBSE", "IGCSE", "IB"],
+        "rating": 4.9,
+        "reviewCount": 44,
+        "yearsExperience": 5,
+        "profileHref": "/tutors/nicolas-bernard"
+      }
+    ]
+  },
+  "howTutorsHelp": {
+    "title": "How French Tutors Can Help",
+    "paragraphs": [
+      "Learning French involves much more than memorising vocabulary and grammar rules. Students are expected to read, write, listen, and communicate confidently while applying language skills in real situations. As the curriculum becomes more advanced, students must also develop accuracy, fluency, comprehension, and confidence across multiple language areas.",
+      "Many students understand classroom lessons but hesitate when speaking or writing independently. Others find listening exercises difficult, struggle with pronunciation, or lose marks because they cannot apply grammar rules consistently under examination conditions.",
+      "A French tutor helps you build practical language skills step by step. Tutors can help improve speaking confidence, strengthen reading comprehension, expand vocabulary, develop writing skills, and improve listening accuracy. Support may also include examination preparation, oral assessments, revision planning, and curriculum-specific requirements.",
+      "If your child needs support with French coursework, examination preparation, oral communication, or overall language development, targeted tutoring can provide structured guidance and regular feedback. Language learning often improves most when students receive consistent practice and personalised support."
+    ]
+  },
+  "curriculum": {
+    "title": "Find French Tutors by Curriculum",
+    "lead": "French requirements vary across curricula. Explore tutors with experience supporting the curriculum your child studies.",
+    "cards": [
+      {
+        "title": "IGCSE French Tutors",
+        "description": "Support for speaking, listening, reading, writing, vocabulary development, examination preparation, and revision planning.",
+        "href": "/igcse-french-tutors",
+        "cta": "Explore IGCSE French Tutors",
+        "tutorCount": 28
+      },
+      {
+        "title": "IB French Tutors",
+        "description": "Guidance across language acquisition, oral assessments, written tasks, comprehension skills, and examination preparation.",
+        "href": "/ib-french-tutors",
+        "cta": "Explore IB French Tutors",
+        "tutorCount": 22
+      },
+      {
+        "title": "A-Level French Tutors",
+        "description": "Support for advanced language skills, literary analysis, oral examinations, essay writing, and examination preparation.",
+        "href": "/a-level-french-tutors",
+        "cta": "Explore A-Level French Tutors",
+        "tutorCount": 19
+      },
+      {
+        "title": "American Curriculum French Tutors",
+        "description": "Support for language development, coursework, assessments, communication skills, and curriculum progression.",
+        "href": "/american-curriculum-french-tutors",
+        "cta": "Explore American Curriculum French Tutors",
+        "tutorCount": 16
+      },
+      {
+        "title": "CBSE French Tutors",
+        "description": "Support aligned with CBSE French requirements, language development, comprehension, grammar, and examination preparation.",
+        "href": "/cbse-french-tutors",
+        "cta": "Explore CBSE French Tutors",
+        "tutorCount": 18
+      }
+    ]
+  },
+  "whyParentsChoose": {
+    "title": "Why Parents Choose CoachAcadem",
+    "lead": "Finding the right tutor is about more than subject knowledge. Parents want confidence that the tutor is qualified, reliable, and able to support their child's learning goals.",
+    "reasons": [
+      {
+        "title": "Verified Tutor Profiles",
+        "description": "Every tutor on CoachAcadem completes a verification process before appearing on the platform."
+      },
+      {
+        "title": "Ratings and Reviews",
+        "description": "Review authentic feedback from students and parents before making a decision."
+      },
+      {
+        "title": "Curriculum Expertise",
+        "description": "Find tutors experienced across major international curricula."
+      },
+      {
+        "title": "Instant and Scheduled Booking",
+        "description": "Book lessons immediately or schedule them around your family's routine."
+      },
+      {
+        "title": "Built-In Communication",
+        "description": "Coordinate lessons through CoachAcadem after booking."
+      },
+      {
+        "title": "Access Across the UAE",
+        "description": "Connect with tutors online from anywhere in the UAE."
+      }
+    ]
+  },
+  "reviews": {
+    "title": "Student and Parent Reviews",
+    "lead": "Choosing a tutor is an important decision. Reviews from students and parents can provide valuable insight into teaching style, communication, reliability, and overall learning experience.",
+    "items": [
+      {
+        "content": "Our daughter was hesitant to speak French in class. Her CoachAcadem tutor built her speaking confidence through regular conversation practice and her oral exam results improved dramatically.",
+        "author": "Sophie Laurent",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "IGCSE French listening and writing were my weakest areas. My tutor helped me develop strategies for comprehension and grammar that made a real difference before my exams.",
+        "author": "Noah Williams",
+        "role": "IGCSE Student",
+        "avatar": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "We compared French tutors on CoachAcadem and chose one with excellent reviews. The lessons were engaging, well structured, and our son's language skills improved steadily.",
+        "author": "Patricia O'Brien",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      }
+    ]
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "items": [
+      {
+        "question": "How do I find a French tutor?",
+        "answer": "Browse French tutor profiles on CoachAcadem, compare qualifications, reviews, teaching experience, and curriculum expertise, then choose the tutor who best matches your goals."
+      },
+      {
+        "question": "Are French tutors verified?",
+        "answer": "Yes. Tutors appearing on CoachAcadem complete the platform's verification requirements before becoming visible to students and parents."
+      },
+      {
+        "question": "Can I read tutor reviews before booking?",
+        "answer": "Yes. Public ratings and reviews help you compare tutors before making a decision."
+      },
+      {
+        "question": "Do French tutors support IGCSE French?",
+        "answer": "Many tutors support IGCSE French, including speaking, listening, reading, writing, examination preparation, and revision planning."
+      },
+      {
+        "question": "Do tutors support IB French?",
+        "answer": "Yes. Tutors may support language acquisition, oral assessments, written assignments, and examination preparation."
+      },
+      {
+        "question": "Can lessons be booked instantly?",
+        "answer": "Depending on tutor availability, lessons may be booked instantly or scheduled for a future date and time."
+      },
+      {
+        "question": "Can students across the UAE use CoachAcadem?",
+        "answer": "Yes. Students throughout the UAE can connect with tutors through the platform."
+      }
+    ]
+  },
+  "downloadApp": {
+    "title": "CoachAcadem in Your Pocket",
+    "supportingCopy": "Search tutors, manage bookings, communicate with tutors, and continue learning through one platform."
+  },
+  "relatedSubjects": {
+    "title": "Related Subjects",
+    "subjects": [
+      {
+        "name": "English Tutors",
+        "description": "Learning an additional language often strengthens communication skills, reading comprehension, vocabulary development, and written expression.",
+        "href": "/english-tutors",
+        "cta": "Explore English Tutors"
+      },
+      {
+        "name": "Arabic Tutors",
+        "description": "Students developing multilingual language skills often benefit from support across multiple language subjects.",
+        "href": "/arabic-tutors",
+        "cta": "Explore Arabic Tutors"
+      },
+      {
+        "name": "History Tutors",
+        "description": "Many advanced French programmes include cultural, historical, and contextual topics that benefit from strong analytical skills.",
+        "href": "/history-tutors",
+        "cta": "Explore History Tutors"
+      },
+      {
+        "name": "Geography Tutors",
+        "description": "Global cultures, international perspectives, and regional understanding often connect language learning with Geography.",
+        "href": "/geography-tutors",
+        "cta": "Explore Geography Tutors"
+      }
+    ]
+  }
+}

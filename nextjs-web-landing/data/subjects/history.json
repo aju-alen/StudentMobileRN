@@ -1,0 +1,271 @@
+{
+  "slug": "history-tutors",
+  "subjectName": "History",
+  "seo": {
+    "title": "History Tutors in the UAE | Verified Online Tutors | CoachAcadem",
+    "description": "Browse verified History tutors across the UAE. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons through CoachAcadem.",
+    "primaryKeywords": ["History Tutors UAE"],
+    "secondaryKeywords": [
+      "Online History Tutors UAE",
+      "IGCSE History Tutors UAE",
+      "IB History Tutors UAE",
+      "A-Level History Tutors UAE"
+    ]
+  },
+  "hero": {
+    "h1": "History Tutors in the UAE",
+    "supportingCopy": "Browse verified History tutors on CoachAcadem. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons online.",
+    "primaryCta": "Find Tutors",
+    "primaryCtaHref": "#featured-tutors",
+    "secondaryCta": "Get the App",
+    "secondaryCtaHref": "#download-app"
+  },
+  "featuredTutors": {
+    "title": "Featured History Tutors",
+    "lead": "Compare experienced History tutors supporting students across leading international curricula. Review qualifications, ratings, teaching experience, and student feedback before exploring individual tutor profiles.",
+    "tutors": [
+      {
+        "id": "catherine-moore",
+        "name": "Catherine Moore",
+        "photo": "https://randomuser.me/api/portraits/women/46.jpg",
+        "qualification": "MA History, University of Edinburgh",
+        "subjects": ["History"],
+        "curricula": ["IGCSE", "A-Level", "IB"],
+        "rating": 4.9,
+        "reviewCount": 84,
+        "yearsExperience": 9,
+        "profileHref": "/tutors/catherine-moore"
+      },
+      {
+        "id": "hassan-al-omari",
+        "name": "Hassan Al Omari",
+        "photo": "https://randomuser.me/api/portraits/men/68.jpg",
+        "qualification": "BA History, American University of Cairo",
+        "subjects": ["History", "Islamic Studies"],
+        "curricula": ["IGCSE", "CBSE", "American Curriculum"],
+        "rating": 4.8,
+        "reviewCount": 71,
+        "yearsExperience": 7,
+        "profileHref": "/tutors/hassan-al-omari"
+      },
+      {
+        "id": "emily-hart",
+        "name": "Emily Hart",
+        "photo": "https://randomuser.me/api/portraits/women/32.jpg",
+        "qualification": "PhD Modern History, University of Oxford",
+        "subjects": ["History"],
+        "curricula": ["IB", "A-Level"],
+        "rating": 5.0,
+        "reviewCount": 58,
+        "yearsExperience": 10,
+        "profileHref": "/tutors/emily-hart"
+      },
+      {
+        "id": "raj-malhotra",
+        "name": "Raj Malhotra",
+        "photo": "https://randomuser.me/api/portraits/men/73.jpg",
+        "qualification": "MEd History Education, University of Melbourne",
+        "subjects": ["History"],
+        "curricula": ["CBSE", "IGCSE", "IB"],
+        "rating": 4.9,
+        "reviewCount": 63,
+        "yearsExperience": 8,
+        "profileHref": "/tutors/raj-malhotra"
+      },
+      {
+        "id": "sophie-laurent",
+        "name": "Sophie Laurent",
+        "photo": "https://randomuser.me/api/portraits/women/56.jpg",
+        "qualification": "BA History & Politics, Sciences Po Paris",
+        "subjects": ["History", "Economics"],
+        "curricula": ["IGCSE", "IB", "A-Level"],
+        "rating": 4.8,
+        "reviewCount": 52,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/sophie-laurent"
+      },
+      {
+        "id": "michael-davies",
+        "name": "Michael Davies",
+        "photo": "https://randomuser.me/api/portraits/men/40.jpg",
+        "qualification": "PGCE History, University of Bristol",
+        "subjects": ["History"],
+        "curricula": ["A-Level", "IGCSE", "American Curriculum"],
+        "rating": 4.9,
+        "reviewCount": 46,
+        "yearsExperience": 5,
+        "profileHref": "/tutors/michael-davies"
+      }
+    ]
+  },
+  "howTutorsHelp": {
+    "title": "How History Tutors Can Help",
+    "paragraphs": [
+      "History is far more than remembering dates and events. Students are expected to examine evidence, understand cause and consequence, compare interpretations, evaluate sources, and build well-supported arguments. Many students discover that understanding what happened is only the starting point. The greater challenge is explaining why events happened and assessing their significance.",
+      "You may know the content but still lose marks because your answers lack structure, analysis, or supporting evidence. Others find source-based questions difficult or struggle to manage the volume of information required across different historical periods and themes.",
+      "A History tutor helps you organise knowledge more effectively and develop the skills examiners are looking for. This can include essay planning, source analysis, interpretation questions, revision strategies, examination technique, and argument development. Tutors can also help you understand how historical events connect rather than treating topics as isolated pieces of information.",
+      "If your child needs support improving analytical writing, strengthening historical understanding, or preparing for examinations, targeted tutoring can provide structured guidance and regular feedback. The critical-thinking skills developed through History often support success across many other subjects as well."
+    ]
+  },
+  "curriculum": {
+    "title": "Find History Tutors by Curriculum",
+    "lead": "History is taught and assessed differently across curricula. Explore tutors who understand the curriculum your child studies.",
+    "cards": [
+      {
+        "title": "IGCSE History Tutors",
+        "description": "Support for source analysis, historical interpretation, essay writing, examination preparation, and revision planning.",
+        "href": "/igcse-history-tutors",
+        "cta": "Explore IGCSE History Tutors",
+        "tutorCount": 28
+      },
+      {
+        "title": "IB History Tutors",
+        "description": "Guidance across historical investigation, source evaluation, internal assessments, essay development, and examination preparation.",
+        "href": "/ib-history-tutors",
+        "cta": "Explore IB History Tutors",
+        "tutorCount": 23
+      },
+      {
+        "title": "A-Level History Tutors",
+        "description": "Support for advanced historical analysis, interpretation, coursework requirements, essay writing, and examination preparation.",
+        "href": "/a-level-history-tutors",
+        "cta": "Explore A-Level History Tutors",
+        "tutorCount": 25
+      },
+      {
+        "title": "American Curriculum History Tutors",
+        "description": "Assistance with coursework, research assignments, historical analysis, assessments, and curriculum progression.",
+        "href": "/american-curriculum-history-tutors",
+        "cta": "Explore American Curriculum History Tutors",
+        "tutorCount": 16
+      },
+      {
+        "title": "CBSE History Tutors",
+        "description": "Support aligned with CBSE History requirements, historical understanding, analytical writing, and examination preparation.",
+        "href": "/cbse-history-tutors",
+        "cta": "Explore CBSE History Tutors",
+        "tutorCount": 20
+      }
+    ]
+  },
+  "whyParentsChoose": {
+    "title": "Why Parents Choose CoachAcadem",
+    "lead": "A trusted way to find qualified tutors, compare options, and book with confidence.",
+    "reasons": [
+      {
+        "title": "Verified Tutor Profiles",
+        "description": "Every tutor on CoachAcadem undergoes a verification process before appearing on the platform, helping parents make informed decisions with greater confidence."
+      },
+      {
+        "title": "Ratings and Reviews",
+        "description": "Read feedback from students and parents who have previously worked with a tutor to better understand teaching style, communication, and learning outcomes."
+      },
+      {
+        "title": "Curriculum Expertise",
+        "description": "Find tutors with experience supporting students across leading curricula including IGCSE, IB, A-Level, American Curriculum, and CBSE."
+      },
+      {
+        "title": "Instant and Scheduled Booking",
+        "description": "Book lessons immediately or schedule sessions around academic commitments and family routines."
+      },
+      {
+        "title": "Built-In Communication",
+        "description": "Stay connected through CoachAcadem's integrated communication tools after booking, helping coordinate lessons efficiently."
+      },
+      {
+        "title": "Access Across the UAE",
+        "description": "Connect with tutors through online lessons from anywhere in the UAE, expanding access to subject specialists regardless of location."
+      }
+    ]
+  },
+  "reviews": {
+    "title": "Student and Parent Reviews",
+    "lead": "Choosing a tutor is an important decision. Reviews from students and parents can provide valuable insight into teaching style, communication, reliability, and overall learning experience.",
+    "items": [
+      {
+        "content": "Our son was struggling with source analysis and essay structure in IGCSE History. His CoachAcadem tutor helped him develop a clearer approach to exam questions and his grades improved noticeably.",
+        "author": "Layla Al Shamsi",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "IB History required much more than memorising dates. My tutor helped me connect topics, evaluate sources more effectively, and write stronger historical investigations.",
+        "author": "Noah Williams",
+        "role": "IB Student",
+        "avatar": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "We appreciated being able to read verified reviews before choosing a History tutor. The tutor we booked was excellent at building our daughter's confidence in analytical writing.",
+        "author": "Patricia O'Brien",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      }
+    ]
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "items": [
+      {
+        "question": "How do I find a History tutor?",
+        "answer": "Browse History tutor profiles on CoachAcadem, compare qualifications, reviews, teaching experience, and curriculum expertise, then choose the tutor who best matches your academic goals."
+      },
+      {
+        "question": "Are History tutors verified?",
+        "answer": "Yes. Tutors appearing on CoachAcadem complete the platform's verification requirements before becoming visible to students and parents."
+      },
+      {
+        "question": "Can I read tutor reviews before booking?",
+        "answer": "Yes. Public ratings and reviews allow you to evaluate previous learning experiences before choosing a tutor."
+      },
+      {
+        "question": "Do History tutors support IGCSE History?",
+        "answer": "Many tutors support IGCSE History, including source analysis, essay writing, examination preparation, and revision planning."
+      },
+      {
+        "question": "Do tutors support IB History?",
+        "answer": "Yes. Tutors may support internal assessments, historical investigations, essay development, and examination preparation."
+      },
+      {
+        "question": "Can lessons be booked instantly?",
+        "answer": "Depending on tutor availability, lessons may be booked instantly or scheduled for a future date and time."
+      },
+      {
+        "question": "Can students across the UAE use CoachAcadem?",
+        "answer": "Yes. Students throughout the UAE can connect with tutors through the platform."
+      }
+    ]
+  },
+  "downloadApp": {
+    "title": "CoachAcadem in Your Pocket",
+    "supportingCopy": "Search tutors, manage bookings, communicate with tutors, and continue learning through one platform."
+  },
+  "relatedSubjects": {
+    "title": "Related Subjects",
+    "subjects": [
+      {
+        "name": "English Tutors",
+        "description": "History relies heavily on reading comprehension, analytical writing, argument development, and evidence-based responses.",
+        "href": "/english-tutors",
+        "cta": "Explore English Tutors"
+      },
+      {
+        "name": "Economics Tutors",
+        "description": "Many historical topics involve economic change, policy decisions, trade, industrial development, and societal transformation.",
+        "href": "/economics-tutors",
+        "cta": "Explore Economics Tutors"
+      },
+      {
+        "name": "Business Studies Tutors",
+        "description": "Understanding political, economic, and social developments can provide valuable context for many business-related topics.",
+        "href": "/business-studies-tutors",
+        "cta": "Explore Business Studies Tutors"
+      },
+      {
+        "name": "Arabic Tutors",
+        "description": "Strong language skills support reading, interpretation, communication, and written analysis across humanities subjects.",
+        "href": "/arabic-tutors",
+        "cta": "Explore Arabic Tutors"
+      }
+    ]
+  }
+}

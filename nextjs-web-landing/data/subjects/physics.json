@@ -1,0 +1,271 @@
+{
+  "slug": "physics-tutors",
+  "subjectName": "Physics",
+  "seo": {
+    "title": "Physics Tutors in the UAE | Verified Online Tutors | CoachAcadem",
+    "description": "Browse verified Physics tutors across the UAE. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons through CoachAcadem.",
+    "primaryKeywords": ["Physics Tutors UAE"],
+    "secondaryKeywords": [
+      "Online Physics Tutors UAE",
+      "IGCSE Physics Tutors UAE",
+      "IB Physics Tutors UAE",
+      "A-Level Physics Tutors UAE"
+    ]
+  },
+  "hero": {
+    "h1": "Physics Tutors in the UAE",
+    "supportingCopy": "Browse verified Physics tutors on CoachAcadem. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons online.",
+    "primaryCta": "Find Tutors",
+    "primaryCtaHref": "#featured-tutors",
+    "secondaryCta": "Get the App",
+    "secondaryCtaHref": "#download-app"
+  },
+  "featuredTutors": {
+    "title": "Featured Physics Tutors",
+    "lead": "Compare experienced Physics tutors supporting students across leading international curricula. Review qualifications, ratings, teaching experience, and student feedback before exploring individual tutor profiles.",
+    "tutors": [
+      {
+        "id": "james-okafor",
+        "name": "James Okafor",
+        "photo": "https://randomuser.me/api/portraits/men/32.jpg",
+        "qualification": "BSc Physics, Imperial College London",
+        "subjects": ["Physics", "Science"],
+        "curricula": ["IGCSE", "IB", "American Curriculum"],
+        "rating": 4.9,
+        "reviewCount": 96,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/james-okafor"
+      },
+      {
+        "id": "layla-hamdan",
+        "name": "Layla Hamdan",
+        "photo": "https://randomuser.me/api/portraits/women/26.jpg",
+        "qualification": "MSc Physics, Khalifa University",
+        "subjects": ["Physics"],
+        "curricula": ["IGCSE", "A-Level", "CBSE"],
+        "rating": 4.9,
+        "reviewCount": 88,
+        "yearsExperience": 7,
+        "profileHref": "/tutors/layla-hamdan"
+      },
+      {
+        "id": "marcus-chen",
+        "name": "Marcus Chen",
+        "photo": "https://randomuser.me/api/portraits/men/67.jpg",
+        "qualification": "PhD Physics, University of Edinburgh",
+        "subjects": ["Physics", "Further Physics"],
+        "curricula": ["IB", "A-Level"],
+        "rating": 5.0,
+        "reviewCount": 72,
+        "yearsExperience": 9,
+        "profileHref": "/tutors/marcus-chen"
+      },
+      {
+        "id": "nadia-rahman",
+        "name": "Nadia Rahman",
+        "photo": "https://randomuser.me/api/portraits/women/55.jpg",
+        "qualification": "BSc Physics, American University of Sharjah",
+        "subjects": ["Physics", "Science"],
+        "curricula": ["American Curriculum", "IGCSE"],
+        "rating": 4.8,
+        "reviewCount": 65,
+        "yearsExperience": 5,
+        "profileHref": "/tutors/nadia-rahman"
+      },
+      {
+        "id": "thomas-brennan",
+        "name": "Thomas Brennan",
+        "photo": "https://randomuser.me/api/portraits/men/22.jpg",
+        "qualification": "MSc Theoretical Physics, Trinity College Dublin",
+        "subjects": ["Physics"],
+        "curricula": ["A-Level", "IB", "IGCSE"],
+        "rating": 4.9,
+        "reviewCount": 81,
+        "yearsExperience": 8,
+        "profileHref": "/tutors/thomas-brennan"
+      },
+      {
+        "id": "anita-desai",
+        "name": "Anita Desai",
+        "photo": "https://randomuser.me/api/portraits/women/72.jpg",
+        "qualification": "BSc Physics, IIT Delhi",
+        "subjects": ["Physics", "Science"],
+        "curricula": ["CBSE", "IGCSE", "IB"],
+        "rating": 4.8,
+        "reviewCount": 59,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/anita-desai"
+      }
+    ]
+  },
+  "howTutorsHelp": {
+    "title": "How Physics Tutors Can Help",
+    "paragraphs": [
+      "Physics asks you to do more than memorise formulas. It requires you to understand how forces, motion, energy, electricity, waves, and matter behave, and then apply that understanding to unfamiliar situations.",
+      "A Physics tutor helps you bridge the gap between theory and application. Instead of simply learning equations, you learn when to use them, why they work, and how different concepts connect.",
+      "If your child finds Physics challenging because of calculations, problem-solving, or scientific reasoning, targeted support can help build confidence and improve understanding over time.",
+      "Whether the goal is improving grades, preparing for important examinations, or gaining confidence in a demanding subject, Physics tutoring provides focused academic support aligned with your curriculum and learning objectives."
+    ]
+  },
+  "curriculum": {
+    "title": "Find Physics Tutors by Curriculum",
+    "lead": "Different curricula approach Physics with varying content depth, assessment methods, and learning objectives.",
+    "cards": [
+      {
+        "title": "IGCSE Physics Tutors",
+        "description": "Support for mechanics, electricity, thermal physics, waves, atomic physics, examination preparation, and structured revision.",
+        "href": "/igcse-physics-tutors",
+        "cta": "Explore IGCSE Physics Tutors",
+        "tutorCount": 42
+      },
+      {
+        "title": "IB Physics Tutors",
+        "description": "Guidance across core and higher-level Physics topics, practical investigations, internal assessments, and examination preparation.",
+        "href": "/ib-physics-tutors",
+        "cta": "Explore IB Physics Tutors",
+        "tutorCount": 28
+      },
+      {
+        "title": "A-Level Physics Tutors",
+        "description": "Support for advanced Physics concepts, calculations, practical work, and university pathway preparation.",
+        "href": "/a-level-physics-tutors",
+        "cta": "Explore A-Level Physics Tutors",
+        "tutorCount": 34
+      },
+      {
+        "title": "American Curriculum Physics Tutors",
+        "description": "Assistance with coursework, assessments, laboratory concepts, and curriculum progression.",
+        "href": "/american-curriculum-physics-tutors",
+        "cta": "Explore American Curriculum Physics Tutors",
+        "tutorCount": 22
+      },
+      {
+        "title": "CBSE Physics Tutors",
+        "description": "Support aligned with CBSE Physics requirements, conceptual understanding, numerical problem-solving, and examination preparation.",
+        "href": "/cbse-physics-tutors",
+        "cta": "Explore CBSE Physics Tutors",
+        "tutorCount": 26
+      }
+    ]
+  },
+  "whyParentsChoose": {
+    "title": "Why Parents Choose CoachAcadem",
+    "lead": "A trusted way to find qualified tutors, compare options, and book with confidence.",
+    "reasons": [
+      {
+        "title": "Verified Tutor Profiles",
+        "description": "Every tutor on CoachAcadem undergoes a verification process before appearing on the platform."
+      },
+      {
+        "title": "Ratings and Reviews",
+        "description": "Read feedback from students and parents who have previously worked with a tutor."
+      },
+      {
+        "title": "Curriculum Expertise",
+        "description": "Find tutors with experience supporting students across leading curricula."
+      },
+      {
+        "title": "Instant and Scheduled Booking",
+        "description": "Book lessons immediately or schedule sessions around academic commitments."
+      },
+      {
+        "title": "Built-In Communication",
+        "description": "Stay connected through CoachAcadem's integrated communication tools after booking."
+      },
+      {
+        "title": "Access Across the UAE",
+        "description": "Connect with tutors through online lessons from anywhere in the UAE."
+      }
+    ]
+  },
+  "reviews": {
+    "title": "Student and Parent Reviews",
+    "lead": "Choosing a tutor is an important decision. Reviews from students and parents can provide valuable insight into teaching style, communication, reliability, and overall learning experience.",
+    "items": [
+      {
+        "content": "Our son was struggling with mechanics and electricity in IGCSE Physics. His CoachAcadem tutor explained concepts clearly and his confidence improved within weeks.",
+        "author": "Khalid Al Nuaimi",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "IB Physics HL felt overwhelming until I started working with a tutor through CoachAcadem. The step-by-step approach to problem-solving made a huge difference before my exams.",
+        "author": "Maya Kapoor",
+        "role": "IB Student",
+        "avatar": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "We compared several Physics tutors on CoachAcadem before booking. The reviews were honest and helped us find someone who matched our daughter's learning style perfectly.",
+        "author": "Helen Brooks",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      }
+    ]
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "items": [
+      {
+        "question": "How do I find a Physics tutor?",
+        "answer": "Browse Physics tutor profiles on CoachAcadem, compare qualifications, reviews, teaching experience, and curriculum expertise, then choose the tutor who best matches your academic goals."
+      },
+      {
+        "question": "Are Physics tutors verified?",
+        "answer": "Yes. Tutors appearing on CoachAcadem complete the platform's verification requirements before becoming visible to students and parents."
+      },
+      {
+        "question": "Can I read tutor reviews before booking?",
+        "answer": "Yes. Public ratings and reviews allow you to evaluate previous learning experiences before choosing a tutor."
+      },
+      {
+        "question": "Do Physics tutors support IGCSE Physics?",
+        "answer": "Many tutors support IGCSE Physics, including theory, practical concepts, examination preparation, and revision planning."
+      },
+      {
+        "question": "Do Physics tutors support IB Physics?",
+        "answer": "Yes. Tutors may support both Standard Level and Higher Level Physics."
+      },
+      {
+        "question": "Can lessons be booked instantly?",
+        "answer": "Depending on tutor availability, lessons may be booked instantly or scheduled."
+      },
+      {
+        "question": "Can students across the UAE use CoachAcadem?",
+        "answer": "Yes. Students throughout the UAE can connect with tutors through the platform."
+      }
+    ]
+  },
+  "downloadApp": {
+    "title": "CoachAcadem in Your Pocket",
+    "supportingCopy": "Search tutors, manage bookings, communicate with tutors, and continue learning through one platform."
+  },
+  "relatedSubjects": {
+    "title": "Related Subjects",
+    "subjects": [
+      {
+        "name": "Mathematics Tutors",
+        "description": "Many Physics topics rely heavily on algebra, graphs, trigonometry, and problem-solving techniques.",
+        "href": "/mathematics-tutors",
+        "cta": "Explore Mathematics Tutors"
+      },
+      {
+        "name": "Chemistry Tutors",
+        "description": "Physics and Chemistry frequently overlap in areas such as atomic structure, energy transfer, thermodynamics, and scientific investigation.",
+        "href": "/chemistry-tutors",
+        "cta": "Explore Chemistry Tutors"
+      },
+      {
+        "name": "Biology Tutors",
+        "description": "Students pursuing science pathways often study Physics alongside Biology.",
+        "href": "/biology-tutors",
+        "cta": "Explore Biology Tutors"
+      },
+      {
+        "name": "Computer Science Tutors",
+        "description": "Physics develops analytical and logical thinking skills that often complement Computer Science learning.",
+        "href": "/computer-science-tutors",
+        "cta": "Explore Computer Science Tutors"
+      }
+    ]
+  }
+}

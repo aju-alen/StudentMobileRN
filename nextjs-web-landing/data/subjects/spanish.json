@@ -1,0 +1,273 @@
+{
+  "slug": "spanish-tutors",
+  "subjectName": "Spanish",
+  "seo": {
+    "title": "Spanish Tutors in the UAE | Verified Online Tutors | CoachAcadem",
+    "description": "Browse verified Spanish tutors across the UAE. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons through CoachAcadem.",
+    "primaryKeywords": ["Spanish Tutors UAE"],
+    "secondaryKeywords": [
+      "Online Spanish Tutors UAE",
+      "IGCSE Spanish Tutors UAE",
+      "IB Spanish Tutors UAE",
+      "A-Level Spanish Tutors UAE",
+      "Spanish Language Tutors UAE",
+      "Spanish Tuition UAE"
+    ]
+  },
+  "hero": {
+    "h1": "Spanish Tutors in the UAE",
+    "supportingCopy": "Browse verified Spanish tutors on CoachAcadem. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons online.",
+    "primaryCta": "Find Tutors",
+    "primaryCtaHref": "#featured-tutors",
+    "secondaryCta": "Get the App",
+    "secondaryCtaHref": "#download-app"
+  },
+  "featuredTutors": {
+    "title": "Featured Spanish Tutors",
+    "lead": "Compare experienced Spanish tutors supporting students across leading international curricula. Review qualifications, ratings, teaching experience, and student feedback before exploring individual tutor profiles.",
+    "tutors": [
+      {
+        "id": "elena-garcia",
+        "name": "Elena Garcia",
+        "photo": "https://randomuser.me/api/portraits/women/34.jpg",
+        "qualification": "MA Spanish Language & Literature, University of Barcelona",
+        "subjects": ["Spanish"],
+        "curricula": ["IGCSE", "A-Level", "IB"],
+        "rating": 4.9,
+        "reviewCount": 86,
+        "yearsExperience": 8,
+        "profileHref": "/tutors/elena-garcia"
+      },
+      {
+        "id": "carlos-mendez",
+        "name": "Carlos Mendez",
+        "photo": "https://randomuser.me/api/portraits/men/42.jpg",
+        "qualification": "BA Hispanic Studies, Universidad de Madrid",
+        "subjects": ["Spanish"],
+        "curricula": ["IB", "IGCSE", "American Curriculum"],
+        "rating": 4.8,
+        "reviewCount": 71,
+        "yearsExperience": 7,
+        "profileHref": "/tutors/carlos-mendez"
+      },
+      {
+        "id": "lucia-rodriguez",
+        "name": "Lucia Rodriguez",
+        "photo": "https://randomuser.me/api/portraits/women/56.jpg",
+        "qualification": "PGCE Modern Languages, University of Bristol",
+        "subjects": ["Spanish", "French"],
+        "curricula": ["A-Level", "IGCSE", "CBSE"],
+        "rating": 4.9,
+        "reviewCount": 63,
+        "yearsExperience": 9,
+        "profileHref": "/tutors/lucia-rodriguez"
+      },
+      {
+        "id": "diego-silva",
+        "name": "Diego Silva",
+        "photo": "https://randomuser.me/api/portraits/men/53.jpg",
+        "qualification": "DELE Superior, Instituto Cervantes",
+        "subjects": ["Spanish"],
+        "curricula": ["IGCSE", "American Curriculum"],
+        "rating": 4.8,
+        "reviewCount": 52,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/diego-silva"
+      },
+      {
+        "id": "valentina-torres",
+        "name": "Valentina Torres",
+        "photo": "https://randomuser.me/api/portraits/women/43.jpg",
+        "qualification": "MEd Spanish Teaching, University of Buenos Aires",
+        "subjects": ["Spanish"],
+        "curricula": ["IB", "A-Level", "IGCSE"],
+        "rating": 5.0,
+        "reviewCount": 48,
+        "yearsExperience": 10,
+        "profileHref": "/tutors/valentina-torres"
+      },
+      {
+        "id": "miguel-ortiz",
+        "name": "Miguel Ortiz",
+        "photo": "https://randomuser.me/api/portraits/men/70.jpg",
+        "qualification": "BA Applied Linguistics, University of Seville",
+        "subjects": ["Spanish"],
+        "curricula": ["CBSE", "IGCSE", "IB"],
+        "rating": 4.9,
+        "reviewCount": 41,
+        "yearsExperience": 5,
+        "profileHref": "/tutors/miguel-ortiz"
+      }
+    ]
+  },
+  "howTutorsHelp": {
+    "title": "How Spanish Tutors Can Help",
+    "paragraphs": [
+      "Spanish is one of the most widely spoken languages in the world and is studied by students for a variety of reasons, including academic requirements, university preparation, travel, and personal development. While many students make good progress in the early stages of learning Spanish, the subject becomes more demanding as expectations around communication, comprehension, and written expression increase.",
+      "You may understand vocabulary and grammar during lessons but struggle to apply them confidently in conversations, listening exercises, or examinations. Some students hesitate when speaking because they are afraid of making mistakes, while others find it difficult to understand spoken Spanish at natural speed.",
+      "A Spanish tutor helps you develop language skills in a structured and practical way. Tutors can support speaking confidence, listening comprehension, reading skills, vocabulary development, grammar application, and written communication. They can also help with oral assessments, examination preparation, revision planning, and curriculum-specific requirements.",
+      "If your child needs support with Spanish coursework, examination preparation, speaking assessments, or overall language development, targeted tutoring can provide personalised guidance and regular feedback. Consistent practice and individual support often make a significant difference in language learning outcomes."
+    ]
+  },
+  "curriculum": {
+    "title": "Find Spanish Tutors by Curriculum",
+    "lead": "Spanish requirements vary across curricula. Explore tutors with experience supporting the curriculum your child studies.",
+    "cards": [
+      {
+        "title": "IGCSE Spanish Tutors",
+        "description": "Support for speaking, listening, reading, writing, vocabulary development, examination preparation, and revision planning.",
+        "href": "/igcse-spanish-tutors",
+        "cta": "Explore IGCSE Spanish Tutors",
+        "tutorCount": 26
+      },
+      {
+        "title": "IB Spanish Tutors",
+        "description": "Guidance across language acquisition, oral assessments, written tasks, communication skills, and examination preparation.",
+        "href": "/ib-spanish-tutors",
+        "cta": "Explore IB Spanish Tutors",
+        "tutorCount": 21
+      },
+      {
+        "title": "A-Level Spanish Tutors",
+        "description": "Support for advanced language development, literary analysis, oral examinations, essay writing, and examination preparation.",
+        "href": "/a-level-spanish-tutors",
+        "cta": "Explore A-Level Spanish Tutors",
+        "tutorCount": 18
+      },
+      {
+        "title": "American Curriculum Spanish Tutors",
+        "description": "Support for language development, coursework, assessments, communication skills, and curriculum progression.",
+        "href": "/american-curriculum-spanish-tutors",
+        "cta": "Explore American Curriculum Spanish Tutors",
+        "tutorCount": 15
+      },
+      {
+        "title": "CBSE Spanish Tutors",
+        "description": "Support aligned with language-learning requirements, comprehension skills, grammar development, vocabulary growth, and examination preparation.",
+        "href": "/cbse-spanish-tutors",
+        "cta": "Explore CBSE Spanish Tutors",
+        "tutorCount": 14
+      }
+    ]
+  },
+  "whyParentsChoose": {
+    "title": "Why Parents Choose CoachAcadem",
+    "lead": "Finding the right tutor is about more than subject knowledge. Parents want confidence that the tutor is qualified, reliable, and able to support their child's learning goals.",
+    "reasons": [
+      {
+        "title": "Verified Tutor Profiles",
+        "description": "Every tutor on CoachAcadem completes a verification process before appearing on the platform. Parents can review qualifications, experience, and teaching backgrounds with confidence."
+      },
+      {
+        "title": "Ratings and Reviews",
+        "description": "Verified ratings and reviews provide insight into how tutors communicate, teach, and support students. This helps families compare options based on real learning experiences."
+      },
+      {
+        "title": "Curriculum Expertise",
+        "description": "Find tutors who understand the specific curriculum your child follows, including IGCSE, IB, A-Level, American Curriculum, CBSE, and other international programmes."
+      },
+      {
+        "title": "Instant and Scheduled Booking",
+        "description": "Book lessons immediately when support is needed or schedule sessions in advance around school commitments, examinations, and family routines."
+      },
+      {
+        "title": "Built-In Communication",
+        "description": "Stay connected with tutors through CoachAcadem's integrated communication features after booking lessons, making coordination simple and efficient."
+      },
+      {
+        "title": "Access Across the UAE",
+        "description": "Students can connect with tutors online from anywhere in the UAE, making it easier to access subject specialists regardless of location."
+      }
+    ]
+  },
+  "reviews": {
+    "title": "Student and Parent Reviews",
+    "lead": "Choosing a tutor is an important decision. Reviews from students and parents can provide valuable insight into teaching style, communication, reliability, and overall learning experience.",
+    "items": [
+      {
+        "content": "Our son was nervous about speaking Spanish in his oral exams. His CoachAcadem tutor built his confidence through regular conversation practice and he performed much better than expected.",
+        "author": "Isabelle Martin",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "IB Spanish oral assessments and written tasks were challenging. My tutor helped me improve listening comprehension and grammar accuracy, which made a real difference to my final grade.",
+        "author": "Maya Kapoor",
+        "role": "IB Student",
+        "avatar": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "We read verified reviews before choosing a Spanish tutor. The lessons were engaging and well structured, and our daughter's language skills improved steadily over the term.",
+        "author": "Helen Brooks",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      }
+    ]
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "items": [
+      {
+        "question": "How do I find a Spanish tutor?",
+        "answer": "Browse Spanish tutor profiles on CoachAcadem, compare qualifications, reviews, teaching experience, and curriculum expertise, then choose the tutor who best matches your academic goals."
+      },
+      {
+        "question": "Are Spanish tutors verified?",
+        "answer": "Yes. Tutors appearing on CoachAcadem complete the platform's verification requirements before becoming visible to students and parents."
+      },
+      {
+        "question": "Can I read tutor reviews before booking?",
+        "answer": "Yes. Public ratings and reviews allow you to evaluate previous learning experiences before choosing a tutor."
+      },
+      {
+        "question": "Do Spanish tutors support IGCSE Spanish?",
+        "answer": "Many tutors support IGCSE Spanish, including speaking, listening, reading, writing, examination preparation, and revision planning."
+      },
+      {
+        "question": "Do Spanish tutors support IB Spanish?",
+        "answer": "Yes. Tutors may support oral assessments, language acquisition requirements, written assignments, and examination preparation."
+      },
+      {
+        "question": "Can lessons be booked instantly?",
+        "answer": "Depending on tutor availability, lessons may be booked instantly or scheduled for a future date and time."
+      },
+      {
+        "question": "Can students across the UAE use CoachAcadem?",
+        "answer": "Yes. Students throughout the UAE can connect with tutors through the platform."
+      }
+    ]
+  },
+  "downloadApp": {
+    "title": "CoachAcadem in Your Pocket",
+    "supportingCopy": "Search tutors, manage bookings, communicate with tutors, and continue learning through one platform."
+  },
+  "relatedSubjects": {
+    "title": "Related Subjects",
+    "subjects": [
+      {
+        "name": "English Tutors",
+        "description": "Developing proficiency in multiple languages often strengthens communication skills, vocabulary, comprehension, and written expression.",
+        "href": "/english-tutors",
+        "cta": "Explore English Tutors"
+      },
+      {
+        "name": "Arabic Tutors",
+        "description": "Students building multilingual language skills often benefit from support across multiple language subjects.",
+        "href": "/arabic-tutors",
+        "cta": "Explore Arabic Tutors"
+      },
+      {
+        "name": "French Tutors",
+        "description": "Many students studying one additional language often develop an interest in learning other international languages as well.",
+        "href": "/french-tutors",
+        "cta": "Explore French Tutors"
+      },
+      {
+        "name": "Geography Tutors",
+        "description": "Language learning often develops cultural awareness and global understanding, which connects naturally with geographical studies.",
+        "href": "/geography-tutors",
+        "cta": "Explore Geography Tutors"
+      }
+    ]
+  }
+}

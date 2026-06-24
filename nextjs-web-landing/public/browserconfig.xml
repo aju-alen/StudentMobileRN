@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<browserconfig>
+    <msapplication>
+        <tile>
+            <square70x70logo src="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png"/>
+            <square150x150logo src="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png"/>
+            <square310x310logo src="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png"/>
+            <wide310x150logo src="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png"/>
+            <TileColor>#3B82F6</TileColor>
+            <TileImage src="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo-circle.png"/>
+        </tile>
+    </msapplication>
+</browserconfig> 

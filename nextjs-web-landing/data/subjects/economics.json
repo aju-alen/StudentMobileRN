@@ -1,0 +1,271 @@
+{
+  "slug": "economics-tutors",
+  "subjectName": "Economics",
+  "seo": {
+    "title": "Economics Tutors in the UAE | Verified Online Tutors | CoachAcadem",
+    "description": "Browse verified Economics tutors across the UAE. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons through CoachAcadem.",
+    "primaryKeywords": ["Economics Tutors UAE"],
+    "secondaryKeywords": [
+      "Online Economics Tutors UAE",
+      "IGCSE Economics Tutors UAE",
+      "IB Economics Tutors UAE",
+      "A-Level Economics Tutors UAE"
+    ]
+  },
+  "hero": {
+    "h1": "Economics Tutors in the UAE",
+    "supportingCopy": "Browse verified Economics tutors on CoachAcadem. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons online.",
+    "primaryCta": "Find Tutors",
+    "primaryCtaHref": "#featured-tutors",
+    "secondaryCta": "Get the App",
+    "secondaryCtaHref": "#download-app"
+  },
+  "featuredTutors": {
+    "title": "Featured Economics Tutors",
+    "lead": "Compare experienced Economics tutors supporting students across leading international curricula. Review qualifications, ratings, teaching experience, and student feedback before exploring individual tutor profiles.",
+    "tutors": [
+      {
+        "id": "andrew-clarke",
+        "name": "Andrew Clarke",
+        "photo": "https://randomuser.me/api/portraits/men/49.jpg",
+        "qualification": "MSc Economics, London School of Economics",
+        "subjects": ["Economics", "Business Studies"],
+        "curricula": ["IGCSE", "A-Level", "IB"],
+        "rating": 4.9,
+        "reviewCount": 93,
+        "yearsExperience": 9,
+        "profileHref": "/tutors/andrew-clarke"
+      },
+      {
+        "id": "meera-shah",
+        "name": "Meera Shah",
+        "photo": "https://randomuser.me/api/portraits/women/51.jpg",
+        "qualification": "BA Economics, University of Delhi",
+        "subjects": ["Economics"],
+        "curricula": ["CBSE", "IGCSE", "American Curriculum"],
+        "rating": 4.8,
+        "reviewCount": 76,
+        "yearsExperience": 7,
+        "profileHref": "/tutors/meera-shah"
+      },
+      {
+        "id": "thomas-wright",
+        "name": "Thomas Wright",
+        "photo": "https://randomuser.me/api/portraits/men/55.jpg",
+        "qualification": "PhD Economics, University of Cambridge",
+        "subjects": ["Economics"],
+        "curricula": ["IB", "A-Level"],
+        "rating": 5.0,
+        "reviewCount": 61,
+        "yearsExperience": 11,
+        "profileHref": "/tutors/thomas-wright"
+      },
+      {
+        "id": "fatima-al-ansari",
+        "name": "Fatima Al Ansari",
+        "photo": "https://randomuser.me/api/portraits/women/63.jpg",
+        "qualification": "MSc Applied Economics, UAE University",
+        "subjects": ["Economics", "Business Studies"],
+        "curricula": ["IGCSE", "CBSE", "IB"],
+        "rating": 4.9,
+        "reviewCount": 68,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/fatima-al-ansari"
+      },
+      {
+        "id": "benjamin-ross",
+        "name": "Benjamin Ross",
+        "photo": "https://randomuser.me/api/portraits/men/27.jpg",
+        "qualification": "PGCE Economics, University of Oxford",
+        "subjects": ["Economics"],
+        "curricula": ["A-Level", "IGCSE", "IB"],
+        "rating": 4.8,
+        "reviewCount": 55,
+        "yearsExperience": 8,
+        "profileHref": "/tutors/benjamin-ross"
+      },
+      {
+        "id": "nisha-patel",
+        "name": "Nisha Patel",
+        "photo": "https://randomuser.me/api/portraits/women/39.jpg",
+        "qualification": "BSc Economics, American University of Sharjah",
+        "subjects": ["Economics", "Business Studies"],
+        "curricula": ["American Curriculum", "IGCSE"],
+        "rating": 4.9,
+        "reviewCount": 47,
+        "yearsExperience": 5,
+        "profileHref": "/tutors/nisha-patel"
+      }
+    ]
+  },
+  "howTutorsHelp": {
+    "title": "How Economics Tutors Can Help",
+    "paragraphs": [
+      "Economics is a subject that asks you to think about how people, businesses, and governments make decisions when resources are limited. While many students understand the basic ideas, applying economic theory to real-world situations often becomes the biggest challenge.",
+      "You may understand concepts such as supply and demand, inflation, market structures, economic growth, or government intervention, yet struggle to explain their effects clearly in examination answers. Many students lose marks not because they lack knowledge, but because they find it difficult to analyse, evaluate, and build well-structured arguments.",
+      "An Economics tutor helps you move beyond definitions and diagrams. Tutors can help you understand how economic concepts interact, develop stronger analytical skills, improve essay structure, interpret data effectively, and apply theory to current events and case studies.",
+      "If your child needs support with examination technique, essay writing, data-response questions, revision planning, or economic reasoning, targeted tutoring can provide structured guidance and regular feedback. Economics tutoring helps students build both subject knowledge and the critical-thinking skills needed for academic success."
+    ]
+  },
+  "curriculum": {
+    "title": "Find Economics Tutors by Curriculum",
+    "lead": "Economics requirements differ across curricula. Explore tutors who understand the curriculum your child studies.",
+    "cards": [
+      {
+        "title": "IGCSE Economics Tutors",
+        "description": "Support for microeconomics, macroeconomics, market systems, data interpretation, examination preparation, and revision planning.",
+        "href": "/igcse-economics-tutors",
+        "cta": "Explore IGCSE Economics Tutors",
+        "tutorCount": 30
+      },
+      {
+        "title": "IB Economics Tutors",
+        "description": "Guidance across microeconomics, macroeconomics, global economics, internal assessments, data-response questions, and examination preparation.",
+        "href": "/ib-economics-tutors",
+        "cta": "Explore IB Economics Tutors",
+        "tutorCount": 25
+      },
+      {
+        "title": "A-Level Economics Tutors",
+        "description": "Support for advanced economic theory, evaluation skills, essay writing, data analysis, and examination preparation.",
+        "href": "/a-level-economics-tutors",
+        "cta": "Explore A-Level Economics Tutors",
+        "tutorCount": 27
+      },
+      {
+        "title": "American Curriculum Economics Tutors",
+        "description": "Assistance with coursework, economic concepts, assessments, and curriculum progression.",
+        "href": "/american-curriculum-economics-tutors",
+        "cta": "Explore American Curriculum Economics Tutors",
+        "tutorCount": 17
+      },
+      {
+        "title": "CBSE Economics Tutors",
+        "description": "Support aligned with CBSE Economics requirements, analytical thinking, economic interpretation, and examination preparation.",
+        "href": "/cbse-economics-tutors",
+        "cta": "Explore CBSE Economics Tutors",
+        "tutorCount": 22
+      }
+    ]
+  },
+  "whyParentsChoose": {
+    "title": "Why Parents Choose CoachAcadem",
+    "lead": "A trusted way to find qualified tutors, compare options, and book with confidence.",
+    "reasons": [
+      {
+        "title": "Verified Tutor Profiles",
+        "description": "Every tutor on CoachAcadem undergoes a verification process before appearing on the platform, helping parents make informed decisions with greater confidence."
+      },
+      {
+        "title": "Ratings and Reviews",
+        "description": "Read feedback from students and parents who have previously worked with a tutor to better understand teaching style, communication, and learning outcomes."
+      },
+      {
+        "title": "Curriculum Expertise",
+        "description": "Find tutors with experience supporting students across leading curricula including IGCSE, IB, A-Level, American Curriculum, and CBSE."
+      },
+      {
+        "title": "Instant and Scheduled Booking",
+        "description": "Book lessons immediately or schedule sessions around academic commitments and family routines."
+      },
+      {
+        "title": "Built-In Communication",
+        "description": "Stay connected through CoachAcadem's integrated communication tools after booking, helping coordinate lessons efficiently."
+      },
+      {
+        "title": "Access Across the UAE",
+        "description": "Connect with tutors through online lessons from anywhere in the UAE, expanding access to subject specialists regardless of location."
+      }
+    ]
+  },
+  "reviews": {
+    "title": "Student and Parent Reviews",
+    "lead": "Choosing a tutor is an important decision. Reviews from students and parents can provide valuable insight into teaching style, communication, reliability, and overall learning experience.",
+    "items": [
+      {
+        "content": "Our daughter was losing marks on evaluation questions in A-Level Economics. Her CoachAcadem tutor helped her structure arguments and use diagrams more effectively, which made a real difference to her results.",
+        "author": "David Morrison",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "IB Economics data-response questions were my biggest challenge. My tutor helped me interpret graphs and build clearer, more analytical answers under exam conditions.",
+        "author": "Aisha Rahman",
+        "role": "IB Student",
+        "avatar": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "Being able to compare Economics tutors and read honest reviews gave us confidence before booking. The tutor we chose was knowledgeable, patient, and excellent at explaining complex concepts.",
+        "author": "James Liu",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      }
+    ]
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "items": [
+      {
+        "question": "How do I find an Economics tutor?",
+        "answer": "Browse Economics tutor profiles on CoachAcadem, compare qualifications, reviews, teaching experience, and curriculum expertise, then choose the tutor who best matches your academic goals."
+      },
+      {
+        "question": "Are Economics tutors verified?",
+        "answer": "Yes. Tutors appearing on CoachAcadem complete the platform's verification requirements before becoming visible to students and parents."
+      },
+      {
+        "question": "Can I read tutor reviews before booking?",
+        "answer": "Yes. Public ratings and reviews allow you to evaluate previous learning experiences before choosing a tutor."
+      },
+      {
+        "question": "Do Economics tutors support IGCSE Economics?",
+        "answer": "Many tutors support IGCSE Economics, including data interpretation, examination preparation, essay writing, and revision planning."
+      },
+      {
+        "question": "Do tutors support IB Economics?",
+        "answer": "Yes. Tutors may support internal assessments, data-response questions, essay writing, and examination preparation."
+      },
+      {
+        "question": "Can lessons be booked instantly?",
+        "answer": "Depending on tutor availability, lessons may be booked instantly or scheduled for a future date and time."
+      },
+      {
+        "question": "Can students across the UAE use CoachAcadem?",
+        "answer": "Yes. Students throughout the UAE can connect with tutors through the platform."
+      }
+    ]
+  },
+  "downloadApp": {
+    "title": "CoachAcadem in Your Pocket",
+    "supportingCopy": "Search tutors, manage bookings, communicate with tutors, and continue learning through one platform."
+  },
+  "relatedSubjects": {
+    "title": "Related Subjects",
+    "subjects": [
+      {
+        "name": "Business Studies Tutors",
+        "description": "Economics and Business Studies frequently overlap in areas such as markets, competition, strategy, and decision-making.",
+        "href": "/business-studies-tutors",
+        "cta": "Explore Business Studies Tutors"
+      },
+      {
+        "name": "Mathematics Tutors",
+        "description": "Economic analysis often relies on graphs, calculations, percentages, and quantitative reasoning.",
+        "href": "/mathematics-tutors",
+        "cta": "Explore Mathematics Tutors"
+      },
+      {
+        "name": "English Tutors",
+        "description": "Strong analytical writing and argument development are important skills in Economics, particularly in essay-based assessments.",
+        "href": "/english-tutors",
+        "cta": "Explore English Tutors"
+      },
+      {
+        "name": "Computer Science Tutors",
+        "description": "Data analysis, modelling, technology, and digital transformation increasingly connect Economics and Computer Science.",
+        "href": "/computer-science-tutors",
+        "cta": "Explore Computer Science Tutors"
+      }
+    ]
+  }
+}

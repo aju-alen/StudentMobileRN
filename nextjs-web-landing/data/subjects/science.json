@@ -1,0 +1,282 @@
+{
+  "slug": "science-tutors",
+  "subjectName": "Science",
+  "seo": {
+    "title": "Science Tutors in the UAE | Verified Online Tutors | CoachAcadem",
+    "description": "Browse verified Science tutors across the UAE. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons through CoachAcadem. Explore Physics, Chemistry, Biology, and other science subjects.",
+    "primaryKeywords": ["Science Tutors UAE"],
+    "secondaryKeywords": [
+      "Online Science Tutors UAE",
+      "Science Tuition UAE",
+      "IGCSE Science Tutors UAE",
+      "IB Science Tutors UAE",
+      "A-Level Science Tutors UAE",
+      "Biology Tutors UAE",
+      "Chemistry Tutors UAE",
+      "Physics Tutors UAE"
+    ]
+  },
+  "hero": {
+    "h1": "Science Tutors in the UAE",
+    "supportingCopy": "Browse verified Science tutors on CoachAcadem. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons online. Science helps students understand how the world works through observation, investigation, experimentation, and evidence-based reasoning. Explore tutors across Physics, Chemistry, Biology, and other science disciplines through one platform.",
+    "primaryCta": "Find Tutors",
+    "primaryCtaHref": "#featured-tutors",
+    "secondaryCta": "Get the App",
+    "secondaryCtaHref": "#download-app"
+  },
+  "featuredTutors": {
+    "title": "Featured Science Tutors",
+    "lead": "Compare experienced Science tutors supporting students across leading international curricula. Review qualifications, ratings, teaching experience, and student feedback before exploring individual tutor profiles.",
+    "tutors": [
+      {
+        "id": "james-okafor",
+        "name": "James Okafor",
+        "photo": "https://randomuser.me/api/portraits/men/32.jpg",
+        "qualification": "BSc Physics, Imperial College London",
+        "subjects": ["Physics", "Science"],
+        "curricula": ["IGCSE", "IB", "American Curriculum"],
+        "rating": 4.9,
+        "reviewCount": 96,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/james-okafor"
+      },
+      {
+        "id": "rachel-nguyen",
+        "name": "Rachel Nguyen",
+        "photo": "https://randomuser.me/api/portraits/women/31.jpg",
+        "qualification": "MSc Chemistry, University of Manchester",
+        "subjects": ["Chemistry", "Science"],
+        "curricula": ["IGCSE", "A-Level", "IB"],
+        "rating": 4.9,
+        "reviewCount": 91,
+        "yearsExperience": 7,
+        "profileHref": "/tutors/rachel-nguyen"
+      },
+      {
+        "id": "emma-walsh",
+        "name": "Emma Walsh",
+        "photo": "https://randomuser.me/api/portraits/women/29.jpg",
+        "qualification": "MSc Biology, University of Edinburgh",
+        "subjects": ["Biology", "Science"],
+        "curricula": ["IGCSE", "A-Level", "IB"],
+        "rating": 4.9,
+        "reviewCount": 94,
+        "yearsExperience": 7,
+        "profileHref": "/tutors/emma-walsh"
+      },
+      {
+        "id": "alex-rivera",
+        "name": "Alex Rivera",
+        "photo": "https://randomuser.me/api/portraits/men/46.jpg",
+        "qualification": "MSc Computer Science, Stanford University",
+        "subjects": ["Computer Science", "Science"],
+        "curricula": ["IGCSE", "IB", "A-Level"],
+        "rating": 4.9,
+        "reviewCount": 89,
+        "yearsExperience": 7,
+        "profileHref": "/tutors/alex-rivera"
+      },
+      {
+        "id": "sarah-hassan",
+        "name": "Sarah Hassan",
+        "photo": "https://randomuser.me/api/portraits/women/44.jpg",
+        "qualification": "MSc Mathematics, University of Oxford",
+        "subjects": ["Mathematics", "Science"],
+        "curricula": ["IGCSE", "A-Level", "IB"],
+        "rating": 4.9,
+        "reviewCount": 128,
+        "yearsExperience": 8,
+        "profileHref": "/tutors/sarah-hassan"
+      },
+      {
+        "id": "omar-al-suwaidi",
+        "name": "Omar Al Suwaidi",
+        "photo": "https://randomuser.me/api/portraits/men/56.jpg",
+        "qualification": "BSc Environmental Science, UAE University",
+        "subjects": ["Science", "Geography"],
+        "curricula": ["IGCSE", "CBSE", "American Curriculum"],
+        "rating": 4.8,
+        "reviewCount": 66,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/omar-al-suwaidi"
+      }
+    ]
+  },
+  "howTutorsHelp": {
+    "title": "How Science Tutors Can Help",
+    "paragraphs": [
+      "Science encourages students to ask questions, investigate ideas, test explanations, and understand the principles that shape the world around them. As students progress through school, science subjects become increasingly specialised, requiring a combination of conceptual understanding, analytical thinking, mathematical application, and examination technique.",
+      "Many students perform well in one science subject while finding another more challenging. Some struggle with calculations in Physics, others with abstract concepts in Chemistry, while many find the volume of content in Biology difficult to manage. As curriculum expectations increase, students are often required to interpret data, evaluate evidence, conduct investigations, and apply knowledge to unfamiliar scenarios.",
+      "A Science tutor helps you develop stronger subject understanding while identifying the areas that need the most support. Tutors can help explain difficult concepts, strengthen problem-solving skills, improve examination techniques, and build confidence across scientific topics.",
+      "Whether your child needs support in a specific science subject or is looking to strengthen overall scientific understanding, targeted tutoring can provide structured guidance, personalised support, and consistent feedback."
+    ]
+  },
+  "exploreSubjects": {
+    "title": "Explore Science Subjects",
+    "lead": "Science is a broad academic field. Explore tutors by subject to find support aligned with your child's learning goals.",
+    "subjects": [
+      {
+        "name": "Physics Tutors",
+        "description": "Physics helps students understand motion, forces, energy, electricity, waves, and the laws that govern the physical world. Students often seek support with calculations, problem-solving, and examination technique.",
+        "href": "/physics-tutors",
+        "cta": "Explore Physics Tutors"
+      },
+      {
+        "name": "Chemistry Tutors",
+        "description": "Chemistry focuses on substances, reactions, atomic structure, bonding, and the interactions that shape matter. Tutors help students build confidence with calculations, theory, and laboratory-based concepts.",
+        "href": "/chemistry-tutors",
+        "cta": "Explore Chemistry Tutors"
+      },
+      {
+        "name": "Biology Tutors",
+        "description": "Biology explores living organisms, ecosystems, genetics, human systems, and environmental processes. Tutors help students manage large content volumes while developing stronger analytical and examination skills.",
+        "href": "/biology-tutors",
+        "cta": "Explore Biology Tutors"
+      },
+      {
+        "name": "Computer Science Tutors",
+        "description": "Many students interested in science also study Computer Science. Programming, computational thinking, data analysis, and technology increasingly intersect with modern scientific disciplines.",
+        "href": "/computer-science-tutors",
+        "cta": "Explore Computer Science Tutors"
+      },
+      {
+        "name": "Mathematics Tutors",
+        "description": "Strong mathematical skills support success across many science subjects. Mathematics often forms the foundation for calculations, modelling, data interpretation, and scientific reasoning.",
+        "href": "/mathematics-tutors",
+        "cta": "Explore Mathematics Tutors"
+      }
+    ]
+  },
+  "curriculum": {
+    "title": "Find Science Tutors by Curriculum",
+    "lead": "Science requirements vary across curricula. Explore tutors who understand the curriculum your child studies.",
+    "cards": [
+      {
+        "title": "IGCSE Science Tutors",
+        "description": "Support across Biology, Chemistry, Physics, Combined Science, examination preparation, practical skills, and revision planning.",
+        "href": "/igcse-science-tutors",
+        "cta": "Explore IGCSE Science Tutors",
+        "tutorCount": 52
+      },
+      {
+        "title": "IB Science Tutors",
+        "description": "Support across Biology, Chemistry, Physics, Environmental Systems, internal assessments, investigations, and examination preparation.",
+        "href": "/ib-science-tutors",
+        "cta": "Explore IB Science Tutors",
+        "tutorCount": 38
+      },
+      {
+        "title": "A-Level Science Tutors",
+        "description": "Support across advanced scientific subjects, analytical thinking, practical investigations, coursework requirements, and examination preparation.",
+        "href": "/a-level-science-tutors",
+        "cta": "Explore A-Level Science Tutors",
+        "tutorCount": 42
+      },
+      {
+        "title": "American Curriculum Science Tutors",
+        "description": "Support across coursework, laboratory concepts, assessments, and curriculum progression.",
+        "href": "/american-curriculum-science-tutors",
+        "cta": "Explore American Curriculum Science Tutors",
+        "tutorCount": 28
+      },
+      {
+        "title": "CBSE Science Tutors",
+        "description": "Support aligned with CBSE Science requirements, conceptual understanding, practical application, and examination preparation.",
+        "href": "/cbse-science-tutors",
+        "cta": "Explore CBSE Science Tutors",
+        "tutorCount": 35
+      }
+    ]
+  },
+  "whyParentsChoose": {
+    "title": "Why Parents Choose CoachAcadem",
+    "lead": "Finding the right tutor is about more than subject knowledge. Parents want confidence that the tutor is qualified, reliable, and able to support their child's learning goals.",
+    "reasons": [
+      {
+        "title": "Verified Tutor Profiles",
+        "description": "Every tutor on CoachAcadem completes a verification process before appearing on the platform."
+      },
+      {
+        "title": "Ratings and Reviews",
+        "description": "Review authentic feedback from students and parents before making a decision."
+      },
+      {
+        "title": "Curriculum Expertise",
+        "description": "Find tutors experienced across major international curricula."
+      },
+      {
+        "title": "Instant and Scheduled Booking",
+        "description": "Book lessons immediately or schedule them around your family's routine."
+      },
+      {
+        "title": "Built-In Communication",
+        "description": "Coordinate lessons through CoachAcadem after booking."
+      },
+      {
+        "title": "Access Across the UAE",
+        "description": "Connect with tutors online from anywhere in the UAE."
+      }
+    ]
+  },
+  "reviews": {
+    "title": "Student and Parent Reviews",
+    "lead": "Choosing a tutor is an important decision. Reviews from students and parents can provide valuable insight into teaching style, communication, reliability, and overall learning experience.",
+    "items": [
+      {
+        "content": "Our daughter needed support across multiple science subjects. CoachAcadem helped us find tutors specialising in Biology and Chemistry, and her overall science performance improved significantly.",
+        "author": "Fatima Al Rashid",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "IGCSE Combined Science felt overwhelming with so many topics to cover. My tutor helped me prioritise revision and understand how Physics, Chemistry, and Biology connected.",
+        "author": "Arjun Mehta",
+        "role": "IGCSE Student",
+        "avatar": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "Being able to find specialist science tutors on one platform saved us time. The tutors were professional, well prepared, and genuinely invested in our son's progress.",
+        "author": "Sarah Mitchell",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      }
+    ]
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "items": [
+      {
+        "question": "How do I find a Science tutor?",
+        "answer": "Browse Science tutor profiles on CoachAcadem, compare qualifications, reviews, teaching experience, and curriculum expertise, then choose the tutor who best matches your academic goals."
+      },
+      {
+        "question": "Are Science tutors verified?",
+        "answer": "Yes. Tutors appearing on CoachAcadem complete the platform's verification requirements before becoming visible to students and parents."
+      },
+      {
+        "question": "Can I find tutors for individual science subjects?",
+        "answer": "Yes. You can explore tutors specialising in Physics, Chemistry, Biology, Computer Science, and Mathematics through dedicated subject pages."
+      },
+      {
+        "question": "Do Science tutors support IGCSE Science?",
+        "answer": "Many tutors support IGCSE Biology, Chemistry, Physics, Combined Science, examination preparation, and revision planning."
+      },
+      {
+        "question": "Do Science tutors support IB Science subjects?",
+        "answer": "Yes. Tutors may support Biology, Chemistry, Physics, Environmental Systems, internal assessments, and examination preparation."
+      },
+      {
+        "question": "Can lessons be booked instantly?",
+        "answer": "Depending on tutor availability, lessons may be booked instantly or scheduled for a future date and time."
+      },
+      {
+        "question": "Can students across the UAE use CoachAcadem?",
+        "answer": "Yes. Students throughout the UAE can connect with tutors through the platform."
+      }
+    ]
+  },
+  "downloadApp": {
+    "title": "CoachAcadem in Your Pocket",
+    "supportingCopy": "Search tutors, manage bookings, communicate with tutors, and continue learning through one platform."
+  }
+}

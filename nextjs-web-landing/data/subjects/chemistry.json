@@ -1,0 +1,271 @@
+{
+  "slug": "chemistry-tutors",
+  "subjectName": "Chemistry",
+  "seo": {
+    "title": "Chemistry Tutors in the UAE | Verified Online Tutors | CoachAcadem",
+    "description": "Browse verified Chemistry tutors across the UAE. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons through CoachAcadem.",
+    "primaryKeywords": ["Chemistry Tutors UAE"],
+    "secondaryKeywords": [
+      "Online Chemistry Tutors UAE",
+      "IGCSE Chemistry Tutors UAE",
+      "IB Chemistry Tutors UAE",
+      "A-Level Chemistry Tutors UAE"
+    ]
+  },
+  "hero": {
+    "h1": "Chemistry Tutors in the UAE",
+    "supportingCopy": "Browse verified Chemistry tutors on CoachAcadem. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons online.",
+    "primaryCta": "Find Tutors",
+    "primaryCtaHref": "#featured-tutors",
+    "secondaryCta": "Get the App",
+    "secondaryCtaHref": "#download-app"
+  },
+  "featuredTutors": {
+    "title": "Featured Chemistry Tutors",
+    "lead": "Compare experienced Chemistry tutors supporting students across leading international curricula. Review qualifications, ratings, teaching experience, and student feedback before exploring individual tutor profiles.",
+    "tutors": [
+      {
+        "id": "rachel-nguyen",
+        "name": "Rachel Nguyen",
+        "photo": "https://randomuser.me/api/portraits/women/31.jpg",
+        "qualification": "MSc Chemistry, University of Manchester",
+        "subjects": ["Chemistry", "Science"],
+        "curricula": ["IGCSE", "A-Level", "IB"],
+        "rating": 4.9,
+        "reviewCount": 91,
+        "yearsExperience": 7,
+        "profileHref": "/tutors/rachel-nguyen"
+      },
+      {
+        "id": "hassan-malik",
+        "name": "Hassan Malik",
+        "photo": "https://randomuser.me/api/portraits/men/45.jpg",
+        "qualification": "BSc Chemistry, UAE University",
+        "subjects": ["Chemistry"],
+        "curricula": ["CBSE", "IGCSE", "American Curriculum"],
+        "rating": 4.8,
+        "reviewCount": 78,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/hassan-malik"
+      },
+      {
+        "id": "isabelle-martin",
+        "name": "Isabelle Martin",
+        "photo": "https://randomuser.me/api/portraits/women/48.jpg",
+        "qualification": "PhD Organic Chemistry, Sorbonne University",
+        "subjects": ["Chemistry", "Biology"],
+        "curricula": ["IB", "A-Level"],
+        "rating": 5.0,
+        "reviewCount": 64,
+        "yearsExperience": 10,
+        "profileHref": "/tutors/isabelle-martin"
+      },
+      {
+        "id": "vikram-patel",
+        "name": "Vikram Patel",
+        "photo": "https://randomuser.me/api/portraits/men/58.jpg",
+        "qualification": "MSc Chemistry, IIT Bombay",
+        "subjects": ["Chemistry", "Science"],
+        "curricula": ["CBSE", "IGCSE"],
+        "rating": 4.9,
+        "reviewCount": 85,
+        "yearsExperience": 8,
+        "profileHref": "/tutors/vikram-patel"
+      },
+      {
+        "id": "sophie-laurent",
+        "name": "Sophie Laurent",
+        "photo": "https://randomuser.me/api/portraits/women/62.jpg",
+        "qualification": "BSc Chemistry, King's College London",
+        "subjects": ["Chemistry"],
+        "curricula": ["IGCSE", "IB", "A-Level"],
+        "rating": 4.8,
+        "reviewCount": 70,
+        "yearsExperience": 5,
+        "profileHref": "/tutors/sophie-laurent"
+      },
+      {
+        "id": "daniel-osei",
+        "name": "Daniel Osei",
+        "photo": "https://randomuser.me/api/portraits/men/36.jpg",
+        "qualification": "MSc Chemical Sciences, University of Cape Town",
+        "subjects": ["Chemistry", "Science"],
+        "curricula": ["American Curriculum", "IGCSE", "IB"],
+        "rating": 4.9,
+        "reviewCount": 56,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/daniel-osei"
+      }
+    ]
+  },
+  "howTutorsHelp": {
+    "title": "How Chemistry Tutors Can Help",
+    "paragraphs": [
+      "Chemistry sits at the intersection of theory, calculations, and practical understanding. You are often expected to move between chemical equations, laboratory concepts, atomic structures, reactions, and numerical calculations within the same lesson. For many students, the challenge is not a lack of effort—it is connecting these different parts of the subject into a clear and logical picture.",
+      "A Chemistry tutor helps you make sense of those connections. Instead of memorising isolated facts, you learn how topics relate to one another, why reactions occur, and how chemical principles can be applied when answering examination questions. This deeper understanding often improves both confidence and performance.",
+      "If your child struggles with balancing equations, understanding chemical reactions, interpreting experimental results, or applying concepts under exam conditions, focused academic support can help identify weak areas and strengthen understanding step by step.",
+      "Chemistry tutoring can also support practical assessment preparation, revision planning, coursework requirements, and examination readiness. Whether the goal is improving grades, building confidence, or preparing for future science-related studies, tutors provide structured support aligned with your curriculum and learning objectives."
+    ]
+  },
+  "curriculum": {
+    "title": "Find Chemistry Tutors by Curriculum",
+    "lead": "Chemistry requirements vary across curricula. Explore tutors who understand the expectations, assessments, and learning outcomes of your curriculum.",
+    "cards": [
+      {
+        "title": "IGCSE Chemistry Tutors",
+        "description": "Support for chemical reactions, atomic structure, bonding, calculations, practical skills, examination preparation, and revision planning.",
+        "href": "/igcse-chemistry-tutors",
+        "cta": "Explore IGCSE Chemistry Tutors",
+        "tutorCount": 40
+      },
+      {
+        "title": "IB Chemistry Tutors",
+        "description": "Guidance across Standard Level and Higher Level Chemistry, including practical investigations, internal assessments, and examination preparation.",
+        "href": "/ib-chemistry-tutors",
+        "cta": "Explore IB Chemistry Tutors",
+        "tutorCount": 30
+      },
+      {
+        "title": "A-Level Chemistry Tutors",
+        "description": "Support for advanced Chemistry topics, calculations, laboratory concepts, examination preparation, and university pathway requirements.",
+        "href": "/a-level-chemistry-tutors",
+        "cta": "Explore A-Level Chemistry Tutors",
+        "tutorCount": 33
+      },
+      {
+        "title": "American Curriculum Chemistry Tutors",
+        "description": "Assistance with coursework, laboratory concepts, assessments, and curriculum progression.",
+        "href": "/american-curriculum-chemistry-tutors",
+        "cta": "Explore American Curriculum Chemistry Tutors",
+        "tutorCount": 21
+      },
+      {
+        "title": "CBSE Chemistry Tutors",
+        "description": "Support aligned with CBSE Chemistry requirements, conceptual understanding, practical applications, and examination preparation.",
+        "href": "/cbse-chemistry-tutors",
+        "cta": "Explore CBSE Chemistry Tutors",
+        "tutorCount": 27
+      }
+    ]
+  },
+  "whyParentsChoose": {
+    "title": "Why Parents Choose CoachAcadem",
+    "lead": "A trusted way to find qualified tutors, compare options, and book with confidence.",
+    "reasons": [
+      {
+        "title": "Verified Tutor Profiles",
+        "description": "Every tutor on CoachAcadem undergoes a verification process before appearing on the platform, helping parents make informed decisions with greater confidence."
+      },
+      {
+        "title": "Ratings and Reviews",
+        "description": "Read feedback from students and parents who have previously worked with a tutor to better understand teaching style, communication, and learning outcomes."
+      },
+      {
+        "title": "Curriculum Expertise",
+        "description": "Find tutors with experience supporting students across leading curricula including IGCSE, IB, A-Level, American Curriculum, and CBSE."
+      },
+      {
+        "title": "Instant and Scheduled Booking",
+        "description": "Book lessons immediately or schedule sessions around academic commitments and family routines."
+      },
+      {
+        "title": "Built-In Communication",
+        "description": "Stay connected through CoachAcadem's integrated communication tools after booking, helping coordinate lessons efficiently."
+      },
+      {
+        "title": "Access Across the UAE",
+        "description": "Connect with tutors through online lessons from anywhere in the UAE, expanding access to subject specialists regardless of location."
+      }
+    ]
+  },
+  "reviews": {
+    "title": "Student and Parent Reviews",
+    "lead": "Choosing a tutor is an important decision. Reviews from students and parents can provide valuable insight into teaching style, communication, reliability, and overall learning experience.",
+    "items": [
+      {
+        "content": "Our daughter was struggling with organic chemistry and stoichiometry. Her CoachAcadem tutor broke down complex topics into manageable steps and her exam results improved significantly.",
+        "author": "Amira Al Farsi",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "IB Chemistry HL was one of my toughest subjects. My tutor helped me understand practical investigations and internal assessment requirements, which made a real difference to my final grade.",
+        "author": "Rohan Singh",
+        "role": "IB Student",
+        "avatar": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "We appreciated being able to read verified reviews before choosing a Chemistry tutor. The tutor we selected was patient, knowledgeable, and always well prepared for each lesson.",
+        "author": "Claire Morrison",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      }
+    ]
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "items": [
+      {
+        "question": "How do I find a Chemistry tutor?",
+        "answer": "Browse Chemistry tutor profiles on CoachAcadem, compare qualifications, reviews, teaching experience, and curriculum expertise, then choose the tutor who best matches your academic goals."
+      },
+      {
+        "question": "Are Chemistry tutors verified?",
+        "answer": "Yes. Tutors appearing on CoachAcadem complete the platform's verification requirements before becoming visible to students and parents."
+      },
+      {
+        "question": "Can I read tutor reviews before booking?",
+        "answer": "Yes. Public ratings and reviews allow you to evaluate previous learning experiences before choosing a tutor."
+      },
+      {
+        "question": "Do Chemistry tutors support IGCSE Chemistry?",
+        "answer": "Many tutors support IGCSE Chemistry, including theory, practical concepts, calculations, examination preparation, and revision planning."
+      },
+      {
+        "question": "Do Chemistry tutors support IB Chemistry?",
+        "answer": "Yes. Tutors may support both Standard Level and Higher Level Chemistry, including internal assessments and examination preparation."
+      },
+      {
+        "question": "Can lessons be booked instantly?",
+        "answer": "Depending on tutor availability, lessons may be booked instantly or scheduled for a future date and time."
+      },
+      {
+        "question": "Can students across the UAE use CoachAcadem?",
+        "answer": "Yes. Students throughout the UAE can connect with tutors through the platform."
+      }
+    ]
+  },
+  "downloadApp": {
+    "title": "CoachAcadem in Your Pocket",
+    "supportingCopy": "Search tutors, manage bookings, communicate with tutors, and continue learning through one platform."
+  },
+  "relatedSubjects": {
+    "title": "Related Subjects",
+    "subjects": [
+      {
+        "name": "Mathematics Tutors",
+        "description": "Chemical calculations, ratios, data interpretation, and quantitative analysis frequently rely on strong Mathematics skills.",
+        "href": "/mathematics-tutors",
+        "cta": "Explore Mathematics Tutors"
+      },
+      {
+        "name": "Physics Tutors",
+        "description": "Chemistry and Physics overlap in areas such as energy transfer, atomic structure, thermodynamics, and scientific investigation.",
+        "href": "/physics-tutors",
+        "cta": "Explore Physics Tutors"
+      },
+      {
+        "name": "Biology Tutors",
+        "description": "Students interested in medicine, life sciences, and healthcare pathways often study Chemistry and Biology together.",
+        "href": "/biology-tutors",
+        "cta": "Explore Biology Tutors"
+      },
+      {
+        "name": "Computer Science Tutors",
+        "description": "Scientific problem-solving, logical reasoning, and analytical thinking developed through Chemistry can complement Computer Science learning.",
+        "href": "/computer-science-tutors",
+        "cta": "Explore Computer Science Tutors"
+      }
+    ]
+  }
+}

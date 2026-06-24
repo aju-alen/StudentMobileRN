@@ -1,0 +1,273 @@
+{
+  "slug": "accounting-tutors",
+  "subjectName": "Accounting",
+  "seo": {
+    "title": "Accounting Tutors in the UAE | Verified Online Tutors | CoachAcadem",
+    "description": "Browse verified Accounting tutors across the UAE. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons through CoachAcadem.",
+    "primaryKeywords": ["Accounting Tutors UAE"],
+    "secondaryKeywords": [
+      "Online Accounting Tutors UAE",
+      "IGCSE Accounting Tutors UAE",
+      "IB Accounting Tutors UAE",
+      "A-Level Accounting Tutors UAE",
+      "Accounting Tuition UAE",
+      "Accounting Teachers UAE"
+    ]
+  },
+  "hero": {
+    "h1": "Accounting Tutors in the UAE",
+    "supportingCopy": "Browse verified Accounting tutors on CoachAcadem. Compare qualifications, reviews, experience, and curriculum expertise before booking lessons online.",
+    "primaryCta": "Find Tutors",
+    "primaryCtaHref": "#featured-tutors",
+    "secondaryCta": "Get the App",
+    "secondaryCtaHref": "#download-app"
+  },
+  "featuredTutors": {
+    "title": "Featured Accounting Tutors",
+    "lead": "Compare experienced Accounting tutors supporting students across leading international curricula. Review qualifications, ratings, teaching experience, and student feedback before exploring individual tutor profiles.",
+    "tutors": [
+      {
+        "id": "richard-hayes",
+        "name": "Richard Hayes",
+        "photo": "https://randomuser.me/api/portraits/men/51.jpg",
+        "qualification": "ACCA, BSc Accounting, University of Warwick",
+        "subjects": ["Accounting", "Business Studies"],
+        "curricula": ["IGCSE", "A-Level", "CBSE"],
+        "rating": 4.9,
+        "reviewCount": 88,
+        "yearsExperience": 10,
+        "profileHref": "/tutors/richard-hayes"
+      },
+      {
+        "id": "anita-sharma",
+        "name": "Anita Sharma",
+        "photo": "https://randomuser.me/api/portraits/women/45.jpg",
+        "qualification": "MCom, Chartered Accountant",
+        "subjects": ["Accounting"],
+        "curricula": ["CBSE", "IGCSE"],
+        "rating": 4.9,
+        "reviewCount": 76,
+        "yearsExperience": 8,
+        "profileHref": "/tutors/anita-sharma"
+      },
+      {
+        "id": "mark-stevens",
+        "name": "Mark Stevens",
+        "photo": "https://randomuser.me/api/portraits/men/62.jpg",
+        "qualification": "BSc Accounting & Finance, LSE",
+        "subjects": ["Accounting", "Economics"],
+        "curricula": ["A-Level", "IB", "IGCSE"],
+        "rating": 4.8,
+        "reviewCount": 64,
+        "yearsExperience": 7,
+        "profileHref": "/tutors/mark-stevens"
+      },
+      {
+        "id": "layla-hassan",
+        "name": "Layla Hassan",
+        "photo": "https://randomuser.me/api/portraits/women/59.jpg",
+        "qualification": "BBA Accounting, American University of Sharjah",
+        "subjects": ["Accounting"],
+        "curricula": ["American Curriculum", "IGCSE", "CBSE"],
+        "rating": 4.8,
+        "reviewCount": 55,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/layla-hassan"
+      },
+      {
+        "id": "peter-nguyen",
+        "name": "Peter Nguyen",
+        "photo": "https://randomuser.me/api/portraits/men/44.jpg",
+        "qualification": "CPA, MSc Finance, NUS",
+        "subjects": ["Accounting", "Business Studies"],
+        "curricula": ["IB", "A-Level"],
+        "rating": 5.0,
+        "reviewCount": 49,
+        "yearsExperience": 9,
+        "profileHref": "/tutors/peter-nguyen"
+      },
+      {
+        "id": "sophie-martin",
+        "name": "Sophie Martin",
+        "photo": "https://randomuser.me/api/portraits/women/37.jpg",
+        "qualification": "PGCE Business & Accounting, University of Nottingham",
+        "subjects": ["Accounting"],
+        "curricula": ["IGCSE", "A-Level", "American Curriculum"],
+        "rating": 4.9,
+        "reviewCount": 43,
+        "yearsExperience": 5,
+        "profileHref": "/tutors/sophie-martin"
+      }
+    ]
+  },
+  "howTutorsHelp": {
+    "title": "How Accounting Tutors Can Help",
+    "paragraphs": [
+      "Accounting is often described as the language of business. While many students expect it to be a subject built entirely around calculations, success in Accounting requires much more than working with numbers. You need to understand financial principles, apply accounting rules accurately, interpret financial information, and explain what the numbers actually mean.",
+      "Many students struggle because Accounting builds on previous knowledge. If one concept is not fully understood, later topics can quickly become confusing. A small mistake in a ledger, journal entry, trial balance, or financial statement can affect an entire question.",
+      "An Accounting tutor helps you build confidence step by step. Tutors can help you understand core principles, improve accuracy, strengthen problem-solving skills, and develop examination techniques that reduce common mistakes. Support may also include coursework guidance, revision planning, financial statement preparation, ratio analysis, and curriculum-specific assessment requirements.",
+      "If your child finds Accounting difficult, loses marks through avoidable errors, or needs support preparing for examinations, targeted tutoring can provide structured guidance and regular feedback. Strong Accounting skills not only support academic performance but also provide a valuable foundation for future studies in business, finance, economics, and related fields."
+    ]
+  },
+  "curriculum": {
+    "title": "Find Accounting Tutors by Curriculum",
+    "lead": "Accounting requirements differ across curricula. Explore tutors with experience supporting the curriculum your child studies.",
+    "cards": [
+      {
+        "title": "IGCSE Accounting Tutors",
+        "description": "Support for bookkeeping, financial statements, ledger accounts, ratio analysis, examination preparation, and revision planning.",
+        "href": "/igcse-accounting-tutors",
+        "cta": "Explore IGCSE Accounting Tutors",
+        "tutorCount": 24
+      },
+      {
+        "title": "IB Accounting Tutors",
+        "description": "Support for financial accounting, management accounting, financial interpretation, assessment preparation, and examination success.",
+        "href": "/ib-accounting-tutors",
+        "cta": "Explore IB Accounting Tutors",
+        "tutorCount": 18
+      },
+      {
+        "title": "A-Level Accounting Tutors",
+        "description": "Support for advanced accounting principles, financial reporting, business finance, ratio analysis, and examination preparation.",
+        "href": "/a-level-accounting-tutors",
+        "cta": "Explore A-Level Accounting Tutors",
+        "tutorCount": 20
+      },
+      {
+        "title": "American Curriculum Accounting Tutors",
+        "description": "Support for accounting fundamentals, financial reporting, coursework, assessments, and curriculum progression.",
+        "href": "/american-curriculum-accounting-tutors",
+        "cta": "Explore American Curriculum Accounting Tutors",
+        "tutorCount": 14
+      },
+      {
+        "title": "CBSE Accounting Tutors",
+        "description": "Support aligned with CBSE Accounting requirements, financial accounting, partnership accounts, company accounts, and examination preparation.",
+        "href": "/cbse-accounting-tutors",
+        "cta": "Explore CBSE Accounting Tutors",
+        "tutorCount": 22
+      }
+    ]
+  },
+  "whyParentsChoose": {
+    "title": "Why Parents Choose CoachAcadem",
+    "lead": "Finding the right tutor is about more than subject knowledge. Parents want confidence that the tutor is qualified, reliable, and able to support their child's learning goals.",
+    "reasons": [
+      {
+        "title": "Verified Tutor Profiles",
+        "description": "Every tutor on CoachAcadem completes a verification process before appearing on the platform. Parents can review qualifications, experience, and teaching backgrounds with confidence."
+      },
+      {
+        "title": "Ratings and Reviews",
+        "description": "Verified ratings and reviews provide insight into how tutors communicate, teach, and support students. This helps families compare options based on real learning experiences."
+      },
+      {
+        "title": "Curriculum Expertise",
+        "description": "Find tutors who understand the specific curriculum your child follows, including IGCSE, IB, A-Level, American Curriculum, CBSE, and other international programmes."
+      },
+      {
+        "title": "Instant and Scheduled Booking",
+        "description": "Book lessons immediately when support is needed or schedule sessions in advance around school commitments, examinations, and family routines."
+      },
+      {
+        "title": "Built-In Communication",
+        "description": "Stay connected with tutors through CoachAcadem's integrated communication features after booking lessons, making coordination simple and efficient."
+      },
+      {
+        "title": "Access Across the UAE",
+        "description": "Students can connect with tutors online from anywhere in the UAE, making it easier to access subject specialists regardless of location."
+      }
+    ]
+  },
+  "reviews": {
+    "title": "Student and Parent Reviews",
+    "lead": "Choosing a tutor is an important decision. Reviews from students and parents can provide valuable insight into teaching style, communication, reliability, and overall learning experience.",
+    "items": [
+      {
+        "content": "Our son was making repeated errors in ledger accounts and financial statements. His CoachAcadem tutor helped him build accuracy step by step and his IGCSE Accounting grade improved significantly.",
+        "author": "Khalid Al Mansoori",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "A-Level Accounting ratio analysis and financial reporting felt overwhelming. My tutor explained concepts clearly and helped me avoid the common mistakes that were costing me marks.",
+        "author": "Emily Hart",
+        "role": "A-Level Student",
+        "avatar": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "We read verified reviews before choosing an Accounting tutor. The tutor we booked was patient, thorough, and excellent at preparing our daughter for her CBSE examinations.",
+        "author": "Raj Malhotra",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      }
+    ]
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "items": [
+      {
+        "question": "How do I find an Accounting tutor?",
+        "answer": "Browse Accounting tutor profiles on CoachAcadem, compare qualifications, reviews, teaching experience, and curriculum expertise, then choose the tutor who best matches your academic goals."
+      },
+      {
+        "question": "Are Accounting tutors verified?",
+        "answer": "Yes. Tutors appearing on CoachAcadem complete the platform's verification requirements before becoming visible to students and parents."
+      },
+      {
+        "question": "Can I read tutor reviews before booking?",
+        "answer": "Yes. Public ratings and reviews allow you to evaluate previous learning experiences before choosing a tutor."
+      },
+      {
+        "question": "Do Accounting tutors support IGCSE Accounting?",
+        "answer": "Many tutors support IGCSE Accounting, including bookkeeping, financial statements, ratio analysis, examination preparation, and revision planning."
+      },
+      {
+        "question": "Do tutors support A-Level Accounting?",
+        "answer": "Yes. Tutors may support advanced accounting concepts, financial reporting, ratio analysis, and examination preparation."
+      },
+      {
+        "question": "Can lessons be booked instantly?",
+        "answer": "Depending on tutor availability, lessons may be booked instantly or scheduled for a future date and time."
+      },
+      {
+        "question": "Can students across the UAE use CoachAcadem?",
+        "answer": "Yes. Students throughout the UAE can connect with tutors through the platform."
+      }
+    ]
+  },
+  "downloadApp": {
+    "title": "CoachAcadem in Your Pocket",
+    "supportingCopy": "Search tutors, manage bookings, communicate with tutors, and continue learning through one platform."
+  },
+  "relatedSubjects": {
+    "title": "Related Subjects",
+    "subjects": [
+      {
+        "name": "Business Studies Tutors",
+        "description": "Accounting and Business Studies frequently overlap through financial decision-making, organisational performance, business operations, and strategic planning.",
+        "href": "/business-studies-tutors",
+        "cta": "Explore Business Studies Tutors"
+      },
+      {
+        "name": "Economics Tutors",
+        "description": "Many Accounting concepts connect with economic decision-making, financial systems, markets, and resource management.",
+        "href": "/economics-tutors",
+        "cta": "Explore Economics Tutors"
+      },
+      {
+        "name": "Mathematics Tutors",
+        "description": "Strong numerical skills support financial calculations, ratio analysis, data interpretation, and problem-solving in Accounting.",
+        "href": "/mathematics-tutors",
+        "cta": "Explore Mathematics Tutors"
+      },
+      {
+        "name": "Computer Science Tutors",
+        "description": "Modern accounting increasingly relies on technology, financial systems, data management, and digital tools.",
+        "href": "/computer-science-tutors",
+        "cta": "Explore Computer Science Tutors"
+      }
+    ]
+  }
+}

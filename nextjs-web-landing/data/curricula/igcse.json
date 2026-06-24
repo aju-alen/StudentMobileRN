@@ -1,0 +1,315 @@
+{
+  "slug": "igcse-tutors",
+  "curriculumName": "IGCSE",
+  "seo": {
+    "title": "IGCSE Tutors in the UAE | Verified Online Tutors | CoachAcadem",
+    "description": "Browse verified IGCSE tutors across the UAE. Compare qualifications, reviews, experience, and subject expertise before booking lessons through CoachAcadem.",
+    "primaryKeywords": ["IGCSE Tutors UAE"],
+    "secondaryKeywords": [
+      "Online IGCSE Tutors UAE",
+      "IGCSE Tuition UAE",
+      "IGCSE Teachers UAE",
+      "IGCSE Exam Preparation UAE",
+      "IGCSE Subject Tutors UAE"
+    ]
+  },
+  "hero": {
+    "h1": "IGCSE Tutors in the UAE",
+    "supportingCopy": "Browse verified IGCSE tutors on CoachAcadem. Compare qualifications, reviews, experience, and subject expertise before booking lessons online. The IGCSE is one of the most widely studied international qualifications in the UAE. Students often seek support as subjects become more specialised, examination expectations increase, and academic goals become more demanding. CoachAcadem helps you find tutors who understand the curriculum and the subjects your child studies.",
+    "primaryCta": "Find Tutors",
+    "primaryCtaHref": "#featured-tutors",
+    "secondaryCta": "Get the App",
+    "secondaryCtaHref": "#download-app"
+  },
+  "featuredTutors": {
+    "title": "Featured IGCSE Tutors",
+    "lead": "Compare experienced IGCSE tutors supporting students across leading subject areas. Review qualifications, ratings, teaching experience, and student feedback before exploring individual tutor profiles.",
+    "tutors": [
+      {
+        "id": "sarah-hassan",
+        "name": "Sarah Hassan",
+        "photo": "https://randomuser.me/api/portraits/women/44.jpg",
+        "qualification": "MSc Mathematics, University of Oxford",
+        "subjects": ["Mathematics", "Further Mathematics"],
+        "curricula": ["IGCSE"],
+        "rating": 4.9,
+        "reviewCount": 128,
+        "yearsExperience": 8,
+        "profileHref": "/tutors/sarah-hassan"
+      },
+      {
+        "id": "james-okafor",
+        "name": "James Okafor",
+        "photo": "https://randomuser.me/api/portraits/men/32.jpg",
+        "qualification": "BSc Physics, Imperial College London",
+        "subjects": ["Physics", "Science"],
+        "curricula": ["IGCSE"],
+        "rating": 4.9,
+        "reviewCount": 96,
+        "yearsExperience": 7,
+        "profileHref": "/tutors/james-okafor"
+      },
+      {
+        "id": "priya-sharma",
+        "name": "Priya Sharma",
+        "photo": "https://randomuser.me/api/portraits/women/65.jpg",
+        "qualification": "MSc Chemistry, University of Manchester",
+        "subjects": ["Chemistry", "Biology"],
+        "curricula": ["IGCSE"],
+        "rating": 4.8,
+        "reviewCount": 94,
+        "yearsExperience": 6,
+        "profileHref": "/tutors/priya-sharma"
+      },
+      {
+        "id": "omar-al-mansoori",
+        "name": "Omar Al Mansoori",
+        "photo": "https://randomuser.me/api/portraits/men/52.jpg",
+        "qualification": "BA English Literature, UAE University",
+        "subjects": ["English", "History"],
+        "curricula": ["IGCSE"],
+        "rating": 4.8,
+        "reviewCount": 87,
+        "yearsExperience": 5,
+        "profileHref": "/tutors/omar-al-mansoori"
+      },
+      {
+        "id": "elena-petrov",
+        "name": "Elena Petrov",
+        "photo": "https://randomuser.me/api/portraits/women/33.jpg",
+        "qualification": "BSc Economics, London School of Economics",
+        "subjects": ["Economics", "Business Studies"],
+        "curricula": ["IGCSE"],
+        "rating": 5.0,
+        "reviewCount": 76,
+        "yearsExperience": 10,
+        "profileHref": "/tutors/elena-petrov"
+      },
+      {
+        "id": "david-wong",
+        "name": "David Wong",
+        "photo": "https://randomuser.me/api/portraits/men/41.jpg",
+        "qualification": "BSc Computer Science, NUS",
+        "subjects": ["Computer Science", "Mathematics"],
+        "curricula": ["IGCSE"],
+        "rating": 4.9,
+        "reviewCount": 103,
+        "yearsExperience": 9,
+        "profileHref": "/tutors/david-wong"
+      }
+    ]
+  },
+  "understanding": {
+    "title": "Understanding the IGCSE Curriculum",
+    "paragraphs": [
+      "The International General Certificate of Secondary Education (IGCSE) is one of the most recognised secondary school qualifications worldwide and is offered by many schools throughout the UAE. Students typically study a combination of subjects across sciences, mathematics, languages, humanities, and business-related disciplines.",
+      "As students progress through the curriculum, they are expected to apply knowledge independently, analyse information, solve problems, and demonstrate understanding through structured assessments. Many subjects combine theoretical knowledge with practical application, making strong study habits and effective revision strategies increasingly important.",
+      "You may find that some subjects become more demanding as examinations approach. Topics often build on previous knowledge, meaning gaps in understanding can affect performance later in the course. Students commonly seek tutoring support to strengthen subject knowledge, improve examination techniques, build confidence, and establish effective revision routines.",
+      "Whether your child requires help in one subject or several, working with a tutor familiar with the IGCSE curriculum can provide focused support aligned with curriculum expectations."
+    ]
+  },
+  "subjects": {
+    "title": "Find IGCSE Tutors by Subject",
+    "lead": "The IGCSE curriculum offers a wide range of subjects. Explore tutors by subject area.",
+    "cards": [
+      {
+        "name": "Mathematics Tutors",
+        "description": "Support for algebra, geometry, statistics, probability, problem-solving, examination preparation, and revision planning.",
+        "href": "/igcse-mathematics-tutors",
+        "cta": "Explore Mathematics Tutors",
+        "tutorCount": 48
+      },
+      {
+        "name": "Physics Tutors",
+        "description": "Support for mechanics, electricity, forces, energy, waves, practical concepts, and examination preparation.",
+        "href": "/igcse-physics-tutors",
+        "cta": "Explore Physics Tutors",
+        "tutorCount": 42
+      },
+      {
+        "name": "Chemistry Tutors",
+        "description": "Support for atomic structure, bonding, reactions, calculations, practical concepts, and examination preparation.",
+        "href": "/igcse-chemistry-tutors",
+        "cta": "Explore Chemistry Tutors",
+        "tutorCount": 38
+      },
+      {
+        "name": "Biology Tutors",
+        "description": "Support for living organisms, genetics, ecosystems, human biology, practical concepts, and examination preparation.",
+        "href": "/igcse-biology-tutors",
+        "cta": "Explore Biology Tutors",
+        "tutorCount": 36
+      },
+      {
+        "name": "English Tutors",
+        "description": "Support for reading comprehension, writing skills, literary analysis, communication, and examination preparation.",
+        "href": "/igcse-english-tutors",
+        "cta": "Explore English Tutors",
+        "tutorCount": 44
+      },
+      {
+        "name": "Computer Science Tutors",
+        "description": "Support for programming concepts, computational thinking, algorithms, and examination preparation.",
+        "href": "/igcse-computer-science-tutors",
+        "cta": "Explore Computer Science Tutors",
+        "tutorCount": 28
+      },
+      {
+        "name": "Business Studies Tutors",
+        "description": "Support for business operations, finance, marketing, management, and examination preparation.",
+        "href": "/igcse-business-studies-tutors",
+        "cta": "Explore Business Studies Tutors",
+        "tutorCount": 32
+      },
+      {
+        "name": "Economics Tutors",
+        "description": "Support for markets, economic decision-making, development, global trade, and examination preparation.",
+        "href": "/igcse-economics-tutors",
+        "cta": "Explore Economics Tutors",
+        "tutorCount": 30
+      },
+      {
+        "name": "Accounting Tutors",
+        "description": "Support for bookkeeping, financial statements, financial analysis, and examination preparation.",
+        "href": "/igcse-accounting-tutors",
+        "cta": "Explore Accounting Tutors",
+        "tutorCount": 26
+      },
+      {
+        "name": "Geography Tutors",
+        "description": "Support for human geography, physical geography, case studies, data interpretation, and examination preparation.",
+        "href": "/igcse-geography-tutors",
+        "cta": "Explore Geography Tutors",
+        "tutorCount": 24
+      },
+      {
+        "name": "History Tutors",
+        "description": "Support for historical analysis, source evaluation, essay writing, and examination preparation.",
+        "href": "/igcse-history-tutors",
+        "cta": "Explore History Tutors",
+        "tutorCount": 22
+      }
+    ]
+  },
+  "whyParentsChoose": {
+    "title": "Why Parents Choose CoachAcadem",
+    "lead": "Choosing a tutor involves more than finding subject expertise. Parents want confidence that tutors understand the curriculum their child studies and can provide reliable academic support.",
+    "reasons": [
+      {
+        "title": "Verified Tutor Profiles",
+        "description": "Review qualifications, experience, and tutor information through verified profiles."
+      },
+      {
+        "title": "Ratings and Reviews",
+        "description": "Read feedback from students and parents before making a decision."
+      },
+      {
+        "title": "Curriculum Expertise",
+        "description": "Identify tutors who specifically support the IGCSE curriculum."
+      },
+      {
+        "title": "Instant and Scheduled Booking",
+        "description": "Book lessons immediately or schedule sessions around academic commitments."
+      },
+      {
+        "title": "Built-In Communication",
+        "description": "Coordinate lessons through CoachAcadem after booking."
+      },
+      {
+        "title": "Access Across the UAE",
+        "description": "Connect with tutors online from anywhere in the UAE."
+      }
+    ]
+  },
+  "reviews": {
+    "title": "Student and Parent Reviews",
+    "lead": "Choosing a tutor is an important academic decision. Reviews can help you understand how tutors communicate, teach, and support student progress.",
+    "items": [
+      {
+        "content": "Our son's IGCSE Mathematics and Physics grades improved significantly after working with a CoachAcadem tutor. The structured approach to examination preparation made a real difference before his final exams.",
+        "author": "Fatima Al Rashid",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "I was struggling with IGCSE Chemistry until I found a tutor through CoachAcadem. Clear explanations and consistent practice helped me gain confidence before my examinations.",
+        "author": "Arjun Mehta",
+        "role": "IGCSE Student",
+        "avatar": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      },
+      {
+        "content": "Being able to read reviews and compare IGCSE tutors before booking gave us peace of mind. The tutor we chose was professional, punctual, and genuinely invested in our daughter's progress.",
+        "author": "Sarah Mitchell",
+        "role": "Parent",
+        "avatar": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+      }
+    ]
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "items": [
+      {
+        "question": "What is the IGCSE curriculum?",
+        "answer": "The IGCSE is an internationally recognised secondary school qualification offered by schools around the world, including many schools across the UAE. Students study a range of subjects and complete curriculum-specific assessments."
+      },
+      {
+        "question": "How do I find an IGCSE tutor?",
+        "answer": "Browse tutor profiles on CoachAcadem, compare qualifications, reviews, experience, and subject expertise, then choose the tutor who best matches your child's needs."
+      },
+      {
+        "question": "Can I find tutors for individual IGCSE subjects?",
+        "answer": "Yes. CoachAcadem allows you to explore tutors by subject, including Mathematics, Physics, Chemistry, Biology, English, Business Studies, Economics, Geography, History, and more."
+      },
+      {
+        "question": "Are IGCSE tutors verified?",
+        "answer": "Yes. Tutors must complete CoachAcadem's verification requirements before appearing on the platform."
+      },
+      {
+        "question": "Can I read tutor reviews before booking?",
+        "answer": "Yes. Ratings and reviews are publicly available to help families make informed decisions."
+      },
+      {
+        "question": "Can lessons be booked instantly?",
+        "answer": "Depending on tutor availability, lessons may be booked immediately or scheduled for a later time."
+      },
+      {
+        "question": "Can students across the UAE use CoachAcadem?",
+        "answer": "Yes. Students throughout the UAE can connect with tutors through the platform."
+      }
+    ]
+  },
+  "downloadApp": {
+    "title": "CoachAcadem in Your Pocket",
+    "supportingCopy": "Search tutors, manage bookings, communicate with tutors, and continue learning through one platform."
+  },
+  "relatedCurricula": {
+    "title": "Related Curricula",
+    "lead": "Families exploring the IGCSE curriculum often compare it with other international programmes.",
+    "items": [
+      {
+        "name": "IB Tutors",
+        "description": "Explore tutors supporting students studying the International Baccalaureate curriculum.",
+        "href": "/ib-tutors",
+        "cta": "Explore IB Tutors"
+      },
+      {
+        "name": "A-Level Tutors",
+        "description": "Explore tutors supporting students preparing for advanced secondary qualifications.",
+        "href": "/a-level-tutors",
+        "cta": "Explore A-Level Tutors"
+      },
+      {
+        "name": "American Curriculum Tutors",
+        "description": "Explore tutors supporting students following the American curriculum pathway.",
+        "href": "/american-curriculum-tutors",
+        "cta": "Explore American Curriculum Tutors"
+      },
+      {
+        "name": "CBSE Tutors",
+        "description": "Explore tutors supporting students studying the CBSE curriculum.",
+        "href": "/cbse-tutors",
+        "cta": "Explore CBSE Tutors"
+      }
+    ]
+  }
+}
