@@ -140,7 +140,7 @@ export default function TopTutorCards({
               {displayTutors.map((tutor) => (
                 <div
                   key={tutor.id}
-                  className="w-[88vw] sm:w-[85vw] max-w-sm flex-shrink-0 snap-center first:pl-0"
+                  className="w-[88vw] sm:w-[85vw] max-w-sm shrink-0 snap-center first:pl-0"
                 >
                   <TutorCard tutor={tutor} />
                 </div>
