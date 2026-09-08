@@ -159,8 +159,6 @@ export default function SubjectCards({
             >
               <span className="text-xl sm:text-2xl me-2">+</span>{' '}
               {isAr ? 'عرض المزيد' : 'Show more'}
-            </a>
-              <span className="text-xl sm:text-2xl mr-2">+</span> Show more
             </button>
           </div>
         </div>

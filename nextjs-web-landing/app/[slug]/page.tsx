@@ -68,7 +68,7 @@ export async function generateMetadata({
     path: `/${slug}`,
     locale: "en",
     titleAbsolute: true,
-    noIndex: NOINDEX_RESOURCE_SLUGS.has(slug),
+    noIndex: true,
   });
 }
 
