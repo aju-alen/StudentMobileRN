@@ -1,7 +1,6 @@
 export type FeaturedTutor = {
   id: string;
   name: string;
-  photo: string;
   qualification: string;
   subjects: string[];
   curricula: string[];
@@ -23,7 +22,6 @@ export type Review = {
   content: string;
   author: string;
   role: string;
-  avatar?: string;
 };
 
 export type FaqItem = {

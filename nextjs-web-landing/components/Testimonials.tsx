@@ -5,7 +5,7 @@ const defaultTestimonials: Review[] = [
   {
     content:
       "My daughter's IGCSE Chemistry grade went from a 6 to a 9 in one term. Her tutor explained every topic clearly and made revision feel manageable before exams.",
-    author: 'Sara Al Maktoum',
+    author: 'Sara Al Mansoori',
     role: 'Parent in Dubai · IGCSE Chemistry',
   },
   {
@@ -46,6 +46,7 @@ type TestimonialsProps = {
   lead?: string;
   testimonials?: Review[];
   showVerifiedNote?: boolean;
+  verifiedNote?: string;
 };
 
 export default function Testimonials({
@@ -53,6 +54,7 @@ export default function Testimonials({
   lead,
   testimonials = defaultTestimonials,
   showVerifiedNote = true,
+  verifiedNote = 'Verified reviews only.',
 }: TestimonialsProps) {
   return (
     <section
@@ -98,7 +100,7 @@ export default function Testimonials({
           {showVerifiedNote && (
             <div className="text-center px-1 sm:px-0">
               <p className="text-base sm:text-[1.5rem] font-semibold text-gray-900">
-                Verified reviews only.
+                {verifiedNote}
               </p>
             </div>
           )}

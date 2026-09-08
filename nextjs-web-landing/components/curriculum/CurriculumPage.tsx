@@ -10,12 +10,17 @@ import CurriculumSubjectSection from '@/components/curriculum/CurriculumSubjectS
 import RelatedCurricula from '@/components/curriculum/RelatedCurricula';
 import CurriculumJsonLd from '@/components/curriculum/CurriculumJsonLd';
 import type { CurriculumPageData } from '@/lib/curricula/types';
+import type { Locale } from '@/lib/i18n/locale';
 
 type CurriculumPageProps = {
   curriculum: CurriculumPageData;
+  locale?: Locale;
 };
 
-export default function CurriculumPage({ curriculum }: CurriculumPageProps) {
+export default function CurriculumPage({
+  curriculum,
+  locale = 'en',
+}: CurriculumPageProps) {
   return (
     <>
       <CurriculumJsonLd curriculum={curriculum} />
@@ -25,6 +30,7 @@ export default function CurriculumPage({ curriculum }: CurriculumPageProps) {
         title={curriculum.featuredTutors.title}
         lead={curriculum.featuredTutors.lead}
         tutors={curriculum.featuredTutors.tutors}
+        locale={locale}
       />
       <CurriculumUnderstanding section={curriculum.understanding} />
       <CurriculumSubjectSection

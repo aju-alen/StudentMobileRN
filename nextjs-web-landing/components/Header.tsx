@@ -3,6 +3,11 @@
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Menu, X, ChevronDown } from 'lucide-react';
+import StoreDownloadLink from '@/components/StoreDownloadLink';
+import type { Locale } from '@/lib/i18n/locale';
+import { withLocale } from '@/lib/i18n/locale';
+import { t } from '@/lib/i18n/messages';
+import { getMainNav } from '@/lib/i18n/nav';
 import { APP_STORE_URL } from '@/lib/constants';
 
 type NavDropdownItem = { label: string; href: string };
@@ -94,13 +99,16 @@ const NavAnchor = ({
 };
 
 const linkClass =
-  'text-black-700 hover:text-indigo-600 font-medium transition-colors';
+  'whitespace-nowrap text-sm xl:text-base text-black-700 hover:text-indigo-600 font-medium transition-colors';
 const dropdownItemClass =
-  'block px-4 py-2.5 text-gray-700 hover:bg-gray-50 hover:text-[#205072] font-medium transition-colors';
+  'block px-4 py-2.5 text-gray-700 hover:bg-gray-50 hover:text-[#205072] font-medium transition-colors whitespace-nowrap';
 const mobileDropdownItemClass =
   'text-gray-600 hover:text-indigo-600 font-medium transition-colors';
 
-export default function Header() {
+export default function Header({ locale = 'en' }: { locale?: Locale }) {
+  const copy = t(locale);
+  const mainNav = getMainNav(locale);
+  const homeHref = withLocale('/', locale);
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -143,27 +151,27 @@ export default function Header() {
         isScrolled ? 'bg-white shadow-md py-3' : 'bg-white py-5'
       }`}
     >
-      <div className="home-section">
-        <div className="home-section-inner pl-0 pr-4 md:px-0">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center min-w-0 gap-6 md:gap-10 lg:gap-14">
-              <Link href="/" aria-label="CoachAcadem home">
+      <div className="px-4 sm:px-6 lg:px-8 xl:px-10">
+        <div className="mx-auto max-w-[90rem]">
+          <div className="flex justify-between items-center gap-3 flex-nowrap">
+            <div className="flex items-center min-w-0 gap-3 lg:gap-5 xl:gap-8">
+              <Link href={homeHref} aria-label="CoachAcadem home" className="shrink-0">
                 <img
                   src="https://coachacademic.s3.ap-southeast-1.amazonaws.com/dummy-image/logo.png"
                   alt="CoachAcadem logo"
-                  className="h-20 w-20 shrink-0"
+                  className="h-14 w-14 sm:h-16 sm:w-16 lg:h-[4.25rem] lg:w-[4.25rem] xl:h-20 xl:w-20"
                 />
               </Link>
               <nav
                 ref={navRef}
-                className="hidden md:flex items-center space-x-8 md:mt-4 md:ml-10 lg:ml-16"
+                className="hidden lg:flex items-center gap-3 xl:gap-6 flex-nowrap"
               >
                 {mainNav.map((item) =>
                   item.type === 'dropdown' ? (
-                    <div key={item.label} className="relative">
+                    <div key={item.label} className="relative shrink-0">
                       <button
                         type="button"
-                        className={`flex items-center gap-1 ${linkClass}`}
+                        className={`flex items-center gap-0.5 xl:gap-1 ${linkClass}`}
                         onClick={() =>
                           setOpenDropdown((prev) =>
                             prev === item.label ? null : item.label
@@ -174,14 +182,14 @@ export default function Header() {
                       >
                         {item.label}
                         <ChevronDown
-                          size={18}
-                          className={`transition-transform duration-200 ${
+                          size={16}
+                          className={`shrink-0 transition-transform duration-200 ${
                             openDropdown === item.label ? 'rotate-180' : ''
                           }`}
                         />
                       </button>
                       {openDropdown === item.label && (
-                        <div className="absolute left-0 top-full mt-2 min-w-[220px] rounded-lg border border-gray-100 bg-white py-2 shadow-lg">
+                        <div className="absolute start-0 top-full mt-2 min-w-[220px] rounded-lg border border-gray-100 bg-white py-2 shadow-lg">
                           {item.items.map((sub) => (
                             <Link
                               key={sub.label}
@@ -208,26 +216,23 @@ export default function Header() {
               </nav>
             </div>
 
-            <div className="hidden md:block shrink-0">
-              <button
-                className="bg-[#205072] hover:bg-[#24bcc7] text-white text-lg px-5 py-2 rounded-full font-medium transition-colors"
-                onClick={() => window.open(APP_STORE_URL, '_blank')}
-              >
-                Get the App
-              </button>
+            <div className="hidden lg:block shrink-0">
+              <StoreDownloadLink className="bg-[#205072] hover:bg-[#24bcc7] text-white text-sm xl:text-lg px-4 xl:px-5 py-2 rounded-full font-medium transition-colors inline-block whitespace-nowrap">
+                {copy.getTheApp}
+              </StoreDownloadLink>
             </div>
 
             <button
-              className="md:hidden text-gray-700"
+              className="lg:hidden text-gray-700"
               onClick={() => setIsOpen(!isOpen)}
-              aria-label={isOpen ? 'Close menu' : 'Open menu'}
+              aria-label={isOpen ? copy.closeMenu : copy.openMenu}
             >
               {isOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
 
           {isOpen && (
-            <div className="md:hidden mt-4 py-4 border-t border-gray-100">
+            <div className="lg:hidden mt-4 py-4 border-t border-gray-100">
               <nav className="flex flex-col space-y-4">
                 {mainNav.map((item) =>
                   item.type === 'dropdown' ? (
@@ -246,7 +251,7 @@ export default function Header() {
                         />
                       </button>
                       {mobileOpenDropdowns[item.label] && (
-                        <div className="mt-2 ml-3 flex flex-col space-y-2 border-l-2 border-gray-100 pl-3">
+                        <div className="mt-2 ms-3 flex flex-col space-y-2 border-s-2 border-gray-100 ps-3">
                           {item.items.map((sub) => (
                             <Link
                               key={sub.label}
@@ -271,12 +276,12 @@ export default function Header() {
                     </NavAnchor>
                   )
                 )}
-                <button
-                  className="bg-[#205072] hover:bg-[#24bcc7] text-white w-full py-2 rounded-full font-medium transition-colors mt-2"
-                  onClick={() => window.open(APP_STORE_URL, '_blank')}
+                <StoreDownloadLink
+                  className="bg-[#205072] hover:bg-[#24bcc7] text-white w-full py-2 rounded-full font-medium transition-colors mt-2 inline-block text-center"
+                  onClick={closeMobileMenu}
                 >
-                  Get the App
-                </button>
+                  {copy.getTheApp}
+                </StoreDownloadLink>
               </nav>
             </div>
           )}

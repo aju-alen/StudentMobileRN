@@ -30,7 +30,6 @@
       {
         "id": "ahmed-khan",
         "name": "Ahmed Khan",
-        "photo": "https://randomuser.me/api/portraits/men/75.jpg",
         "qualification": "BSc Mathematics, American University of Sharjah",
         "subjects": [
           "Mathematics",
@@ -47,7 +46,6 @@
       {
         "id": "vikram-patel",
         "name": "Vikram Patel",
-        "photo": "https://randomuser.me/api/portraits/men/58.jpg",
         "qualification": "MSc Chemistry, IIT Bombay",
         "subjects": [
           "Chemistry",
@@ -64,7 +62,6 @@
       {
         "id": "amit-verma",
         "name": "Amit Verma",
-        "photo": "https://randomuser.me/api/portraits/men/48.jpg",
         "qualification": "MSc Life Sciences, IIT Delhi",
         "subjects": [
           "Biology",
@@ -81,7 +78,6 @@
       {
         "id": "anita-sharma",
         "name": "Anita Sharma",
-        "photo": "https://randomuser.me/api/portraits/women/45.jpg",
         "qualification": "MCom, Chartered Accountant",
         "subjects": [
           "Accounting"
@@ -97,7 +93,6 @@
       {
         "id": "aisha-mohammed",
         "name": "Aisha Mohammed",
-        "photo": "https://randomuser.me/api/portraits/women/74.jpg",
         "qualification": "MA Applied Linguistics, American University of Sharjah",
         "subjects": [
           "English",
@@ -114,7 +109,6 @@
       {
         "id": "sana-kapoor",
         "name": "Sana Kapoor",
-        "photo": "https://randomuser.me/api/portraits/women/53.jpg",
         "qualification": "BSc Software Engineering, BITS Pilani",
         "subjects": [
           "Computer Science"

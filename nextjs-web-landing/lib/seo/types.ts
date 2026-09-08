@@ -19,6 +19,8 @@ export type PageSeoInput = {
   ogImage?: string;
   /** Set to true to prevent indexing */
   noIndex?: boolean;
+  /** When set, emit en-AE / ar-AE hreflang for the Arabic translation pair */
+  locale?: "en" | "ar";
 };
 
 export type PageSeoConfig = PageSeoInput & {

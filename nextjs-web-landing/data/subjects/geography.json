@@ -31,7 +31,6 @@
       {
         "id": "hannah-clarke",
         "name": "Hannah Clarke",
-        "photo": "https://randomuser.me/api/portraits/women/41.jpg",
         "qualification": "MA Geography, University of Manchester",
         "subjects": [
           "Geography"
@@ -49,7 +48,6 @@
       {
         "id": "omar-al-suwaidi",
         "name": "Omar Al Suwaidi",
-        "photo": "https://randomuser.me/api/portraits/men/56.jpg",
         "qualification": "BSc Environmental Science, UAE University",
         "subjects": [
           "Geography",
@@ -68,7 +66,6 @@
       {
         "id": "isabelle-dubois",
         "name": "Isabelle Dubois",
-        "photo": "https://randomuser.me/api/portraits/women/52.jpg",
         "qualification": "MSc Human Geography, Sorbonne University",
         "subjects": [
           "Geography"
@@ -86,7 +83,6 @@
       {
         "id": "james-mitchell",
         "name": "James Mitchell",
-        "photo": "https://randomuser.me/api/portraits/men/33.jpg",
         "qualification": "PGCE Geography, University of Exeter",
         "subjects": [
           "Geography"
@@ -103,7 +99,6 @@
       {
         "id": "priya-desai",
         "name": "Priya Desai",
-        "photo": "https://randomuser.me/api/portraits/women/64.jpg",
         "qualification": "BEd Geography, University of Delhi",
         "subjects": [
           "Geography",
@@ -122,7 +117,6 @@
       {
         "id": "thomas-eriksson",
         "name": "Thomas Eriksson",
-        "photo": "https://randomuser.me/api/portraits/men/69.jpg",
         "qualification": "MSc Physical Geography, University of Oslo",
         "subjects": [
           "Geography",

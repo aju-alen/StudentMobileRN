@@ -1,6 +1,6 @@
 import { Check } from 'lucide-react';
 
-const steps = [
+const defaultSteps = [
   {
     step: 'Search',
     items: ['Browse tutors by subject and curriculum.'],
@@ -23,16 +23,25 @@ const steps = [
   },
 ];
 
-export default function HowCoachacademWorks() {
+type HowCoachacademWorksProps = {
+  title?: string;
+  lead?: string;
+  steps?: { step: string; items: string[] }[];
+};
+
+export default function HowCoachacademWorks({
+  title = "How CoachAcadem works",
+  lead = "CoachAcadem helps students and parents discover, compare and book tutors through one platform.",
+  steps = defaultSteps,
+}: HowCoachacademWorksProps) {
   return (
     <section className="home-section home-section-spacing bg-white">
       <div className="home-section-inner">
         <h2 className="home-section-title text-3xl sm:text-4xl md:text-5xl !mb-6 sm:!mb-8 md:!mb-10 leading-tight px-1 sm:px-0">
-          How CoachAcadem works
+          {title}
         </h2>
         <p className="home-section-lead text-lg sm:text-[1.5rem] !-mt-2 sm:!-mt-4 !mb-6 sm:!mb-8 md:!mb-10 leading-relaxed">
-          CoachAcadem helps students and parents discover, compare and book
-          tutors through one platform.
+          {lead}
         </p>
 
         <div className="home-section-stack gap-6 sm:gap-8">

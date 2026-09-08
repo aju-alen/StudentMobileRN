@@ -31,6 +31,7 @@ export async function generateMetadata({
     primaryKeywords: curriculum.seo.primaryKeywords,
     secondaryKeywords: curriculum.seo.secondaryKeywords,
     path: `/${curriculum.slug}`,
+    locale: "en",
     titleAbsolute: true,
   });
 }

@@ -29,7 +29,6 @@
       {
         "id": "emma-walsh",
         "name": "Emma Walsh",
-        "photo": "https://randomuser.me/api/portraits/women/29.jpg",
         "qualification": "MSc Biology, University of Edinburgh",
         "subjects": [
           "Biology",
@@ -48,7 +47,6 @@
       {
         "id": "youssef-ibrahim",
         "name": "Youssef Ibrahim",
-        "photo": "https://randomuser.me/api/portraits/men/63.jpg",
         "qualification": "BSc Biological Sciences, UAE University",
         "subjects": [
           "Biology"
@@ -66,7 +64,6 @@
       {
         "id": "lucia-fernandez",
         "name": "Lucia Fernandez",
-        "photo": "https://randomuser.me/api/portraits/women/57.jpg",
         "qualification": "PhD Molecular Biology, University of Barcelona",
         "subjects": [
           "Biology",
@@ -84,7 +81,6 @@
       {
         "id": "amit-verma",
         "name": "Amit Verma",
-        "photo": "https://randomuser.me/api/portraits/men/48.jpg",
         "qualification": "MSc Life Sciences, IIT Delhi",
         "subjects": [
           "Biology",
@@ -102,7 +98,6 @@
       {
         "id": "grace-oconnor",
         "name": "Grace O'Connor",
-        "photo": "https://randomuser.me/api/portraits/women/38.jpg",
         "qualification": "BSc Biomedical Science, Trinity College Dublin",
         "subjects": [
           "Biology"
@@ -120,7 +115,6 @@
       {
         "id": "kenji-tanaka",
         "name": "Kenji Tanaka",
-        "photo": "https://randomuser.me/api/portraits/men/71.jpg",
         "qualification": "MSc Ecology & Evolution, University of Tokyo",
         "subjects": [
           "Biology",

@@ -9,6 +9,7 @@ import {
   Video,
 } from 'lucide-react';
 import { APP_DOWNLOAD_QR, S3_BASE } from '@/lib/constants';
+import StoreDownloadLink from '@/components/StoreDownloadLink';
 
 const FloatingElement = ({
   children,
@@ -52,7 +53,19 @@ const FloatingElement = ({
   );
 };
 
-export default function Hero() {
+type HeroProps = {
+  h1?: string;
+  supporting?: string;
+  getTheApp?: string;
+  scanToDownload?: string;
+};
+
+export default function Hero({
+  h1 = "The UAE's app-first tutoring platform — KHDA-verified tutors for every curriculum.",
+  supporting = "Compare tutor profiles, book in the app, and learn online — IGCSE, IB, A-Level, American, CBSE, and more.",
+  getTheApp = "Get the app",
+  scanToDownload = "Scan to download on iOS or Android",
+}: HeroProps) {
   return (
     <section
       id="home"
@@ -60,32 +73,30 @@ export default function Hero() {
     >
       <div className="home-section-inner relative z-10 h-full">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-0 lg:min-h-[760px] xl:min-h-[800px]">
-          <div className="order-2 lg:order-1 text-left flex flex-col justify-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-[600] mb-3 lg:mb-2 lg:leading-tight mt-0 lg:mt-36 font-sans">
-              Find expert online tutors across the UAE
+            <div className="order-2 lg:order-1 text-start flex flex-col justify-center">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-[600] mb-3 lg:mb-2 lg:leading-tight mt-0 lg:mt-36">
+              {h1}
             </h1>
             <p className="text-lg sm:text-[1.3rem] text-gray-600 mb-6 sm:mb-8 lg:leading-8">
-              Connect with qualified tutors for IGCSE, IB, A-Level, American,
-              CBSE, and more. Compare tutor profiles, book lessons, and learn
-              online.
+              {supporting}
             </p>
             <div className="mb-6 sm:mb-8">
               <div className="flex w-full flex-row items-center justify-between gap-4 rounded-2xl bg-[#205072] px-4 py-4 shadow-xl sm:px-6 sm:py-5 lg:inline-flex lg:w-auto lg:justify-start lg:gap-6">
                 <div className="flex flex-col justify-center gap-1 min-w-0 flex-1 sm:pr-2">
                   <span className="text-base sm:text-lg lg:text-xl font-semibold text-white">
-                    Get the app
+                    {getTheApp}
                   </span>
                   <span className="text-xs sm:text-sm text-white/85 leading-snug">
-                    Scan to download on iOS or Android
+                    {scanToDownload}
                   </span>
                 </div>
-                <div className="rounded-xl border border-white/30 bg-white p-2 sm:p-3 shadow-md shrink-0">
+                <StoreDownloadLink className="rounded-xl border border-white/30 bg-white p-2 sm:p-3 shadow-md shrink-0">
                   <img
                     src={APP_DOWNLOAD_QR}
                     alt="Scan to download app"
                     className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32"
                   />
-                </div>
+                </StoreDownloadLink>
               </div>
             </div>
           </div>

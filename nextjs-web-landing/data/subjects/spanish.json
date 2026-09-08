@@ -31,7 +31,6 @@
       {
         "id": "elena-garcia",
         "name": "Elena Garcia",
-        "photo": "https://randomuser.me/api/portraits/women/34.jpg",
         "qualification": "MA Spanish Language & Literature, University of Barcelona",
         "subjects": [
           "Spanish"
@@ -49,7 +48,6 @@
       {
         "id": "carlos-mendez",
         "name": "Carlos Mendez",
-        "photo": "https://randomuser.me/api/portraits/men/42.jpg",
         "qualification": "BA Hispanic Studies, Universidad de Madrid",
         "subjects": [
           "Spanish"
@@ -67,7 +65,6 @@
       {
         "id": "lucia-rodriguez",
         "name": "Lucia Rodriguez",
-        "photo": "https://randomuser.me/api/portraits/women/56.jpg",
         "qualification": "PGCE Modern Languages, University of Bristol",
         "subjects": [
           "Spanish",
@@ -86,7 +83,6 @@
       {
         "id": "diego-silva",
         "name": "Diego Silva",
-        "photo": "https://randomuser.me/api/portraits/men/53.jpg",
         "qualification": "DELE Superior, Instituto Cervantes",
         "subjects": [
           "Spanish"
@@ -103,7 +99,6 @@
       {
         "id": "valentina-torres",
         "name": "Valentina Torres",
-        "photo": "https://randomuser.me/api/portraits/women/43.jpg",
         "qualification": "MEd Spanish Teaching, University of Buenos Aires",
         "subjects": [
           "Spanish"
@@ -121,7 +116,6 @@
       {
         "id": "miguel-ortiz",
         "name": "Miguel Ortiz",
-        "photo": "https://randomuser.me/api/portraits/men/70.jpg",
         "qualification": "BA Applied Linguistics, University of Seville",
         "subjects": [
           "Spanish"

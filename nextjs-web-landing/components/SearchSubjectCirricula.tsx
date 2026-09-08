@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { Search } from 'lucide-react';
+import type { Locale } from '@/lib/i18n/locale';
+import { t } from '@/lib/i18n/messages';
+import { SUBJECT_NAME_AR, CURRICULUM_NAME_AR } from '@/lib/i18n/names';
 
 const subjects = [
   'English',
@@ -41,7 +44,12 @@ const selectClass =
 
 const chevronBg = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`;
 
-export default function SearchSubjectCirricula() {
+export default function SearchSubjectCirricula({
+  locale = 'en',
+}: {
+  locale?: Locale;
+}) {
+  const copy = t(locale);
   const [subject, setSubject] = useState('');
   const [curriculum, setCurriculum] = useState('');
 
@@ -70,7 +78,7 @@ export default function SearchSubjectCirricula() {
                 htmlFor="search-subject"
                 className="block text-sm font-semibold text-gray-700 mb-2"
               >
-                Subject
+                {copy.search.subject}
               </label>
               <select
                 id="search-subject"
@@ -79,10 +87,14 @@ export default function SearchSubjectCirricula() {
                 className={selectClass}
                 style={{ backgroundImage: chevronBg }}
               >
-                <option value="">Select a subject</option>
+                <option value="">
+                  {copy.search.placeholderSubject}
+                </option>
                 {subjects.map((item) => (
                   <option key={item} value={item}>
-                    {item}
+                    {locale === 'ar'
+                      ? SUBJECT_NAME_AR[toSlug(item)] ?? item
+                      : item}
                   </option>
                 ))}
               </select>
@@ -93,7 +105,7 @@ export default function SearchSubjectCirricula() {
                 htmlFor="search-curriculum"
                 className="block text-sm font-semibold text-gray-700 mb-2"
               >
-                Curricula
+                {copy.search.curriculum}
               </label>
               <select
                 id="search-curriculum"
@@ -102,10 +114,14 @@ export default function SearchSubjectCirricula() {
                 className={selectClass}
                 style={{ backgroundImage: chevronBg }}
               >
-                <option value="">Select a curriculum</option>
+                <option value="">
+                  {copy.search.placeholderCurriculum}
+                </option>
                 {curricula.map((item) => (
                   <option key={item} value={item}>
-                    {item}
+                    {locale === 'ar'
+                      ? CURRICULUM_NAME_AR[toSlug(item)] ?? item
+                      : item}
                   </option>
                 ))}
               </select>
@@ -114,10 +130,12 @@ export default function SearchSubjectCirricula() {
             <button
               type="submit"
               className="flex items-center justify-center gap-2 bg-[#205072] hover:bg-[#24bcc7] text-white font-medium rounded-xl px-6 py-3.5 md:py-3.5 transition-colors w-full md:w-auto md:min-w-[3.5rem] md:px-5"
-              aria-label="Search tutors"
+              aria-label={copy.search.submit}
             >
               <Search className="h-5 w-5" strokeWidth={2.5} />
-              <span className="md:hidden">Search</span>
+              <span className="md:hidden">
+                {copy.search.submit}
+              </span>
             </button>
           </form>
         </div>

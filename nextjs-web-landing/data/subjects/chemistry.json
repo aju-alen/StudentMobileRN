@@ -29,7 +29,6 @@
       {
         "id": "rachel-nguyen",
         "name": "Rachel Nguyen",
-        "photo": "https://randomuser.me/api/portraits/women/31.jpg",
         "qualification": "MSc Chemistry, University of Manchester",
         "subjects": [
           "Chemistry",
@@ -48,7 +47,6 @@
       {
         "id": "hassan-malik",
         "name": "Hassan Malik",
-        "photo": "https://randomuser.me/api/portraits/men/45.jpg",
         "qualification": "BSc Chemistry, UAE University",
         "subjects": [
           "Chemistry"
@@ -66,7 +64,6 @@
       {
         "id": "isabelle-martin",
         "name": "Isabelle Martin",
-        "photo": "https://randomuser.me/api/portraits/women/48.jpg",
         "qualification": "PhD Organic Chemistry, Sorbonne University",
         "subjects": [
           "Chemistry",
@@ -84,7 +81,6 @@
       {
         "id": "vikram-patel",
         "name": "Vikram Patel",
-        "photo": "https://randomuser.me/api/portraits/men/58.jpg",
         "qualification": "MSc Chemistry, IIT Bombay",
         "subjects": [
           "Chemistry",
@@ -102,7 +98,6 @@
       {
         "id": "sophie-laurent",
         "name": "Sophie Laurent",
-        "photo": "https://randomuser.me/api/portraits/women/62.jpg",
         "qualification": "BSc Chemistry, King's College London",
         "subjects": [
           "Chemistry"
@@ -120,7 +115,6 @@
       {
         "id": "daniel-osei",
         "name": "Daniel Osei",
-        "photo": "https://randomuser.me/api/portraits/men/36.jpg",
         "qualification": "MSc Chemical Sciences, University of Cape Town",
         "subjects": [
           "Chemistry",

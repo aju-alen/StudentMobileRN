@@ -1,3 +1,7 @@
+import type { Locale } from '@/lib/i18n/locale';
+import { withLocale } from '@/lib/i18n/locale';
+import { SUBJECT_BLURB_AR } from '@/lib/i18n/names';
+
 const languages = [
   {
     name: 'English',
@@ -99,38 +103,53 @@ const getSubjectPageHref = (name: string) => {
 const getCtaLabel = (name: string) =>
   name.endsWith('Tutors') ? `Find ${name}` : `Find ${name} Tutors`;
 
-export default function SubjectCards() {
+export default function SubjectCards({
+  locale = 'en',
+}: {
+  locale?: Locale;
+}) {
+  const isAr = locale === 'ar';
+
   return (
     <section className="home-section home-section-spacing bg-white">
       <div className="home-section-inner">
         <h2 className="home-section-title text-3xl sm:text-4xl md:text-5xl !mb-6 sm:!mb-8 md:!mb-10 leading-tight px-1 sm:px-0">
-          Explore tutors by subject
+          {isAr ? 'استكشف المعلمين حسب المادة' : 'Explore tutors by subject'}
         </h2>
         <p className="home-section-lead text-lg sm:text-[1.5rem] !-mt-2 sm:!-mt-4 !mb-6 sm:!mb-8 md:!mb-10 leading-relaxed">
-          Browse tutors across the most requested subjects on CoachAcadem.
+          {isAr
+            ? 'تصفّح المعلمين في أكثر المواد طلباً على كوتش أكاديم.'
+            : 'Browse tutors across the most requested subjects on CoachAcadem.'}
         </p>
 
         <div className="home-section-stack gap-6 sm:gap-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-6 items-stretch w-full">
-            {languages.map((lang) => (
+            {languages.map((lang) => {
+              const ar = isAr ? SUBJECT_BLURB_AR[lang.name] : undefined;
+              const name = ar?.name ?? lang.name;
+              const description = ar?.description ?? lang.description;
+              return (
               <div
                 key={lang.name}
                 className="flex flex-col p-5 sm:p-6 bg-gray-50 rounded-xl shadow border h-full min-h-0 sm:min-h-[10rem] w-full min-w-0"
               >
                 <div className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2 break-words">
-                  {lang.name}
+                  {name}
                 </div>
-                <div className="text-gray-600 text-base sm:text-[1.3rem] break-words text-left flex-grow mb-4 leading-relaxed">
-                  {lang.description}
+                <div className="text-gray-600 text-base sm:text-[1.3rem] break-words text-start flex-grow mb-4 leading-relaxed">
+                  {description}
                 </div>
                 <a
-                  href={getSubjectPageHref(lang.name)}
+                  href={withLocale(getSubjectPageHref(lang.name), locale)}
                   className="w-full sm:w-auto sm:self-start text-center bg-[#205072] hover:bg-[#24bcc7] text-white px-4 py-2.5 sm:py-2 rounded-lg font-medium transition-colors text-sm sm:text-base"
                 >
-                  {getCtaLabel(lang.name)}
+                  {isAr
+                    ? `ابحث عن معلمي ${name}`
+                    : getCtaLabel(lang.name)}
                 </a>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="flex justify-start">
@@ -138,6 +157,9 @@ export default function SubjectCards() {
               type="button"
               className="flex items-center text-base sm:text-lg font-medium text-gray-900 hover:underline"
             >
+              <span className="text-xl sm:text-2xl me-2">+</span>{' '}
+              {isAr ? 'عرض المزيد' : 'Show more'}
+            </a>
               <span className="text-xl sm:text-2xl mr-2">+</span> Show more
             </button>
           </div>

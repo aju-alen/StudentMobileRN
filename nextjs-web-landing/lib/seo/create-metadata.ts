@@ -1,12 +1,32 @@
 import type { Metadata } from "next";
 import {
+  stripLocalePrefix,
+  withLocale,
+} from "@/lib/i18n/locale";
+import {
   CANONICAL_SITE_ORIGIN,
-  CANONICAL_SITE_URL,
   canonicalUrl,
   normalizeSiteUrl,
   siteConfig,
 } from "./site";
 import type { KeywordInput, PageSeoConfig, PageSeoInput } from "./types";
+
+function languageAlternates(path: string | undefined, locale?: "en" | "ar") {
+  const bare = stripLocalePrefix(path ?? "/");
+  const english = canonicalUrl(bare);
+  if (!locale && bare !== "/") {
+    return {
+      "en-AE": english,
+      "x-default": english,
+    };
+  }
+
+  return {
+    "en-AE": english,
+    "ar-AE": canonicalUrl(withLocale(bare, "ar")),
+    "x-default": english,
+  };
+}
 
 function normalizeKeywords(value: KeywordInput): string[] {
   if (Array.isArray(value)) {
@@ -59,10 +79,7 @@ export function definePageSeo(input: PageSeoInput): Metadata {
     keywords: config.allKeywords,
     alternates: {
       canonical,
-      languages: {
-        "en-AE": canonical,
-        "x-default": canonical,
-      },
+      languages: languageAlternates(config.path, config.locale),
     },
     robots: config.noIndex
       ? { index: false, follow: false }
@@ -73,7 +90,7 @@ export function definePageSeo(input: PageSeoInput): Metadata {
       siteName: siteConfig.name,
       title: config.title,
       description: config.description,
-      locale: siteConfig.locale,
+      locale: config.locale === "ar" ? "ar_AE" : siteConfig.locale,
       images: [
         {
           url: ogImage,

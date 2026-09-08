@@ -15,7 +15,7 @@ function renderBlock(block: LegalBlock, index: number) {
       return (
         <ul
           key={index}
-          className="list-disc pl-6 space-y-2 mb-4 text-gray-700 text-base sm:text-lg leading-relaxed"
+          className="list-disc ps-6 space-y-2 mb-4 text-gray-700 text-base sm:text-lg leading-relaxed"
         >
           {block.items.map((item) => (
             <li key={item}>{item}</li>

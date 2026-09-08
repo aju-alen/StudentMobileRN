@@ -29,7 +29,6 @@
       {
         "id": "catherine-moore",
         "name": "Catherine Moore",
-        "photo": "https://randomuser.me/api/portraits/women/46.jpg",
         "qualification": "MA History, University of Edinburgh",
         "subjects": [
           "History"
@@ -47,7 +46,6 @@
       {
         "id": "hassan-al-omari",
         "name": "Hassan Al Omari",
-        "photo": "https://randomuser.me/api/portraits/men/68.jpg",
         "qualification": "BA History, American University of Cairo",
         "subjects": [
           "History",
@@ -66,7 +64,6 @@
       {
         "id": "emily-hart",
         "name": "Emily Hart",
-        "photo": "https://randomuser.me/api/portraits/women/32.jpg",
         "qualification": "PhD Modern History, University of Oxford",
         "subjects": [
           "History"
@@ -83,7 +80,6 @@
       {
         "id": "raj-malhotra",
         "name": "Raj Malhotra",
-        "photo": "https://randomuser.me/api/portraits/men/73.jpg",
         "qualification": "MEd History Education, University of Melbourne",
         "subjects": [
           "History"
@@ -101,7 +97,6 @@
       {
         "id": "sophie-laurent",
         "name": "Sophie Laurent",
-        "photo": "https://randomuser.me/api/portraits/women/56.jpg",
         "qualification": "BA History & Politics, Sciences Po Paris",
         "subjects": [
           "History",
@@ -120,7 +115,6 @@
       {
         "id": "michael-davies",
         "name": "Michael Davies",
-        "photo": "https://randomuser.me/api/portraits/men/40.jpg",
         "qualification": "PGCE History, University of Bristol",
         "subjects": [
           "History"

@@ -31,7 +31,6 @@
       {
         "id": "claire-fontaine",
         "name": "Claire Fontaine",
-        "photo": "https://randomuser.me/api/portraits/women/27.jpg",
         "qualification": "MA French Literature, Sorbonne University",
         "subjects": [
           "French"
@@ -49,7 +48,6 @@
       {
         "id": "antoine-moreau",
         "name": "Antoine Moreau",
-        "photo": "https://randomuser.me/api/portraits/men/38.jpg",
         "qualification": "BA French & Linguistics, University of Lyon",
         "subjects": [
           "French"
@@ -67,7 +65,6 @@
       {
         "id": "marie-laurent",
         "name": "Marie Laurent",
-        "photo": "https://randomuser.me/api/portraits/women/49.jpg",
         "qualification": "PGCE Modern Languages, University of Cambridge",
         "subjects": [
           "French",
@@ -86,7 +83,6 @@
       {
         "id": "julien-dupont",
         "name": "Julien Dupont",
-        "photo": "https://randomuser.me/api/portraits/men/57.jpg",
         "qualification": "Diplôme d'Études Françaises, Alliance Française",
         "subjects": [
           "French"
@@ -103,7 +99,6 @@
       {
         "id": "camille-rousseau",
         "name": "Camille Rousseau",
-        "photo": "https://randomuser.me/api/portraits/women/60.jpg",
         "qualification": "MEd French Language Teaching, University of Geneva",
         "subjects": [
           "French"
@@ -121,7 +116,6 @@
       {
         "id": "nicolas-bernard",
         "name": "Nicolas Bernard",
-        "photo": "https://randomuser.me/api/portraits/men/65.jpg",
         "qualification": "BA Applied French, University of Montreal",
         "subjects": [
           "French"

@@ -20,6 +20,7 @@ export const homePageSeo = definePageSeo({
   ],
   path: "/",
   canonicalUrl: CANONICAL_SITE_URL,
+  locale: "en",
   titleAbsolute: true,
 });
 

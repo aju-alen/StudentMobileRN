@@ -29,7 +29,6 @@
       {
         "id": "alex-rivera",
         "name": "Alex Rivera",
-        "photo": "https://randomuser.me/api/portraits/men/46.jpg",
         "qualification": "MSc Computer Science, Stanford University",
         "subjects": [
           "Computer Science",
@@ -48,7 +47,6 @@
       {
         "id": "sana-kapoor",
         "name": "Sana Kapoor",
-        "photo": "https://randomuser.me/api/portraits/women/53.jpg",
         "qualification": "BSc Software Engineering, BITS Pilani",
         "subjects": [
           "Computer Science"
@@ -66,7 +64,6 @@
       {
         "id": "michael-stone",
         "name": "Michael Stone",
-        "photo": "https://randomuser.me/api/portraits/men/59.jpg",
         "qualification": "MEng Computing, Imperial College London",
         "subjects": [
           "Computer Science",
@@ -85,7 +82,6 @@
       {
         "id": "fatima-yousef",
         "name": "Fatima Yousef",
-        "photo": "https://randomuser.me/api/portraits/women/40.jpg",
         "qualification": "BSc Computer Science, Khalifa University",
         "subjects": [
           "Computer Science",
@@ -104,7 +100,6 @@
       {
         "id": "liam-obrien",
         "name": "Liam O'Brien",
-        "photo": "https://randomuser.me/api/portraits/men/34.jpg",
         "qualification": "MSc Artificial Intelligence, University of Edinburgh",
         "subjects": [
           "Computer Science"
@@ -121,7 +116,6 @@
       {
         "id": "nadia-hassan",
         "name": "Nadia Hassan",
-        "photo": "https://randomuser.me/api/portraits/women/66.jpg",
         "qualification": "BSc Information Technology, American University of Sharjah",
         "subjects": [
           "Computer Science",

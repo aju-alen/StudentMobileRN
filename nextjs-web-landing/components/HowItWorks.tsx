@@ -48,6 +48,15 @@ const curriculumCards = [
   },
 ];
 
+type CurriculumCardData = {
+  step: number;
+  badgeClass: string;
+  title: string;
+  description: string;
+  href: string;
+  cta: string;
+};
+
 const CurriculumCard = ({
   step,
   badgeClass,
@@ -55,7 +64,7 @@ const CurriculumCard = ({
   description,
   href,
   cta,
-}: (typeof curriculumCards)[number]) => (
+}: CurriculumCardData) => (
   <div className="border rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 bg-white shadow-sm flex flex-col items-start h-full w-full min-w-0">
     <div className="mb-3 sm:mb-4">
       <span
@@ -77,18 +86,28 @@ const CurriculumCard = ({
   </div>
 );
 
-export default function CirriculamCards() {
-  const topRow = curriculumCards.slice(0, 3);
-  const bottomRow = curriculumCards.slice(3);
+type CirriculamCardsProps = {
+  title?: string;
+  lead?: string;
+  cards?: CurriculumCardData[];
+};
+
+export default function CirriculamCards({
+  title = 'Find tutors by curriculum',
+  lead = 'Explore tutors who teach within the curriculum your child follows.',
+  cards = curriculumCards,
+}: CirriculamCardsProps) {
+  const topRow = cards.slice(0, 3);
+  const bottomRow = cards.slice(3);
 
   return (
     <section className="home-section home-section-spacing bg-white">
       <div className="home-section-inner">
         <h2 className="home-section-title text-3xl sm:text-4xl md:text-5xl !mb-6 sm:!mb-8 md:!mb-10 leading-tight px-1 sm:px-0">
-          Find tutors by curriculum
+          {title}
         </h2>
         <p className="home-section-lead text-lg sm:text-[1.5rem] !-mt-2 sm:!-mt-4 !mb-6 sm:!mb-8 md:!mb-10 leading-relaxed">
-          Explore tutors who teach within the curriculum your child follows.
+          {lead}
         </p>
 
         <div className="home-section-stack gap-6 sm:gap-8">

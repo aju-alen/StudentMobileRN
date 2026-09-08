@@ -10,12 +10,14 @@ import SubjectCurriculumSection from '@/components/subject/SubjectCurriculumSect
 import RelatedSubjects from '@/components/subject/RelatedSubjects';
 import SubjectJsonLd from '@/components/subject/SubjectJsonLd';
 import type { SubjectPageData } from '@/lib/subjects/types';
+import type { Locale } from '@/lib/i18n/locale';
 
 type SubjectPageProps = {
   subject: SubjectPageData;
+  locale?: Locale;
 };
 
-export default function SubjectPage({ subject }: SubjectPageProps) {
+export default function SubjectPage({ subject, locale = 'en' }: SubjectPageProps) {
   return (
     <>
       <SubjectJsonLd subject={subject} />
@@ -25,6 +27,7 @@ export default function SubjectPage({ subject }: SubjectPageProps) {
         title={subject.featuredTutors.title}
         lead={subject.featuredTutors.lead}
         tutors={subject.featuredTutors.tutors}
+        locale={locale}
       />
       <SubjectHowTutorsHelp section={subject.howTutorsHelp} />
       {subject.exploreSubjects && (

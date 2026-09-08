@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Figtree, Montserrat, Lora } from "next/font/google";
+import { Cairo, Figtree, Montserrat, Lora } from "next/font/google";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import LanguageFloater from "@/components/LanguageFloater";
+import WhatsAppFloater from "@/components/WhatsAppFloater";
+import { getRequestLocale } from "@/lib/i18n/get-request-locale";
 import { CANONICAL_SITE_ORIGIN, CANONICAL_SITE_URL, siteConfig } from "@/lib/seo/site";
 import "./globals.css";
 
@@ -19,6 +22,12 @@ const montserrat = Montserrat({
 const lora = Lora({
   variable: "--font-lora",
   subsets: ["latin"],
+});
+
+const cairo = Cairo({
+  variable: "--font-cairo",
+  subsets: ["arabic", "latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 /** Site-wide defaults — each page overrides via definePageSeo() */
@@ -59,20 +68,24 @@ const organizationSchema = {
   contactPoint: {
     "@type": "ContactPoint",
     contactType: "customer service",
-    availableLanguage: ["English"],
+    availableLanguage: ["English", "Arabic"],
   },
   sameAs: [CANONICAL_SITE_URL],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getRequestLocale();
+  const isAr = locale === "ar";
+
   return (
     <html
-      lang="en"
-      className={`${figtree.variable} ${montserrat.variable} ${lora.variable} h-full`}
+      lang={isAr ? "ar" : "en"}
+      dir={isAr ? "rtl" : "ltr"}
+      className={`${figtree.variable} ${montserrat.variable} ${lora.variable} ${cairo.variable} h-full`}
     >
       <head>
         <link
@@ -88,9 +101,11 @@ export default function RootLayout({
       </head>
       <body className="min-h-full bg-white">
         <div className="min-h-screen bg-white flex flex-col">
-          <Header />
+          <Header locale={locale} />
           <main className="flex-1">{children}</main>
-          <Footer />
+          <Footer locale={locale} />
+          <LanguageFloater />
+          <WhatsAppFloater />
         </div>
       </body>
     </html>

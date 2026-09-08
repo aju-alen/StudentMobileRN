@@ -29,7 +29,6 @@
       {
         "id": "andrew-clarke",
         "name": "Andrew Clarke",
-        "photo": "https://randomuser.me/api/portraits/men/49.jpg",
         "qualification": "MSc Economics, London School of Economics",
         "subjects": [
           "Economics",
@@ -48,7 +47,6 @@
       {
         "id": "meera-shah",
         "name": "Meera Shah",
-        "photo": "https://randomuser.me/api/portraits/women/51.jpg",
         "qualification": "BA Economics, University of Delhi",
         "subjects": [
           "Economics"
@@ -66,7 +64,6 @@
       {
         "id": "thomas-wright",
         "name": "Thomas Wright",
-        "photo": "https://randomuser.me/api/portraits/men/55.jpg",
         "qualification": "PhD Economics, University of Cambridge",
         "subjects": [
           "Economics"
@@ -83,7 +80,6 @@
       {
         "id": "fatima-al-ansari",
         "name": "Fatima Al Ansari",
-        "photo": "https://randomuser.me/api/portraits/women/63.jpg",
         "qualification": "MSc Applied Economics, UAE University",
         "subjects": [
           "Economics",
@@ -102,7 +98,6 @@
       {
         "id": "benjamin-ross",
         "name": "Benjamin Ross",
-        "photo": "https://randomuser.me/api/portraits/men/27.jpg",
         "qualification": "PGCE Economics, University of Oxford",
         "subjects": [
           "Economics"
@@ -120,7 +115,6 @@
       {
         "id": "nisha-patel",
         "name": "Nisha Patel",
-        "photo": "https://randomuser.me/api/portraits/women/39.jpg",
         "qualification": "BSc Economics, American University of Sharjah",
         "subjects": [
           "Economics",

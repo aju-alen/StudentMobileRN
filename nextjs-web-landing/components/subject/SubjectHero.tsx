@@ -1,4 +1,5 @@
 import { S3_BASE } from '@/lib/constants';
+import StoreDownloadLink from '@/components/StoreDownloadLink';
 import type { SubjectPageData } from '@/lib/subjects/types';
 
 type SubjectHeroProps = {
@@ -24,12 +25,9 @@ export default function SubjectHero({ hero }: SubjectHeroProps) {
               >
                 {hero.primaryCta}
               </a>
-              <a
-                href={hero.secondaryCtaHref}
-                className="text-center border-2 border-[#205072] text-[#205072] hover:bg-[#205072] hover:text-white px-6 py-3 rounded-lg font-medium transition-colors text-base sm:text-lg"
-              >
+              <StoreDownloadLink className="text-center border-2 border-[#205072] text-[#205072] hover:bg-[#205072] hover:text-white px-6 py-3 rounded-lg font-medium transition-colors text-base sm:text-lg">
                 {hero.secondaryCta}
-              </a>
+              </StoreDownloadLink>
             </div>
           </div>
 

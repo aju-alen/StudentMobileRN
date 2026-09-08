@@ -29,7 +29,6 @@
       {
         "id": "mariam-al-hashimi",
         "name": "Mariam Al Hashimi",
-        "photo": "https://randomuser.me/api/portraits/women/47.jpg",
         "qualification": "MA Arabic Language & Literature, UAE University",
         "subjects": [
           "Arabic"
@@ -47,7 +46,6 @@
       {
         "id": "khalid-benali",
         "name": "Khalid Benali",
-        "photo": "https://randomuser.me/api/portraits/men/39.jpg",
         "qualification": "BA Arabic Studies, American University of Cairo",
         "subjects": [
           "Arabic",
@@ -66,7 +64,6 @@
       {
         "id": "layla-abbas",
         "name": "Layla Abbas",
-        "photo": "https://randomuser.me/api/portraits/women/61.jpg",
         "qualification": "MEd Arabic Education, Zayed University",
         "subjects": [
           "Arabic"
@@ -84,7 +81,6 @@
       {
         "id": "omar-said",
         "name": "Omar Said",
-        "photo": "https://randomuser.me/api/portraits/men/76.jpg",
         "qualification": "BA Arabic Language, Sorbonne University",
         "subjects": [
           "Arabic"
@@ -102,7 +98,6 @@
       {
         "id": "noor-al-dhaheri",
         "name": "Noor Al Dhaheri",
-        "photo": "https://randomuser.me/api/portraits/women/35.jpg",
         "qualification": "PGCE Arabic, University of Exeter",
         "subjects": [
           "Arabic",
@@ -121,7 +116,6 @@
       {
         "id": "hassan-rahimi",
         "name": "Hassan Rahimi",
-        "photo": "https://randomuser.me/api/portraits/men/64.jpg",
         "qualification": "MA Applied Linguistics, King Saud University",
         "subjects": [
           "Arabic"

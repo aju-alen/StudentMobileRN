@@ -29,7 +29,6 @@
       {
         "id": "james-okafor",
         "name": "James Okafor",
-        "photo": "https://randomuser.me/api/portraits/men/32.jpg",
         "qualification": "BSc Physics, Imperial College London",
         "subjects": [
           "Physics",
@@ -48,7 +47,6 @@
       {
         "id": "layla-hamdan",
         "name": "Layla Hamdan",
-        "photo": "https://randomuser.me/api/portraits/women/26.jpg",
         "qualification": "MSc Physics, Khalifa University",
         "subjects": [
           "Physics"
@@ -66,7 +64,6 @@
       {
         "id": "marcus-chen",
         "name": "Marcus Chen",
-        "photo": "https://randomuser.me/api/portraits/men/67.jpg",
         "qualification": "PhD Physics, University of Edinburgh",
         "subjects": [
           "Physics",
@@ -84,7 +81,6 @@
       {
         "id": "nadia-rahman",
         "name": "Nadia Rahman",
-        "photo": "https://randomuser.me/api/portraits/women/55.jpg",
         "qualification": "BSc Physics, American University of Sharjah",
         "subjects": [
           "Physics",
@@ -102,7 +98,6 @@
       {
         "id": "thomas-brennan",
         "name": "Thomas Brennan",
-        "photo": "https://randomuser.me/api/portraits/men/22.jpg",
         "qualification": "MSc Theoretical Physics, Trinity College Dublin",
         "subjects": [
           "Physics"
@@ -120,7 +115,6 @@
       {
         "id": "anita-desai",
         "name": "Anita Desai",
-        "photo": "https://randomuser.me/api/portraits/women/72.jpg",
         "qualification": "BSc Physics, IIT Delhi",
         "subjects": [
           "Physics",

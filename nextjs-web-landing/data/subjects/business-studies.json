@@ -29,7 +29,6 @@
       {
         "id": "daniel-foster",
         "name": "Daniel Foster",
-        "photo": "https://randomuser.me/api/portraits/men/43.jpg",
         "qualification": "MBA, London Business School",
         "subjects": [
           "Business Studies",
@@ -48,7 +47,6 @@
       {
         "id": "sara-al-mazrouei",
         "name": "Sara Al Mazrouei",
-        "photo": "https://randomuser.me/api/portraits/women/50.jpg",
         "qualification": "BBA, American University of Sharjah",
         "subjects": [
           "Business Studies",
@@ -67,7 +65,6 @@
       {
         "id": "james-patterson",
         "name": "James Patterson",
-        "photo": "https://randomuser.me/api/portraits/men/61.jpg",
         "qualification": "MSc Management, University of Warwick",
         "subjects": [
           "Business Studies"
@@ -84,7 +81,6 @@
       {
         "id": "amira-hassan",
         "name": "Amira Hassan",
-        "photo": "https://randomuser.me/api/portraits/women/44.jpg",
         "qualification": "BA Business Administration, UAE University",
         "subjects": [
           "Business Studies",
@@ -103,7 +99,6 @@
       {
         "id": "lucas-bergmann",
         "name": "Lucas Bergmann",
-        "photo": "https://randomuser.me/api/portraits/men/37.jpg",
         "qualification": "MSc International Business, INSEAD",
         "subjects": [
           "Business Studies",
@@ -122,7 +117,6 @@
       {
         "id": "priya-menon",
         "name": "Priya Menon",
-        "photo": "https://randomuser.me/api/portraits/women/58.jpg",
         "qualification": "PGCE Business Studies, University of Nottingham",
         "subjects": [
           "Business Studies"

@@ -4,6 +4,7 @@
   --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
   --font-montserrat: var(--font-montserrat), ui-sans-serif, sans-serif;
   --font-lora: var(--font-lora), ui-serif, serif;
+  --font-cairo: var(--font-cairo), ui-sans-serif, system-ui, sans-serif;
 
   --animate-float: float 3s ease-in-out infinite;
 
@@ -34,6 +35,17 @@
   h5,
   h6 {
     @apply font-sans;
+  }
+
+  html[lang="ar"],
+  html[lang="ar"] body,
+  html[lang="ar"] h1,
+  html[lang="ar"] h2,
+  html[lang="ar"] h3,
+  html[lang="ar"] h4,
+  html[lang="ar"] h5,
+  html[lang="ar"] h6 {
+    font-family: var(--font-cairo), ui-sans-serif, system-ui, sans-serif;
   }
 }
 

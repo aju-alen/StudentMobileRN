@@ -29,7 +29,6 @@
       {
         "id": "sarah-hassan",
         "name": "Sarah Hassan",
-        "photo": "https://randomuser.me/api/portraits/women/44.jpg",
         "qualification": "MSc Mathematics, University of Oxford",
         "subjects": [
           "Mathematics",
@@ -48,7 +47,6 @@
       {
         "id": "ahmed-khan",
         "name": "Ahmed Khan",
-        "photo": "https://randomuser.me/api/portraits/men/75.jpg",
         "qualification": "BSc Mathematics, American University of Sharjah",
         "subjects": [
           "Mathematics",
@@ -67,7 +65,6 @@
       {
         "id": "priya-sharma",
         "name": "Priya Sharma",
-        "photo": "https://randomuser.me/api/portraits/women/65.jpg",
         "qualification": "MSc Applied Mathematics, Imperial College London",
         "subjects": [
           "Mathematics",
@@ -86,7 +83,6 @@
       {
         "id": "omar-al-mansoori",
         "name": "Omar Al Mansoori",
-        "photo": "https://randomuser.me/api/portraits/men/52.jpg",
         "qualification": "BSc Mathematics, UAE University",
         "subjects": [
           "Mathematics"
@@ -104,7 +100,6 @@
       {
         "id": "elena-petrov",
         "name": "Elena Petrov",
-        "photo": "https://randomuser.me/api/portraits/women/33.jpg",
         "qualification": "PhD Mathematics Education, University of Cambridge",
         "subjects": [
           "Mathematics",
@@ -122,7 +117,6 @@
       {
         "id": "david-wong",
         "name": "David Wong",
-        "photo": "https://randomuser.me/api/portraits/men/41.jpg",
         "qualification": "MEng Engineering Mathematics, NUS",
         "subjects": [
           "Mathematics",

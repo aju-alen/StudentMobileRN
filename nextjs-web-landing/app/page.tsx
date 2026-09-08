@@ -29,7 +29,7 @@ export default function Home() {
       <TopTutorCards />
       <WhyParentsChooseCA />
       <Testimonials />
-      <DownloadApp />
+      <DownloadApp id="download-app" />
       <FAQ faqs={homeFaqs} />
       <QRCodeFloater />
     </>

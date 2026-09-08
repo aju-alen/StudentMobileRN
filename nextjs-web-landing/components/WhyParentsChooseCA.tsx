@@ -35,7 +35,7 @@ const ReasonCard = ({ title, description }: WhyParentsReason) => (
         {title}
       </span>
     </div>
-    <div className="flex gap-2.5 sm:gap-3 text-left">
+    <div className="flex gap-2.5 sm:gap-3 text-start">
       <Check
         className="mt-0.5 h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0 text-blue-500"
         strokeWidth={2.5}

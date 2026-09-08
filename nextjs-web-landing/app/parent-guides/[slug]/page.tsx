@@ -7,6 +7,9 @@ import {
   getAllParentGuideSlugs,
   getParentGuideArticleBySlug,
 } from '@/lib/resources/parent-guides';
+import { getRequestLocale } from '@/lib/i18n/get-request-locale';
+import { withLocale } from '@/lib/i18n/locale';
+import { localizeArticle } from '@/lib/i18n/articles';
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -28,12 +31,16 @@ export async function generateMetadata({
     return {};
   }
 
+  const locale = await getRequestLocale();
+  const localized = localizeArticle(article, locale);
+
   return definePageSeo({
-    title: article.title,
-    description: article.description,
-    primaryKeywords: article.primaryKeywords,
-    secondaryKeywords: article.secondaryKeywords,
-    path: `/parent-guides/${article.slug}`,
+    title: localized.title,
+    description: localized.description,
+    primaryKeywords: localized.primaryKeywords,
+    secondaryKeywords: localized.secondaryKeywords,
+    path: withLocale(`/parent-guides/${article.slug}`, locale),
+    locale,
     titleAbsolute: true,
   });
 }
@@ -46,10 +53,12 @@ export default async function ParentGuideArticlePage({ params }: PageProps) {
     notFound();
   }
 
+  const locale = await getRequestLocale();
+
   return (
     <>
-      <ArticleJsonLd article={article} />
-      <ResourceArticleView article={article} />
+      <ArticleJsonLd article={localizeArticle(article, locale)} />
+      <ResourceArticleView article={article} locale={locale} />
     </>
   );
 }

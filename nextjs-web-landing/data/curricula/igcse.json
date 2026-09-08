@@ -30,7 +30,6 @@
       {
         "id": "sarah-hassan",
         "name": "Sarah Hassan",
-        "photo": "https://randomuser.me/api/portraits/women/44.jpg",
         "qualification": "MSc Mathematics, University of Oxford",
         "subjects": [
           "Mathematics",
@@ -47,7 +46,6 @@
       {
         "id": "james-okafor",
         "name": "James Okafor",
-        "photo": "https://randomuser.me/api/portraits/men/32.jpg",
         "qualification": "BSc Physics, Imperial College London",
         "subjects": [
           "Physics",
@@ -64,7 +62,6 @@
       {
         "id": "priya-sharma",
         "name": "Priya Sharma",
-        "photo": "https://randomuser.me/api/portraits/women/65.jpg",
         "qualification": "MSc Chemistry, University of Manchester",
         "subjects": [
           "Chemistry",
@@ -81,7 +78,6 @@
       {
         "id": "omar-al-mansoori",
         "name": "Omar Al Mansoori",
-        "photo": "https://randomuser.me/api/portraits/men/52.jpg",
         "qualification": "BA English Literature, UAE University",
         "subjects": [
           "English",
@@ -98,7 +94,6 @@
       {
         "id": "elena-petrov",
         "name": "Elena Petrov",
-        "photo": "https://randomuser.me/api/portraits/women/33.jpg",
         "qualification": "BSc Economics, London School of Economics",
         "subjects": [
           "Economics",
@@ -115,7 +110,6 @@
       {
         "id": "david-wong",
         "name": "David Wong",
-        "photo": "https://randomuser.me/api/portraits/men/41.jpg",
         "qualification": "BSc Computer Science, NUS",
         "subjects": [
           "Computer Science",

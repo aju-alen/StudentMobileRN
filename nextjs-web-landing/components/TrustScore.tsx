@@ -35,12 +35,16 @@ const LogoCard = ({ logo }: { logo: Logo }) => (
 
 const logoPairs = [logos.slice(0, 2), logos.slice(2, 4)];
 
-export default function TrustScore() {
+export default function TrustScore({
+  title = "Find trusted tutors for your child's curriculum",
+}: {
+  title?: string;
+}) {
   return (
     <section className="home-section home-section-spacing bg-white">
       <div className="home-section-inner">
         <h2 className="home-section-title text-gray-900 text-3xl sm:text-4xl md:text-5xl leading-tight px-1 sm:px-0">
-          Find trusted tutors for your child&apos;s curriculum
+          {title}
         </h2>
 
         <div className="pt-10 sm:pt-12 md:pt-14">

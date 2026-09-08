@@ -1,4 +1,8 @@
 import { APP_STORE_URL, PLAY_STORE_URL } from '@/lib/constants';
+import type { Locale } from '@/lib/i18n/locale';
+import { withLocale } from '@/lib/i18n/locale';
+import { t } from '@/lib/i18n/messages';
+import { getFooterColumns, type FooterColumn } from '@/lib/i18n/nav';
 
 const storeButtons = [
   {
@@ -96,7 +100,10 @@ const FooterNavColumn = ({ label, items }: FooterColumn) => (
   </div>
 );
 
-export default function Footer() {
+export default function Footer({ locale = 'en' }: { locale?: Locale }) {
+  const copy = t(locale);
+  const { primary, secondary } = getFooterColumns(locale);
+
   return (
     <footer className="bg-gray-900 text-gray-300">
       <div className="home-section home-section-spacing max-md:!py-12">
@@ -110,12 +117,12 @@ export default function Footer() {
                     alt="Logo"
                     className="h-8 w-8 flex-shrink-0"
                   />
-                  <span className="ml-2 text-xl sm:text-2xl font-bold text-white">
+                  <span className="ms-2 text-xl sm:text-2xl font-bold text-white">
                     Coach Academ
                   </span>
                 </div>
                 <p className="text-gray-400 leading-relaxed text-base max-md:text-base sm:text-[1.1rem] mb-5 max-md:mb-4">
-                  Learn and grow with CoachAcadem.
+                  {copy.footer.tagline}
                 </p>
                 <div className="flex flex-col sm:flex-row justify-start gap-5 md:gap-6 max-md:items-start max-md:gap-4">
                   {storeButtons.map((store) => (
@@ -142,14 +149,14 @@ export default function Footer() {
               </div>
 
               <div className="lg:col-span-8">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
-                  {footerRowPrimary.map((column) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-6 md:gap-8">
+                  {primary.map((column) => (
                     <FooterNavColumn key={column.label} {...column} />
                   ))}
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 md:gap-8 pt-6 sm:pt-8 border-t border-gray-800">
-                  {footerRowSecondary.map((column) => (
+                  {secondary.map((column) => (
                     <FooterNavColumn key={column.label} {...column} />
                   ))}
                 </div>
@@ -159,7 +166,7 @@ export default function Footer() {
             <div className="border-t border-gray-800 pt-6 sm:pt-8">
               <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-3 sm:gap-4 text-sm max-md:text-xs text-gray-500">
                 <p className="text-center sm:text-left">
-                  © {new Date().getFullYear()} CoachAcadem. All rights reserved.
+                  © {new Date().getFullYear()} CoachAcadem. {copy.footer.rights}
                 </p>
                 <span
                   className="hidden sm:block h-4 w-px bg-gray-600 flex-shrink-0"
@@ -167,28 +174,28 @@ export default function Footer() {
                 />
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2">
                   <a
-                    href="/terms-of-use"
+                    href={withLocale('/terms-of-use', locale)}
                     className="hover:text-gray-300 transition-colors"
                   >
-                    Terms of Use
+                    {copy.footer.terms}
                   </a>
                   <span className="text-gray-600" aria-hidden>
                     |
                   </span>
                   <a
-                    href="/privacy-policy"
+                    href={withLocale('/privacy-policy', locale)}
                     className="hover:text-gray-300 transition-colors"
                   >
-                    Privacy Policy
+                    {copy.footer.privacy}
                   </a>
                   <span className="text-gray-600" aria-hidden>
                     |
                   </span>
                   <a
-                    href="/child-safeguarding-policy"
+                    href={withLocale('/child-safeguarding-policy', locale)}
                     className="hover:text-gray-300 transition-colors"
                   >
-                    Child Safeguarding Policy
+                    {copy.footer.safeguarding}
                   </a>
                 </div>
               </div>

@@ -33,7 +33,6 @@
       {
         "id": "james-okafor",
         "name": "James Okafor",
-        "photo": "https://randomuser.me/api/portraits/men/32.jpg",
         "qualification": "BSc Physics, Imperial College London",
         "subjects": [
           "Physics",
@@ -52,7 +51,6 @@
       {
         "id": "rachel-nguyen",
         "name": "Rachel Nguyen",
-        "photo": "https://randomuser.me/api/portraits/women/31.jpg",
         "qualification": "MSc Chemistry, University of Manchester",
         "subjects": [
           "Chemistry",
@@ -71,7 +69,6 @@
       {
         "id": "emma-walsh",
         "name": "Emma Walsh",
-        "photo": "https://randomuser.me/api/portraits/women/29.jpg",
         "qualification": "MSc Biology, University of Edinburgh",
         "subjects": [
           "Biology",
@@ -90,7 +87,6 @@
       {
         "id": "alex-rivera",
         "name": "Alex Rivera",
-        "photo": "https://randomuser.me/api/portraits/men/46.jpg",
         "qualification": "MSc Computer Science, Stanford University",
         "subjects": [
           "Computer Science",
@@ -109,7 +105,6 @@
       {
         "id": "sarah-hassan",
         "name": "Sarah Hassan",
-        "photo": "https://randomuser.me/api/portraits/women/44.jpg",
         "qualification": "MSc Mathematics, University of Oxford",
         "subjects": [
           "Mathematics",
@@ -128,7 +123,6 @@
       {
         "id": "omar-al-suwaidi",
         "name": "Omar Al Suwaidi",
-        "photo": "https://randomuser.me/api/portraits/men/56.jpg",
         "qualification": "BSc Environmental Science, UAE University",
         "subjects": [
           "Science",

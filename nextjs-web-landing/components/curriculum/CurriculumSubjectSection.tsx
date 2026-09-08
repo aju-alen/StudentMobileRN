@@ -1,18 +1,20 @@
 import type { SubjectCard } from '@/lib/curricula/types';
 
 type CurriculumSubjectSectionProps = {
+  id?: string;
   title: string;
   lead: string;
   cards: SubjectCard[];
 };
 
 export default function CurriculumSubjectSection({
+  id,
   title,
   lead,
   cards,
 }: CurriculumSubjectSectionProps) {
   return (
-    <section className="home-section home-section-spacing bg-white">
+    <section id={id} className="home-section home-section-spacing bg-white">
       <div className="home-section-inner">
         <h2 className="home-section-title text-3xl sm:text-4xl md:text-5xl !mb-6 sm:!mb-8 md:!mb-10 leading-tight px-1 sm:px-0">
           {title}

@@ -29,7 +29,6 @@
       {
         "id": "fatima-al-zaabi",
         "name": "Fatima Al Zaabi",
-        "photo": "https://randomuser.me/api/portraits/women/68.jpg",
         "qualification": "BA English Literature, UAE University",
         "subjects": [
           "English",
@@ -48,7 +47,6 @@
       {
         "id": "oliver-hughes",
         "name": "Oliver Hughes",
-        "photo": "https://randomuser.me/api/portraits/men/28.jpg",
         "qualification": "MA English Literature, University of Oxford",
         "subjects": [
           "English",
@@ -67,7 +65,6 @@
       {
         "id": "priya-nair",
         "name": "Priya Nair",
-        "photo": "https://randomuser.me/api/portraits/women/42.jpg",
         "qualification": "MEd English Education, University of Melbourne",
         "subjects": [
           "English",
@@ -86,7 +83,6 @@
       {
         "id": "william-carter",
         "name": "William Carter",
-        "photo": "https://randomuser.me/api/portraits/men/54.jpg",
         "qualification": "BA English & Drama, University of Bristol",
         "subjects": [
           "English"
@@ -103,7 +99,6 @@
       {
         "id": "aisha-mohammed",
         "name": "Aisha Mohammed",
-        "photo": "https://randomuser.me/api/portraits/women/74.jpg",
         "qualification": "MA Applied Linguistics, American University of Sharjah",
         "subjects": [
           "English",
@@ -122,7 +117,6 @@
       {
         "id": "charlotte-evans",
         "name": "Charlotte Evans",
-        "photo": "https://randomuser.me/api/portraits/women/19.jpg",
         "qualification": "PGCE English, University of Cambridge",
         "subjects": [
           "English",
