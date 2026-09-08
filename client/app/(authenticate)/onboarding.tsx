@@ -15,6 +15,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS, FONT, SIZES } from '../../constants';
 import { horizontalScale, verticalScale, moderateScale } from '../utils/metrics';
+import { getPostAuthHref } from '../utils/teacherProfileLink';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
@@ -94,7 +95,7 @@ const OnboardingScreen = () => {
     } else {
       await AsyncStorage.setItem('hasSeenOnboarding', 'true');
       await AsyncStorage.setItem('userType', userType); // Store userType for future use
-      router.replace('/(tabs)/home');
+      router.replace(await getPostAuthHref());
     }
   };
 

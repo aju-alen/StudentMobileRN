@@ -1,15 +1,22 @@
 import { Redirect } from "expo-router";
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Linking from 'expo-linking';
 import { useEffect, useState } from "react";
 import { View, Image, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  getPostAuthHref,
+  getTeacherProfileAppPath,
+  parseTeacherIdFromUrl,
+  setPendingTeacherProfileId,
+} from "./utils/teacherProfileLink";
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
 export default function Page() {
-  const [token, setToken] = useState(null);
+  const [initialHref, setInitialHref] = useState(null);
   const [isReady, setIsReady] = useState(false);
   const [fontsLoaded] = useFonts({
     NotoSemiBold: require('../assets/fonts/NotoSans/NotoSans-SemiBold.ttf'),
@@ -24,11 +31,24 @@ export default function Page() {
     async function checkLogin() {
       try {
         const storedToken = await AsyncStorage.getItem('authToken');
-        const user = await AsyncStorage.getItem('userDetails');
+        const initialUrl = await Linking.getInitialURL();
+        const teacherIdFromLink = parseTeacherIdFromUrl(initialUrl);
 
-        setToken(storedToken);
+        if (teacherIdFromLink) {
+          if (storedToken) {
+            setInitialHref(getTeacherProfileAppPath(teacherIdFromLink));
+          } else {
+            await setPendingTeacherProfileId(teacherIdFromLink);
+            setInitialHref('/(authenticate)/welcome');
+          }
+        } else if (storedToken) {
+          setInitialHref(await getPostAuthHref());
+        } else {
+          setInitialHref('/(authenticate)/welcome');
+        }
       } catch (err) {
-  throw new Error('Error checking login');
+        console.error('Error checking login', err);
+        setInitialHref('/(authenticate)/welcome');
       }
     }
     checkLogin();
@@ -55,11 +75,11 @@ export default function Page() {
   }, [fontsLoaded]);
 
   // Show splash screen while preparing
-  if (!fontsLoaded || !isReady) {
+  if (!fontsLoaded || !isReady || !initialHref) {
     return (
       <View style={styles.container}>
-        <Image 
-          source={require('../assets/images/logo.png')}  // Make sure this path matches your splash image location
+        <Image
+          source={require('../assets/images/logo.png')}
           style={styles.splashImage}
           resizeMode="contain"
         />
@@ -67,14 +87,9 @@ export default function Page() {
     );
   }
 
-  // Once ready, redirect based on authentication status
   return (
     <View>
-      {!token ? (
-        <Redirect href={'/(authenticate)/welcome'} />
-      ) : (
-        <Redirect href={'/(tabs)/home'} />
-      )}
+      <Redirect href={initialHref} />
     </View>
   );
 }

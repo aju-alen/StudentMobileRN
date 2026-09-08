@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
+  Share,
 } from "react-native";
 import { Image } from 'expo-image';
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -26,6 +27,7 @@ import UserSubjectCards from "../../components/UserSubjectCards";
 import * as Sentry from '@sentry/react-native';
 import CourseTypeModal from "../../components/CourseTypeModal";
 import { useRevenueCat } from "../../providers/RevenueCatProvider";
+import { getTeacherProfileShareUrl } from "../../utils/teacherProfileLink";
 
 interface User {
   id?: string;
@@ -344,6 +346,24 @@ const ProfilePage = () => {
     router.push('/(tabs)/profile/settings');
   };
 
+  const handleShareProfile = async () => {
+    if (!user?.id) {
+      Alert.alert('Error', 'Your profile is still loading. Please try again.');
+      return;
+    }
+
+    const url = getTeacherProfileShareUrl(user.id);
+    const message = `View ${user.name || 'this teacher'}'s profile on Coach Academ\n${url}`;
+
+    try {
+      await Share.share({ message, url });
+    } catch (err) {
+      if ((err as { message?: string })?.message !== 'User did not share') {
+        Alert.alert('Error', 'Could not open share sheet.');
+      }
+    }
+  };
+
   const onRefresh = () => {
     // Show the same ActivityIndicator as initial load and refetch all data
     setLoading(true);
@@ -370,6 +390,14 @@ const ProfilePage = () => {
           <View style={styles.topBar}>
             <Text style={styles.pageTitle}>My Profile</Text>
             <View style={styles.iconsContainer}>
+              {userDetails?.isTeacher && (
+                <TouchableOpacity
+                  style={styles.settingsButton}
+                  onPress={handleShareProfile}
+                >
+                  <Ionicons name="share-outline" size={24} color="#1A2B4B" />
+                </TouchableOpacity>
+              )}
               <TouchableOpacity 
                 style={styles.settingsButton}
                 onPress={handleSettingsPress}

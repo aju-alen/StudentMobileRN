@@ -19,6 +19,7 @@ import {
 import { COLORS } from '../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
 import { ipURL } from '../utils/utils';
+import { getPostAuthHref } from '../utils/teacherProfileLink';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const LoginPage = () => {
@@ -90,8 +91,7 @@ const LoginPage = () => {
         });
         console.log(userUpdate, 'User has seen onboarding');
       } else {
-        // Returning user - redirect to home
-        router.replace('/(tabs)/home');
+        router.replace(await getPostAuthHref());
       }
     } catch (err: any) {
       console.log(err);
