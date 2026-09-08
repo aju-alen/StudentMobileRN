@@ -1,12 +1,13 @@
 export type FeaturedTutor = {
   id: string;
   name: string;
+  photo?: string;
   qualification: string;
   subjects: string[];
   curricula: string[];
-  rating: number;
-  reviewCount: number;
-  yearsExperience: number;
+  rating?: number;
+  reviewCount?: number;
+  yearsExperience?: number;
   profileHref?: string;
 };
 

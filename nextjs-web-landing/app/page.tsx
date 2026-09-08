@@ -13,10 +13,13 @@ import FaqJsonLd from '@/components/FaqJsonLd';
 import QRCodeFloater from '@/components/QRCodeFloater';
 import { homeMetadata } from '@/lib/seo/pages/home';
 import { homeFaqs } from '@/lib/seo/pages/home-faqs';
+import { getFeaturedTutors } from '@/lib/tutors/get-featured-tutors';
 
 export const metadata = homeMetadata;
 
-export default function Home() {
+export default async function Home() {
+  const featuredTutors = await getFeaturedTutors();
+
   return (
     <>
       <FaqJsonLd faqs={homeFaqs} />
@@ -26,7 +29,7 @@ export default function Home() {
       <CirriculamCards />
       <SubjectCards />
       <HowCoachacademWorks />
-      <TopTutorCards />
+      <TopTutorCards tutors={featuredTutors} />
       <WhyParentsChooseCA />
       <Testimonials />
       <DownloadApp id="download-app" />

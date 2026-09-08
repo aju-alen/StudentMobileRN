@@ -40,3 +40,9 @@ export function whatsappUrl(message = WHATSAPP_DEFAULT_MESSAGE): string {
   if (!WHATSAPP_NUMBER) return `https://wa.me/?text=${text}`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${text}`;
 }
+
+export const API_BASE_URL = "https://api.coachacadem.ae";
+
+export const FEATURED_TEACHER_USER_IDS = [
+  "cmtpjwpqx0010of2tf7enfo2l",
+] as const;
