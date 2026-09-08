@@ -27,7 +27,7 @@ import Button from "../../../components/Button";
 import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import { File } from 'expo-file-system';
 import { axiosWithAuth } from "../../../utils/customAxios";
 import * as Sentry from '@sentry/react-native';
 import * as Crypto from 'expo-crypto';
@@ -332,16 +332,17 @@ const CreateSubject = () => {
         // User canceled the picker
         return;
       }
+
+      const pdfUri = result.assets[0]['uri'];
+      const file = new File(pdfUri);
+      if (!file.exists) throw new Error('File does not exist');
   
       // Store the PDF URI depending on which PDF was picked
       if (pdfName === 'pdf1') {
-        setPdf1(result.assets[0]['uri']); // Directly set the PDF URI
+        setPdf1(pdfUri);
       } else {
-        setPdf2(result.assets[0]['uri']); // Directly set the PDF URI
+        setPdf2(pdfUri);
       }
-  
-      // Optionally get file info
-      await FileSystem.getInfoAsync(result.assets[0]['uri']);
   
     } catch (error) {
       Sentry.captureException(error, {

@@ -39,6 +39,7 @@ const VerifySubject = lazy(() => import('./pages/admin/VerifySubject'));
 const SingleReport = lazy(() => import('./pages/admin/SingleReport'));
 const DeleteAccount = lazy(() => import('./pages/DeleteAccount'));
 const FindTutorPage = lazy(() => import('./pages/FindTutorPage'));
+const TeacherProfileRedirect = lazy(() => import('./pages/TeacherProfileRedirect'));
 
 const App = () => {
 
@@ -98,6 +99,10 @@ const App = () => {
         {
           path: "/online/:subject-tutor",
           element: <FindTutorPage />, // Wrap Dashboard inside ProtectedRoute
+        },
+        {
+          path: "/teacher/:teacherId",
+          element: <TeacherProfileRedirect />,
         },
         {
           path: "/404",

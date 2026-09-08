@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import StoreDownloadLink from '@/components/StoreDownloadLink';
@@ -8,6 +8,95 @@ import type { Locale } from '@/lib/i18n/locale';
 import { withLocale } from '@/lib/i18n/locale';
 import { t } from '@/lib/i18n/messages';
 import { getMainNav } from '@/lib/i18n/nav';
+import { APP_STORE_URL } from '@/lib/constants';
+
+type NavDropdownItem = { label: string; href: string };
+
+type NavItem =
+  | { label: string; type: 'link'; href: string }
+  | { label: string; type: 'dropdown'; items: NavDropdownItem[] };
+
+const mainNav: NavItem[] = [
+  {
+    label: 'Find Tutors',
+    type: 'dropdown',
+    items: [
+      { label: 'Math Tutors', href: '/mathematics-tutors' },
+      { label: 'Physics Tutors', href: '/physics-tutors' },
+      { label: 'Chemistry Tutors', href: '/chemistry-tutors' },
+      { label: 'Biology Tutors', href: '/biology-tutors' },
+      { label: 'English Tutors', href: '/english-tutors' },
+      { label: 'Arabic Tutors', href: '/arabic-tutors' },
+      { label: 'Economics Tutors', href: '/economics-tutors' },
+      { label: 'Accounting Tutors', href: '/accounting-tutors' },
+      { label: 'Computer Science Tutors', href: '/computer-science-tutors' },
+    ],
+  },
+  {
+    label: 'Curricula',
+    type: 'dropdown',
+    items: [
+      { label: 'IGCSE Tutors', href: '/igcse-tutors' },
+      { label: 'GCSE Tutors', href: '/gcse-tutors' },
+      { label: 'A-Level Tutors', href: '/a-level-tutors' },
+      { label: 'IB Tutors', href: '/ib-tutors' },
+      { label: 'American Curriculum Tutors', href: '/american-curriculum-tutors' },
+      { label: 'CBSE Tutors', href: '/cbse-tutors' },
+    ],
+  },
+  {
+    label: 'How it works',
+    type: 'link',
+    href: '/#home',
+  },
+  {
+    label: 'Resources',
+    type: 'dropdown',
+    items: [
+      { label: 'Parent Guides', href: '/parent-guides' },
+      { label: 'Exam Preparation', href: '/exam-preparation' },
+    ],
+  },
+  {
+    label: 'Become a Tutor',
+    type: 'link',
+    href: APP_STORE_URL,
+  },
+];
+
+const isExternalHref = (href: string) => href.startsWith('http');
+
+const NavAnchor = ({
+  href,
+  className,
+  onClick,
+  children,
+}: {
+  href: string;
+  className: string;
+  onClick?: () => void;
+  children: ReactNode;
+}) => {
+  if (isExternalHref(href)) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={className}
+        onClick={onClick}
+      >
+        {children}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={href} className={className} onClick={onClick}>
+      {children}
+    </Link>
+  );
+};
 
 const linkClass =
   'whitespace-nowrap text-sm xl:text-base text-black-700 hover:text-indigo-600 font-medium transition-colors';
@@ -115,13 +204,13 @@ export default function Header({ locale = 'en' }: { locale?: Locale }) {
                       )}
                     </div>
                   ) : (
-                    <Link
+                    <NavAnchor
                       key={item.label}
                       href={item.href}
-                      className={`${linkClass} shrink-0`}
+                      className={linkClass}
                     >
                       {item.label}
-                    </Link>
+                    </NavAnchor>
                   )
                 )}
               </nav>
@@ -177,14 +266,14 @@ export default function Header({ locale = 'en' }: { locale?: Locale }) {
                       )}
                     </div>
                   ) : (
-                    <Link
+                    <NavAnchor
                       key={item.label}
                       href={item.href}
                       className="text-gray-700 hover:text-indigo-600 font-medium transition-colors"
                       onClick={closeMobileMenu}
                     >
                       {item.label}
-                    </Link>
+                    </NavAnchor>
                   )
                 )}
                 <StoreDownloadLink

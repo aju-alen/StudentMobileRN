@@ -17,6 +17,64 @@ const storeButtons = [
   },
 ];
 
+type FooterLink = { label: string; href: string };
+
+type FooterColumn = {
+  label: string;
+  items: FooterLink[];
+};
+
+const footerRowPrimary: FooterColumn[] = [
+  {
+    label: 'Subjects',
+    items: [
+      { label: 'Math Tutors', href: '/mathematics-tutors' },
+      { label: 'Physics Tutors', href: '/physics-tutors' },
+      { label: 'Chemistry Tutors', href: '/chemistry-tutors' },
+      { label: 'Biology Tutors', href: '/biology-tutors' },
+      { label: 'English Tutors', href: '/english-tutors' },
+      { label: 'Arabic Tutors', href: '/arabic-tutors' },
+      { label: 'Economics Tutors', href: '/economics-tutors' },
+      { label: 'Accounting Tutors', href: '/accounting-tutors' },
+      { label: 'Computer Science Tutors', href: '/computer-science-tutors' },
+    ],
+  },
+  {
+    label: 'Curricula',
+    items: [
+      { label: 'IGCSE Tutors', href: '/igcse-tutors' },
+      { label: 'GCSE Tutors', href: '/gcse-tutors' },
+      { label: 'A-Level Tutors', href: '/a-level-tutors' },
+      { label: 'IB Tutors', href: '/ib-tutors' },
+      { label: 'American Curriculum Tutors', href: '/american-curriculum-tutors' },
+      { label: 'CBSE Tutors', href: '/cbse-tutors' },
+    ],
+  },
+  {
+    label: 'Resources',
+    items: [
+      { label: 'Parent Guides', href: '/parent-guides' },
+      { label: 'Exam Preparation', href: '/exam-preparation' },
+      { label: 'FAQ', href: '/#faq' },
+    ],
+  },
+  {
+    label: 'Company',
+    items: [
+      { label: 'Contact Us', href: 'mailto:support@coachacadem.ae' },
+    ],
+  },
+];
+
+const footerRowSecondary: FooterColumn[] = [
+  {
+    label: 'Become a Tutor',
+    items: [
+      { label: 'Become a Tutor', href: APP_STORE_URL },
+    ],
+  },
+];
+
 const isExternalHref = (href: string) =>
   href.startsWith('http') && !href.startsWith('mailto:');
 

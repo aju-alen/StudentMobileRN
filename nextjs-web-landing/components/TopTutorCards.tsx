@@ -14,7 +14,6 @@ const defaultTutors: FeaturedTutor[] = [
     rating: 4.9,
     reviewCount: 128,
     yearsExperience: 8,
-    profileHref: '#tutor-sini',
   },
   {
     id: 'meeno',
@@ -25,7 +24,6 @@ const defaultTutors: FeaturedTutor[] = [
     rating: 4.9,
     reviewCount: 96,
     yearsExperience: 6,
-    profileHref: '#tutor-meeno',
   },
   {
     id: 'bonny',
@@ -36,9 +34,14 @@ const defaultTutors: FeaturedTutor[] = [
     rating: 4.8,
     reviewCount: 84,
     yearsExperience: 5,
-    profileHref: '#tutor-fatima-al-zaabi',
   },
 ];
+
+const tutorCtaClass =
+  'block w-full text-center bg-[#205072] hover:bg-[#24bcc7] text-white text-sm font-medium px-4 py-2.5 sm:py-2.5 rounded-lg transition-colors';
+
+const isCrawlableProfileHref = (href?: string) =>
+  Boolean(href && !href.startsWith('#'));
 
 const TagList = ({ label, items }: { label: string; items: string[] }) => (
   <div>
@@ -93,6 +96,15 @@ const TutorCard = ({
     >
       {copy.topTutors.viewProfile}
     </a>
+    {isCrawlableProfileHref(tutor.profileHref) ? (
+      <a href={tutor.profileHref} className={tutorCtaClass}>
+        View Tutor Profile
+      </a>
+    ) : (
+      <button type="button" className={tutorCtaClass}>
+        View Tutor Profile
+      </button>
+    )}
   </article>
   );
 };

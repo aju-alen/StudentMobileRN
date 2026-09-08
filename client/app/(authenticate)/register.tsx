@@ -7,7 +7,7 @@ import { ipURL } from '../utils/utils';
 import { COLORS } from '../../constants/theme';
 import { verticalScale, horizontalScale, moderateScale } from '../utils/metrics';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import { File } from 'expo-file-system';
 import useSafeAreaInsets, { addBasePaddingToTopInset, addBasePaddingToInset } from '../hooks/useSafeAreaInsets';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -603,9 +603,8 @@ const RegisterPage = () => {
             const uriParts = pdfUri.split('.');
             const fileType = uriParts[uriParts.length - 1];
             
-            // Verify file exists
-            const fileInfo = await FileSystem.getInfoAsync(pdfUri);
-            if (!fileInfo.exists) {
+            const file = new File(pdfUri);
+            if (!file.exists) {
                 throw new Error('File does not exist');
             }
 
