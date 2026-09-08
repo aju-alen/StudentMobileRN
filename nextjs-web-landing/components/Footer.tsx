@@ -50,16 +50,13 @@ const footerRowPrimary: FooterColumn[] = [
     label: 'Resources',
     items: [
       { label: 'Parent Guides', href: '/parent-guides' },
-      { label: 'Study Tips', href: '/study-tips' },
       { label: 'Exam Preparation', href: '/exam-preparation' },
-      { label: 'Blog', href: '/blog' },
       { label: 'FAQ', href: '/#faq' },
     ],
   },
   {
     label: 'Company',
     items: [
-      { label: 'About ', href: '/about-coachacadem' },
       { label: 'Contact Us', href: 'mailto:support@coachacadem.ae' },
     ],
   },

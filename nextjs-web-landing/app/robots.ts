@@ -6,7 +6,14 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/admin/", "/api/"],
+      disallow: [
+        "/admin/",
+        "/api/",
+        "/become-a-tutor",
+        "/about-coachacadem",
+        "/blog",
+        "/study-tips",
+      ],
     },
     sitemap: canonicalUrl("sitemap.xml"),
     host: CANONICAL_SITE_ORIGIN,

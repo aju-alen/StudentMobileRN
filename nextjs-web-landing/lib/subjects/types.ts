@@ -8,7 +8,7 @@ export type FeaturedTutor = {
   rating: number;
   reviewCount: number;
   yearsExperience: number;
-  profileHref: string;
+  profileHref?: string;
 };
 
 export type CurriculumCard = {

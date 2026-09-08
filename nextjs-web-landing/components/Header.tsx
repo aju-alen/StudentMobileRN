@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Menu, X, ChevronDown } from 'lucide-react';
 import { APP_STORE_URL } from '@/lib/constants';
@@ -49,17 +49,49 @@ const mainNav: NavItem[] = [
     type: 'dropdown',
     items: [
       { label: 'Parent Guides', href: '/parent-guides' },
-      { label: 'Study Tips', href: '/study-tips' },
       { label: 'Exam Preparation', href: '/exam-preparation' },
-      { label: 'Blog', href: '/blog' },
     ],
   },
   {
     label: 'Become a Tutor',
     type: 'link',
-    href: '/become-a-tutor',
+    href: APP_STORE_URL,
   },
 ];
+
+const isExternalHref = (href: string) => href.startsWith('http');
+
+const NavAnchor = ({
+  href,
+  className,
+  onClick,
+  children,
+}: {
+  href: string;
+  className: string;
+  onClick?: () => void;
+  children: ReactNode;
+}) => {
+  if (isExternalHref(href)) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={className}
+        onClick={onClick}
+      >
+        {children}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={href} className={className} onClick={onClick}>
+      {children}
+    </Link>
+  );
+};
 
 const linkClass =
   'text-black-700 hover:text-indigo-600 font-medium transition-colors';
@@ -164,9 +196,13 @@ export default function Header() {
                       )}
                     </div>
                   ) : (
-                    <Link key={item.label} href={item.href} className={linkClass}>
+                    <NavAnchor
+                      key={item.label}
+                      href={item.href}
+                      className={linkClass}
+                    >
                       {item.label}
-                    </Link>
+                    </NavAnchor>
                   )
                 )}
               </nav>
@@ -225,14 +261,14 @@ export default function Header() {
                       )}
                     </div>
                   ) : (
-                    <Link
+                    <NavAnchor
                       key={item.label}
                       href={item.href}
                       className="text-gray-700 hover:text-indigo-600 font-medium transition-colors"
                       onClick={closeMobileMenu}
                     >
                       {item.label}
-                    </Link>
+                    </NavAnchor>
                   )
                 )}
                 <button

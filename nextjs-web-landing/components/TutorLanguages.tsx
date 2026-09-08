@@ -134,12 +134,12 @@ export default function SubjectCards() {
           </div>
 
           <div className="flex justify-start">
-            <a
-              href="#"
+            <button
+              type="button"
               className="flex items-center text-base sm:text-lg font-medium text-gray-900 hover:underline"
             >
               <span className="text-xl sm:text-2xl mr-2">+</span> Show more
-            </a>
+            </button>
           </div>
         </div>
       </div>

@@ -12,8 +12,6 @@ type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-const NOINDEX_RESOURCE_SLUGS = new Set(['study-tips', 'blog']);
-
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
@@ -35,7 +33,7 @@ export async function generateMetadata({
       primaryKeywords: [pageTitle],
       path: `/${slug}`,
       titleAbsolute: true,
-      noIndex: NOINDEX_RESOURCE_SLUGS.has(slug),
+      noIndex: true,
     });
   }
 
