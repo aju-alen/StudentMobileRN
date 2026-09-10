@@ -72,7 +72,7 @@ const HorizontalSubjectCard = ({ subjectData, handleItemPress, isHorizontal }) =
                   {item?.user.name}
                 </Text>
                 <Text numberOfLines={1} style={styles.subjectTeacherDesignation}>
-                  {item?.user.designation || 'Senior Teacher'}
+                  {item?.user.designation || 'Senior Tutor'}
                 </Text>
                 {item?.maxCapacity > 1 && (
                   <Text style={styles.enrollmentText}>

@@ -71,18 +71,18 @@ const InviteTeacherPage = () => {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Invite Teacher</Text>
+        <Text style={styles.headerTitle}>Invite Tutor</Text>
       </View>
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.description}>
-          Enter the email address of a teacher to invite them to your organization.
+          Enter the email address of a tutor to invite them to your organization.
         </Text>
 
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Email Address</Text>
           <TextInput
             style={[styles.input, error ? styles.inputError : null]}
-            placeholder="teacher@example.com"
+            placeholder="tutor@example.com"
             placeholderTextColor="#94A3B8"
             value={email}
             onChangeText={(text) => {
@@ -117,7 +117,7 @@ const InviteTeacherPage = () => {
         <View style={styles.infoBox}>
           <Ionicons name="information-circle-outline" size={20} color="#64748B" />
           <Text style={styles.infoText}>
-            The teacher must already have an account and not be part of another organization.
+            The tutor must already have an account and not be part of another organization.
           </Text>
         </View>
       </ScrollView>

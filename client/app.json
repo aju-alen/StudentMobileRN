@@ -3,8 +3,11 @@
     "name": "Coach Academ",
     "slug": "coach-academ",
     "scheme": "coachacadem",
-    "platforms": ["ios", "android"],
-    "version": "1.1.13",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "version": "1.1.14",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "splash": {
@@ -26,7 +29,7 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "50"
+      "buildNumber": "51"
     },
     "android": {
       "edgeToEdgeEnabled": true,
@@ -59,7 +62,10 @@
               "pathPrefix": "/teacher"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },

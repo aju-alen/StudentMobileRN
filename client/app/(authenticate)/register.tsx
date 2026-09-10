@@ -92,8 +92,8 @@ const UserTypeScreen = ({ onSelect }) => {
                         <View style={styles.userTypeIconContainer}>
                             <Ionicons name="person-outline" size={40} color={COLORS.primary} />
                         </View>
-                        <Text style={styles.userTypeTitle}>Teacher</Text>
-                        <Text style={styles.userTypeDescription}>Join as a teacher to share your knowledge and help students</Text>
+                        <Text style={styles.userTypeTitle}>Tutor</Text>
+                        <Text style={styles.userTypeDescription}>Join as a tutor to share your knowledge and help students</Text>
                         <TouchableOpacity 
                             style={styles.knowMoreButton}
                             onPress={() => toggleExpand('teacher')}
@@ -133,7 +133,7 @@ const UserTypeScreen = ({ onSelect }) => {
                             <Ionicons name="business-outline" size={32} color={COLORS.primary} />
                         </View>
                         <Text style={styles.userTypeTitle}>Organization</Text>
-                        <Text style={styles.userTypeDescription}>Register your organization to manage multiple teachers and students</Text>
+                        <Text style={styles.userTypeDescription}>Register your organization to manage multiple tutors and students</Text>
                         <TouchableOpacity 
                             style={styles.knowMoreButton}
                             onPress={() => toggleExpand('organization')}
@@ -150,7 +150,7 @@ const UserTypeScreen = ({ onSelect }) => {
                                 <View style={styles.userTypeFeatures}>
                                     <View style={styles.featureItem}>
                                         <Ionicons name="checkmark-circle" size={18} color={COLORS.primary} />
-                                        <Text style={styles.featureText}>Manage Multiple Teachers</Text>
+                                        <Text style={styles.featureText}>Manage Multiple Tutors</Text>
                                     </View>
                                     <View style={styles.featureItem}>
                                         <Ionicons name="checkmark-circle" size={18} color={COLORS.primary} />
@@ -334,7 +334,7 @@ const RegisterPage = () => {
     };
 
     const boardOptions = [
-        { label: 'Select your board', value: '' },
+        { label: 'Select your curricula', value: '' },
         { label: 'CBSE', value: 'CBSE' },
         { label: 'ICSE', value: 'ICSE' },
         { label: 'AP', value: 'AP' },
@@ -343,7 +343,7 @@ const RegisterPage = () => {
     ].filter((opt) => opt.value !== '');
 
     const boardOptionsWithPlaceholder = [
-        { label: 'Select your board', value: '' },
+        { label: 'Select your curricula', value: '' },
         { label: 'CBSE', value: 'CBSE' },
         { label: 'ICSE', value: 'ICSE' },
         { label: 'AP', value: 'AP' },
@@ -361,7 +361,7 @@ const RegisterPage = () => {
 
     const organizationRoleOptions = [
         { label: 'OWNER', value: 'OWNER' },
-        { label: 'TEACHER', value: 'TEACHER' },
+        { label: 'Tutor', value: 'TEACHER' },
         { label: 'MANAGER', value: 'MANAGER' },
     ];
 
@@ -418,10 +418,10 @@ const RegisterPage = () => {
 
         if (userType === 'organization') {
             if (selectedBoards.length === 0) {
-                newErrors.recommendedBoard = 'Please select at least one board';
+                newErrors.recommendedBoard = 'Please select at least one curricula';
             }
         } else if (recommendedBoard === '') {
-            newErrors.recommendedBoard = 'Please select a board';
+            newErrors.recommendedBoard = 'Please select a curricula';
         }
 
         if (userType === 'teacher' || userType === 'organization') {
@@ -452,7 +452,7 @@ const RegisterPage = () => {
             }
             // Teacher count is fixed at 3 (free tier)
             if (teacherCount !== '3') {
-                newErrors.teacherCount = 'Invalid teacher count';
+                newErrors.teacherCount = 'Invalid tutor count';
             }
             if (!organizationRole || !['OWNER', 'TEACHER', 'MANAGER'].includes(organizationRole)) {
                 newErrors.organizationRole = 'Please select a user role';
@@ -681,7 +681,7 @@ const RegisterPage = () => {
                         <Text style={styles.title}>
                             Create {
                                 userType === 'organization' ? 'Organization' : 
-                                userType === 'teacher' ? 'Teacher' : 
+                                userType === 'teacher' ? 'Tutor' : 
                                 'Student'
                             } Account
                         </Text>
@@ -836,32 +836,32 @@ const RegisterPage = () => {
                     {userType === 'organization' ? (
                         <>
                             <CustomDropdown
-                                label="Boards"
+                                label="Curricula"
                                 value=""
                                 options={boardOptions}
                                 onSelect={(value: string[] | string) => {
                                     setSelectedBoards(value as string[]);
                                     if ((value as string[]).length > 0) clearFieldError('recommendedBoard');
                                 }}
-                                placeholder="Select boards your organization supports"
+                                placeholder="Select curricula your organization supports"
                                 isMultiSelect
                                 selectedValues={selectedBoards}
                                 multiSelectValueType="string"
                                 hasError={!!errors.recommendedBoard}
                                 errorMessage={errors.recommendedBoard || ''}
                             />
-                            <Text style={styles.infoText}>Only one board is stored on the backend. The first selected board will be saved.</Text>
+                            <Text style={styles.infoText}>Only one curricula is stored on the backend. The first selected curricula will be saved.</Text>
                         </>
                     ) : (
                         <CustomDropdown
-                            label="Board"
+                            label="Curricula"
                             value={recommendedBoard}
                             options={boardOptionsWithPlaceholder}
                             onSelect={(value) => {
                                 setRecommendedBoard(value);
                                 clearFieldError('recommendedBoard');
                             }}
-                            placeholder="Select your board"
+                            placeholder="Select your curricula"
                             hasError={!!errors.recommendedBoard}
                             errorMessage={errors.recommendedBoard || ''}
                         />
@@ -959,10 +959,10 @@ const RegisterPage = () => {
                             </View>
 
                             <View style={styles.inputGroup}>
-                                <Text style={styles.label}>Number of Teachers</Text>
+                                <Text style={styles.label}>Number of Tutors</Text>
                                 <TextInput
                                     style={[styles.input, errors.teacherCount && styles.inputError, styles.inputDisabled]}
-                                    placeholder="Enter number of teachers"
+                                    placeholder="Enter number of tutors"
                                     placeholderTextColor="#666"
                                     value={teacherCount}
                                     editable={false}
@@ -1008,7 +1008,7 @@ const RegisterPage = () => {
                             onValueChange={setIsTeacher}
                             color={isTeacher ? COLORS.primary : undefined}
                         />
-                        <Text style={styles.checkboxLabel}>I am a teacher</Text>
+                        <Text style={styles.checkboxLabel}>I am a tutor</Text>
                     </View> */}
 
                     <TouchableOpacity

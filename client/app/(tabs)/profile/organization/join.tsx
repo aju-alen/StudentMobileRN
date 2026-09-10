@@ -127,7 +127,7 @@ const JoinOrganizationPage = () => {
         <View style={styles.infoBox}>
           <Ionicons name="information-circle-outline" size={20} color="#64748B" />
           <Text style={styles.infoText}>
-            You must be a verified teacher to join an organization. Once joined, you'll be able to view organization members.
+            You must be a verified tutor to join an organization. Once joined, you'll be able to view organization members.
           </Text>
         </View>
       </ScrollView>

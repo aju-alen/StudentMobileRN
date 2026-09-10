@@ -238,7 +238,7 @@ const SubjectPage = ({ subjectId }) => {
     }
 
     if(!purchaseStatus){
-      alert('Please purchase the course to chat with the teacher');
+      alert('Please purchase the course to chat with the tutor');
       return;
     }
 
@@ -252,7 +252,7 @@ const SubjectPage = ({ subjectId }) => {
     const clientId = singleSubjectData.user?.id;
     
     if (!clientId) {
-      alert('Teacher information not available');
+      alert('Tutor information not available');
       return;
     }
 
@@ -954,9 +954,9 @@ const SubjectPage = ({ subjectId }) => {
                 transition={100}
               />
               <View style={styles.teacherInfo}>
-                <Text style={styles.teacherName}>{singleSubjectData.user?.name || 'Teacher'}</Text>
+                <Text style={styles.teacherName}>{singleSubjectData.user?.name || 'Tutor'}</Text>
                 <Text style={styles.teacherRole}>
-                  {singleSubjectData.user?.userType}
+                  {singleSubjectData.user?.userType === 'TEACHER' ? 'Tutor' : singleSubjectData.user?.userType}
                 </Text>
               </View>
               <Text style={styles.viewProfileText}>View Profile</Text>

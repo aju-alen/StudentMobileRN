@@ -132,7 +132,7 @@ const CreateOrganizationPage = () => {
       if (response.status === 201) {
         Alert.alert(
           'Success',
-          `Organization "${response.data.organization.orgName}" has been created. You can now invite teachers and manage your organization.`,
+          `Organization "${response.data.organization.orgName}" has been created. You can now invite tutors and manage your organization.`,
           [{ text: 'OK', onPress: () => router.replace('/(tabs)/profile/organization') }]
         );
       }
@@ -158,7 +158,7 @@ const CreateOrganizationPage = () => {
 
       <View style={styles.content}>
         <Text style={styles.description}>
-          Create your organization to manage multiple teachers and invite them with a code. You will be the team lead.
+          Create your organization to manage multiple tutors and invite them with a code. You will be the team lead.
         </Text>
 
         <View style={styles.inputContainer}>
@@ -209,7 +209,7 @@ const CreateOrganizationPage = () => {
         </View>
 
         <View style={styles.inputContainer}>
-          <Text style={styles.label}>Number of Teachers</Text>
+          <Text style={styles.label}>Number of Tutors</Text>
           <TextInput
             style={[styles.input, styles.inputDisabled]}
             value="3"

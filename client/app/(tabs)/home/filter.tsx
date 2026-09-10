@@ -41,11 +41,11 @@ const Filter = () => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Board</Text>
+            <Text style={styles.label}>Curricula</Text>
             <View style={styles.inputWrapper}>
               <TextInput 
                 style={styles.input}
-                placeholder="Enter board (e.g., CBSE, ICSE)"
+                placeholder="Enter curricula (e.g., CBSE, ICSE)"
                 placeholderTextColor="#999"
                 value={board}
                 onChangeText={setBoard}

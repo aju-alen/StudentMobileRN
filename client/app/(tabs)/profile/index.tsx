@@ -155,7 +155,7 @@ const ProfilePage = () => {
       const zoomVerified = zoomUserAcceptedInvite || zoomAccountCreated;
       console.log(zoomAccountCreated, zoomUserAcceptedInvite, isTeacher, 'this is the user verification check');
       if ( !isTeacher ) {
-        Alert.alert('Incomplete Profile', 'You need to be registered as a teacher to create a course.');
+        Alert.alert('Incomplete Profile', 'You need to be registered as a tutor to create a course.');
         return;
       }
       if ( !zoomVerified ) {
@@ -353,7 +353,7 @@ const ProfilePage = () => {
     }
 
     const url = getTeacherProfileShareUrl(user.id);
-    const message = `View ${user.name || 'this teacher'}'s profile on Coach Academ\n${url}`;
+    const message = `View ${user.name || 'this tutor'}'s profile on Coach Academ\n${url}`;
 
     try {
       await Share.share({ message, url });
@@ -428,7 +428,7 @@ const ProfilePage = () => {
             <View style={styles.profileInfo}>
               <Text style={styles.name}>{user.name}</Text>
               <Text style={styles.role}>
-                {userDetails?.isTeacher ? 'Teacher' : 'Student'}
+                {userDetails?.isTeacher ? 'Tutor' : 'Student'}
               </Text>
               <View style={styles.badgeContainer}>
 

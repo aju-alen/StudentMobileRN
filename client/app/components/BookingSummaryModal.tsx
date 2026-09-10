@@ -311,7 +311,7 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
                     />
                     <View style={styles.teacherInfo}>
                       <Text style={styles.teacherName}>{teacherData.name}</Text>
-                      <Text style={styles.teacherRole}>Teacher</Text>
+                      <Text style={styles.teacherRole}>Tutor</Text>
                     </View>
                   </View>
 

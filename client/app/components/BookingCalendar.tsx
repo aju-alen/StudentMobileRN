@@ -180,7 +180,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, teacherPro
       setTimeSlots(updatedSlots);
     } catch (error) {
       console.error('Error fetching teacher availability:', error);
-      Alert.alert('Error', 'Failed to fetch teacher availability');
+      Alert.alert('Error', 'Failed to fetch tutor availability');
     } finally {
       setLoading(false);
     }

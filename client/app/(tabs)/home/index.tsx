@@ -613,7 +613,7 @@ const HomePage = () => {
         <View style={styles.welcomeText}>
             <Text style={styles.greeting}>{getGreeting()},</Text>
           <Text style={styles.userName}>{userDetails.userName.split(' ')[0]}</Text>
-            <Text style={styles.userLevel}> {user.isTeacher ? 'Teacher' : 'Student'}</Text>
+            <Text style={styles.userLevel}> {user.isTeacher ? 'Tutor' : 'Student'}</Text>
         </View>
         
      

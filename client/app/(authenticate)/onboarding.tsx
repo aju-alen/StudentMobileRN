@@ -35,7 +35,7 @@ const getSlides = (userType) => {
       title: userType === 'teacher' ? 'Share Your Expertise' : 'Learn from Experts',
       description: userType === 'teacher'
         ? 'Connect with students and share your knowledge and experience'
-        : 'Connect with qualified teachers and get personalized guidance',
+        : 'Connect with qualified tutors and get personalized guidance',
       image: require('../../assets/images/onboard-1.png'),
     },
     {
@@ -50,7 +50,7 @@ const getSlides = (userType) => {
       id: '4',
       title: 'Ready to Start?',
       description: userType === 'teacher'
-        ? 'Begin your teaching journey and make a difference today!'
+        ? 'Begin your tutoring journey and make a difference today!'
         : 'Begin your learning adventure and achieve your goals today!',
       image: require('../../assets/images/onboard-1.png'),
     },

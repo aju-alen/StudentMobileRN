@@ -547,7 +547,7 @@ const CreateSubject = () => {
         return;
       }
       if (!subjectBoard.trim()) {
-        validationErrors.push("Educational board is required");
+        validationErrors.push("Educational curricula is required");
         setIsLoading(false);
         return;
       }
@@ -935,8 +935,8 @@ const CreateSubject = () => {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Academic Details</Text>
               <CustomDropdown
-                label="Board"
-                info="Select the educational board that this subject aligns with."
+                label="Curricula"
+                info="Select the educational curricula that this subject aligns with."
                 value={subjectBoard}
                 options={[
                   { label: 'CBSE', value: 'CBSE' },
@@ -946,7 +946,7 @@ const CreateSubject = () => {
                   { label: 'IB', value: 'IB' },
                 ]}
                 onSelect={setSubjectBoard}
-                placeholder="Select educational board"
+                placeholder="Select educational curricula"
               />
               <CustomDropdown
                 label="Grade"

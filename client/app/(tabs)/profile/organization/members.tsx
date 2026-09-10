@@ -101,7 +101,7 @@ const OrganizationMembersPage = () => {
     }
 
     Alert.alert(
-      'Remove Teacher',
+      'Remove Tutor',
       `Are you sure you want to remove ${member.name} from the organization?`,
       [
         {
@@ -119,7 +119,7 @@ const OrganizationMembersPage = () => {
               Alert.alert('Success', `${member.name} has been removed from the organization`);
               fetchOrganizationMembers(); // Refresh the list
             } catch (err: any) {
-              const errorMessage = err.response?.data?.message || 'Failed to remove teacher';
+              const errorMessage = err.response?.data?.message || 'Failed to remove tutor';
               Alert.alert('Error', errorMessage);
             }
           },
@@ -185,7 +185,7 @@ const OrganizationMembersPage = () => {
                   })}
                 >
                   <Ionicons name="trending-up-outline" size={20} color="#FFFFFF" />
-                  <Text style={styles.increaseCapacityButtonText}>Increase Teacher Capacity</Text>
+                  <Text style={styles.increaseCapacityButtonText}>Increase Tutor Capacity</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -198,7 +198,7 @@ const OrganizationMembersPage = () => {
                 onPress={() => router.push('/(tabs)/profile/organization/invite')}
               >
                 <Ionicons name="person-add-outline" size={24} color="#FFFFFF" />
-                <Text style={styles.inviteButtonText}>Invite Teacher</Text>
+                <Text style={styles.inviteButtonText}>Invite Tutor</Text>
               </TouchableOpacity>
             </View>
           )}

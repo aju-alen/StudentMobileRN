@@ -145,7 +145,7 @@ const CommunityId = () => {
 
         // Handle error when trying to send message (e.g., if student tries to send)
         socket.on("community-message-error", (error) => {
-          alert(error.message || 'Only teachers can send messages in communities');
+          alert(error.message || 'Only tutors can send messages in communities');
         });
       } catch (error) {
         console.error('Error fetching messages:', error);
@@ -278,7 +278,7 @@ const CommunityId = () => {
                 {memberCount} {memberCount === 1 ? 'member' : 'members'} · {messageCount} {messageCount === 1 ? 'message' : 'messages'}
               </Text>
               <Text style={styles.communityHeaderMeta} numberOfLines={1}>
-                {isTeacher ? 'You can post in this community' : 'Teachers only can send messages'}
+                {isTeacher ? 'You can post in this community' : 'Tutors only can send messages'}
               </Text>
             </View>
           </View>
@@ -331,7 +331,7 @@ const CommunityId = () => {
               <View style={[styles.restrictedContainer, { paddingBottom: Platform.OS === 'android' ? addBasePaddingToInset(16, insets.bottom) : undefined }]}>
                 <Ionicons name="lock-closed" size={20} color="#7F8C8D" />
                 <Text style={styles.restrictedText}>
-                  Only teachers can send messages in communities
+                  Only tutors can send messages in communities
                 </Text>
               </View>
             )}

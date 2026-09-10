@@ -99,7 +99,7 @@ const SingleProfilePage = () => {
             <View style={styles.profileInfo}>
               <Text style={styles.name}>{user.name}</Text>
               <Text style={styles.role}>
-                {userDetails?.isTeacher ? 'Instructor' : 'Student'}
+                {userDetails?.isTeacher ? 'Tutor' : 'Student'}
               </Text>
               <View style={styles.badgeContainer}>
                 {user?.reccomendedSubjects?.map((subjectTag, idx) => (
