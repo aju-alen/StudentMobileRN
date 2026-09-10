@@ -516,7 +516,24 @@ export const getAllSubjectsByAdvanceSearch = async (req, res, next) => {
 
         // Only add search conditions if q is provided and not empty
         if (q && typeof q === 'string' && q.trim() !== '') {
-            const searchTerm = q.toLowerCase();
+            const searchTerm = q.trim();
+            const searchTermLower = searchTerm.toLowerCase();
+
+            const teachers = await prisma.user.findMany({
+                where: { userType: 'TEACHER' },
+                select: {
+                    name: true,
+                    teacherProfile: {
+                        select: { id: true }
+                    }
+                }
+            });
+
+            const matchingTeacherIds = teachers
+                .filter((teacher) => teacher.name?.toLowerCase().includes(searchTermLower))
+                .map((teacher) => teacher.teacherProfile?.id)
+                .filter(Boolean);
+
             whereCondition = {
                 AND: [
                     { subjectVerification: true },
@@ -525,7 +542,10 @@ export const getAllSubjectsByAdvanceSearch = async (req, res, next) => {
                             { subjectName: { contains: searchTerm } },
                             { subjectDescription: { contains: searchTerm } },
                             { subjectSearchHeading: { contains: searchTerm } },
-                            { subjectNameSubHeading: { contains: searchTerm } }
+                            { subjectNameSubHeading: { contains: searchTerm } },
+                            ...(matchingTeacherIds.length > 0
+                                ? [{ teacherId: { in: matchingTeacherIds } }]
+                                : [])
                         ]
                     }
                 ]

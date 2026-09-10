@@ -54,7 +54,7 @@ const allSubject = () => {
       }
 
       const url = searchTerm && searchTerm.trim() !== ''
-        ? `${ipURL}/api/subjects/advance-search?q=${searchTerm}&page=${page}`
+        ? `${ipURL}/api/subjects/advance-search?q=${encodeURIComponent(searchTerm.trim())}&page=${page}`
         : `${ipURL}/api/subjects/advance-search?page=${page}`;
       
       const response = await axiosWithAuth.get(url);
@@ -160,7 +160,7 @@ const allSubject = () => {
           <Ionicons name="search" size={moderateScale(20)} color={COLORS.gray} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search courses by name"
+            placeholder="Search by course or tutor name"
             placeholderTextColor={COLORS.gray}
             value={search}
             onChangeText={handleSearch}
