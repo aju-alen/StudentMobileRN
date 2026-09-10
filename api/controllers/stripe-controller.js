@@ -5,17 +5,20 @@ dotenv.config();
 import Stripe from 'stripe';
 import { sendEmailService } from "../services/emailService.js";
 import { Resend } from 'resend';
+import { fromUaeDateTime, normalizeHHmm, parseDateUTC, slotsFromInstant } from "../utils/uaeDateTime.js";
+import { isFixedSchedulePast } from "../utils/upcomingCatalog.js";
+import {
+  findSlotConflict,
+  getStudentOccupiedSlots,
+  hasSlotOverlap,
+  lockBookingProfiles,
+  requestedSlotsFor,
+  resolveStudentProfileId,
+  resolveTeacherProfileId,
+} from "./bookingController.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const prisma = new PrismaClient();
-
-/** Parse YYYY-MM-DD to UTC midnight for consistent DB storage/query */
-function parseDateUTC(dateStr) {
-  const s = String(dateStr || '').trim().split('T')[0];
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(dateStr);
-  const [y, m, d] = s.split('-').map(Number);
-  return new Date(Date.UTC(y, m - 1, d, 0, 0, 0, 0));
-}
 const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
 export const getPublisherKey = async (req, res, next) => {
     try {
@@ -44,7 +47,12 @@ export const paymentSheet = async (req, res, next) => {
         const subject = await prisma.subject.findUnique({
             where: {
                 id: subjectId
-            }
+            },
+            include: {
+                subjectTopics: {
+                    select: { id: true, hours: true, scheduledAt: true, orderIndex: true },
+                },
+            },
         });
         if (!subject) {
             return res.status(404).json({
@@ -55,6 +63,73 @@ export const paymentSheet = async (req, res, next) => {
             return res.status(400).json({
                 error: 'Invalid amount. Price of the subject is not same as amount.'
             });
+        }
+
+        if (isFixedSchedulePast(subject)) {
+            return res.status(400).json({
+                error: 'This course has already started.'
+            });
+        }
+
+        const teacherProfileId = await resolveTeacherProfileId(teacherId);
+        const studentProfileId = await resolveStudentProfileId(userId);
+
+        if ((subject.courseType === 'SINGLE_STUDENT' || subject.courseType === 'SINGLE_PACKAGE') && (!teacherProfileId || !studentProfileId)) {
+            return res.status(400).json({ error: 'Could not verify tutor or student profile.' });
+        }
+
+        if (subject.courseType === 'SINGLE_STUDENT' && date && time) {
+            const durationHours = Math.min(2, Math.max(1, parseInt(subjectDuration || subject.subjectDuration, 10) || 1));
+            const taken = await findSlotConflict({
+                teacherProfileId,
+                studentProfileId,
+                dateStr: String(date).trim().split('T')[0],
+                time,
+                durationHours,
+            });
+            if (taken) {
+                return res.status(409).json({ error: 'This time slot is no longer available. Please pick another time.' });
+            }
+        }
+
+        if (subject.courseType === 'SINGLE_PACKAGE' && Array.isArray(topicSlots) && topicSlots.length) {
+            const extraByDate = {};
+            for (const slot of topicSlots) {
+                const topic = subject.subjectTopics.find((t) => t.id === slot.subjectTopicId);
+                const durationHours = Math.min(3, Math.max(1, topic?.hours || 1));
+                const dateStr = String(slot.date || '').trim().split('T')[0];
+                const taken = await findSlotConflict({
+                    teacherProfileId,
+                    studentProfileId,
+                    dateStr,
+                    time: slot.time,
+                    durationHours,
+                    extraOccupied: extraByDate[dateStr] || [],
+                });
+                if (taken) {
+                    return res.status(409).json({ error: 'One of the selected topic times is no longer available. Please pick another time.' });
+                }
+                extraByDate[dateStr] = [...(extraByDate[dateStr] || []), ...requestedSlotsFor(slot.time, durationHours)];
+            }
+        }
+
+        if (subject.courseType === 'MULTI_STUDENT' && subject.scheduledDateTime && studentProfileId) {
+            const { dateStr, slots } = slotsFromInstant(subject.scheduledDateTime, Math.max(1, Math.min(2, subject.subjectDuration ?? 1)));
+            const occupied = await getStudentOccupiedSlots(studentProfileId, dateStr);
+            if (hasSlotOverlap(slots, occupied)) {
+                return res.status(409).json({ error: 'You already have a class at this time.' });
+            }
+        }
+
+        if (subject.courseType === 'MULTI_PACKAGE' && studentProfileId) {
+            for (const topic of subject.subjectTopics || []) {
+                if (!topic.scheduledAt) continue;
+                const { dateStr, slots } = slotsFromInstant(topic.scheduledAt, Math.max(1, Math.min(3, topic.hours ?? 1)));
+                const occupied = await getStudentOccupiedSlots(studentProfileId, dateStr);
+                if (hasSlotOverlap(slots, occupied)) {
+                    return res.status(409).json({ error: 'You already have a class that overlaps this package schedule.' });
+                }
+            }
         }
 
         // For multi-student and multi-package courses, check capacity before allowing payment
@@ -402,6 +477,11 @@ export const stripeWebhook = async (req, res, next) => {
                                 zoomMeetingUrl: true,
                                 zoomMeetingPassword: true,
                                 zoomMeetingId: true,
+                                scheduledDateTime: true,
+                                subjectDuration: true,
+                                subjectTopics: {
+                                    select: { scheduledAt: true, hours: true },
+                                },
                             },
                         });
 
@@ -425,6 +505,33 @@ export const stripeWebhook = async (req, res, next) => {
 
                         if (existingEnrollment && existingEnrollment.enrollmentStatus !== 'CANCELLED') {
                             throw new Error('Student is already enrolled in this course');
+                        }
+
+                        let studentScheduleConflict = false;
+                        if (subject.courseType === 'MULTI_STUDENT' && subject.scheduledDateTime) {
+                            const { dateStr, slots } = slotsFromInstant(subject.scheduledDateTime, Math.max(1, Math.min(2, subject.subjectDuration ?? 1)));
+                            const occupied = await getStudentOccupiedSlots(studentProfileId, dateStr);
+                            studentScheduleConflict = hasSlotOverlap(slots, occupied);
+                        }
+                        if (subject.courseType === 'MULTI_PACKAGE') {
+                            for (const topic of subject.subjectTopics || []) {
+                                if (!topic.scheduledAt) continue;
+                                const { dateStr, slots } = slotsFromInstant(topic.scheduledAt, Math.max(1, Math.min(3, topic.hours ?? 1)));
+                                const occupied = await getStudentOccupiedSlots(studentProfileId, dateStr);
+                                if (hasSlotOverlap(slots, occupied)) {
+                                    studentScheduleConflict = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (studentScheduleConflict) {
+                            try {
+                                await stripe.refunds.create({ charge: chargeSucceeded.id, reason: 'requested_by_customer' });
+                            } catch (refundErr) {
+                                console.error('Stripe refund failed after group-class schedule conflict:', refundErr);
+                            }
+                            console.error(`Group enrollment failed: student already has a class at this time. chargeId=${chargeSucceeded.id}`);
+                            break;
                         }
 
                         // Create enrollment and stripe purchase in transaction
@@ -531,58 +638,21 @@ export const stripeWebhook = async (req, res, next) => {
                             }
                         }
 
-                        // Re-check availability for each topic slot (race-condition protection)
-                        const getBlockedSlotsForTopic = (b) => {
-                            if (!b?.bookingTime) return [];
-                            const parts = b.bookingTime.split(':').map(Number);
-                            const h = Number.isNaN(parts[0]) ? 0 : parts[0];
-                            const dur = Math.max(1, b.bookingHours ?? 1);
-                            const slots = [];
-                            for (let i = 0; i < dur; i++) slots.push(`${(h + i).toString().padStart(2, '0')}:00`);
-                            return slots;
-                        };
-
                         let singlePackageSlotConflict = false;
+                        const extraByDate = {};
                         for (const slot of topicSlotsParsed) {
                             const topic = topicMap.get(slot.subjectTopicId);
                             const durationHours = Math.min(3, Math.max(1, topic.hours));
-                            const timeParts = slot.time.split(':').map(Number);
-                            const startHour = Number.isNaN(timeParts[0]) ? 0 : timeParts[0];
-                            const requestedSlots = [];
-                            for (let i = 0; i < durationHours; i++) {
-                                requestedSlots.push(`${(startHour + i).toString().padStart(2, '0')}:00`);
-                            }
-
-                            const startOfDay = new Date(slot.date);
-                            startOfDay.setHours(0, 0, 0, 0);
-                            const endOfDay = new Date(slot.date);
-                            endOfDay.setHours(23, 59, 59, 999);
-
-                            const [teacherBookings, studentBookings] = await Promise.all([
-                                prisma.booking.findMany({
-                                    where: {
-                                        teacherId: teacherProfileId,
-                                        bookingDate: { gte: startOfDay, lte: endOfDay },
-                                        bookingStatus: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
-                                    },
-                                    select: { bookingTime: true, bookingHours: true },
-                                }),
-                                prisma.booking.findMany({
-                                    where: {
-                                        studentId: studentProfileId,
-                                        bookingDate: { gte: startOfDay, lte: endOfDay },
-                                        bookingStatus: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
-                                    },
-                                    select: { bookingTime: true, bookingHours: true },
-                                }),
-                            ]);
-
-                            const teacherBlocked = teacherBookings.flatMap(getBlockedSlotsForTopic);
-                            const studentBlocked = studentBookings.flatMap(getBlockedSlotsForTopic);
-                            const allBlocked = new Set([...teacherBlocked, ...studentBlocked]);
-                            const slotTaken = requestedSlots.some((s) => allBlocked.has(s));
-
-                            if (slotTaken) {
+                            const dateStr = String(slot.date || '').trim().split('T')[0];
+                            const taken = await findSlotConflict({
+                                teacherProfileId,
+                                studentProfileId,
+                                dateStr,
+                                time: slot.time,
+                                durationHours,
+                                extraOccupied: extraByDate[dateStr] || [],
+                            });
+                            if (taken) {
                                 singlePackageSlotConflict = true;
                                 try {
                                     await stripe.refunds.create({ charge: chargeSucceeded.id, reason: 'requested_by_customer' });
@@ -592,6 +662,7 @@ export const stripeWebhook = async (req, res, next) => {
                                 console.error(`SINGLE_PACKAGE booking failed: slot no longer available. topic=${topic.topicTitle} date=${slot.date} time=${slot.time}. chargeId=${chargeSucceeded.id}`);
                                 break;
                             }
+                            extraByDate[dateStr] = [...(extraByDate[dateStr] || []), ...requestedSlotsFor(slot.time, durationHours)];
                         }
 
                         if (singlePackageSlotConflict) break;
@@ -600,7 +671,7 @@ export const stripeWebhook = async (req, res, next) => {
                         const bookingsToCreate = [];
                         for (const slot of topicSlotsParsed) {
                             const topic = topicMap.get(slot.subjectTopicId);
-                            const startTime = new Date(`${slot.date}T${slot.time}:00`);
+                            const startTime = fromUaeDateTime(slot.date, slot.time);
                             const meeting = await createZoomMeeting(
                                 chargeSucceeded.metadata.teacherEmail,
                                 `${chargeSucceeded.metadata.subjectName} - ${topic.topicTitle}`,
@@ -609,15 +680,37 @@ export const stripeWebhook = async (req, res, next) => {
                             );
                             bookingsToCreate.push({
                                 subjectTopicId: topic.id,
-                                bookingDate: startTime,
-                                bookingTime: slot.time,
+                                bookingDate: parseDateUTC(slot.date),
+                                bookingTime: normalizeHHmm(slot.time),
                                 bookingHours: topic.hours,
                                 meeting,
                             });
                         }
 
                         const amountPerBooking = Math.floor(chargeSucceeded.amount / bookingsToCreate.length);
-                        const singlePackageResult = await prisma.$transaction(async (tx) => {
+                        let singlePackageResult;
+                        try {
+                            singlePackageResult = await prisma.$transaction(async (tx) => {
+                            await lockBookingProfiles(tx, teacherProfileId, studentProfileId);
+                            const extraByDateTx = {};
+                            for (const slot of topicSlotsParsed) {
+                                const topic = topicMap.get(slot.subjectTopicId);
+                                const durationHours = Math.min(3, Math.max(1, topic.hours));
+                                const dateStr = String(slot.date || '').trim().split('T')[0];
+                                const taken = await findSlotConflict({
+                                    teacherProfileId,
+                                    studentProfileId,
+                                    dateStr,
+                                    time: slot.time,
+                                    durationHours,
+                                    extraOccupied: extraByDateTx[dateStr] || [],
+                                    db: tx,
+                                });
+                                if (taken) {
+                                    throw new Error('SLOT_CONFLICT');
+                                }
+                                extraByDateTx[dateStr] = [...(extraByDateTx[dateStr] || []), ...requestedSlotsFor(slot.time, durationHours)];
+                            }
                             let firstBooking = null;
                             for (const b of bookingsToCreate) {
                                 const created = await tx.booking.create({
@@ -654,6 +747,18 @@ export const stripeWebhook = async (req, res, next) => {
                             });
                             return { saveTransaction, firstBooking };
                         });
+                        } catch (err) {
+                            if (String(err.message) === 'SLOT_CONFLICT') {
+                                try {
+                                    await stripe.refunds.create({ charge: chargeSucceeded.id, reason: 'requested_by_customer' });
+                                } catch (refundErr) {
+                                    console.error('Stripe refund failed after SINGLE_PACKAGE slot conflict:', refundErr);
+                                }
+                                console.error(`SINGLE_PACKAGE booking failed: slot conflict during commit. chargeId=${chargeSucceeded.id}`);
+                                break;
+                            }
+                            throw err;
+                        }
                         saveTransaction = singlePackageResult.saveTransaction;
                         createBooking = singlePackageResult.firstBooking;
 
@@ -676,57 +781,17 @@ export const stripeWebhook = async (req, res, next) => {
                     } else {
                         // Handle single-student course booking (existing flow)
                         // Re-check availability before creating (race-condition protection)
-                        const bookingDateStr = chargeSucceeded.metadata.date;
+                        const bookingDateStrMeta = chargeSucceeded.metadata.date;
                         const bookingTime = chargeSucceeded.metadata.time || '';
                         const durationHours = Math.min(2, Math.max(1, parseInt(chargeSucceeded.metadata.subjectDuration, 10) || 1));
-                        const timeParts = bookingTime.split(':').map(Number);
-                        const startHour = Number.isNaN(timeParts[0]) ? 0 : timeParts[0];
-                        const requestedSlots = [];
-                        for (let i = 0; i < durationHours; i++) {
-                            requestedSlots.push(`${(startHour + i).toString().padStart(2, '0')}:00`);
-                        }
-
-                        const dateStr = String(bookingDateStr || '').trim().split('T')[0];
-                        const [y, m, d] = dateStr.split('-').map(Number);
-                        const startWide = new Date(Date.UTC(y, m - 1, d, -12, 0, 0, 0));
-                        const endWide = new Date(Date.UTC(y, m - 1, d, 36, 0, 0, 0));
-                        const onDate = (b) => b.bookingDate && b.bookingDate.toISOString().split('T')[0] === dateStr;
-
-                        const [teacherBookingsRaw, studentBookingsRaw] = await Promise.all([
-                            prisma.booking.findMany({
-                                where: {
-                                    teacherId: teacherProfileId,
-                                    bookingDate: { gte: startWide, lte: endWide },
-                                    bookingStatus: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
-                                },
-                                select: { bookingTime: true, bookingHours: true, bookingDate: true },
-                            }),
-                            prisma.booking.findMany({
-                                where: {
-                                    studentId: studentProfileId,
-                                    bookingDate: { gte: startWide, lte: endWide },
-                                    bookingStatus: { in: [BookingStatus.CONFIRMED, BookingStatus.PENDING] },
-                                },
-                                select: { bookingTime: true, bookingHours: true, bookingDate: true },
-                            }),
-                        ]);
-                        const teacherBookings = teacherBookingsRaw.filter(onDate);
-                        const studentBookings = studentBookingsRaw.filter(onDate);
-
-                        const getBlockedSlots = (b) => {
-                            if (!b?.bookingTime) return [];
-                            const parts = b.bookingTime.split(':').map(Number);
-                            const h = Number.isNaN(parts[0]) ? 0 : parts[0];
-                            const dur = Math.max(1, b.bookingHours ?? 1);
-                            const slots = [];
-                            for (let i = 0; i < dur; i++) slots.push(`${(h + i).toString().padStart(2, '0')}:00`);
-                            return slots;
-                        };
-
-                        const teacherBlocked = teacherBookings.flatMap(getBlockedSlots);
-                        const studentBlocked = studentBookings.flatMap(getBlockedSlots);
-                        const allBlocked = new Set([...teacherBlocked, ...studentBlocked]);
-                        const slotTaken = requestedSlots.some((s) => allBlocked.has(s));
+                        const dateStr = String(bookingDateStrMeta || '').trim().split('T')[0];
+                        const slotTaken = await findSlotConflict({
+                            teacherProfileId,
+                            studentProfileId,
+                            dateStr,
+                            time: bookingTime,
+                            durationHours,
+                        });
 
                         if (slotTaken) {
                             try {
@@ -738,20 +803,38 @@ export const stripeWebhook = async (req, res, next) => {
                             break;
                         }
 
-                        // create meeting for teacher
-                        const bookingDateParsed = parseDateUTC(chargeSucceeded.metadata.date);
-                        const meeting = await createZoomMeeting(chargeSucceeded.metadata.teacherEmail, chargeSucceeded.metadata.subjectName, bookingDateParsed, parseInt(chargeSucceeded.metadata.subjectDuration) * 60);
+                        const bookingDateParsed = parseDateUTC(dateStr);
+                        const meetingStart = fromUaeDateTime(dateStr, bookingTime);
+                        const meeting = await createZoomMeeting(
+                            chargeSucceeded.metadata.teacherEmail,
+                            chargeSucceeded.metadata.subjectName,
+                            meetingStart,
+                            parseInt(chargeSucceeded.metadata.subjectDuration, 10) * 60
+                        );
                         
                     
-                        const singleStudentResult = await prisma.$transaction(async (tx) => {
-                            // Create booking first
+                        let singleStudentResult;
+                        try {
+                        singleStudentResult = await prisma.$transaction(async (tx) => {
+                            await lockBookingProfiles(tx, teacherProfileId, studentProfileId);
+                            const takenNow = await findSlotConflict({
+                                teacherProfileId,
+                                studentProfileId,
+                                dateStr,
+                                time: bookingTime,
+                                durationHours,
+                                db: tx,
+                            });
+                            if (takenNow) {
+                                throw new Error('SLOT_CONFLICT');
+                            }
                             const newBooking = await tx.booking.create({
                                 data: {
                                     subjectId: chargeSucceeded.metadata.subjectId,
                                     teacherId: teacherProfileId,
                                     studentId: studentProfileId,
                                     bookingDate: bookingDateParsed,
-                                    bookingTime: chargeSucceeded.metadata.time,
+                                    bookingTime: normalizeHHmm(chargeSucceeded.metadata.time),
                                     bookingStatus: BookingStatus.CONFIRMED,
                                     bookingPrice: chargeSucceeded.amount,
                                     bookingPaymentCompleted: true,
@@ -779,6 +862,18 @@ export const stripeWebhook = async (req, res, next) => {
 
                             return { saveTransaction, createBooking: newBooking };
                         });
+                        } catch (err) {
+                            if (String(err.message) === 'SLOT_CONFLICT') {
+                                try {
+                                    await stripe.refunds.create({ charge: chargeSucceeded.id, reason: 'requested_by_customer' });
+                                } catch (refundErr) {
+                                    console.error('Stripe refund failed after slot conflict:', refundErr);
+                                }
+                                console.error(`SINGLE_STUDENT booking failed: slot conflict during commit. chargeId=${chargeSucceeded.id}`);
+                                break;
+                            }
+                            throw err;
+                        }
                         saveTransaction = singleStudentResult.saveTransaction;
                         createBooking = singleStudentResult.createBooking;
 

@@ -34,6 +34,7 @@ import { Calendar } from 'react-native-calendars';
 import { useRevenueCat } from '../../../providers/RevenueCatProvider';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { prepareCoverImage, COVER_PICKER_ASPECT, COVER_ASPECT } from "../../../utils/coverImage";
+import { fromUaeDateTime, normalizeHHmm, toUaeParts, uaeDateStr } from '../../../utils/uaeDateTime';
 import CoverImage from "../../../components/CoverImage";
 // Add type definition for file object
 type FileObject = {
@@ -241,12 +242,7 @@ const CreateSubject = () => {
     return slots;
   };
 
-  const normalizeTime = (t: string): string => {
-    const parts = String(t || '').trim().split(':');
-    const h = parseInt(parts[0], 10);
-    const m = parts[1] != null ? parseInt(parts[1], 10) : 0;
-    return `${(isNaN(h) ? 0 : h).toString().padStart(2, '0')}:${(isNaN(m) ? 0 : m).toString().padStart(2, '0')}`;
-  };
+  const normalizeTime = (t: string): string => normalizeHHmm(t);
 
   const fetchTeacherAvailability = async (dateStr: string, durationHours: number, sessionBlockedSlots: string[] = []) => {
     if (!dateStr) return;
@@ -256,9 +252,8 @@ const CreateSubject = () => {
         params: { date: dateStr },
       });
       const booked = (res.data.bookedSlots || []).map(normalizeTime);
-      const unavailable = res.data.unavailableDates || [];
       setTeacherBookedSlots(booked);
-      setTeacherUnavailableDates(unavailable);
+      setTeacherUnavailableDates([]);
       const allBlocked = [...new Set([...booked, ...sessionBlockedSlots.map(normalizeTime)])];
       const baseSlots = generateTimeSlots();
 
@@ -266,13 +261,13 @@ const CreateSubject = () => {
       // - Compare selected calendar date to today's date
       // - Ceil current time to the next whole hour (10:10 → 11:00).
       //   If already at an exact hour (10:00), use that hour as the minimum.
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = uaeDateStr();
       const isToday = dateStr === todayStr;
       let minAllowedHourForToday = 0;
       if (isToday) {
-        const now = new Date();
-        let hour = now.getHours();
-        if (now.getMinutes() > 0 || now.getSeconds() > 0 || now.getMilliseconds() > 0) {
+        const nowUae = toUaeParts(new Date());
+        let hour = nowUae.hour;
+        if (nowUae.minute > 0) {
           hour += 1;
         }
         minAllowedHourForToday = hour;
@@ -1161,7 +1156,7 @@ const CreateSubject = () => {
                                 onPress={() => {
                                   setEditingTopicIndex(index);
                                   const d = block.scheduledDateTime;
-                                  setTopicCalendarDate(d ? d.toISOString().split('T')[0] : '');
+                                  setTopicCalendarDate(d ? toUaeParts(d).dateStr : '');
                                   if (!d) setAvailableTimeSlots(generateTimeSlots());
                                 }}
                               >
@@ -1183,12 +1178,11 @@ const CreateSubject = () => {
                                 const sessionBlocked: string[] = [];
                                 topicBlocks.forEach((b, j) => {
                                   if (j === index || !b.scheduledDateTime) return;
-                                  const bDate = b.scheduledDateTime.toISOString().split('T')[0];
-                                  if (bDate !== day.dateString) return;
-                                  const h = b.scheduledDateTime.getUTCHours();
+                                  const parts = toUaeParts(b.scheduledDateTime);
+                                  if (parts.dateStr !== day.dateString) return;
                                   const dur = parseInt(b.hours || '1', 10);
                                   for (let k = 0; k < dur; k++) {
-                                    sessionBlocked.push(`${(h + k).toString().padStart(2, '0')}:00`);
+                                    sessionBlocked.push(`${String(parts.hour + k).padStart(2, '0')}:00`);
                                   }
                                 });
                                 fetchTeacherAvailability(day.dateString, topicHours, sessionBlocked);
@@ -1202,7 +1196,7 @@ const CreateSubject = () => {
                                   [topicCalendarDate]: { selected: true, selectedColor: COLORS.primary },
                                 } : {}),
                               }}
-                              minDate={new Date().toISOString().split('T')[0]}
+                              minDate={uaeDateStr()}
                               theme={{
                                 todayTextColor: COLORS.primary,
                                 selectedDayBackgroundColor: COLORS.primary,
@@ -1226,9 +1220,7 @@ const CreateSubject = () => {
                                         style={[styles.timeSlotChip, !slot.available && styles.timeSlotChipUnavailable]}
                                         onPress={() => {
                                           if (!slot.available) return;
-                                          const [h, m] = slot.time.split(':').map(Number);
-                                          const d = new Date(topicCalendarDate + 'T00:00:00');
-                                          d.setHours(h, m || 0, 0, 0);
+                                          const d = fromUaeDateTime(topicCalendarDate, slot.time);
                                           setTopicBlocks(prev => {
                                             const p = [...prev];
                                             p[index] = { ...p[index], scheduledDateTime: d };
@@ -1286,7 +1278,7 @@ const CreateSubject = () => {
                         },
                       } : {}),
                     }}
-                    minDate={new Date().toISOString().split('T')[0]}
+                    minDate={uaeDateStr()}
                     theme={{
                       todayTextColor: COLORS.primary,
                       selectedDayBackgroundColor: COLORS.primary,
@@ -1314,9 +1306,7 @@ const CreateSubject = () => {
                               style={[styles.timeSlotChip, !slot.available && styles.timeSlotChipUnavailable]}
                               onPress={() => {
                                 if (!slot.available) return;
-                                const [h, m] = slot.time.split(':').map(Number);
-                                const d = new Date(selectedAvailDate + 'T00:00:00');
-                                d.setHours(h, m || 0, 0, 0);
+                                const d = fromUaeDateTime(selectedAvailDate, slot.time);
                                 setScheduledDateTime(d);
                               }}
                               disabled={!slot.available}

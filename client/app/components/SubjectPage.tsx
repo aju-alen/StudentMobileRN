@@ -203,6 +203,22 @@ const SubjectPage = ({ subjectId }) => {
   const [isInitializingChat, setIsInitializingChat] = useState(false);
   const [showAllTopics, setShowAllTopics] = useState(false);
 
+  const isFixedSchedulePast = useMemo(() => {
+    const now = Date.now();
+    if (singleSubjectData.courseType === 'MULTI_STUDENT' && singleSubjectData.scheduledDateTime) {
+      return new Date(singleSubjectData.scheduledDateTime).getTime() <= now;
+    }
+    if (singleSubjectData.courseType === 'MULTI_PACKAGE') {
+      const times = (singleSubjectData.subjectTopics || [])
+        .map((topic) => topic.scheduledAt)
+        .filter(Boolean)
+        .map((value) => new Date(value as string).getTime());
+      if (!times.length) return false;
+      return times.some((ms) => ms <= now);
+    }
+    return false;
+  }, [singleSubjectData.courseType, singleSubjectData.scheduledDateTime, singleSubjectData.subjectTopics]);
+
   // Animation values
   const scrollY = useRef(new Animated.Value(0)).current;
   const headerOpacity = useRef(new Animated.Value(0)).current;
@@ -372,6 +388,11 @@ const SubjectPage = ({ subjectId }) => {
   };
 
   const handleEnrollPress = async () => {
+    if (isFixedSchedulePast) {
+      alert('This course has already started.');
+      return;
+    }
+
     // For multi-student and multi-package courses, skip date/time selection and go directly to payment (slots/capacity only)
     if (singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') {
       try {
@@ -1123,7 +1144,8 @@ const SubjectPage = ({ subjectId }) => {
           style={[
             styles.primaryButton,
             isUserType === 'TEACHER' && styles.disabledButton,
-            (singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && purchaseStatus && styles.disabledButton
+            ((singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && purchaseStatus) && styles.disabledButton,
+            isFixedSchedulePast && styles.disabledButton,
           ]} 
           onPress={() => {
             handleButtonPress();
@@ -1131,6 +1153,7 @@ const SubjectPage = ({ subjectId }) => {
           }}
           disabled={
             isUserType === 'TEACHER' ||
+            isFixedSchedulePast ||
             ((singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && purchaseStatus)
           }
         >
@@ -1138,13 +1161,15 @@ const SubjectPage = ({ subjectId }) => {
             <Text style={styles.primaryButtonText} numberOfLines={2}>
               {isUserType === 'TEACHER'
                 ? "Log in as a student to enroll"
+                : isFixedSchedulePast
+                ? "This class has started"
                 : (singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && purchaseStatus
                 ? "Already enrolled"
                 : (singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && capacityInfo?.isFull
                 ? "Course full"
                 : "Enroll now"}
             </Text>
-            {(singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && capacityInfo && !capacityInfo.isFull && !purchaseStatus && (
+            {(singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && capacityInfo && !capacityInfo.isFull && !purchaseStatus && !isFixedSchedulePast && (
               <Text style={styles.capacityText}>
                 {capacityInfo.availableSpots} of {singleSubjectData.maxCapacity} spots left
               </Text>
