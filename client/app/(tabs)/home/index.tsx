@@ -3,16 +3,14 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   RefreshControl,
-  Animated,
   ActivityIndicator,
   Alert,
-  Button,
-  Dimensions,
+  Pressable,
+  ScrollView,
 } from "react-native";
 import { Image } from 'expo-image';
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router, useLocalSearchParams } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
@@ -20,10 +18,9 @@ import * as Updates from "expo-updates";
 import axios from "axios";
 import { ipURL } from '../../utils/utils';
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS, FONT, SIZES } from '../../../constants';
+import { FONT } from '../../../constants';
 import { horizontalScale, verticalScale, moderateScale } from '../../utils/metrics';
 import { StatusBar } from "expo-status-bar";
-import SubjectCards from "../../components/SubjectCards";
 import HorizontalSubjectCard from "../../components/horizontalSubjectCard";
 import ColumnSubjectCards from "../../components/colSubjectCards";
 import VideoPlayer from "../../components/VideoPlayer";
@@ -31,8 +28,8 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/en';
 import { axiosWithAuth } from "../../utils/customAxios";
-import { LinearGradient } from 'expo-linear-gradient';
-// Initialize dayjs plugins
+import { SafeAreaView } from "react-native-safe-area-context";
+
 dayjs.extend(relativeTime);
 dayjs.locale('en');
 
@@ -57,18 +54,10 @@ interface User {
   totalStudents?: number;
 }
 
-interface Stats {
-  icon: string;
-  label: string;
-  value: number;
-  color?: string;
-  progress?: number;
-}
-
 interface Deadline {
   id: string;
-  bookingDate: string; // ISO date string
-  bookingTime: string; // e.g., "11:00"
+  bookingDate: string;
+  bookingTime: string;
   subject: {
     subjectName: string;
   };
@@ -78,42 +67,160 @@ interface Deadline {
   student: {
     name: string;
   };
-  priority?: 'high' | 'medium' | 'low';
-}
-
-interface LiveSession {
-  id: string;
-  title: string;
-  instructor: string;
-  startTime: string;
-  duration: string;
-  thumbnail: string;
-  participantsCount: number;
-}
-
-interface CourseProgress {
-  id: string;
-  title: string;
-  progress: number;
-  lastAccessed: string;
-  nextLesson: string;
-  thumbnail: string;
 }
 
 const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
-const { width: screenWidth } = Dimensions.get('window');
+const communityVideos = [
+  {
+    id: "welcome-splash",
+    title: "Mathematics",
+    videoUrl: "https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/1f.mp4",
+  },
+  {
+    id: "community-reel",
+    title: "Mathematics",
+    videoUrl: "https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/2f.mp4",
+  },
+  {
+    id: "highlights",
+    title: "Mathematics",
+    videoUrl: "https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/3f.mp4",
+  },
+  {
+    id: "high",
+    title: "Mathematics",
+    videoUrl: "https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/4f.mp4",
+  },
+];
+
+const getGreeting = (date: Date) => {
+  const hour = date.getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+};
+
+const getRelativeDate = (dateString: string) => {
+  const bookingDate = dayjs(dateString);
+  const today = dayjs().startOf('day');
+  const tomorrow = today.add(1, 'day');
+
+  if (bookingDate.isSame(today, 'day')) return 'Today';
+  if (bookingDate.isSame(tomorrow, 'day')) return 'Tomorrow';
+  return bookingDate.format('MMM D');
+};
+
+const SectionHeader = ({
+  title,
+  actionLabel,
+  onAction,
+}: {
+  title: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}) => (
+  <View style={styles.sectionHeader}>
+    <Text style={styles.sectionTitle}>{title}</Text>
+    {!!actionLabel && !!onAction && (
+      <TouchableOpacity
+        onPress={onAction}
+        hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        style={styles.seeAllButton}
+        accessibilityRole="button"
+        accessibilityLabel={actionLabel}
+      >
+        <Text style={styles.seeAllText}>{actionLabel}</Text>
+        <Ionicons name="chevron-forward" size={16} color="#1A4C6E" />
+      </TouchableOpacity>
+    )}
+  </View>
+);
+
+const DestinationTile = ({
+  icon,
+  label,
+  onPress,
+  badge,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  onPress: () => void;
+  badge?: string | null;
+}) => (
+  <TouchableOpacity
+    style={styles.destinationTile}
+    onPress={onPress}
+    activeOpacity={0.85}
+    accessibilityRole="button"
+    accessibilityLabel={badge ? `${label}, ${badge}` : label}
+  >
+    <View style={styles.destinationIconWrap}>
+      <Ionicons name={icon} size={22} color="#1A4C6E" />
+      {!!badge && (
+        <View style={styles.destinationBadge}>
+          <Text style={styles.badgeText}>{badge}</Text>
+        </View>
+      )}
+    </View>
+    <Text style={styles.destinationLabel}>{label}</Text>
+  </TouchableOpacity>
+);
+
+const NextClassCard = ({
+  deadline,
+  isTeacher,
+  onPress,
+  compact = false,
+}: {
+  deadline: Deadline;
+  isTeacher?: boolean;
+  onPress: () => void;
+  compact?: boolean;
+}) => {
+  const counterpart = isTeacher ? deadline?.student?.name : deadline?.teacher?.name;
+  const when = getRelativeDate(deadline.bookingDate);
+  const isToday = when === 'Today';
+
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        compact ? styles.nextClassCompact : styles.nextClassCard,
+        pressed && styles.pressed,
+      ]}
+      accessibilityRole="button"
+      accessibilityLabel={`${deadline?.subject?.subjectName}, ${when} at ${deadline.bookingTime}`}
+    >
+      <View style={[styles.nextClassWhen, isToday && styles.nextClassWhenToday]}>
+        <Text style={[styles.nextClassWhenLabel, isToday && styles.nextClassWhenLabelToday]}>
+          {when}
+        </Text>
+        <Text style={[styles.nextClassTime, isToday && styles.nextClassTimeToday]}>
+          {deadline.bookingTime}
+        </Text>
+      </View>
+      <View style={styles.nextClassBody}>
+        <Text style={styles.nextClassKicker}>{isTeacher ? 'Your class' : 'Live class'}</Text>
+        <Text style={styles.nextClassTitle} numberOfLines={2}>
+          {deadline?.subject?.subjectName}
+        </Text>
+        {!!counterpart && (
+          <Text style={styles.nextClassWith} numberOfLines={1}>
+            with {counterpart}
+          </Text>
+        )}
+      </View>
+      <Ionicons name="chevron-forward" size={18} color="#5C6B76" />
+    </Pressable>
+  );
+};
 
 const HomePage = () => {
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const buttonScale = useRef(new Animated.Value(1)).current;
-  const [subjectData, setSubjectData] = React.useState([]);
-  const [recommendedSubjects, setRecommendedSubjects] = React.useState([]);
-  const [refreshing, setRefreshing] = React.useState(false);
-  const [loading, setLoading] = React.useState(true);
-  const [currentLearning, setCurrentLearning] = useState([]);
-  const [achievements, setAchievements] = useState([]);
+  const [subjectData, setSubjectData] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const params = useLocalSearchParams();
   const { subjectGrade, subjectBoard, subjectTags } = params;
   const [user, setUser] = useState<User>({
@@ -130,324 +237,47 @@ const HomePage = () => {
   const [userDetails, setUserDetails] = useState({
     userName: '',
     userProfileImage: '',
-
   });
   const [profileImageVersion, setProfileImageVersion] = useState<string>('0');
-
-  useEffect(() => {
-    async function getUserDetails() {
-      const stored = await AsyncStorage.getItem('userDetails');
-      if (stored) setUserDetails(JSON.parse(stored));
-    }
-    getUserDetails();
-  }, []);
-
-  // Re-read userDetails when home tab is focused so profile image updates after edit-profile
-  useFocusEffect(
-    useCallback(() => {
-      async function refreshUserDetails() {
-        const stored = await AsyncStorage.getItem('userDetails');
-        if (stored) setUserDetails(JSON.parse(stored));
-        const version = await AsyncStorage.getItem('profileImageVersion');
-        if (version != null) setProfileImageVersion(version);
-      }
-      refreshUserDetails();
-    }, [])
-  );
-
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
   const { isUpdateAvailable, isUpdatePending } = Updates.useUpdates();
   const [isUpdatingApp, setIsUpdatingApp] = useState(false);
   const [hasShownUpdateAlert, setHasShownUpdateAlert] = useState(false);
 
-  const communityVideos = [
-    {
-      id: "welcome-splash",
-      title: "Mathematics",
-      videoUrl: "https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/1f.mp4",
-    },
-    {
-      id: "community-reel",
-      title: "Mathematics",
-      videoUrl: "https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/2f.mp4",
-    },
-    {
-      id: "highlights",
-      title: "Mathematics",
-      videoUrl: "https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/3f.mp4",
-    },
-    {
-      id: "high",
-      title: "Mathematics",
-      videoUrl: "https://coachacademic.s3.ap-southeast-1.amazonaws.com/video/4f.mp4",
-    },
-  ];
+  const firstName = userDetails.userName?.split(' ')[0] || 'there';
+  const roleLabel = user.isTeacher ? 'Tutor' : 'Student';
+  const featuredCourses = useMemo(() => subjectData.slice(0, 6), [subjectData]);
+  const browseCourses = useMemo(() => subjectData.slice(6, 16), [subjectData]);
+  const [nextClass, ...laterClasses] = deadlines;
 
-  // Updated Header animation for smoother transition
-  const headerHeight = scrollY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [verticalScale(200), verticalScale(140)], // Increased height
-    extrapolate: 'clamp',
-  });
+  const refreshUserDetails = useCallback(async () => {
+    const stored = await AsyncStorage.getItem('userDetails');
+    if (stored) setUserDetails(JSON.parse(stored));
+    const version = await AsyncStorage.getItem('profileImageVersion');
+    if (version != null) setProfileImageVersion(version);
+  }, []);
 
-  const headerOpacity = scrollY.interpolate({
-    inputRange: [0, 100],
-    outputRange: [1, 0.98],
-    extrapolate: 'clamp',
-  });
+  useEffect(() => {
+    refreshUserDetails();
+  }, [refreshUserDetails]);
 
-  const StatsCard = ({ stats }: { stats: Stats }) => (
-    <View style={[styles.statsCard, { backgroundColor: stats.color || '#FFFFFF' }]}>
-      <View style={styles.statsIconContainer}>
-        <Ionicons name={stats.icon as any} size={24} color={stats.color ? '#FFFFFF' : '#1A4C6E'} />
-      </View>
-      <Text style={[styles.statsValue, { color: stats.color ? '#FFFFFF' : '#1A4C6E' }]}>{stats.value}</Text>
-      <Text style={[styles.statsLabel, { color: stats.color ? 'rgba(255,255,255,0.8)' : '#666' }]}>{stats.label}</Text>
-      {stats.progress && (
-        <View style={styles.progressBarContainer}>
-          <View style={[styles.progressBarFill, { width: `${stats.progress}%` }]} />
-        </View>
-      )}
-    </View>
+  useFocusEffect(
+    useCallback(() => {
+      refreshUserDetails();
+    }, [refreshUserDetails])
   );
-
-  const StudyStreakCard = () => (
-    <LinearGradient
-      colors={['#FF6B6B', '#FF8E8E']}
-      style={styles.streakCard}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-    >
-      <View style={styles.streakContent}>
-        <View style={styles.streakIcon}>
-          <Ionicons name="flame" size={32} color="#FFFFFF" />
-        </View>
-        <View style={styles.streakInfo}>
-          <Text style={styles.streakNumber}>{user.streakCount || 0}</Text>
-          <Text style={styles.streakLabel}>Day Streak</Text>
-          <Text style={styles.streakSubtext}>Keep it up!</Text>
-        </View>
-      </View>
-    </LinearGradient>
-  );
-
-  const StudyProgressCard = () => (
-    <View style={styles.progressCard}>
-      <View style={styles.progressHeaderNew}>
-        <Text style={styles.progressTitleNew}>Weekly Goal</Text>
-        <Text style={styles.progressPercentage}>
-          {Math.round((user.studyTime || 0) / (user.weeklyGoal || 20) * 100)}%
-        </Text>
-      </View>
-      <View style={styles.progressBarContainer}>
-        <View style={[styles.progressBarFill, { 
-          width: `${Math.min((user.studyTime || 0) / (user.weeklyGoal || 20) * 100, 100)}%`,
-          backgroundColor: '#4ECDC4'
-        }]} />
-      </View>
-      <Text style={styles.progressTextNew}>
-        {user.studyTime || 0}h / {user.weeklyGoal || 20}h this week
-      </Text>
-    </View>
-  );
-
-  const LeaderboardCard = () => (
-    <View style={styles.leaderboardCard}>
-      <View style={styles.leaderboardHeader}>
-        <Ionicons name="trophy" size={20} color="#FFD700" />
-        <Text style={styles.leaderboardTitle}>Your Rank</Text>
-      </View>
-      <Text style={styles.rankNumber}>#{user.rank || 0}</Text>
-      <Text style={styles.rankSubtext}>out of {user.totalStudents || 0} students</Text>
-    </View>
-  );
-
-  const animateButton = (scale: Animated.Value) => {
-    Animated.sequence([
-      Animated.timing(scale, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scale, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const QuickActionButton = ({ icon, label, onPress, color = "#1A4C6E", badge = null }) => {
-    const scale = useRef(new Animated.Value(1)).current;
-
-    const handlePress = () => {
-      animateButton(scale);
-      onPress();
-    };
-
-    return (
-      <TouchableOpacity 
-        style={styles.quickActionButton} 
-        onPress={handlePress}
-        activeOpacity={0.7}
-      >
-        <Animated.View 
-          style={[
-            styles.quickActionIcon,
-            {
-              transform: [{ scale }],
-              backgroundColor: color === "#1A4C6E" ? 'rgba(26,76,110,0.08)' : `${color}20`
-            }
-          ]}
-        >
-          <Ionicons name={icon} size={20} color={color} />
-          {badge && (
-            <View style={styles.quickActionBadge}>
-              <Text style={styles.badgeText}>{badge}</Text>
-            </View>
-          )}
-        </Animated.View>
-        <Text style={[styles.quickActionLabel, { color }]}>{label}</Text>
-      </TouchableOpacity>
-    );
-  };
-
-  const SectionHeader = ({ title, showSeeAll = false }) => {
-    const scale = useRef(new Animated.Value(1)).current;
-
-    const handleSeeAllPress = () => {
-      animateButton(scale);
-      router.push('/(tabs)/home/allSubject');
-    };
-
-    return (
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{title}</Text>
-        {showSeeAll && (
-          <TouchableOpacity 
-            style={styles.seeAllButton} 
-            onPress={handleSeeAllPress}
-            activeOpacity={0.7}
-          >
-            <Animated.View 
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                transform: [{ scale }]
-              }}
-            >
-              <Text style={styles.seeAllText}>See All</Text>
-              <Ionicons name="chevron-forward" size={16} color="#F1A568" />
-            </Animated.View>
-          </TouchableOpacity>
-        )}
-      </View>
-    );
-  };
-
-  const getRelativeDate = (dateString: string) => {
-    const bookingDate = dayjs(dateString);
-    const today = dayjs().startOf('day');
-    const tomorrow = today.add(1, 'day');
-    
-    if (bookingDate.isSame(today, 'day')) {
-      return 'Today';
-    } else if (bookingDate.isSame(tomorrow, 'day')) {
-      return 'Tomorrow';
-    } else {
-      return bookingDate.format('MMM D, YYYY');
-    }
-  };
-
-  const getPriority = (dateString: string): 'high' | 'medium' | 'low' => {
-    const bookingDate = dayjs(dateString);
-    const today = dayjs().startOf('day');
-    const tomorrow = today.add(1, 'day');
-    
-    if (bookingDate.isSame(today, 'day')) {
-      return 'high';
-    } else if (bookingDate.isSame(tomorrow, 'day')) {
-      return 'medium';
-    } else {
-      return 'low';
-    }
-  };
-
-  const DeadlineCard = ({
-    deadline,
-    isTeacher,
-    onPress,
-  }: {
-    deadline: Deadline;
-    isTeacher: boolean;
-    onPress: () => void;
-  }) => {
-    const scale = useRef(new Animated.Value(1)).current;
-    const priority = getPriority(deadline.bookingDate);
-    
-    const handlePress = () => {
-      animateButton(scale);
-      onPress && onPress();
-    };
-
-    return (
-      <TouchableOpacity 
-        onPress={handlePress}
-        activeOpacity={0.7}
-      >
-        <Animated.View 
-          style={[
-            styles.deadlineCard,
-            {
-              transform: [{ scale }]
-            }
-          ]}
-        >
-          <View style={[styles.priorityIndicator, styles[`priority${priority}`]]} />
-          <View style={styles.deadlineInfo}>
-            <Text style={styles.deadlineTitle}>{deadline?.subject.subjectName}</Text>
-            <Text style={styles.deadlineType}>Live Class</Text>
-            {isTeacher ? (
-              <Text style={styles.teacherName}>with {deadline?.student.name}</Text>
-            ) : (
-              <Text style={styles.teacherName}>with {deadline?.teacher.name}</Text>
-            )}
-          </View>
-          <View style={styles.deadlineTime}>
-            <Text style={styles.deadlineLabel}>Due</Text>
-            <Text style={styles.deadlineDate}>{getRelativeDate(deadline.bookingDate)}</Text>
-            <Text style={styles.classTime}>{deadline.bookingTime}</Text>
-          </View>
-        </Animated.View>
-      </TouchableOpacity>
-    );
-  };
 
   const fetchData = async () => {
-    setLoading(true);
     try {
       const [userResponse, subjectsResponse] = await Promise.all([
         axiosWithAuth.get(`${ipURL}/api/auth/metadata`),
         axiosWithAuth.get(`${ipURL}/api/subjects/search?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`)
       ]);
-
-
       setUser(userResponse.data);
       setSubjectData(subjectsResponse.data);
-
-      const { reccomendedSubjects: recommendedSubjects, recommendedGrade, recommendedBoard } = userResponse.data;
-      // const recommendedResponse = await axios.post(
-      //   `${ipURL}/api/subjects/get-recommended-subjects`,
-      //   { recommendedSubjects, recommendedBoard, recommendedGrade },
-      //   { headers: { Authorization: `Bearer ${token}` }}
-      // );
-      // setRecommendedSubjects(recommendedResponse.data);
     } catch (error) {
       console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -467,14 +297,14 @@ const HomePage = () => {
     const loadAllData = async () => {
       try {
         await Promise.all([fetchData(), fetchDeadlines()]);
-        setIsDataLoaded(true);
       } catch (error) {
         console.error('Error loading data:', error);
+      } finally {
+        setIsDataLoaded(true);
       }
     };
     loadAllData();
 
-    // Update time every minute for greeting
     const timeInterval = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
@@ -482,7 +312,7 @@ const HomePage = () => {
     return () => clearInterval(timeInterval);
   }, []);
 
-  const onRefresh = React.useCallback(() => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
     Promise.all([fetchData(), fetchDeadlines()]).finally(() => setRefreshing(false));
   }, []);
@@ -490,6 +320,8 @@ const HomePage = () => {
   const handleItemPress = (itemId: { id: any }) => {
     router.push(`/(tabs)/home/${itemId.id}`);
   };
+
+  const openSchedule = () => router.push('/(tabs)/home/schedule');
 
   const applyOtaUpdate = useCallback(async () => {
     if (__DEV__) {
@@ -560,286 +392,214 @@ const HomePage = () => {
 
   if (!isDataLoaded) {
     return (
-      <View style={[styles.container, styles.loadingContainer]}>
+      <SafeAreaView style={[styles.container, styles.loadingContainer]}>
+        <StatusBar style="dark" />
         <ActivityIndicator size="large" color="#1A4C6E" />
-      </View>
+        <Text style={styles.loadingText}>Loading your home</Text>
+      </SafeAreaView>
     );
   }
 
-  const getGreeting = () => {
-    const hour = currentTime.getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 17) return "Good Afternoon";
-    return "Good Evening";
-  };
-
   return (
-    <View style={styles.container}>
-    <StatusBar style="dark" />
-    
-    {/* Enhanced Animated Header */}
-    <Animated.View style={[styles.header]}>
-      <LinearGradient
-        colors={['#1A4C6E', '#2A5C7E']}
-        style={styles.headerGradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-      <View style={styles.userSection}>
-        <TouchableOpacity 
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar style="dark" />
+
+      <View style={styles.topBar}>
+        <TouchableOpacity
           style={styles.profileButton}
-          onPress={() => {
-            animateButton(buttonScale);
-            router.replace('/(tabs)/profile');
-          }}
-          activeOpacity={0.7}
+          onPress={() => router.navigate('/(tabs)/profile')}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Open profile"
         >
-          <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-            <Image
-              source={{
-                uri: userDetails.userProfileImage,
-                cacheKey: `${userDetails.userProfileImage ?? 'default'}-${profileImageVersion}`,
-              }}
-              style={styles.profileImage}
-              placeholder={blurhash}
-              contentFit="cover"
-              transition={300}
-              cachePolicy="memory-disk"
-            />
-            <View style={styles.onlineIndicator} />
-          </Animated.View>
+          <Image
+            source={{
+              uri: userDetails.userProfileImage,
+              cacheKey: `${userDetails.userProfileImage ?? 'default'}-${profileImageVersion}`,
+            }}
+            style={styles.profileImage}
+            placeholder={blurhash}
+            contentFit="cover"
+            transition={200}
+            cachePolicy="memory-disk"
+          />
         </TouchableOpacity>
-        
+
         <View style={styles.welcomeText}>
-            <Text style={styles.greeting}>{getGreeting()},</Text>
-          <Text style={styles.userName}>{userDetails.userName.split(' ')[0]}</Text>
-            <Text style={styles.userLevel}> {user.isTeacher ? 'Tutor' : 'Student'}</Text>
+          <Text style={styles.greeting}>{getGreeting(currentTime)}</Text>
+          <View style={styles.nameRow}>
+            <Text style={styles.userName} numberOfLines={1}>{firstName}</Text>
+            <View style={styles.roleChip}>
+              <Text style={styles.roleChipText}>{roleLabel}</Text>
+            </View>
+          </View>
         </View>
-        
-     
       </View>
 
-        {/* Enhanced Stats Container */}
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          style={styles.statsContainer}
-          contentContainerStyle={styles.statsContent}
+      <ScrollView
+    style={styles.scroll}
+    contentContainerStyle={styles.scrollContent}
+    showsVerticalScrollIndicator={false}
+    refreshControl={
+      <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1A4C6E" />
+    }
+  >
+    <TouchableOpacity
+      style={styles.searchBar}
+      onPress={() => router.push('/(tabs)/home/allSubject')}
+      activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityLabel="Search courses"
+    >
+      <Ionicons name="search" size={20} color="#5C6B76" />
+      <Text style={styles.searchPlaceholder}>Search courses or tutors</Text>
+    </TouchableOpacity>
+
+    {isUpdateAvailable && (
+      <View style={styles.updateBanner}>
+        <View style={styles.updateMessage}>
+          <Ionicons name="cloud-download-outline" size={20} color="#1A4C6E" />
+          <View style={styles.updateTextContainer}>
+            <Text style={styles.updateTitle}>Update available</Text>
+            <Text style={styles.updateSubtitle}>Install the latest fixes and improvements.</Text>
+          </View>
+        </View>
+        <TouchableOpacity
+          style={[styles.updateButton, isUpdatingApp && styles.updateButtonDisabled]}
+          onPress={() => {
+            void applyOtaUpdate();
+          }}
+          disabled={isUpdatingApp}
         >
-          {/*<StudyStreakCard />
-          <StudyProgressCard />
-          <LeaderboardCard />
-          */}
-        </ScrollView>
-      </LinearGradient>
-      </Animated.View>
+          {isUpdatingApp ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Text style={styles.updateButtonText}>Update now</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    )}
 
-      {/* Main Content */}
-      <Animated.ScrollView
-        style={styles.content}
-        showsVerticalScrollIndicator={false}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
-        )}
-        scrollEventThrottle={16}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {/* Enhanced Quick Actions */}
-        <View style={styles.quickActions}>
-          <QuickActionButton 
-            icon="search-outline" 
-            label="Find Courses"
-            onPress={() => router.push('/(tabs)/home/allSubject')}
-            color="#1A4C6E"
+    {nextClass ? (
+      <View style={styles.section}>
+        <SectionHeader title="Up next" actionLabel="Schedule" onAction={openSchedule} />
+        <View style={styles.paddedBlock}>
+          <NextClassCard
+            deadline={nextClass}
+            isTeacher={user.isTeacher}
+            onPress={openSchedule}
           />
-          <QuickActionButton 
-            icon="calendar-outline" 
-            label="Schedule"
-            onPress={() => router.push('/(tabs)/profile/schedule')}
+          {laterClasses.map((deadline) => (
+            <NextClassCard
+              key={deadline.id}
+              deadline={deadline}
+              isTeacher={user.isTeacher}
+              onPress={openSchedule}
+              compact
+            />
+          ))}
+        </View>
+      </View>
+    ) : (
+      <View style={styles.section}>
+        <View style={styles.paddedBlock}>
+          <TouchableOpacity style={styles.emptyClass} onPress={openSchedule} activeOpacity={0.85}>
+            <Ionicons name="calendar-outline" size={22} color="#1A4C6E" />
+            <View style={styles.emptyClassCopy}>
+              <Text style={styles.emptyClassTitle}>No class booked yet</Text>
+              <Text style={styles.emptyClassSub}>Open your schedule to see upcoming sessions.</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#5C6B76" />
+          </TouchableOpacity>
+        </View>
+      </View>
+    )}
 
-            badge={deadlines.length > 0 ? deadlines.length.toString() : null}
-          />
-          <QuickActionButton 
-            icon="bookmark-outline" 
-            label="Saved"
-            onPress={() => router.push('/(tabs)/home/saved')}
+    <View style={styles.destinationRow}>
+      <DestinationTile
+        icon="calendar-outline"
+        label="Schedule"
+        onPress={openSchedule}
+        badge={deadlines.length > 0 ? String(deadlines.length) : null}
+      />
+      <DestinationTile
+        icon="bookmark-outline"
+        label="Saved"
+        onPress={() => router.push('/(tabs)/home/saved')}
+      />
+      <DestinationTile
+        icon="stats-chart-outline"
+        label="Progress"
+        onPress={() => router.push('/(tabs)/home/progress')}
+      />
+    </View>
 
+    {subjectData.length > 0 ? (
+      <>
+        <View style={styles.section}>
+          <SectionHeader
+            title="Featured courses"
+            actionLabel="See all"
+            onAction={() => router.push('/(tabs)/home/allSubject')}
           />
-          <QuickActionButton 
-            icon="trophy-outline" 
-            label="Achievements"
-            onPress={() => {
-              // Alert.alert("Coming Soon", "Achievements feature will be available soon!");
-              router.push('/(tabs)/home/progress');
-            }}
+          <HorizontalSubjectCard
+            subjectData={featuredCourses}
+            handleItemPress={handleItemPress}
+            isHorizontal
           />
         </View>
 
-        {isUpdateAvailable && (
-          <View style={styles.updateBanner}>
-            <View style={styles.updateMessage}>
-              <Ionicons name="cloud-download-outline" size={20} color="#1A4C6E" />
-              <View style={styles.updateTextContainer}>
-                <Text style={styles.updateTitle}>Update available</Text>
-                <Text style={styles.updateSubtitle}>Install the latest fixes and improvements.</Text>
-              </View>
-            </View>
-            <TouchableOpacity
-              style={[styles.updateButton, isUpdatingApp && styles.updateButtonDisabled]}
-              onPress={() => {
-                void applyOtaUpdate();
-              }}
-              disabled={isUpdatingApp}
-            >
-              {isUpdatingApp ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Text style={styles.updateButtonText}>Update now</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Study Tools Section */}
-        {/* <View style={styles.studyToolsSection}>
-          <SectionHeader title="Study Tools" />
-          <View style={styles.studyToolsGrid}>
-            <TouchableOpacity 
-              style={styles.studyToolCard}
-              onPress={() => {
-                Alert.alert("Coming Soon", "Study Timer feature will be available soon!");
-              }}
-            >
-              <View style={[styles.studyToolIcon, { backgroundColor: '#4ECDC420' }]}>
-                <Ionicons name="timer-outline" size={24} color="#4ECDC4" />
-              </View>
-              <Text style={styles.studyToolLabel}>Study Timer</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.studyToolCard}
-              onPress={() => {
-                Alert.alert("Coming Soon", "Flashcards feature will be available soon!");
-              }}
-            >
-              <View style={[styles.studyToolIcon, { backgroundColor: '#FF6B6B20' }]}>
-                <Ionicons name="library-outline" size={24} color="#FF6B6B" />
-              </View>
-              <Text style={styles.studyToolLabel}>Flashcards</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.studyToolCard}
-              onPress={() => {
-                Alert.alert("Coming Soon", "Study Groups feature will be available soon!");
-              }}
-            >
-              <View style={[styles.studyToolIcon, { backgroundColor: '#FFD70020' }]}>
-                <Ionicons name="people-outline" size={24} color="#FFD700" />
-              </View>
-              <Text style={styles.studyToolLabel}>Study Groups</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.studyToolCard}
-              onPress={() => {
-                Alert.alert("Coming Soon", "AI Tutor feature will be available soon!");
-              }}
-            >
-              <View style={[styles.studyToolIcon, { backgroundColor: '#9B59B620' }]}>
-                <Ionicons name="chatbubble-outline" size={24} color="#9B59B6" />
-              </View>
-              <Text style={styles.studyToolLabel}>AI Tutor</Text>
-            </TouchableOpacity>
-          </View>
-        </View> */}
-
-        {/* Continue Learning Section */}
-        {currentLearning.length > 0 && (
-          <View style={styles.section}>
-            <SectionHeader title="Continue Learning" />
-            <View style={styles.continueCard}>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: '65%' }]} />
-              </View>
-              <Text style={styles.continueTitle}>Advanced Mathematics</Text>
-              <Text style={styles.continueProgress}>65% Complete</Text>
-              <TouchableOpacity style={styles.continueButton}>
-                <Text style={styles.continueButtonText}>Resume</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {/* Upcoming Deadlines */}
-        {deadlines.length > 0 && <View style={styles.section}>
-          <SectionHeader title="Booked Classes" />
-          <View style={styles.deadlinesContainer}>
-            {deadlines.map(deadline => (
-              <DeadlineCard
-                key={deadline.id}
-                deadline={deadline}
-                isTeacher={user.isTeacher}
-                onPress={() => router.push('/profile/schedule')}
-              />
-            ))}
-          </View>
-        </View>}
-
-        {/* Recommended Courses Section */}
-        {/* <View style={styles.section}>
-          <SectionHeader title="Recommended for You" />
-          <HorizontalSubjectCard 
-            subjectData={recommendedSubjects} 
-            handleItemPress={handleItemPress} 
-            isHorizontal={true}
-          />
-        </View> */}
-
-        {/* Popular Courses Section */}
+        {browseCourses.length > 0 && (
         <View style={styles.section}>
-          <SectionHeader title="Popular Courses" />
-          <HorizontalSubjectCard 
-            subjectData={subjectData
-              .sort(() => Math.random() - 0.5)
-              .slice(0, 7)} 
-            handleItemPress={handleItemPress} 
-            isHorizontal={true}
+          <SectionHeader
+            title="Browse courses"
+            actionLabel="See all"
+            onAction={() => router.push('/(tabs)/home/allSubject')}
           />
-        </View>
-
-        {/* Browse Courses Section */}
-        <View style={styles.section}>
-          <SectionHeader title="Browse Courses" showSeeAll />
-          <ColumnSubjectCards 
-            subjectData={subjectData.slice(0, 14)} 
-            handleItemPress={handleItemPress} 
+          <ColumnSubjectCards
+            subjectData={browseCourses}
+            handleItemPress={handleItemPress}
             isHorizontal={false}
           />
         </View>
-
-        <View style={[styles.section, styles.lastSection]}>
-          <SectionHeader title="Community Videos" />
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.videoScrollContainer}
-          >
-            {communityVideos.map((item) => (
-              <View key={item.id} style={styles.videoCard}>
-                <VideoPlayer videoUrl={item.videoUrl} />
-                <Text style={styles.videoTitle} numberOfLines={1}>
-                  {item.title}
-                </Text>
-              </View>
-            ))}
-          </ScrollView>
+        )}
+      </>
+    ) : (
+      <View style={styles.section}>
+        <View style={styles.paddedBlock}>
+          <View style={styles.emptyCourses}>
+            <Text style={styles.emptyClassTitle}>No courses to show yet</Text>
+            <Text style={styles.emptyClassSub}>Pull to refresh, or search to find a tutor.</Text>
+            <TouchableOpacity
+              style={styles.emptyCta}
+              onPress={() => router.push('/(tabs)/home/allSubject')}
+            >
+              <Text style={styles.emptyCtaText}>Find courses</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </Animated.ScrollView>
+      </View>
+    )}
+
+    <View style={[styles.section, styles.lastSection]}>
+      <SectionHeader title="Community videos" />
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.videoScroll}
+      >
+        {communityVideos.map((item) => (
+          <View key={item.id} style={styles.videoCard}>
+            <VideoPlayer videoUrl={item.videoUrl} />
+            <Text style={styles.videoTitle} numberOfLines={1}>
+              {item.title}
+            </Text>
+          </View>
+        ))}
+      </ScrollView>
     </View>
+  </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -848,52 +608,35 @@ export default HomePage;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F4F6F8',
   },
-  header: {
-
-    paddingBottom: verticalScale(0),
-
-    borderBottomLeftRadius: moderateScale(35),
-    borderBottomRightRadius: moderateScale(35),
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  headerGradient: {
-    paddingTop: verticalScale(20),
-    paddingBottom: verticalScale(25),
-    borderBottomLeftRadius: moderateScale(35),
-    borderBottomRightRadius: moderateScale(35),
+  loadingText: {
+    marginTop: verticalScale(12),
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
+    color: '#5C6B76',
   },
-  userSection: {
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: horizontalScale(20),
-    marginTop: verticalScale(40),
+    paddingTop: verticalScale(6),
+    paddingBottom: verticalScale(12),
   },
   profileButton: {
-    position: 'relative',
+    minWidth: 48,
+    minHeight: 48,
+    justifyContent: 'center',
   },
   profileImage: {
-    height: verticalScale(48),
-    width: horizontalScale(48),
-    borderRadius: moderateScale(24),
-    borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.8)',
-  },
-  onlineIndicator: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#2DCB63',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
+    height: 48,
+    width: 48,
+    borderRadius: 24,
+    backgroundColor: '#D7DEE5',
   },
   welcomeText: {
     flex: 1,
@@ -901,87 +644,57 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontFamily: FONT.regular,
-    fontSize: moderateScale(14),
-    color: '#E0E0E0',
+    fontSize: moderateScale(13),
+    color: '#5C6B76',
   },
-  userLevel: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(12),
-    color: '#B0C4DE',
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: horizontalScale(8),
     marginTop: verticalScale(2),
   },
-  notificationBadge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#FF4A4A',
-    justifyContent: 'center',
-    alignItems: 'center',
+  userName: {
+    flexShrink: 1,
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(22),
+    color: '#12263A',
   },
-  badgeText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
+  roleChip: {
+    backgroundColor: '#E4EEF5',
+    paddingHorizontal: horizontalScale(8),
+    paddingVertical: verticalScale(3),
+    borderRadius: moderateScale(999),
+  },
+  roleChipText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(11),
+    color: '#1A4C6E',
   },
   content: {
     flex: 1,
   },
-  section: {
-    marginTop: verticalScale(24),
+  scroll: {
+    flex: 1,
   },
-  lastSection: {
-    marginBottom: verticalScale(24),
+  scrollContent: {
+    paddingBottom: verticalScale(28),
   },
-  
- 
-  seeAllButton: {
+  searchBar: {
+    marginHorizontal: horizontalScale(20),
+    minHeight: 48,
+    borderRadius: moderateScale(14),
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: horizontalScale(14),
+    gap: horizontalScale(10),
   },
-  seeAllText: {
+  searchPlaceholder: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(14),
-    color: '#F1A568',
-    marginRight: horizontalScale(4),
-  },
-  
-  statsValue: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(18),
-    color: '#1A4C6E',
-    marginTop: verticalScale(5),
-  },
-  statsLabel: {
-    fontFamily: FONT.regular,
-    fontSize: moderateScale(12),
-    color: '#666',
-    marginTop: verticalScale(2),
-  },
-  quickActionButton: {
-    alignItems: 'center',
-    width: horizontalScale(80),
-  },
-  
-  quickActionLabel: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(10),
-    color: COLORS.primary,
-    marginTop: verticalScale(8),
-  },
-  statsContainer: {
-    marginTop: verticalScale(10),
-  },
-  statsContent: {
-    paddingHorizontal: horizontalScale(20),
-  },
-  quickActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: horizontalScale(20),
-    marginTop: verticalScale(20),
+    fontSize: moderateScale(15),
+    color: '#8A97A3',
   },
   updateBanner: {
     marginTop: verticalScale(16),
@@ -1018,8 +731,10 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(10),
     paddingVertical: verticalScale(8),
     paddingHorizontal: horizontalScale(14),
-    minWidth: horizontalScale(110),
+    minWidth: 110,
+    minHeight: 40,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   updateButtonDisabled: {
     opacity: 0.7,
@@ -1029,544 +744,218 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(12),
     color: '#FFFFFF',
   },
-  continueCard: {
-    backgroundColor: '#F1A568',
-    borderRadius: moderateScale(15),
-    padding: moderateScale(20),
-    alignItems: 'center',
+  section: {
+    marginTop: verticalScale(22),
   },
- 
-  continueTitle: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(18),
-    color: '#1A4C6E',
-  },
-  continueProgress: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(14),
-    color: '#1A4C6E',
-    marginBottom: verticalScale(12),
-  },
-  continueButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: moderateScale(15),
-    paddingVertical: verticalScale(8),
-    paddingHorizontal: horizontalScale(20),
-  },
-  continueButtonText: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(14),
-    color: '#1A4C6E',
-  },
-  achievementsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  achievementCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: moderateScale(15),
-    padding: moderateScale(15),
-    width: horizontalScale(100),
-    alignItems: 'center',
-  },
-  achievementIcon: {
-    backgroundColor: '#F1A568',
-    width: horizontalScale(50),
-    height: verticalScale(50),
-    borderRadius: moderateScale(25),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  achievementTitle: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(14),
-    color: '#1A4C6E',
-    marginTop: verticalScale(8),
-  },
-  achievementDesc: {
-    fontFamily: FONT.regular,
-    fontSize: moderateScale(12),
-    color: '#666',
-    marginTop: verticalScale(4),
-  },
-  progressContainer: {
-    backgroundColor: '#FFFFFF',
-    margin: horizontalScale(20),
-    borderRadius: moderateScale(15),
-    padding: moderateScale(20),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    //shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  progressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: verticalScale(15),
-  },
-  progressTitle: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(16),
-    color: '#1A4C6E',
-  },
-  progressStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  progressNumber: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(18),
-    color: '#1A4C6E',
-  },
-  progressLabel: {
-    fontFamily: FONT.regular,
-    fontSize: moderateScale(12),
-    color: '#666666',
-    marginLeft: horizontalScale(4),
-  },
-  progressDivider: {
-    width: 1,
-    height: verticalScale(20),
-    backgroundColor: '#E0E0E0',
-    marginHorizontal: horizontalScale(12),
-  },
-  progressBar: {
-    height: verticalScale(8),
-    backgroundColor: 'rgba(26,76,110,0.1)',
-    borderRadius: moderateScale(4),
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#F1A568',
-    borderRadius: moderateScale(4),
-  },
-  progressText: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(12),
-    color: '#666666',
-    marginTop: verticalScale(8),
-  },
-  liveSessionsContainer: {
-    paddingHorizontal: horizontalScale(20),
-  },
-  liveSessionCard: {
-    width: horizontalScale(280),
-    backgroundColor: '#FFFFFF',
-    borderRadius: moderateScale(15),
-    marginRight: horizontalScale(16),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    //shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  sessionThumbnail: {
-    width: '100%',
-    height: verticalScale(140),
-    borderTopLeftRadius: moderateScale(15),
-    borderTopRightRadius: moderateScale(15),
-  },
-  liveIndicator: {
-    position: 'absolute',
-    top: verticalScale(12),
-    left: horizontalScale(12),
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: horizontalScale(8),
-    paddingVertical: verticalScale(4),
-    borderRadius: moderateScale(12),
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#FF4A4A',
-    marginRight: horizontalScale(4),
-  },
-  liveText: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(10),
-    color: '#FFFFFF',
-  },
-  sessionInfo: {
-    padding: moderateScale(16),
-  },
-  sessionTitle: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(16),
-    color: '#1A4C6E',
-    marginBottom: verticalScale(4),
-  },
-  sessionInstructor: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(14),
-    color: '#666666',
+  lastSection: {
     marginBottom: verticalScale(8),
-  },
-  sessionDetails: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sessionTime: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: horizontalScale(16),
-  },
-  sessionTimeText: {
-    fontFamily: FONT.regular,
-    fontSize: moderateScale(12),
-    color: '#666666',
-    marginLeft: horizontalScale(4),
-  },
-  sessionParticipants: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sessionParticipantsText: {
-    fontFamily: FONT.regular,
-    fontSize: moderateScale(12),
-    color: '#666666',
-    marginLeft: horizontalScale(4),
-  },
-
-  // Deadlines
-  deadlinesContainer: {
-    paddingHorizontal: horizontalScale(20),
-  },
-  
-  priorityIndicator: {
-    width: 4,
-    height: verticalScale(40),
-    borderRadius: moderateScale(2),
-    marginRight: horizontalScale(12),
-  },
-  priorityhigh: {
-    backgroundColor: '#FF4A4A',
-  },
-  prioritymedium: {
-    backgroundColor: '#F1A568',
-  },
-  prioritylow: {
-    backgroundColor: '#2DCB63',
-  },
-  deadlineInfo: {
-    flex: 1,
-    marginRight: horizontalScale(12),
-  },
-  deadlineTitle: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(14),
-    color: '#1A4C6E',
-    marginBottom: verticalScale(4),
-  },
-  deadlineType: {
-    fontFamily: FONT.regular,
-    fontSize: moderateScale(12),
-    color: '#666666',
-  },
-  deadlineTime: {
-    alignItems: 'flex-end',
-    minWidth: horizontalScale(100),
-  },
-  deadlineLabel: {
-    fontFamily: FONT.regular,
-    fontSize: moderateScale(12),
-    color: '#666666',
-  },
-  deadlineDate: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(14),
-    color: '#1A4C6E',
-  },
-  teacherName: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(12),
-    color: '#666666',
-    marginTop: verticalScale(4),
-  },
-  classTime: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(14),
-    color: '#1A4C6E',
-    marginTop: verticalScale(4),
-  },
-  statsCard: {
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    borderRadius: moderateScale(20),
-    padding: moderateScale(16),
-    marginHorizontal: horizontalScale(8),
-    alignItems: 'center',
-    minWidth: horizontalScale(120),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  statsIconContainer: {
-    marginBottom: verticalScale(8),
-  },
-  streakCard: {
-    borderRadius: moderateScale(20),
-    padding: moderateScale(16),
-    marginHorizontal: horizontalScale(8),
-    minWidth: horizontalScale(140),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  streakContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  streakIcon: {
-    marginRight: horizontalScale(12),
-  },
-  streakInfo: {
-    flex: 1,
-  },
-  streakNumber: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(24),
-    color: '#FFFFFF',
-  },
-  streakLabel: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(12),
-    color: 'rgba(255,255,255,0.9)',
-  },
-  streakSubtext: {
-    fontFamily: FONT.regular,
-    fontSize: moderateScale(10),
-    color: 'rgba(255,255,255,0.7)',
-  },
-  progressCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: moderateScale(20),
-    padding: moderateScale(16),
-    marginHorizontal: horizontalScale(8),
-    minWidth: horizontalScale(140),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  progressHeaderNew: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: verticalScale(8),
-  },
-  progressTitleNew: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(12),
-    color: '#666',
-  },
-  progressPercentage: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(16),
-    color: '#1A4C6E',
-  },
-  progressBarContainer: {
-    height: verticalScale(6),
-    backgroundColor: 'rgba(26,76,110,0.1)',
-    borderRadius: moderateScale(3),
-    marginBottom: verticalScale(8),
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#4ECDC4',
-    borderRadius: moderateScale(3),
-  },
-  progressTextNew: {
-    fontFamily: FONT.regular,
-    fontSize: moderateScale(10),
-    color: '#666',
-  },
-  leaderboardCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: moderateScale(20),
-    padding: moderateScale(16),
-    marginHorizontal: horizontalScale(8),
-    minWidth: horizontalScale(120),
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  leaderboardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: verticalScale(8),
-  },
-  leaderboardTitle: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(12),
-    color: '#666',
-    marginLeft: horizontalScale(4),
-  },
-  rankNumber: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(20),
-    color: '#1A4C6E',
-    marginBottom: verticalScale(4),
-  },
-  rankSubtext: {
-    fontFamily: FONT.regular,
-    fontSize: moderateScale(10),
-    color: '#666',
-    textAlign: 'center',
-  },
-  quickActionIcon: {
-    width: horizontalScale(56),
-    height: verticalScale(56),
-    borderRadius: moderateScale(28),
-    backgroundColor: 'rgba(26,76,110,0.08)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#1A4C6E',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    position: 'relative',
-  },
-  quickActionBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#FF4A4A',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  studyToolsSection: {
-    marginTop: verticalScale(24),
-  },
-  studyToolsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    paddingHorizontal: horizontalScale(20),
-  },
-  studyToolCard: {
-    width: (screenWidth - horizontalScale(60)) / 2,
-    backgroundColor: '#FFFFFF',
-    borderRadius: moderateScale(16),
-    padding: moderateScale(16),
-    marginBottom: verticalScale(12),
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  studyToolIcon: {
-    width: horizontalScale(48),
-    height: verticalScale(48),
-    borderRadius: moderateScale(24),
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: verticalScale(8),
-  },
-  studyToolLabel: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(12),
-    color: '#1A4C6E',
-    textAlign: 'center',
-  },
-
-  deadlineCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: moderateScale(16),
-    padding: moderateScale(18),
-    marginBottom: verticalScale(12),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    //shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 4,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: horizontalScale(20),
-    marginBottom: verticalScale(18),
-    marginTop: verticalScale(8),
+    marginBottom: verticalScale(12),
   },
-
   sectionTitle: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(20),
+    fontSize: moderateScale(18),
+    color: '#12263A',
+  },
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 44,
+  },
+  seeAllText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
     color: '#1A4C6E',
-    letterSpacing: -0.5,
+    marginRight: horizontalScale(2),
   },
-
-  notificationButton: {
-    position: 'relative',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center',
+  paddedBlock: {
+    paddingHorizontal: horizontalScale(20),
+    gap: verticalScale(10),
+  },
+  nextClassCard: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(18),
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: '#E6EBF0',
+    padding: moderateScale(14),
+    minHeight: 88,
+    gap: horizontalScale(12),
   },
-  userName: {
+  nextClassCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(14),
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    padding: moderateScale(12),
+    minHeight: 64,
+    gap: horizontalScale(12),
+  },
+  pressed: {
+    opacity: 0.92,
+  },
+  nextClassWhen: {
+    width: horizontalScale(72),
+    borderRadius: moderateScale(12),
+    backgroundColor: '#EEF3F7',
+    paddingVertical: verticalScale(10),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nextClassWhenToday: {
+    backgroundColor: '#1A4C6E',
+  },
+  nextClassWhenLabel: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(11),
+    color: '#1A4C6E',
+  },
+  nextClassWhenLabelToday: {
+    color: '#D7E6F2',
+  },
+  nextClassTime: {
+    marginTop: verticalScale(2),
     fontFamily: FONT.bold,
-    fontSize: moderateScale(20),
-    color: '#FFFFFF',
-    letterSpacing: -0.5,
+    fontSize: moderateScale(13),
+    color: '#12263A',
   },
-  loadingContainer: {
+  nextClassTimeToday: {
+    color: '#FFFFFF',
+  },
+  nextClassBody: {
+    flex: 1,
+  },
+  nextClassKicker: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(11),
+    color: '#5C6B76',
+    marginBottom: verticalScale(2),
+  },
+  nextClassTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(16),
+    color: '#12263A',
+  },
+  nextClassWith: {
+    marginTop: verticalScale(2),
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(13),
+    color: '#5C6B76',
+  },
+  emptyClass: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(16),
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    padding: moderateScale(14),
+    minHeight: 72,
+    gap: horizontalScale(12),
+  },
+  emptyClassCopy: {
+    flex: 1,
+  },
+  emptyClassTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(15),
+    color: '#12263A',
+  },
+  emptyClassSub: {
+    marginTop: verticalScale(2),
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(13),
+    color: '#5C6B76',
+  },
+  emptyCourses: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(16),
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    padding: moderateScale(18),
+    alignItems: 'flex-start',
+  },
+  emptyCta: {
+    marginTop: verticalScale(14),
+    backgroundColor: '#1A4C6E',
+    borderRadius: moderateScale(12),
+    minHeight: 44,
+    paddingHorizontal: horizontalScale(16),
+    justifyContent: 'center',
+  },
+  emptyCtaText: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(14),
+    color: '#FFFFFF',
+  },
+  destinationRow: {
+    marginTop: verticalScale(18),
+    paddingHorizontal: horizontalScale(20),
+    flexDirection: 'row',
+    gap: horizontalScale(10),
+  },
+  destinationTile: {
+    flex: 1,
+    minHeight: 88,
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(16),
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: verticalScale(12),
+    paddingHorizontal: horizontalScale(6),
+  },
+  destinationIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#EEF3F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  destinationBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#C2410C',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 4,
   },
-  videoScrollContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontFamily: FONT.bold,
+  },
+  destinationLabel: {
+    marginTop: verticalScale(8),
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(12),
+    color: '#12263A',
+    textAlign: 'center',
+  },
+  videoScroll: {
+    paddingHorizontal: horizontalScale(20),
   },
   videoCard: {
-    marginRight: 12,
+    marginRight: horizontalScale(12),
   },
   videoTitle: {
     marginTop: verticalScale(8),
     fontFamily: FONT.medium,
     fontSize: moderateScale(13),
-    color: '#1A4C6E',
-    maxWidth: screenWidth * 0.8,
+    color: '#12263A',
   },
 });

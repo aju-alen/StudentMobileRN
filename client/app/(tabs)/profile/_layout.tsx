@@ -23,15 +23,34 @@ const ProfileLayout = () => {
       <Ionicons name="arrow-back" size={24} color="black" onPress={()=>router.back()} style={{ marginLeft: 0 }} />
     ),}} />
 
-    <Stack.Screen name='schedule' options={{ headerShown:false,
-    headerLeft: () => (
-        <Ionicons name="arrow-back" size={24} color="black" onPress={()=>router.replace('/(tabs)/profile')} style={{ marginLeft: 0 }} />
-      ),
-    }}/>
+    <Stack.Screen name='schedule' options={{ headerShown:false }}/>
+    <Stack.Screen
+      name="chat/[conversationId]"
+      options={{ headerShown: false, gestureEnabled: false }}
+    />
+    <Stack.Screen
+      name="singleProfile/[singleProfileId]"
+      options={{
+        presentation: 'modal',
+        headerShown: true,
+        headerTitle: 'Profile',
+        headerLeft: () => (
+          <Ionicons name="arrow-back" size={24} color="black" onPress={() => router.back()} style={{ marginLeft: 0 }} />
+        ),
+      }}
+    />
+    <Stack.Screen
+      name="subjectReviews/[subjectId]"
+      options={{
+        headerShown: true,
+        headerTitle: 'Reviews',
+        headerLeft: () => (
+          <Ionicons name="arrow-back" size={24} color="black" onPress={() => router.back()} style={{ marginLeft: 0 }} />
+        ),
+      }}
+    />
     <Stack.Screen name="editSubject/[editSubjectId]" options={{presentation:'modal'}}/>
-    <Stack.Screen name="createSubject/[createSubjectId]" options={{presentation:'modal', headerShown:true, headerTitle:'', headerLeft: () => (
-      <Ionicons name="arrow-back" size={24} color="black" onPress={()=>router.back()} style={{ marginLeft: 0 }} />
-    ),}}/>
+    <Stack.Screen name="createSubject/[createSubjectId]" options={{ presentation: 'modal', headerShown: false }} />
     <Stack.Screen name="multi-student-paywall" options={{  headerShown: false, headerTitle: 'Multi-Student Subscription' }} />
     <Stack.Screen name="course-paywall" options={{  headerShown: false, headerTitle: 'Course Paywall' }} />
     

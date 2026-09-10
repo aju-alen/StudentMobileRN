@@ -4,30 +4,30 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableWithoutFeedback,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
   RefreshControl,
   Share,
+  StatusBar,
 } from "react-native";
 import { Image } from 'expo-image';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
-import axios from "axios";
-import { ipURL } from "../../utils/utils";
-import { COLORS, FONT } from "../../../constants";
+import { FONT } from "../../../constants";
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
 import SubjectCards from "../../components/SubjectCards";
 import CalendarSummary from "../../components/CalendarSummary";
 import { Ionicons } from '@expo/vector-icons';
 import { axiosWithAuth } from "../../utils/customAxios";
+import { ipURL } from "../../utils/utils";
 import UserSubjectCards from "../../components/UserSubjectCards";
 import * as Sentry from '@sentry/react-native';
 import CourseTypeModal from "../../components/CourseTypeModal";
 import { useRevenueCat } from "../../providers/RevenueCatProvider";
 import { getTeacherProfileShareUrl } from "../../utils/teacherProfileLink";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface User {
   id?: string;
@@ -51,15 +51,11 @@ interface SubjectItem {
   subjectGrade?: number;
 }
 
-
-
-const blurhash = '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
+const blurhash = '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
 const ProfilePage = () => {
   const [user, setUser] = useState<User>({});
   const [userDetails, setUserDetails] = useState<User>({});
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [activeCourses, setActiveCourses] = useState<SubjectItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [showCourseTypeModal, setShowCourseTypeModal] = useState(false);
@@ -79,7 +75,7 @@ const ProfilePage = () => {
   const getUser = async () => {
     try {
       const apiUser = await axiosWithAuth.get(`${ipURL}/api/auth/metadata`);
-      
+
       setUser(apiUser.data);
       setUserDetails(apiUser.data);
       if (apiUser.data?.id) {
@@ -115,7 +111,6 @@ const ProfilePage = () => {
     }
   };
 
-  // Refetch user when screen is focused (e.g. returning from edit-profile after updating photo)
   useFocusEffect(
     React.useCallback(() => {
       getUser();
@@ -125,25 +120,17 @@ const ProfilePage = () => {
     }, [])
   );
 
-  console.log("user in profile", user);
-  
-
-
-
   const handleItemPress = (itemId: { id: any }) => {
     router.push(`/(tabs)/profile/${itemId.id}`);
   };
 
   const handleCreateNewSubject = async () => {
-    // Prevent multiple clicks within 3 seconds
     if (isButtonCooldown) {
       return;
     }
 
-    // Set cooldown state
     setIsButtonCooldown(true);
-    
-    // Reset cooldown after 3 seconds
+
     setTimeout(() => {
       setIsButtonCooldown(false);
     }, 3000);
@@ -153,7 +140,6 @@ const ProfilePage = () => {
 
       const {isTeacher, id, zoomAccountCreated, zoomUserAcceptedInvite} = userverificationCheck.data.userDetail;
       const zoomVerified = zoomUserAcceptedInvite || zoomAccountCreated;
-      console.log(zoomAccountCreated, zoomUserAcceptedInvite, isTeacher, 'this is the user verification check');
       if ( !isTeacher ) {
         Alert.alert('Incomplete Profile', 'You need to be registered as a tutor to create a course.');
         return;
@@ -180,12 +166,11 @@ const ProfilePage = () => {
         );
         return;
       }
-      
+
       if (!id) {
         throw new Error('User ID not found in user details');
       }
       await refreshDraftFlags(id);
-      // Show course type selection modal
       setShowCourseTypeModal(true);
     } catch (error) {
       Sentry.captureException(error, {
@@ -207,7 +192,7 @@ const ProfilePage = () => {
     try {
       const userverificationCheck = await axiosWithAuth.get(`${ipURL}/api/auth/verification-check`);
       const { id } = userverificationCheck.data.userDetail;
-      
+
       Sentry.addBreadcrumb({
         category: 'navigation',
         message: 'Creating single student course',
@@ -217,7 +202,7 @@ const ProfilePage = () => {
           courseType: 'SINGLE_STUDENT'
         }
       });
-      
+
       router.push(`/(tabs)/profile/createSubject/${id}?courseType=SINGLE_STUDENT`);
     } catch (error) {
       Alert.alert('Error', 'Failed to navigate to course creation.');
@@ -226,19 +211,13 @@ const ProfilePage = () => {
 
   const handleSelectMultiStudent = async () => {
     try {
-      console.log(revenueCatContext, 'this is the revenue cat context');
-      
       if (revenueCatContext && revenueCatContext.getMultiStudentCapacity) {
         const capacity = await revenueCatContext.getMultiStudentCapacity();
 
-        console.log(capacity, 'this is the capacity');
-        
-        
         if (capacity && capacity > 0) {
-          // User has entitlement, proceed to create multi-student course
           const userverificationCheck = await axiosWithAuth.get(`${ipURL}/api/auth/verification-check`);
           const { id } = userverificationCheck.data.userDetail;
-          
+
           Sentry.addBreadcrumb({
             category: 'navigation',
             message: 'Creating multi student course',
@@ -249,16 +228,12 @@ const ProfilePage = () => {
               capacity
             }
           });
-          
+
           router.push(`/(tabs)/profile/createSubject/${id}?courseType=MULTI_STUDENT&maxCapacity=${capacity}`);
         } else {
-          // No entitlement, navigate to paywall page
-          console.log('no entitlement, navigating to paywall');
           router.push(`/(tabs)/profile/course-paywall?courseType=MULTI_STUDENT&userEmail=${encodeURIComponent(user.email || '')}`);
         }
       } else {
-        // RevenueCat not ready, navigate to paywall page
-        console.log('revenue cat not ready, navigating to paywall');
         router.push(`/(tabs)/profile/course-paywall?courseType=MULTI_STUDENT&userEmail=${encodeURIComponent(user.email || '')}`);
       }
     } catch (error) {
@@ -336,12 +311,6 @@ const ProfilePage = () => {
     }
   };
 
-  const closeDropdown = () => {
-    setShowDropdown(false);
-  };
-
-  
-
   const handleSettingsPress = () => {
     router.push('/(tabs)/profile/settings');
   };
@@ -365,53 +334,67 @@ const ProfilePage = () => {
   };
 
   const onRefresh = () => {
-    // Show the same ActivityIndicator as initial load and refetch all data
     setLoading(true);
     setRefreshing(true);
     getUser();
   };
 
-  console.log(user, 'this is the user');
-  
+  const teacherCourses = user.subjects || [];
+  const studentCourses = user.userSubjects || [];
+  const hasCourses = userDetails?.isTeacher ? teacherCourses.length > 0 : studentCourses.length > 0;
 
   return (
-    <View style={styles.screen}>
-      {/* Main content remains visible */}
-      <TouchableWithoutFeedback onPress={closeDropdown}>
-        <ScrollView
-          style={styles.mainContainer}
-          contentContainerStyle={styles.scrollContent}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.topBar}>
-            <Text style={styles.pageTitle}>My Profile</Text>
-            <View style={styles.iconsContainer}>
-              {userDetails?.isTeacher && (
-                <TouchableOpacity
-                  style={styles.settingsButton}
-                  onPress={handleShareProfile}
-                >
-                  <Ionicons name="share-outline" size={24} color="#1A2B4B" />
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity 
-                style={styles.settingsButton}
-                onPress={handleSettingsPress}
-              >
-                <Ionicons name="settings-outline" size={24} color="#1A2B4B" />
-              </TouchableOpacity>
-            </View>
-          </View>
-          
-          <View style={styles.profileSection}>
+    <SafeAreaView style={styles.screen} edges={['top']}>
+      <StatusBar barStyle="dark-content" />
+
+      <View style={styles.topBar}>
+        <View style={styles.titleBlock}>
+          <Text style={styles.pageTitle}>Profile</Text>
+          <Text style={styles.pageSubtitle}>Your account, classes, and courses</Text>
+        </View>
+        <View style={styles.iconsContainer}>
+          {userDetails?.isTeacher && (
             <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => router.push('/(tabs)/profile/edit-profile')}
+              style={styles.iconButton}
+              onPress={handleShareProfile}
+              accessibilityRole="button"
+              accessibilityLabel="Share profile"
             >
+              <Ionicons name="share-outline" size={22} color="#12263A" />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={handleSettingsPress}
+            accessibilityRole="button"
+            accessibilityLabel="Open settings"
+          >
+            <Ionicons name="settings-outline" size={22} color="#12263A" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView
+        style={styles.mainContainer}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#1A4C6E']}
+            tintColor="#1A4C6E"
+          />
+        }
+      >
+        <View style={styles.identityCard}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => router.push('/(tabs)/profile/edit-profile')}
+            accessibilityRole="button"
+            accessibilityLabel="Edit profile photo"
+          >
+            {user.profileImage ? (
               <Image
                 key={user.profileImage ?? 'default'}
                 source={{
@@ -421,107 +404,113 @@ const ProfilePage = () => {
                 style={styles.profileImage}
                 placeholder={blurhash}
                 contentFit="cover"
-                transition={500}
+                transition={200}
                 cachePolicy="memory-disk"
               />
-            </TouchableOpacity>
-            <View style={styles.profileInfo}>
-              <Text style={styles.name}>{user.name}</Text>
-              <Text style={styles.role}>
-                {userDetails?.isTeacher ? 'Tutor' : 'Student'}
-              </Text>
-              <View style={styles.badgeContainer}>
-
-                {user?.reccomendedSubjects?.map((subjectTag,idx) =>
-
-                (
-                <View style={styles.badge} key={idx} >
-                  <Text style={styles.badgeText}>{subjectTag.toLocaleUpperCase()}</Text>
-                </View>
-                )
-                )}
-
+            ) : (
+              <View style={styles.profileImagePlaceholder}>
+                <Ionicons name="person-outline" size={28} color="#1A4C6E" />
+              </View>
+            )}
+          </TouchableOpacity>
+          <View style={styles.profileInfo}>
+            <View style={styles.nameRow}>
+              <Text style={styles.name} numberOfLines={1}>{user.name || 'Your profile'}</Text>
+              <View style={styles.roleChip}>
+                <Text style={styles.roleChipText}>
+                  {userDetails?.isTeacher ? 'Tutor' : 'Student'}
+                </Text>
               </View>
             </View>
+            {!!user?.reccomendedSubjects?.length && (
+              <View style={styles.badgeContainer}>
+                {user.reccomendedSubjects.map((subjectTag, idx) => (
+                  <View style={styles.badge} key={`${subjectTag}-${idx}`}>
+                    <Text style={styles.badgeText}>{subjectTag}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            <TouchableOpacity
+              onPress={() => router.push('/(tabs)/profile/edit-profile')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Edit profile"
+            >
+              <Text style={styles.editLink}>Edit profile</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* About Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About</Text>
+          <Text style={[styles.sectionTitle, styles.sectionTitleSpaced]}>About</Text>
           <View style={styles.card}>
             <Text style={styles.aboutText}>
-              {user.userDescription || "No description added."}
+              {user.userDescription || "No description added yet."}
             </Text>
           </View>
         </View>
 
-        {/* Calendar Summary Section */}
         <View style={styles.section}>
           <CalendarSummary isTeacher={userDetails?.isTeacher} />
         </View>
 
-        {/* Teaching Stats */}
-       {/* {userDetails?.isTeacher && <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Teaching Overview</Text>
-          <View style={styles.overviewGrid}>
-            <View style={styles.overviewItem}>
-              <Text style={styles.overviewValue}>98%</Text>
-              <Text style={styles.overviewLabel}>Response Rate</Text>
-            </View>
-            <View style={styles.overviewItem}>
-              <Text style={styles.overviewValue}>2hr</Text>
-              <Text style={styles.overviewLabel}>Avg. Response</Text>
-            </View>
-            <View style={styles.overviewItem}>
-              <Text style={styles.overviewValue}>95%</Text>
-              <Text style={styles.overviewLabel}>Satisfaction</Text>
-            </View>
-          </View>
-        </View>} */}
-
-        {/* Courses Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Your Courses</Text>
             {userDetails?.isTeacher && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={handleCreateNewSubject}
                 disabled={loading || refreshing || isButtonCooldown}
-                activeOpacity={0.7}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel="Create a new course"
               >
                 <View style={[styles.addButton, (loading || refreshing || isButtonCooldown) && styles.addButtonDisabled]}>
                   <Text style={[styles.addButtonText, (loading || refreshing || isButtonCooldown) && styles.addButtonTextDisabled]}>
-                    + New Course
+                    New course
                   </Text>
                 </View>
               </TouchableOpacity>
             )}
           </View>
-       {userDetails?.isTeacher && <SubjectCards 
-            subjectData={user.subjects} 
-            handleItemPress={handleItemPress} 
-            isHorizontal={false} 
-          />}
-          {!userDetails?.isTeacher && <UserSubjectCards 
-            subjectData={user?.userSubjects} 
-            handleItemPress={handleItemPress} 
-            isHorizontal={false} 
-          />}
-        </View>
-         {/* Add Logout Section */}
-         
-        </ScrollView>
-      </TouchableWithoutFeedback>
 
-      {/* Loading overlay on top of content */}
+          {userDetails?.isTeacher && hasCourses && (
+            <SubjectCards
+              subjectData={user.subjects}
+              handleItemPress={handleItemPress}
+              isHorizontal={false}
+            />
+          )}
+          {!userDetails?.isTeacher && hasCourses && (
+            <UserSubjectCards
+              subjectData={user?.userSubjects}
+              handleItemPress={handleItemPress}
+              isHorizontal={false}
+            />
+          )}
+          {!hasCourses && (
+            <View style={styles.emptyCourses}>
+              <Ionicons name="book-outline" size={28} color="#5C6B76" />
+              <Text style={styles.emptyCoursesTitle}>
+                {userDetails?.isTeacher ? 'No courses yet' : 'No enrolled courses'}
+              </Text>
+              <Text style={styles.emptyCoursesSub}>
+                {userDetails?.isTeacher
+                  ? 'Create a course to start teaching.'
+                  : 'Courses you enroll in will show up here.'}
+              </Text>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+
       {(loading || refreshing) && (
         <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color="#1A4C6E" />
         </View>
       )}
 
-      {/* Course Type Selection Modal */}
       <CourseTypeModal
         visible={showCourseTypeModal}
         onClose={() => setShowCourseTypeModal(false)}
@@ -537,20 +526,53 @@ const ProfilePage = () => {
         hasSinglePackageDraft={hasSinglePackageDraft}
         hasMultiPackageDraft={hasMultiPackageDraft}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
+    backgroundColor: '#F4F6F8',
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: horizontalScale(20),
+    paddingTop: verticalScale(8),
+    paddingBottom: verticalScale(12),
+  },
+  titleBlock: {
+    flex: 1,
+    marginRight: 12,
+  },
+  pageTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(24),
+    color: '#12263A',
+  },
+  pageSubtitle: {
+    marginTop: 4,
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(14),
+    color: '#5C6B76',
+  },
+  iconsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   mainContainer: {
     flex: 1,
-    backgroundColor: '#F4F6F8',
   },
   scrollContent: {
-    paddingBottom: verticalScale(24),
+    paddingBottom: verticalScale(28),
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -558,110 +580,82 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(244,246,248,0.4)',
   },
-  header: {
+  identityCard: {
+    marginHorizontal: horizontalScale(20),
+    marginBottom: verticalScale(8),
     backgroundColor: '#FFFFFF',
-    paddingTop: verticalScale(48),
-    paddingBottom: verticalScale(20),
-    borderBottomLeftRadius: moderateScale(20),
-    borderBottomRightRadius: moderateScale(20),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    //shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  topBar: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    padding: 14,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: horizontalScale(20),
-    marginBottom: verticalScale(12),
-  },
-  pageTitle: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(22),
-    color: '#1A2B4B',
-  },
-  profileSection: {
-    flexDirection: 'row',
-    paddingHorizontal: horizontalScale(20),
     alignItems: 'flex-start',
   },
   profileImage: {
-    width: horizontalScale(72),
-    height: verticalScale(72),
-    borderRadius: moderateScale(36),
-    marginRight: horizontalScale(16),
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: '#D7DEE5',
+  },
+  profileImagePlaceholder: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: '#EEF3F7',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   profileInfo: {
     flex: 1,
-    paddingTop: 0,
-    marginTop: 0,
+    marginLeft: 12,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   name: {
+    flexShrink: 1,
     fontFamily: FONT.bold,
     fontSize: moderateScale(18),
-    color: '#1A2B4B',
-    marginBottom: verticalScale(2),
-    marginTop: 0,
+    color: '#12263A',
   },
-  role: {
+  roleChip: {
+    backgroundColor: '#E4EEF5',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+  },
+  roleChipText: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(13),
-    color: '#64748B',
-    marginBottom: verticalScale(6),
+    fontSize: moderateScale(11),
+    color: '#1A4C6E',
   },
   badgeContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: horizontalScale(6),
+    gap: 6,
+    marginTop: 8,
   },
   badge: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: horizontalScale(10),
-    paddingVertical: verticalScale(4),
-    borderRadius: moderateScale(10),
-    marginRight: horizontalScale(6),
-    marginBottom: verticalScale(4),
+    backgroundColor: '#EEF3F7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
   },
   badgeText: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(8),
-    color: '#4F46E5',
+    fontSize: moderateScale(12),
+    color: '#1A4C6E',
   },
-  statsGrid: {
-    padding: moderateScale(20),
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: verticalScale(15),
-  },
-  statCard: {
-    backgroundColor: '#FFFFFF',
-    width: '48%',
-    padding: moderateScale(15),
-    borderRadius: moderateScale(15),
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    //shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  statValue: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(24),
-    color: '#1A2B4B',
-    marginBottom: verticalScale(4),
-  },
-  statLabel: {
+  editLink: {
+    marginTop: 8,
     fontFamily: FONT.medium,
-    fontSize: moderateScale(14),
-    color: '#64748B',
+    fontSize: moderateScale(13),
+    color: '#1A4C6E',
   },
   section: {
-    paddingVertical: verticalScale(16),
+    paddingTop: verticalScale(16),
     paddingHorizontal: horizontalScale(20),
   },
   sectionHeader: {
@@ -669,98 +663,71 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: verticalScale(12),
+    gap: 12,
   },
   sectionTitle: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(18),
-    color: '#1A2B4B',
+    fontSize: moderateScale(16),
+    color: '#12263A',
+  },
+  sectionTitleSpaced: {
+    marginBottom: verticalScale(10),
   },
   card: {
     backgroundColor: '#FFFFFF',
-    padding: moderateScale(20),
-    borderRadius: moderateScale(12),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    //shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
   },
   aboutText: {
     fontFamily: FONT.regular,
     fontSize: moderateScale(14),
-    color: '#475569',
-    lineHeight: moderateScale(24),
-  },
-  overviewGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
-    padding: moderateScale(20),
-    borderRadius: moderateScale(15),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    //shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  overviewItem: {
-    alignItems: 'center',
-  },
-  overviewValue: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(20),
-    color: '#1A2B4B',
-    marginBottom: verticalScale(4),
-  },
-  overviewLabel: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(12),
-    color: '#64748B',
-  },
-  addButtonDisabled: {
-    opacity: 0.5,
-    backgroundColor: '#cccccc',
-  },
-  addButtonTextDisabled: {
-    color: '#999999',
+    color: '#5C6B76',
+    lineHeight: 22,
   },
   addButton: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: horizontalScale(15),
-    paddingVertical: verticalScale(8),
-    borderRadius: moderateScale(12),
+    minHeight: 44,
+    backgroundColor: '#1A4C6E',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addButtonDisabled: {
+    backgroundColor: '#C5CDD6',
   },
   addButtonText: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(14),
+    fontSize: moderateScale(13),
     color: '#FFFFFF',
   },
-  logoutSection: {
-    padding: moderateScale(20),
+  addButtonTextDisabled: {
+    color: '#FFFFFF',
+  },
+  emptyCourses: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
     alignItems: 'center',
+    paddingVertical: 28,
+    paddingHorizontal: 20,
   },
-  logoutButton: {
-    backgroundColor: '#FEE2E2',
-    paddingHorizontal: horizontalScale(30),
-    paddingVertical: verticalScale(12),
-    borderRadius: moderateScale(20),
-    width: '100%',
-    alignItems: 'center',
+  emptyCoursesTitle: {
+    marginTop: 10,
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(15),
+    color: '#12263A',
   },
-  logoutText: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(16),
-    color: '#DC2626',
-  },
-  bottomPadding: {
-    height: verticalScale(20),
-  },
-  iconsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  settingsButton: {
-    marginRight: horizontalScale(15),
+  emptyCoursesSub: {
+    marginTop: 4,
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(13),
+    color: '#5C6B76',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 

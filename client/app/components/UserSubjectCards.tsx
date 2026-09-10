@@ -1,246 +1,111 @@
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Image } from 'expo-image';
 import React from 'react';
 import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
 import { FONT } from '../../constants/theme';
+import CoverImage from './CoverImage';
 
-const blurhash =
-  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
+const formatPrice = (subjectPrice) => {
+  if (subjectPrice == null || Number.isNaN(Number(subjectPrice))) return null;
+  return `AED ${Number(subjectPrice) / 100}`;
+};
 
 const UserSubjectCards = ({ subjectData, handleItemPress, isHorizontal }) => {
-  console.log('subjectData', subjectData);
-  
-  const renderSubjectCard = ({ item }) => (
-    <TouchableOpacity 
-      onPress={() => handleItemPress(item.subject)}
-      style={styles.cardContainer}
-      activeOpacity={0.95}
-    >
-      <View style={styles.imageContainer}>
-        <Image 
-          style={styles.subjectImage} 
-          source={{ uri: item.subject?.subjectImage }}
-          placeholder={blurhash}
-          contentFit="cover"
-          transition={300}
-        />
-        <View style={styles.imageOverlay} />
-        
-        <View style={styles.topBadgeContainer}>
-          <View style={styles.boardBadge}>
-            <Text style={styles.boardText}>{item.subject?.subjectBoard}</Text>
+  const renderSubjectCard = ({ item }) => {
+    const subject = item.subject;
+    const price = formatPrice(subject?.subjectPrice);
+
+    return (
+      <TouchableOpacity
+        onPress={() => handleItemPress(subject)}
+        style={[styles.card, isHorizontal && styles.horizontalCard]}
+        activeOpacity={0.88}
+        accessibilityRole="button"
+        accessibilityLabel={subject?.subjectName}
+      >
+        <CoverImage uri={subject?.subjectImage} style={styles.cover} />
+
+        <View style={styles.body}>
+          <View style={styles.topRow}>
+            <Text style={styles.meta} numberOfLines={1}>
+              {[subject?.subjectBoard, subject?.subjectGrade != null ? `Grade ${subject.subjectGrade}` : null]
+                .filter(Boolean)
+                .join(' · ')}
+            </Text>
+            {price ? <Text style={styles.price}>{price}</Text> : null}
           </View>
-          <View style={styles.gradeBadge}>
-            <Text style={styles.gradeText}>Grade {item.subject?.subjectGrade}</Text>
-          </View>
+
+          <Text style={styles.subjectName} numberOfLines={2}>
+            {subject?.subjectName}
+          </Text>
         </View>
-
-        <View style={styles.priceTag}>
-          <Text style={styles.priceValue}>AED {item.subject?.subjectPrice / 100}</Text>
-        </View>
-      </View>
-
-      <View style={styles.contentContainer}>
-        <Text style={styles.subjectName} numberOfLines={2}>
-          {item.subject?.subjectName}
-        </Text>
-
-        <View style={styles.divider} />
-
-       
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
-    <View style={styles.container}>
-      <FlatList 
-        data={subjectData}
-        keyExtractor={(item) => item.id}
-        renderItem={renderSubjectCard}
-        horizontal={isHorizontal}
-        scrollEnabled={false}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.listContainer}
-      />
-    </View>
+    <FlatList
+      data={subjectData}
+      keyExtractor={(item) => String(item.id)}
+      renderItem={renderSubjectCard}
+      horizontal={isHorizontal}
+      scrollEnabled={isHorizontal}
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.list}
+    />
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  list: {
+    gap: verticalScale(12),
+    paddingBottom: verticalScale(8),
   },
-  listContainer: {
-    gap: moderateScale(16),
-    padding: moderateScale(2),
-  },
-  cardContainer: {
-    width: horizontalScale(340),
-    backgroundColor: 'white',
-    borderRadius: moderateScale(16),
-    marginBottom: verticalScale(16),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    //shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-    overflow: 'hidden',
-  },
-  imageContainer: {
-    position: 'relative',
-    height: verticalScale(180),
-  },
-  imageOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    zIndex: 1,
-  },
-  subjectImage: {
-    width: '100%',
-    height: '100%',
-  },
-  topBadgeContainer: {
-    position: 'absolute',
-    top: verticalScale(16),
-    left: horizontalScale(16),
+  card: {
     flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    overflow: 'hidden',
+    minHeight: verticalScale(108),
+  },
+  cover: {
+    width: horizontalScale(128),
+  },
+  horizontalCard: {
+    width: horizontalScale(320),
+    marginRight: horizontalScale(12),
+  },
+  body: {
+    flex: 1,
+    paddingHorizontal: horizontalScale(14),
+    paddingVertical: verticalScale(12),
+    justifyContent: 'space-between',
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     gap: horizontalScale(8),
-    zIndex: 2,
   },
-  boardBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    paddingVertical: verticalScale(6),
-    paddingHorizontal: horizontalScale(12),
-    borderRadius: moderateScale(12),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    //shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  gradeBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    paddingVertical: verticalScale(6),
-    paddingHorizontal: horizontalScale(12),
-    borderRadius: moderateScale(12),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    //shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  boardText: {
-    fontFamily: FONT.bold,
+  meta: {
+    flex: 1,
+    fontFamily: FONT.medium,
     fontSize: moderateScale(12),
     color: '#1A4C6E',
   },
-  gradeText: {
+  price: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(12),
-    color: '#1A4C6E',
-  },
-  priceTag: {
-    position: 'absolute',
-    bottom: verticalScale(16),
-    right: horizontalScale(16),
-    backgroundColor: '#2DCB63',
-    paddingVertical: verticalScale(6),
-    paddingHorizontal: horizontalScale(12),
-    borderRadius: moderateScale(16),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    //shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-    zIndex: 2,
-  },
-  priceValue: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(14),
-    color: 'white',
-  },
-  contentContainer: {
-    padding: moderateScale(20),
+    fontSize: moderateScale(13),
+    color: '#12263A',
   },
   subjectName: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(18),
-    color: '#1A4C6E',
-    marginBottom: verticalScale(12),
-    lineHeight: moderateScale(28),
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E5E7EB',
-    marginBottom: verticalScale(12),
-  },
-  teacherContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  teacherImageContainer: {
-    position: 'relative',
-  },
-  teacherImage: {
-    width: horizontalScale(48),
-    height: horizontalScale(48),
-    borderRadius: moderateScale(24),
-    borderWidth: 3,
-    borderColor: 'white',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    //shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  statusDot: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: horizontalScale(12),
-    height: horizontalScale(12),
-    borderRadius: moderateScale(6),
-    backgroundColor: '#2DCB63',
-    borderWidth: 2,
-    borderColor: 'white',
-  },
-  teacherInfo: {
-    marginLeft: horizontalScale(12),
-    flex: 1,
-  },
-  teacherName: {
-    fontFamily: FONT.bold,
     fontSize: moderateScale(16),
-    color: '#1A4C6E',
-    marginBottom: verticalScale(4),
-  },
-  expertBadge: {
-    backgroundColor: '#F0F7FF',
-    paddingVertical: verticalScale(4),
-    paddingHorizontal: horizontalScale(10),
-    borderRadius: moderateScale(12),
-    alignSelf: 'flex-start',
-  },
-  expertText: {
-    fontFamily: FONT.semiBold,
-    fontSize: moderateScale(12),
-    color: '#2563EB',
+    color: '#12263A',
+    lineHeight: moderateScale(22),
+    marginTop: verticalScale(6),
   },
 });
 
-export default UserSubjectCards; 
+export default UserSubjectCards;

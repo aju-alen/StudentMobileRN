@@ -4,8 +4,6 @@ import {
   Text,
   View,
   TouchableOpacity,
-  Image,
-  Dimensions,
   Linking,
   Platform,
 } from "react-native";
@@ -15,11 +13,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { ipURL } from '../../utils/utils';
 import { router, useLocalSearchParams } from "expo-router";
+import CoverImage from '../../components/CoverImage';
 import * as FileSystem from 'expo-file-system';
 import * as IntentLauncher from 'expo-intent-launcher';
 import * as WebBrowser from 'expo-web-browser';
-
-const { width } = Dimensions.get('window');
 
 interface SubjectData {
   id?: string;
@@ -120,11 +117,7 @@ const VerifySingleSubject = () => {
 
   return (
     <ScrollView style={styles.container}>
-      <Image
-        source={{ uri: subjectData.subjectImage }}
-        style={styles.headerImage}
-        resizeMode="cover"
-      />
+      <CoverImage uri={subjectData.subjectImage} />
 
       <View style={styles.contentContainer}>
         {/* Status Bar */}
@@ -252,11 +245,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-  },
-  headerImage: {
-    width: width,
-    height: 220,
-    backgroundColor: '#e0e0e0',
   },
   contentContainer: {
     padding: 16,

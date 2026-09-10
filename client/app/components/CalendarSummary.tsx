@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -7,8 +6,7 @@ import { FONT } from '../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
 import { ipURL } from '../utils/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Mock data for upcoming classes - replace with actual API data
+import axios from 'axios';
 
 interface ClassItem {
   id: string;
@@ -33,19 +31,29 @@ const CalendarSummary = ({isTeacher}:{isTeacher:boolean}) => {
     return new Date(dateString).toLocaleDateString('en-US', options);
   };
 
+  const handleViewAll = () => {
+    router.push('/(tabs)/profile/schedule');
+  };
+
   const renderClassItem = ({ item }: { item: ClassItem }) => (
-    <TouchableOpacity onPress={handleViewAll}>
-    <View style={styles.classItem}>
+    <TouchableOpacity
+      onPress={handleViewAll}
+      style={styles.classItem}
+      activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.subject.subjectName} on ${formatDate(item.bookingDate)}`}
+    >
       <View style={styles.dateContainer}>
         <Text style={styles.dateText}>{formatDate(item.bookingDate)}</Text>
         <Text style={styles.timeText}>{item.bookingTime}</Text>
       </View>
       <View style={styles.classInfo}>
-        <Text style={styles.classTitle}>{item.subject.subjectName}</Text>
-        <Text style={styles.instructorText}>with {isTeacher ? item.student.name : item.teacher.name}</Text>
+        <Text style={styles.classTitle} numberOfLines={1}>{item.subject.subjectName}</Text>
+        <Text style={styles.instructorText} numberOfLines={1}>
+          with {isTeacher ? item.student.name : item.teacher.name}
+        </Text>
       </View>
-      <Ionicons name="chevron-forward" size={20} color="#64748B" />
-    </View>
+      <Ionicons name="chevron-forward" size={18} color="#5C6B76" />
     </TouchableOpacity>
   );
 
@@ -66,18 +74,18 @@ const CalendarSummary = ({isTeacher}:{isTeacher:boolean}) => {
     }
     fetchUpcomingClasses();
   },[])
-  console.log(upcomingClasses,'---upcomingClasses');
-
-  const handleViewAll = () => {
-    router.push('/(tabs)/profile/schedule');
-  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Upcoming Classes</Text>
-        <TouchableOpacity onPress={handleViewAll}>
-          <Text style={styles.viewAllText}>View All</Text>
+        <TouchableOpacity
+          onPress={handleViewAll}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="View full schedule"
+        >
+          <Text style={styles.viewAllText}>View all</Text>
         </TouchableOpacity>
       </View>
 
@@ -91,7 +99,7 @@ const CalendarSummary = ({isTeacher}:{isTeacher:boolean}) => {
         />
       ) : (
         <View style={styles.emptyContainer}>
-          <Ionicons name="calendar-outline" size={40} color="#CBD5E1" />
+          <Ionicons name="calendar-outline" size={28} color="#5C6B76" />
           <Text style={styles.emptyText}>No upcoming classes</Text>
         </View>
       )}
@@ -102,81 +110,78 @@ const CalendarSummary = ({isTeacher}:{isTeacher:boolean}) => {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
-    borderRadius: moderateScale(12),
-    padding: moderateScale(16),
-    marginBottom: verticalScale(12),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    //shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    padding: 16,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: verticalScale(12),
+    marginBottom: verticalScale(8),
   },
   title: {
     fontFamily: FONT.bold,
     fontSize: moderateScale(16),
-    color: '#1A2B4B',
+    color: '#12263A',
   },
   viewAllText: {
     fontFamily: FONT.medium,
     fontSize: moderateScale(13),
-    color: '#4F46E5',
+    color: '#1A4C6E',
   },
   classItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: verticalScale(12),
+    minHeight: 52,
+    paddingVertical: 10,
   },
   dateContainer: {
-    width: horizontalScale(100),
+    width: horizontalScale(92),
   },
   dateText: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(14),
-    color: '#1A2B4B',
+    fontSize: moderateScale(13),
+    color: '#12263A',
   },
   timeText: {
     fontFamily: FONT.regular,
     fontSize: moderateScale(12),
-    color: '#64748B',
-    marginTop: verticalScale(2),
+    color: '#5C6B76',
+    marginTop: 2,
   },
   classInfo: {
     flex: 1,
-    marginLeft: horizontalScale(15),
+    marginLeft: 8,
+    marginRight: 8,
   },
   classTitle: {
     fontFamily: FONT.medium,
     fontSize: moderateScale(14),
-    color: '#1A2B4B',
+    color: '#12263A',
   },
   instructorText: {
     fontFamily: FONT.regular,
     fontSize: moderateScale(12),
-    color: '#64748B',
-    marginTop: verticalScale(2),
+    color: '#5C6B76',
+    marginTop: 2,
   },
   separator: {
     height: 1,
-    backgroundColor: '#E2E8F0',
-    marginVertical: verticalScale(4),
+    backgroundColor: '#E6EBF0',
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: verticalScale(24),
+    paddingVertical: verticalScale(20),
   },
   emptyText: {
     fontFamily: FONT.medium,
     fontSize: moderateScale(13),
-    color: '#64748B',
-    marginTop: verticalScale(10),
+    color: '#5C6B76',
+    marginTop: 8,
   },
 });
 
-export default CalendarSummary; 
+export default CalendarSummary;

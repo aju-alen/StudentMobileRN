@@ -18,11 +18,12 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ipURL } from "../utils/utils";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useSegments } from "expo-router";
 import { horizontalScale, verticalScale, moderateScale } from '../utils/metrics';
 import { COLORS, FONT } from "../../constants";
 import { socket } from '../utils/socket';
 import BookingCalendar from './BookingCalendar';
+import CoverImage from './CoverImage';
 import BookingSummaryModal from './BookingSummaryModal';
 import { axiosWithAuth } from "../utils/customAxios";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -109,15 +110,15 @@ const ReviewForm = React.memo(({ onSubmit, isSubmitting, purchaseStatus }: Revie
       {purchaseStatus ? <View>
       <TextInput
         style={styles.input}
-        placeholder="Review Title"
-        placeholderTextColor="#A0AEC0"
+        placeholder="Review title"
+        placeholderTextColor="#8A97A3"
         value={title}
         onChangeText={setTitle}
       />
       <TextInput
         style={[styles.input, styles.textArea]}
         placeholder="Give a brief description of your experience."
-        placeholderTextColor="#A0AEC0"
+        placeholderTextColor="#8A97A3"
         value={description}
         onChangeText={setDescription}
         multiline
@@ -173,6 +174,8 @@ const CapacityCard = React.memo(({ availableSpots, maxCapacity, isFull }: Capaci
 });
 
 const SubjectPage = ({ subjectId }) => {
+  const segments = useSegments() as string[];
+  const stackTab = segments.includes('profile') ? 'profile' : 'home';
   const [singleSubjectData, setSingleSubjectData] = React.useState<SubjectData>({});
   const [capacityInfo, setCapacityInfo] = React.useState<{
     availableSpots: number;
@@ -277,7 +280,7 @@ const SubjectPage = ({ subjectId }) => {
                 socket.emit('chat-room', conversation.id);
                 
                 // Navigate to the existing conversation
-                router.push(`/(tabs)/chat/${conversation.id}`);
+                router.push(`/(tabs)/${stackTab}/chat/${conversation.id}`);
             } finally {
                 setIsInitializingChat(false);
             }
@@ -307,7 +310,7 @@ const SubjectPage = ({ subjectId }) => {
                     socket.emit('chat-room', response.data.id);
                     
                     // Navigate to the new conversation
-                    router.push(`/(tabs)/chat/${response.data.id}`);
+                    router.push(`/(tabs)/${stackTab}/chat/${response.data.id}`);
                 } catch (err: any) {
                     console.error('Error creating new conversation:', err);
                     
@@ -325,7 +328,7 @@ const SubjectPage = ({ subjectId }) => {
                                 socket.off("no-conversation-found");
                                 socket.off("conversation-check-error");
                                 socket.emit('chat-room', conversation.id);
-                                router.push(`/(tabs)/chat/${conversation.id}`);
+                                router.push(`/(tabs)/${stackTab}/chat/${conversation.id}`);
                             } finally {
                                 setIsInitializingChat(false);
                             }
@@ -681,16 +684,6 @@ const SubjectPage = ({ subjectId }) => {
     transform: [{ scale: menuScale }]
   };
 
-  const getCourseTypeHeaderLabel = () => {
-    if (singleSubjectData.courseType === 'SINGLE_STUDENT') {
-      return 'Single Student Course';
-    }
-    if (singleSubjectData.courseType) {
-      return 'Multi Student Course';
-    }
-    return '';
-  };
-
   const handleSubmitReview = useCallback(async (reviewData) => {
     if (!reviewData.title || !reviewData.description) {
       alert('Please fill in all fields');
@@ -723,7 +716,7 @@ const SubjectPage = ({ subjectId }) => {
   }, [subjectId, usertoken]);
 
   const handleViewAllReviews = () => {
-    router.push(`/(tabs)/home/subjectReviews/${subjectId}`);
+    router.push(`/(tabs)/${stackTab}/subjectReviews/${subjectId}`);
   };
 
   const ReviewItem = ({ review }) => {
@@ -780,8 +773,9 @@ const SubjectPage = ({ subjectId }) => {
         
         <View style={styles.voteContainer}>
           <TouchableOpacity 
-            style={[styles.voteButton, voteState.userVote === 'up' && styles.activeVoteButton]}
+            style={[styles.voteButton, voteState.userVote === 'up' && styles.activeUpVote]}
             onPress={() => handleVote('up')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons 
               name="thumbs-up" 
@@ -794,8 +788,9 @@ const SubjectPage = ({ subjectId }) => {
           </TouchableOpacity>
           
           <TouchableOpacity 
-            style={[styles.voteButton, voteState.userVote === 'down' && styles.activeVoteButton]}
+            style={[styles.voteButton, voteState.userVote === 'down' && styles.activeDownVote]}
             onPress={() => handleVote('down')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons 
               name="thumbs-down" 
@@ -812,12 +807,18 @@ const SubjectPage = ({ subjectId }) => {
   };
 
   return (
-   isPageLoading ? <ActivityIndicator size="large" color="#0000ff" style={{flex: 1, justifyContent: 'center', alignItems: 'center'}} /> : 
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+   isPageLoading ? (
+    <View style={styles.loadingWrap}>
+      <ActivityIndicator size="large" color="#1A4C6E" />
+      <Text style={styles.loadingText}>Loading course</Text>
+    </View>
+   ) : (
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <StatusBar barStyle="dark-content" />
       <Animated.ScrollView 
-        style={styles.scrollView} 
-        bounces={false}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: true }
@@ -825,33 +826,30 @@ const SubjectPage = ({ subjectId }) => {
         scrollEventThrottle={16}
       >
         <Animated.View style={[styles.headerImageContainer, headerStyle]}>
-          <Image
-            source={{ uri: singleSubjectData?.subjectImage }}
-            style={styles.headerImage}
-            placeholder={blurhash}
-            contentFit='fill'
-            transition={300}
-          />
-          <View style={styles.headerImageOverlay}>
+          <CoverImage uri={singleSubjectData?.subjectImage} />
+          <View style={styles.headerActions}>
             <TouchableOpacity
-              style={[styles.saveButtonHeader, isSaved && styles.savedButton]}
+              style={[styles.iconButton, isSaved && styles.iconButtonSaved]}
               onPress={handleSaveSubject}
               disabled={isSaving}
+              accessibilityRole="button"
+              accessibilityLabel={isSaved ? "Unsave course" : "Save course"}
             >
               <Ionicons
                 name={isSaved ? "bookmark" : "bookmark-outline"}
-                size={22}
-                color="#FFFFFF"
+                size={20}
+                color={isSaved ? "#1A4C6E" : "#FFFFFF"}
               />
-              <Text style={styles.saveButtonText}>{isSaved ? "Saved" : "Save"}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={handleMenuPress}
+              accessibilityRole="button"
+              accessibilityLabel="More options"
+            >
+              <Ionicons name="ellipsis-horizontal" size={20} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={handleMenuPress}
-          >
-            <Ionicons name="ellipsis-vertical" size={24} color="white" />
-          </TouchableOpacity>
         </Animated.View>
 
         {showMenu && (
@@ -885,66 +883,61 @@ const SubjectPage = ({ subjectId }) => {
         )}
 
         <Animated.View style={[styles.contentContainer, contentStyle]}>
-          {/* Subject Header */}
-          <View style={styles.headerContainer}>
-            <Text style={styles.subjectName}>{singleSubjectData.subjectName}</Text>
-            {getCourseTypeHeaderLabel() ? (
-              <Text style={styles.courseTypeHeaderText}>{getCourseTypeHeaderLabel()}</Text>
-            ) : null}
-            {singleSubjectData.subjectNameSubHeading ? (
-              <Text style={styles.subjectNameSubHeading}>{singleSubjectData.subjectNameSubHeading}</Text>
-            ) : null}
-            <View style={styles.badgeRow}>
-              {singleSubjectData.courseType && (
-                <View style={[styles.badge, styles.courseTypeBadge]}>
-                  <Ionicons
-                    name={
-                      singleSubjectData.courseType === 'SINGLE_STUDENT' ? 'person' :
-                      singleSubjectData.courseType === 'MULTI_STUDENT' ? 'people' :
-                      singleSubjectData.courseType === 'SINGLE_PACKAGE' ? 'layers' : 'albums'
-                    }
-                    size={14}
-                    color={COLORS.primary}
-                  />
-                  <Text style={[styles.badgeText, styles.courseTypeBadgeText]}>
-                    {singleSubjectData.courseType === 'SINGLE_STUDENT' ? '1-on-1' :
-                     singleSubjectData.courseType === 'MULTI_STUDENT' ? 'Group Class' :
-                     singleSubjectData.courseType === 'SINGLE_PACKAGE' ? 'Package' : 'Group Package'}
-                  </Text>
-                </View>
-              )}
+          <Text style={styles.subjectName}>{singleSubjectData.subjectName}</Text>
+          {singleSubjectData.subjectNameSubHeading ? (
+            <Text style={styles.subjectNameSubHeading}>{singleSubjectData.subjectNameSubHeading}</Text>
+          ) : null}
+
+          <View style={styles.badgeRow}>
+            {singleSubjectData.courseType && (
               <View style={styles.badge}>
-                <Ionicons name="school" size={16} color="#0066cc" />
-                <Text style={styles.badgeText}>{singleSubjectData.subjectBoard}</Text>
-              </View>
-              <View style={[styles.badge, styles.gradeBadge]}>
-                <Ionicons name="bookmark" size={16} color="#f57c00" />
-                <Text style={[styles.badgeText, { color: '#f57c00' }]}>
-                  Grade {singleSubjectData.subjectGrade}
+                <Ionicons
+                  name={
+                    singleSubjectData.courseType === 'SINGLE_STUDENT' ? 'person-outline' :
+                    singleSubjectData.courseType === 'MULTI_STUDENT' ? 'people-outline' :
+                    singleSubjectData.courseType === 'SINGLE_PACKAGE' ? 'layers-outline' : 'albums-outline'
+                  }
+                  size={14}
+                  color="#1A4C6E"
+                />
+                <Text style={styles.badgeText} numberOfLines={1}>
+                  {singleSubjectData.courseType === 'SINGLE_STUDENT' ? '1-on-1' :
+                   singleSubjectData.courseType === 'MULTI_STUDENT' ? 'Group class' :
+                   singleSubjectData.courseType === 'SINGLE_PACKAGE' ? 'Package' : 'Group package'}
                 </Text>
               </View>
-            </View>
-            {singleSubjectData.subjectTags && singleSubjectData.subjectTags.length > 0 ? (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.tagsScroll}
-                contentContainerStyle={styles.tagsRow}
-              >
-                {singleSubjectData.subjectTags.map((tag: string, idx: number) => (
-                  <View key={idx} style={styles.tagChip}>
-                    <Text style={styles.tagChipText}>{tag}</Text>
-                  </View>
-                ))}
-              </ScrollView>
-            ) : null}
+            )}
+            {!!singleSubjectData.subjectBoard && (
+              <View style={[styles.badge, styles.badgeShrink]}>
+                <Text style={styles.badgeText} numberOfLines={1}>{singleSubjectData.subjectBoard}</Text>
+              </View>
+            )}
+            {singleSubjectData.subjectGrade != null && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>Grade {singleSubjectData.subjectGrade}</Text>
+              </View>
+            )}
           </View>
 
-          {/* Teacher Info */}
+          {singleSubjectData.subjectTags && singleSubjectData.subjectTags.length > 0 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.tagsRow}
+            >
+              {singleSubjectData.subjectTags.map((tag: string, idx: number) => (
+                <View key={idx} style={styles.tagChip}>
+                  <Text style={styles.tagChipText}>{tag}</Text>
+                </View>
+              ))}
+            </ScrollView>
+          ) : null}
+
           {singleSubjectData?.user && teacherId && (
             <TouchableOpacity
               style={styles.teacherCard}
-              onPress={() => router.push(`/(tabs)/home/singleProfile/${teacherId}`)}
+              onPress={() => router.push(`/(tabs)/${stackTab}/singleProfile/${teacherId}`)}
+              activeOpacity={0.85}
             >
               <Image
                 source={{ uri: singleSubjectData.user?.profileImage || '' }}
@@ -955,50 +948,33 @@ const SubjectPage = ({ subjectId }) => {
               />
               <View style={styles.teacherInfo}>
                 <Text style={styles.teacherName}>{singleSubjectData.user?.name || 'Tutor'}</Text>
-                <Text style={styles.teacherRole}>
-                  {singleSubjectData.user?.userType === 'TEACHER' ? 'Tutor' : singleSubjectData.user?.userType}
-                </Text>
+                <Text style={styles.teacherRole}>Tutor</Text>
               </View>
-              <Text style={styles.viewProfileText}>View Profile</Text>
-              <Ionicons name="chevron-forward" size={20} color={COLORS.primary} />
+              <Text style={styles.viewProfileText}>Profile</Text>
+              <Ionicons name="chevron-forward" size={18} color="#5C6B76" />
             </TouchableOpacity>
           )}
 
-          {/* Pricing Card */}
-          <View style={styles.pricingCard}>
-            <Text style={styles.priceLabel}>Course Fee</Text>
-            <Text style={styles.price}>{singleSubjectData.subjectPrice != null ? `AED ${Number(singleSubjectData.subjectPrice) / 100}` : '—'}</Text>
-            <Text style={styles.durationText}>
-              {singleSubjectData.subjectDuration} hours
-            </Text>
-            {(singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && capacityInfo && !capacityInfo.isFull && (
-              <Text style={styles.spotsText}>
-                {capacityInfo.availableSpots} of {singleSubjectData.maxCapacity} spots available
-              </Text>
-            )}
-          </View>
-
-          {/* Quick Info Cards */}
-          <View style={styles.quickInfoContainer}>
-            <View style={styles.quickInfoCard}>
-              <Ionicons name="language" size={24} color="#1976D2" />
-              <Text style={styles.quickInfoLabel}>Language</Text>
-              <Text style={styles.quickInfoValue}>{singleSubjectData.subjectLanguage}</Text>
+          <View style={styles.factsCard}>
+            <View style={styles.priceBlock}>
+              <Text style={styles.price}>{singleSubjectData.subjectPrice != null ? `AED ${Number(singleSubjectData.subjectPrice) / 100}` : '—'}</Text>
+              <Text style={styles.priceLabel}>Course fee</Text>
             </View>
-            <View style={styles.quickInfoCard}>
-              <Ionicons name="time" size={24} color="#388E3C" />
-              <Text style={styles.quickInfoLabel}>Duration</Text>
-              <Text style={styles.quickInfoValue}>{singleSubjectData.subjectDuration} Hours</Text>
+            <View style={styles.factsDivider} />
+            <View style={styles.factsMeta}>
+              {!!singleSubjectData.subjectDuration && (
+                <Text style={styles.factValue}>{singleSubjectData.subjectDuration} hrs</Text>
+              )}
+              {!!singleSubjectData.subjectLanguage && (
+                <Text style={styles.factValue}>{singleSubjectData.subjectLanguage}</Text>
+              )}
             </View>
           </View>
 
           {/* Multi-Student Course Schedule Info */}
           {singleSubjectData.courseType === 'MULTI_STUDENT' && singleSubjectData.scheduledDateTime && (
             <View style={styles.section}>
-              <View style={styles.sectionTitleRow}>
-                <View style={styles.sectionTitleAccent} />
-                <Text style={[styles.sectionTitle, styles.sectionTitleInRow]}>Course Schedule</Text>
-              </View>
+              <Text style={styles.sectionTitle}>Course schedule</Text>
               <View style={styles.scheduleInfo}>
                   <View style={styles.scheduleItem}>
                   <Ionicons name="calendar-outline" size={16} color={COLORS.primary} />
@@ -1043,7 +1019,7 @@ const SubjectPage = ({ subjectId }) => {
               const isMultiPackage = singleSubjectData.courseType === 'MULTI_PACKAGE';
               return (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Course Topics</Text>
+                  <Text style={styles.sectionTitle}>Course topics</Text>
                   {isMultiPackage && capacityInfo && (
                     <CapacityCard
                       availableSpots={capacityInfo.availableSpots}
@@ -1095,7 +1071,7 @@ const SubjectPage = ({ subjectId }) => {
           {/* Description Section */}
           {singleSubjectData.subjectDescription && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Course Description</Text>
+              <Text style={styles.sectionTitle}>About this course</Text>
               <Text style={styles.description}>{singleSubjectData.subjectDescription}</Text>
             </View>
           )}
@@ -1103,7 +1079,7 @@ const SubjectPage = ({ subjectId }) => {
           {/* Key Points Section */}
           {singleSubjectData.subjectPoints && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>What You'll Learn</Text>
+              <Text style={styles.sectionTitle}>What you'll learn</Text>
               {singleSubjectData.subjectPoints.map((point, index) => (
                 <View key={index} style={styles.pointRow}>
                   <View style={styles.bulletPoint}>
@@ -1118,10 +1094,10 @@ const SubjectPage = ({ subjectId }) => {
           {/* Reviews Section */}
           <View style={styles.section}>
             <View style={styles.reviewsHeader}>
-              <Text style={styles.sectionTitle}>Reviews</Text>
+              <Text style={[styles.sectionTitle, styles.sectionTitleFlush]}>Reviews</Text>
               {reviews.length > 0 && (
                 <TouchableOpacity onPress={handleViewAllReviews}>
-                  <Text style={styles.viewAllButton}>View All Reviews</Text>
+                  <Text style={styles.viewAllButton}>See all</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -1158,42 +1134,38 @@ const SubjectPage = ({ subjectId }) => {
             ((singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && purchaseStatus)
           }
         >
-          <Ionicons name="cart" size={24} color="white" />
           <View style={styles.buttonTextContainer}>
-            <View style={styles.buttonMainRow}>
-              <Text style={styles.primaryButtonText}>
-                {isUserType === 'TEACHER'
-                  ? "Please login as student to purchase"
-                  : (singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && purchaseStatus
-                  ? "Already Enrolled"
-                  : (singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && capacityInfo?.isFull
-                  ? "Course Full"
-                  : "Enroll Now"}
-              </Text>
-            </View>
+            <Text style={styles.primaryButtonText} numberOfLines={2}>
+              {isUserType === 'TEACHER'
+                ? "Log in as a student to enroll"
+                : (singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && purchaseStatus
+                ? "Already enrolled"
+                : (singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && capacityInfo?.isFull
+                ? "Course full"
+                : "Enroll now"}
+            </Text>
             {(singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && capacityInfo && !capacityInfo.isFull && !purchaseStatus && (
               <Text style={styles.capacityText}>
-                {capacityInfo.availableSpots} of {singleSubjectData.maxCapacity} spots available
+                {capacityInfo.availableSpots} of {singleSubjectData.maxCapacity} spots left
               </Text>
             )}
           </View>
         </TouchableOpacity>
         <TouchableOpacity 
-          style={[styles.secondaryButton, isInitializingChat && styles.disabledButton]} 
+          style={[styles.secondaryButton, isInitializingChat && styles.disabledOutline]} 
           onPress={() => {
             handleButtonPress();
             handleChatNow();
           }}
           disabled={isInitializingChat}
+          accessibilityRole="button"
+          accessibilityLabel="Chat with tutor"
         >
           {isInitializingChat ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <ActivityIndicator size="small" color="#1A4C6E" />
           ) : (
-            <Ionicons name="chatbubbles-outline" size={24} color="#FFFFFF" />
+            <Ionicons name="chatbubbles-outline" size={22} color="#1A4C6E" />
           )}
-          <Text style={styles.secondaryButtonText}>
-            {isInitializingChat ? 'Connecting...' : 'Chat'}
-          </Text>
         </TouchableOpacity>
       </Animated.View>
 
@@ -1222,7 +1194,6 @@ const SubjectPage = ({ subjectId }) => {
           time={selectedBookingTime}
           onConfirm={() => {
             setShowBookingSummary(false);
-            router.replace('/(tabs)/home');
           }}
         />
       )}
@@ -1239,7 +1210,7 @@ const SubjectPage = ({ subjectId }) => {
             <TextInput
               style={styles.reportInput}
               placeholder="Please provide a reason for reporting..."
-              placeholderTextColor="#A0AEC0"
+              placeholderTextColor="#8A97A3"
               value={reportReason}
               onChangeText={setReportReason}
               multiline
@@ -1266,41 +1237,54 @@ const SubjectPage = ({ subjectId }) => {
         </View>
       </Modal>
     </SafeAreaView>
+   )
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#F4F6F8',
+  },
+  loadingWrap: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F4F6F8',
+  },
+  loadingText: {
+    marginTop: verticalScale(12),
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
+    color: '#5C6B76',
   },
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: verticalScale(112),
+  },
   headerImageContainer: {
     position: 'relative',
+    backgroundColor: '#D7DEE5',
   },
-  headerImage: {
-    width: width,
-    height: verticalScale(300),
-    backgroundColor: '#e0e0e0',
-  },
-  headerImageOverlay: {
+  headerActions: {
     position: 'absolute',
-    bottom: verticalScale(16),
-    right: horizontalScale(16),
-    left: horizontalScale(16),
+    right: 12,
+    bottom: 12,
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    gap: 8,
   },
-  saveButtonHeader: {
-    flexDirection: 'row',
+  iconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(18, 38, 58, 0.55)',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    paddingHorizontal: horizontalScale(12),
-    paddingVertical: verticalScale(6),
-    borderRadius: moderateScale(20),
-    gap: horizontalScale(6),
+    justifyContent: 'center',
+  },
+  iconButtonSaved: {
+    backgroundColor: '#FFFFFF',
   },
   menuBackdrop: {
     position: 'absolute',
@@ -1308,260 +1292,195 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'transparent',
     zIndex: 999,
   },
   contentContainer: {
-    padding: moderateScale(16),
-    marginTop: verticalScale(-60),
-    backgroundColor: 'white',
-    borderTopLeftRadius: moderateScale(30),
-    borderTopRightRadius: moderateScale(30),
-  },
-  dateText: {
-    color: COLORS.textMuted,
-    fontSize: moderateScale(12),
-  },
-  headerContainer: {
-    marginBottom: verticalScale(20),
+    paddingHorizontal: horizontalScale(20),
+    paddingTop: verticalScale(18),
   },
   subjectName: {
-    fontSize: moderateScale(22),
+    fontSize: moderateScale(24),
     fontFamily: FONT.bold,
-    color: COLORS.textDark,
-    marginBottom: moderateScale(6),
-  },
-  courseTypeHeaderText: {
-    fontSize: moderateScale(14),
-    fontFamily: FONT.medium,
-    color: COLORS.textMuted,
-    marginBottom: verticalScale(4),
+    color: '#12263A',
+    lineHeight: moderateScale(30),
   },
   subjectNameSubHeading: {
+    marginTop: verticalScale(6),
     fontSize: moderateScale(14),
     fontFamily: FONT.medium,
-    color: COLORS.textMuted,
-    marginBottom: verticalScale(12),
+    color: '#5C6B76',
+    lineHeight: moderateScale(20),
   },
   badgeRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: horizontalScale(8),
-    marginBottom: verticalScale(12),
+    gap: 8,
+    marginTop: verticalScale(14),
   },
-  courseTypeBadge: {
-    backgroundColor: '#e8f4fd',
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#EEF3F7',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    maxWidth: '100%',
   },
-  courseTypeBadgeText: {
-    color: COLORS.primary,
+  badgeShrink: {
+    flexShrink: 1,
+    minWidth: 0,
   },
-  tagsScroll: {
-    marginHorizontal: -moderateScale(16),
+  badgeText: {
+    color: '#1A4C6E',
+    fontSize: moderateScale(12),
+    fontFamily: FONT.medium,
   },
   tagsRow: {
     flexDirection: 'row',
-    gap: horizontalScale(8),
-    paddingHorizontal: moderateScale(16),
-    paddingBottom: verticalScale(4),
+    gap: 8,
+    paddingVertical: verticalScale(12),
   },
   tagChip: {
-    backgroundColor: '#f0f7ff',
-    paddingHorizontal: horizontalScale(12),
-    paddingVertical: verticalScale(6),
-    borderRadius: moderateScale(20),
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
   },
   tagChipText: {
     fontSize: moderateScale(12),
     fontFamily: FONT.medium,
-    color: COLORS.primary,
-  },
-  badge: {
-    backgroundColor: '#f0f7ff',
-    paddingHorizontal: horizontalScale(12),
-    paddingVertical: verticalScale(6),
-    borderRadius: moderateScale(20),
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: moderateScale(6),
-  },
-  gradeBadge: {
-    backgroundColor: '#fff3e0',
-  },
-  badgeText: {
-    color: '#0066cc',
-    fontSize: moderateScale(12),
-    fontWeight: '600',
-  },
-  priceContainer: {
-    alignItems: 'flex-end',
-  },
-  pricingCard: {
-    backgroundColor: '#f0fdf4',
-    padding: moderateScale(16),
-    borderRadius: moderateScale(16),
-    marginBottom: verticalScale(24),
-    borderWidth: 1,
-    borderColor: 'rgba(45, 203, 99, 0.2)',
-  },
-  spotsText: {
-    fontSize: moderateScale(12),
-    color: COLORS.primary,
-    marginTop: verticalScale(8),
-    fontFamily: FONT.medium,
-  },
-  priceLabel: {
-    fontSize: moderateScale(12),
-    color: COLORS.textMuted,
-    marginBottom: verticalScale(4),
-    fontFamily: FONT.medium,
-  },
-  price: {
-    fontSize: moderateScale(24),
-    fontFamily: FONT.bold,
-    color: COLORS.success,
-  },
-  durationText: {
-    fontSize: moderateScale(12),
-    color: COLORS.textMuted,
-    marginTop: verticalScale(4),
-    fontFamily: FONT.medium,
+    color: '#12263A',
   },
   teacherCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    padding: moderateScale(16),
-    borderRadius: moderateScale(12),
-    marginBottom: verticalScale(16),
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.primary,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    padding: 12,
+    minHeight: 72,
+    marginTop: verticalScale(4),
+    marginBottom: verticalScale(12),
   },
   teacherImage: {
-    width: moderateScale(50),
-    height: moderateScale(50),
-    borderRadius: moderateScale(25),
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#D7DEE5',
   },
   teacherInfo: {
     flex: 1,
-    marginLeft: horizontalScale(15),
+    marginLeft: 12,
   },
   teacherName: {
     fontSize: moderateScale(16),
     fontFamily: FONT.semiBold,
-    color: COLORS.textDark,
+    color: '#12263A',
   },
   teacherRole: {
-    fontSize: moderateScale(14),
-    color: COLORS.textMuted,
-    marginTop: verticalScale(4),
+    marginTop: 2,
+    fontSize: moderateScale(13),
+    fontFamily: FONT.regular,
+    color: '#5C6B76',
   },
   viewProfileText: {
+    fontSize: moderateScale(13),
+    fontFamily: FONT.medium,
+    color: '#1A4C6E',
+    marginRight: 4,
+  },
+  factsCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    padding: 16,
+    marginBottom: verticalScale(16),
+  },
+  priceBlock: {
+    flex: 1,
+  },
+  price: {
+    fontSize: moderateScale(22),
+    fontFamily: FONT.bold,
+    color: '#12263A',
+  },
+  priceLabel: {
+    marginTop: 2,
     fontSize: moderateScale(12),
     fontFamily: FONT.medium,
-    color: COLORS.primary,
-    marginRight: horizontalScale(4),
+    color: '#5C6B76',
   },
-  quickInfoContainer: {
-    flexDirection: 'row',
-    gap: horizontalScale(12),
-    marginBottom: verticalScale(24),
+  factsDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: '#E6EBF0',
+    marginHorizontal: 14,
   },
-  quickInfoCard: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-    padding: moderateScale(16),
-    borderRadius: moderateScale(12),
-    alignItems: 'center',
+  factsMeta: {
+    alignItems: 'flex-end',
+    gap: 4,
   },
-  quickInfoLabel: {
-    fontSize: moderateScale(12),
-    color: '#666',
-    marginTop: verticalScale(8),
-  },
-  quickInfoValue: {
-    fontSize: moderateScale(14),
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginTop: verticalScale(4),
+  factValue: {
+    fontSize: moderateScale(13),
+    fontFamily: FONT.medium,
+    color: '#12263A',
   },
   section: {
-    marginBottom: verticalScale(24),
-    backgroundColor: 'white',
-    padding: moderateScale(16),
-    borderRadius: moderateScale(12),
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#f0f0f0',
-    flex: 1,
+    borderColor: '#E6EBF0',
+    padding: 16,
+    marginBottom: verticalScale(12),
   },
   sectionTitle: {
-    fontSize: moderateScale(18),
+    fontSize: moderateScale(17),
     fontFamily: FONT.bold,
-    color: COLORS.textDark,
-    marginBottom: verticalScale(16),
+    color: '#12263A',
+    marginBottom: verticalScale(12),
   },
-  sectionTitleInRow: {
+  sectionTitleFlush: {
     marginBottom: 0,
-    flex: 1,
-  },
-  sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: verticalScale(16),
-    gap: horizontalScale(10),
-  },
-  sectionTitleAccent: {
-    width: 4,
-    height: moderateScale(22),
-    borderRadius: 2,
-    backgroundColor: COLORS.primary,
-  },
-  sectionCountBadge: {
-    backgroundColor: '#e8f4fd',
-    paddingHorizontal: horizontalScale(10),
-    paddingVertical: verticalScale(4),
-    borderRadius: moderateScale(12),
-    marginLeft: 'auto',
-  },
-  sectionCountBadgeText: {
-    fontSize: moderateScale(12),
-    fontFamily: FONT.medium,
-    color: COLORS.primary,
   },
   capacityCard: {
-    backgroundColor: '#f8fafc',
-    borderRadius: moderateScale(12),
-    padding: moderateScale(16),
-    marginTop: verticalScale(8),
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    backgroundColor: '#F4F6F8',
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 8,
   },
   capacityCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   capacityIconWrap: {
-    width: horizontalScale(48),
-    height: verticalScale(48),
-    borderRadius: moderateScale(24),
-    backgroundColor: '#e8f4fd',
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#EEF3F7',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: horizontalScale(14),
+    marginRight: 12,
   },
   capacityTextWrap: {
     flex: 1,
   },
   capacityTitle: {
-    fontSize: moderateScale(16),
+    fontSize: moderateScale(14),
     fontFamily: FONT.bold,
-    color: COLORS.textDark,
+    color: '#12263A',
   },
   urgencyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: verticalScale(6),
-    gap: horizontalScale(6),
-    alignSelf: 'flex-start',
+    marginTop: 6,
+    gap: 6,
   },
   urgencyBadgeText: {
     fontSize: moderateScale(12),
@@ -1570,76 +1489,30 @@ const styles = StyleSheet.create({
   },
   capacityProgressBar: {
     height: 6,
-    backgroundColor: '#e2e8f0',
+    backgroundColor: '#E6EBF0',
     borderRadius: 3,
-    marginTop: verticalScale(12),
+    marginTop: 12,
     overflow: 'hidden',
   },
   capacityProgressFill: {
     height: '100%',
     borderRadius: 3,
   },
-  topicTimelineContainer: {
-    marginTop: verticalScale(8),
-  },
-  topicTimelineRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: verticalScale(12),
-  },
-  topicTimelineLeft: {
-    width: horizontalScale(36),
-    alignItems: 'center',
-  },
-  topicTimelineNode: {
-    width: horizontalScale(28),
-    height: verticalScale(28),
-    borderRadius: moderateScale(14),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  topicTimelineNodeText: {
-    color: '#fff',
-    fontSize: moderateScale(12),
-    fontFamily: FONT.bold,
-  },
-  topicTimelineLine: {
-    position: 'absolute',
-    top: verticalScale(28),
-    left: horizontalScale(13),
-    width: 2,
-    bottom: -verticalScale(12),
-    backgroundColor: '#e2e8f0',
-  },
-  topicCard: {
-    flex: 1,
-    borderRadius: moderateScale(12),
-    padding: moderateScale(14),
-    marginLeft: horizontalScale(8),
-  },
-  topicCardNeutral: {
-    backgroundColor: '#f8f9fa',
-  },
-  topicCardCompleted: {
-    backgroundColor: '#f0fdf4',
-  },
-  topicCardUpcoming: {
-    backgroundColor: '#e8f4fd',
-  },
   topicList: {
-    marginTop: 0,
-    gap: verticalScale(12),
+    gap: 12,
   },
   topicRow: {
-    marginBottom: verticalScale(12),
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEF3F7',
   },
   showAllTopicsButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: verticalScale(12),
-    marginTop: verticalScale(8),
-    gap: horizontalScale(8),
+    minHeight: 44,
+    marginTop: 4,
+    gap: 8,
   },
   showAllTopicsButtonText: {
     fontSize: moderateScale(14),
@@ -1647,129 +1520,139 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
   },
   topicTitleText: {
-    fontSize: moderateScale(16),
+    fontSize: moderateScale(15),
     fontFamily: FONT.semiBold,
-    color: COLORS.textDark,
-    marginBottom: verticalScale(8),
+    color: '#12263A',
+    marginBottom: 6,
   },
   description: {
     fontSize: moderateScale(14),
-    color: '#666',
-    lineHeight: verticalScale(24),
+    fontFamily: FONT.regular,
+    color: '#5C6B76',
+    lineHeight: 22,
   },
   pointRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: verticalScale(12),
-    gap: horizontalScale(12),
+    marginBottom: 12,
+    gap: 12,
   },
   bulletPoint: {
-    width: horizontalScale(24),
-    height: verticalScale(24),
-    borderRadius: moderateScale(12),
-    backgroundColor: '#f0f7ff',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#EEF3F7',
     alignItems: 'center',
     justifyContent: 'center',
   },
   bulletNumber: {
-    color: '#0066cc',
+    color: '#1A4C6E',
     fontSize: moderateScale(12),
-    fontWeight: '600',
+    fontFamily: FONT.bold,
   },
   pointText: {
     flex: 1,
-    fontSize: moderateScale(16),
-    color: '#666',
-    lineHeight: verticalScale(24),
+    fontSize: moderateScale(14),
+    fontFamily: FONT.regular,
+    color: '#5C6B76',
+    lineHeight: 22,
   },
   reviewItem: {
-    backgroundColor: '#f8f9fa',
-    padding: moderateScale(16),
-    borderRadius: moderateScale(12),
-    marginBottom: verticalScale(16),
+    backgroundColor: '#F4F6F8',
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 12,
   },
   reviewHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: verticalScale(12),
+    marginBottom: 10,
   },
   reviewerImage: {
-    width: horizontalScale(40),
-    height: verticalScale(40),
-    borderRadius: moderateScale(20),
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#D7DEE5',
   },
   reviewerInfo: {
-    marginLeft: horizontalScale(12),
+    marginLeft: 12,
+    flex: 1,
   },
   reviewerName: {
     fontSize: moderateScale(14),
-    fontWeight: '600',
-    color: '#1a1a1a',
+    fontFamily: FONT.semiBold,
+    color: '#12263A',
   },
   reviewDate: {
-    fontSize: moderateScale(14),
-    color: '#666',
-    marginTop: verticalScale(4),
+    fontSize: moderateScale(12),
+    fontFamily: FONT.regular,
+    color: '#5C6B76',
+    marginTop: 2,
   },
   reviewTitle: {
     fontSize: moderateScale(14),
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: verticalScale(8),
+    fontFamily: FONT.semiBold,
+    color: '#12263A',
+    marginBottom: 4,
   },
   reviewDescription: {
-    fontSize: moderateScale(12),
-    color: '#666',
-    lineHeight: verticalScale(20),
+    fontSize: moderateScale(13),
+    fontFamily: FONT.regular,
+    color: '#5C6B76',
+    lineHeight: 20,
   },
   reviewForm: {
-    flex: 1,
-    marginTop: verticalScale(16),
-    paddingBottom: verticalScale(104),
+    marginTop: 8,
   },
   input: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: moderateScale(8),
-    padding: moderateScale(12),
-    marginBottom: verticalScale(12),
+    backgroundColor: '#F4F6F8',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 10,
     fontSize: moderateScale(14),
+    fontFamily: FONT.regular,
+    color: '#12263A',
+    minHeight: 48,
   },
   textArea: {
-    height: verticalScale(100),
+    height: 100,
     textAlignVertical: 'top',
   },
   submitButton: {
-    backgroundColor: '#2DCB63',
-    borderRadius: moderateScale(8),
-    padding: moderateScale(12),
+    backgroundColor: '#1A4C6E',
+    borderRadius: 12,
+    minHeight: 48,
     alignItems: 'center',
-    minHeight: verticalScale(44),
-    marginTop: verticalScale(16),
-    marginBottom: verticalScale(16),
     justifyContent: 'center',
-    width: '100%',
+    marginTop: 4,
   },
   submitButtonText: {
-    color: 'white',
+    color: '#FFFFFF',
     fontSize: moderateScale(14),
-    fontWeight: '600',
+    fontFamily: FONT.bold,
   },
   noReviewsText: {
     fontSize: moderateScale(14),
-    color: '#666',
-    textAlign: 'center',
-    marginTop: verticalScale(12),
+    fontFamily: FONT.regular,
+    color: '#5C6B76',
+    marginBottom: 8,
   },
   reviewsHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: verticalScale(16),
+    marginBottom: 4,
   },
   viewAllButton: {
     fontSize: moderateScale(14),
-    color: '#2DCB63',
-    textDecorationLine: 'underline',
+    fontFamily: FONT.medium,
+    color: '#1A4C6E',
+    minHeight: 44,
+    textAlignVertical: 'center',
+    paddingTop: 10,
   },
   footer: {
     position: 'absolute',
@@ -1777,258 +1660,197 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     flexDirection: 'row',
-    padding: moderateScale(16),
-    backgroundColor: 'white',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: '#E6EBF0',
+    gap: 10,
   },
   primaryButton: {
     flex: 1,
-    backgroundColor: '#2DCB63',
-    borderRadius: moderateScale(12),
-    padding: moderateScale(16),
-    marginRight: horizontalScale(12),
-    flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: '#1A4C6E',
+    borderRadius: 14,
+    minHeight: 52,
+    paddingHorizontal: 16,
     justifyContent: 'center',
-    gap: horizontalScale(8),
   },
   buttonTextContainer: {
-    flex: 1,
-    flexDirection: 'column',
     alignItems: 'flex-start',
-    justifyContent: 'center',
-  },
-  buttonMainRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    flexWrap: 'wrap',
-    gap: horizontalScale(8),
   },
   primaryButtonText: {
-    color: 'white',
+    color: '#FFFFFF',
     fontSize: moderateScale(16),
-    fontWeight: '600',
-    flexShrink: 1,
+    fontFamily: FONT.bold,
   },
   capacityText: {
     fontSize: moderateScale(11),
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: 'rgba(255,255,255,0.85)',
     fontFamily: FONT.medium,
-    marginTop: verticalScale(2),
-  },
-  priceText: {
-    color: 'white',
-    fontSize: moderateScale(14),
-    fontWeight: '600',
+    marginTop: 2,
   },
   secondaryButton: {
-    backgroundColor: '#3498DB',
-    borderRadius: moderateScale(12),
-    padding: moderateScale(16),
-    width: horizontalScale(70),
+    width: 52,
+    minHeight: 52,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  secondaryButtonText: {
-    color: 'white',
-    fontSize: moderateScale(12),
-    marginTop: verticalScale(4),
+  disabledButton: {
+    backgroundColor: '#C5CDD6',
   },
-  saveButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#3498DB',
-    paddingHorizontal: horizontalScale(12),
-    paddingVertical: verticalScale(6),
-    borderRadius: moderateScale(20),
-    gap: horizontalScale(8),
-  },
-  savedButton: {
-    backgroundColor: '#2DCB63',
-  },
-  saveButtonText: {
-    color: '#FFFFFF',
-    fontSize: moderateScale(14),
-    fontFamily: FONT.medium,
+  disabledOutline: {
+    opacity: 0.6,
   },
   voteContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: verticalScale(12),
-    gap: horizontalScale(16),
+    marginTop: 10,
+    gap: 8,
   },
   voteButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: moderateScale(8),
-    borderRadius: moderateScale(8),
-    backgroundColor: '#f8f9fa',
-    gap: horizontalScale(4),
+    minHeight: 36,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    gap: 6,
   },
-  activeVoteButton: {
-    backgroundColor: '#f0f0f0',
+  activeUpVote: {
+    backgroundColor: '#E8F8EE',
+  },
+  activeDownVote: {
+    backgroundColor: '#FDECEC',
   },
   voteCount: {
-    fontSize: moderateScale(14),
-    color: '#666',
+    fontSize: moderateScale(13),
+    fontFamily: FONT.medium,
+    color: '#5C6B76',
   },
   activeVoteCount: {
-    color: '#2DCB63',
-  },
-  rightActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: horizontalScale(12),
-  },
-  menuButton: {
-    position: 'absolute',
-    top: verticalScale(16),
-    right: horizontalScale(16),
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderRadius: moderateScale(20),
-    padding: moderateScale(8),
+    color: '#12263A',
   },
   menuContainer: {
     position: 'absolute',
     top: verticalScale(70),
-    right: horizontalScale(16),
-    backgroundColor: 'white',
-    borderRadius: moderateScale(12),
-    padding: moderateScale(8),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    //shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    right: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    padding: 6,
     zIndex: 1000,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: moderateScale(12),
-    gap: horizontalScale(8),
+    minHeight: 44,
+    paddingHorizontal: 12,
+    gap: 8,
   },
   menuItemText: {
-    fontSize: moderateScale(16),
-    color: '#1A4C6E',
-    fontWeight: '500',
+    fontSize: moderateScale(15),
+    color: '#12263A',
+    fontFamily: FONT.medium,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(18, 38, 58, 0.45)',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
   modalContent: {
-    backgroundColor: 'white',
-    borderRadius: moderateScale(12),
-    padding: moderateScale(20),
-    width: '90%',
-    maxWidth: horizontalScale(400),
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
   },
   modalTitle: {
-    fontSize: moderateScale(20),
-    fontWeight: '600',
-    color: '#1A4C6E',
-    marginBottom: verticalScale(16),
+    fontSize: moderateScale(18),
+    fontFamily: FONT.bold,
+    color: '#12263A',
+    marginBottom: 12,
   },
   reportInput: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: moderateScale(8),
-    padding: moderateScale(12),
-    marginBottom: verticalScale(16),
+    backgroundColor: '#F4F6F8',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    padding: 12,
+    marginBottom: 16,
     fontSize: moderateScale(14),
-    minHeight: verticalScale(100),
+    minHeight: 100,
     textAlignVertical: 'top',
+    color: '#12263A',
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: horizontalScale(12),
+    gap: 10,
   },
   modalButton: {
-    paddingVertical: verticalScale(8),
-    paddingHorizontal: horizontalScale(16),
-    borderRadius: moderateScale(8),
+    minHeight: 44,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalCancelButton: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#EEF3F7',
   },
   modalSubmitButton: {
-    backgroundColor: '#E74C3C',
+    backgroundColor: '#C2410C',
   },
   modalCancelButtonText: {
     color: '#1A4C6E',
     fontSize: moderateScale(14),
-    fontWeight: '500',
+    fontFamily: FONT.medium,
   },
   modalSubmitButtonText: {
-    color: 'white',
+    color: '#FFFFFF',
     fontSize: moderateScale(14),
-    fontWeight: '500',
-  },
-  disabledButton: {
-    backgroundColor: '#cccccc',
-    opacity: 0.7,
+    fontFamily: FONT.medium,
   },
   purchaseStatusText: {
     fontSize: moderateScale(14),
-    color: '#666',
-    textAlign: 'center',
-    marginTop: verticalScale(12),
+    fontFamily: FONT.regular,
+    color: '#5C6B76',
   },
   scheduleInfo: {
-    gap: verticalScale(12),
+    gap: 10,
   },
   scheduleItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: horizontalScale(12),
-    paddingVertical: verticalScale(8),
+    gap: 10,
+    minHeight: 36,
   },
   scheduleText: {
+    flex: 1,
     fontSize: moderateScale(14),
-    color: COLORS.textDark,
+    color: '#12263A',
     fontFamily: FONT.medium,
-  },
-  topicCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: horizontalScale(12),
-    marginBottom: verticalScale(10),
-  },
-  topicNumberBadge: {
-    width: horizontalScale(28),
-    height: verticalScale(28),
-    borderRadius: moderateScale(14),
-    backgroundColor: '#1976D2',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  topicNumberText: {
-    color: '#fff',
-    fontSize: moderateScale(14),
-    fontFamily: FONT.semiBold,
   },
   topicMetaRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    gap: horizontalScale(16),
+    gap: 12,
   },
   topicMetaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: horizontalScale(6),
+    gap: 6,
   },
   topicMetaText: {
     fontSize: moderateScale(12),
-    color: COLORS.textMuted,
+    color: '#5C6B76',
     fontFamily: FONT.medium,
   },
 });

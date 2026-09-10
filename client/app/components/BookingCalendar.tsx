@@ -9,7 +9,6 @@ import { ipURL } from '../utils/utils';
 import { Ionicons } from '@expo/vector-icons';
 import BookingSummaryModal from './BookingSummaryModal';
 import { axiosWithAuth } from '../utils/customAxios';
-import { router } from 'expo-router';
 
 interface SubjectTopic {
   id: string;
@@ -233,7 +232,6 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, teacherPro
       Alert.alert('Success', 'Session booked successfully!');
       setShowSummary(false);
       onClose();
-      router.replace('/(tabs)/home');
     } catch (error) {
       console.error('Error booking session:', error);
       Alert.alert('Error', 'Failed to book session');

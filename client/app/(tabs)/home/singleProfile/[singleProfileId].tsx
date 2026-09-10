@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Image } from 'expo-image';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useSegments } from "expo-router";
 import axios from "axios";
 import { ipURL } from "../../../utils/utils";
 import { FONT } from "../../../../constants";
@@ -47,6 +47,8 @@ const blurhash = '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWX
 
 const SingleProfilePage = () => {
   const {singleProfileId} = useLocalSearchParams()
+  const segments = useSegments() as string[];
+  const stackTab = segments.includes('profile') ? 'profile' : 'home';
   console.log("singleProfileId", singleProfileId);
   
 
@@ -73,7 +75,7 @@ const SingleProfilePage = () => {
 
 
   const handleItemPress = (itemId: { id: any }) => {
-    router.push(`/(tabs)/profile/${itemId.id}`);
+    router.push(`/(tabs)/${stackTab}/${itemId.id}`);
   };
 
   const closeDropdown = () => {

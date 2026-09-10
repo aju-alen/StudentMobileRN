@@ -58,7 +58,7 @@ const YourReviewsPage = () => {
   };
 
   const handleReviewPress = (subjectId: string) => {
-    router.push(`/(tabs)/home/subjectReviews/${subjectId}`);
+    router.push(`/(tabs)/profile/subjectReviews/${subjectId}`);
   };
 
   if (isLoading) {

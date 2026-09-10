@@ -10,6 +10,7 @@ import { ipURL } from '../../utils/utils';
 import { axiosWithAuth } from '../../utils/customAxios';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const EditProfilePage = () => {
   const [userData, setUserData] = useState({
@@ -194,10 +195,15 @@ const EditProfilePage = () => {
   const displayImageUri = selectedImageUri || (profileImage ? `${profileImage}${profileImage.includes('?') ? '&' : '?'}v=${profileImageVersion}` : null);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          accessibilityLabel="Back to profile"
+        >
+          <Ionicons name="chevron-back" size={24} color="#12263A" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
       </View>
@@ -295,7 +301,7 @@ const EditProfilePage = () => {
         )}
       </TouchableOpacity>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -307,24 +313,20 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: horizontalScale(20),
-    paddingTop: verticalScale(60),
-    paddingBottom: verticalScale(16),
-    backgroundColor: '#FFFFFF',
-    borderBottomLeftRadius: moderateScale(30),
-    borderBottomRightRadius: moderateScale(30),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 8,
-    elevation: 5,
+    paddingHorizontal: 12,
+    paddingTop: verticalScale(4),
+    paddingBottom: verticalScale(12),
   },
   backButton: {
-    marginRight: horizontalScale(15),
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     fontFamily: FONT.bold,
     fontSize: moderateScale(24),
-    color: '#1A2B4B',
+    color: '#12263A',
   },
   scrollView: {
     flex: 1,
@@ -363,7 +365,7 @@ const styles = StyleSheet.create({
     width: moderateScale(32),
     height: moderateScale(32),
     borderRadius: moderateScale(16),
-    backgroundColor: '#1A2B4B',
+    backgroundColor: '#1A4C6E',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
@@ -376,7 +378,7 @@ const styles = StyleSheet.create({
   changePhotoText: {
     fontFamily: FONT.medium,
     fontSize: moderateScale(14),
-    color: '#1A2B4B',
+    color: '#1A4C6E',
   },
   photoActions: {
     flexDirection: 'row',
@@ -384,12 +386,14 @@ const styles = StyleSheet.create({
     gap: horizontalScale(12),
   },
   uploadButton: {
-    backgroundColor: '#1A2B4B',
+    backgroundColor: '#1A4C6E',
     paddingVertical: verticalScale(8),
     paddingHorizontal: horizontalScale(20),
-    borderRadius: moderateScale(20),
+    borderRadius: 12,
+    minHeight: 44,
     minWidth: horizontalScale(120),
     alignItems: 'center',
+    justifyContent: 'center',
   },
   uploadButtonText: {
     fontFamily: FONT.medium,
@@ -407,14 +411,12 @@ const styles = StyleSheet.create({
   },
   formCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: moderateScale(16),
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
     paddingHorizontal: horizontalScale(20),
     paddingVertical: verticalScale(8),
     marginBottom: verticalScale(24),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 6,
-    elevation: 3,
   },
   field: {
     paddingVertical: verticalScale(16),
@@ -435,7 +437,7 @@ const styles = StyleSheet.create({
   fieldInput: {
     fontFamily: FONT.regular,
     fontSize: moderateScale(16),
-    color: '#1A2B4B',
+    color: '#12263A',
     paddingVertical: verticalScale(4),
   },
   fieldInputDisabled: {
@@ -453,12 +455,12 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(4),
   },
   saveButton: {
-    backgroundColor: '#1A2B4B',
+    backgroundColor: '#1A4C6E',
     paddingVertical: verticalScale(16),
-    borderRadius: moderateScale(12),
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: verticalScale(52),
+    minHeight: 52,
   },
   saveButtonDisabled: {
     opacity: 0.8,

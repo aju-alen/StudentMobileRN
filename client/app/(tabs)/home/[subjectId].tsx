@@ -4,22 +4,20 @@ import {
 } from "react-native";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import SubjectPage from "../../components/SubjectPage";
-import { COLORS } from "../../../constants/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 const SubjectId = () => {
   const { subjectId } = useLocalSearchParams();
   return (
-    <View style={{flex:1}}>
+    <View style={{flex:1, backgroundColor: '#F4F6F8'}}>
        <Stack.Screen options={{
-        headerStyle: { backgroundColor: COLORS.primary }, 
-        headerTintColor: COLORS.primary,
+        headerStyle: { backgroundColor: '#F4F6F8' },
+        headerTintColor: '#12263A',
         headerTitle: "",
         headerShadowVisible: false,
         headerBackVisible: false,
         headerLeft: () => (
-          <Ionicons name="arrow-back" size={24} color={COLORS.white} onPress={()=>router.replace('/(tabs)/home')}  style={{ marginLeft: 0 }} />
+          <Ionicons name="chevron-back" size={24} color="#12263A" onPress={()=>router.back()}  style={{ marginLeft: 0 }} />
         ),
       }}>
       </Stack.Screen>

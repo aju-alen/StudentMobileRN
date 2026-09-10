@@ -1,13 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking, ActivityIndicator } from 'react-native';
-import { router, Stack } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking, ActivityIndicator, StatusBar } from 'react-native';
+import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { FONT } from '../../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import StatusBarComponent from '../../components/StatusBarComponent';
 import { axiosWithAuth } from '../../utils/customAxios';
 import { ipURL } from '../../utils/utils';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+const SettingsRow = ({ label, onPress, destructive = false, accessibilityLabel }) => (
+  <TouchableOpacity
+    style={styles.settingItem}
+    onPress={onPress}
+    activeOpacity={0.85}
+    accessibilityRole="button"
+    accessibilityLabel={accessibilityLabel || label}
+  >
+    <Text style={[styles.settingText, destructive && styles.destructiveText]}>{label}</Text>
+    <Ionicons name="chevron-forward" size={18} color={destructive ? '#C44747' : '#5C6B76'} />
+  </TouchableOpacity>
+);
 
 const SettingsPage = () => {
   const [user, setUser] = useState(null);
@@ -19,12 +32,8 @@ const SettingsPage = () => {
         setLoading(true);
         const response = await axiosWithAuth.get(`${ipURL}/api/auth/metadata`);
         setUser(response.data);
-        
-        // Validate organization data if user is a teacher
+
         if (response.data?.isTeacher === true) {
-          // Additional validation: ensure organization data is present
-          // The metadata endpoint should return organization info if user is a teacher
-          // If organization data is missing, we can still show the page but log a warning
           if (!response.data?.organization) {
             console.warn('Teacher user but no organization data found');
           }
@@ -79,162 +88,106 @@ const SettingsPage = () => {
     }
   };
 
-  // Show loading state until user data is loaded and validated
+  const header = (
+    <View style={styles.header}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.back()}
+        accessibilityRole="button"
+        accessibilityLabel="Back to profile"
+      >
+        <Ionicons name="chevron-back" size={24} color="#12263A" />
+      </TouchableOpacity>
+      <View style={styles.headerText}>
+        <Text style={styles.title}>Settings</Text>
+        <Text style={styles.subtitle}>Account, support, and privacy</Text>
+      </View>
+    </View>
+  );
+
   if (loading) {
     return (
-      <View style={styles.container}>
-        <StatusBarComponent />
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
-          </TouchableOpacity>
-          <Text style={styles.title}>Settings</Text>
-        </View>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar barStyle="dark-content" />
+        {header}
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1A2B4B" />
-          <Text style={styles.loadingText}>Loading settings...</Text>
+          <ActivityIndicator size="large" color="#1A4C6E" />
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <StatusBarComponent />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar barStyle="dark-content" />
+      {header}
 
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={24} color="#1A2B4B" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Settings</Text>
-      </View>
-
-      <View style={styles.section}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Text style={styles.sectionTitle}>Account</Text>
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={() => router.push('/(tabs)/profile/edit-profile')}
-        >
-          <Text style={styles.settingText}>Edit Profile</Text>
-          <Ionicons name="chevron-forward" size={24} color="#64748B" />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={() => router.push('/(tabs)/profile/change-password')}
-        >
-          <Text style={styles.settingText}>Change Password</Text>
-          <Ionicons name="chevron-forward" size={24} color="#64748B" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.settingItem}
-          onPress={handleEditSubject}
-        >
-          <Text style={styles.settingText}>Edit Subject</Text>
-          <Ionicons name="chevron-forward" size={24} color="#64748B" />
-        </TouchableOpacity>
-        {/* <TouchableOpacity style={styles.settingItem}>
-          <Text style={styles.settingText}>Notification Settings</Text>
-          <Ionicons name="chevron-forward" size={24} color="#64748B" />
-        </TouchableOpacity> */}
-      </View>
-
-      {user?.isTeacher === true && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Organization</Text>
-          <TouchableOpacity 
-            style={styles.settingItem}
-            onPress={() => router.push('/(tabs)/profile/organization')}
-          >
-            <Text style={styles.settingText}>Organization Settings</Text>
-            <Ionicons name="chevron-forward" size={24} color="#64748B" />
-          </TouchableOpacity>
+        <View style={styles.group}>
+          <SettingsRow label="Edit Profile" onPress={() => router.push('/(tabs)/profile/edit-profile')} />
+          <View style={styles.divider} />
+          <SettingsRow label="Change Password" onPress={() => router.push('/(tabs)/profile/change-password')} />
+          <View style={styles.divider} />
+          <SettingsRow label="Edit Subject" onPress={handleEditSubject} />
         </View>
-      )}
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Actions</Text>
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={() => router.push('/(tabs)/profile/reports')}
-        >
-          <Text style={styles.settingText}>Your Reports</Text>
-          <Ionicons name="chevron-forward" size={24} color="#64748B" />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={() => router.push('/(tabs)/profile/blocked-users')}
-        >
-          <Text style={styles.settingText}>Blocked Users</Text>
-          <Ionicons name="chevron-forward" size={24} color="#64748B" />
-        </TouchableOpacity>
-        {user?.isTeacher !== true && (
-          <TouchableOpacity 
-            style={styles.settingItem}
-            onPress={() => router.push('/(tabs)/profile/your-reviews')}
-          >
-            <Text style={styles.settingText}>Your Reviews</Text>
-            <Ionicons name="chevron-forward" size={24} color="#64748B" />
-          </TouchableOpacity>
+        {user?.isTeacher === true && (
+          <>
+            <Text style={styles.sectionTitle}>Organization</Text>
+            <View style={styles.group}>
+              <SettingsRow label="Organization Settings" onPress={() => router.push('/(tabs)/profile/organization')} />
+            </View>
+          </>
         )}
-      </View>
 
-      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Actions</Text>
+        <View style={styles.group}>
+          <SettingsRow label="Your Reports" onPress={() => router.push('/(tabs)/profile/reports')} />
+          <View style={styles.divider} />
+          <SettingsRow label="Blocked Users" onPress={() => router.push('/(tabs)/profile/blocked-users')} />
+          {user?.isTeacher !== true && (
+            <>
+              <View style={styles.divider} />
+              <SettingsRow label="Your Reviews" onPress={() => router.push('/(tabs)/profile/your-reviews')} />
+            </>
+          )}
+        </View>
+
         <Text style={styles.sectionTitle}>Support</Text>
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={() => router.push('/(tabs)/profile/help-center')}
-        >
-          <Text style={styles.settingText}>Help Center</Text>
-          <Ionicons name="chevron-forward" size={24} color="#64748B" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem} onPress={() => router.push('/(tabs)/profile/contact-us')}>
-          <Text style={styles.settingText}>Contact Us</Text>
-          <Ionicons name="chevron-forward" size={24} color="#64748B" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem} onPress={handlePrivacyPolicy}>
-          <Text style={styles.settingText}>Privacy Policy</Text>
-          <Ionicons name="chevron-forward" size={24} color="#64748B" />
-        </TouchableOpacity>
-      </View>
+        <View style={styles.group}>
+          <SettingsRow label="Help Center" onPress={() => router.push('/(tabs)/profile/help-center')} />
+          <View style={styles.divider} />
+          <SettingsRow label="Contact Us" onPress={() => router.push('/(tabs)/profile/contact-us')} />
+          <View style={styles.divider} />
+          <SettingsRow label="Privacy Policy" onPress={handlePrivacyPolicy} />
+        </View>
 
-      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Developer</Text>
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={() => router.push('/(tabs)/profile/dev-stats')}
-        >
-          <Text style={styles.settingText}>Dev Stats</Text>
-          <Ionicons name="chevron-forward" size={24} color="#64748B" />
-        </TouchableOpacity>
-      </View>
+        <View style={styles.group}>
+          <SettingsRow label="Dev Stats" onPress={() => router.push('/(tabs)/profile/dev-stats')} />
+        </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Dangerous Zone</Text>
-        <TouchableOpacity 
-          style={styles.settingItem}
-          onPress={() => router.push('/(tabs)/profile/delete-account')}
-        >
-          <Text style={[styles.settingText, { color: '#DC2626' }]}>Delete Account</Text>
-          <Ionicons name="chevron-forward" size={24} color="#DC2626" />
-        </TouchableOpacity>
-      </View>
+        <Text style={styles.sectionTitle}>Danger zone</Text>
+        <View style={styles.group}>
+          <SettingsRow
+            label="Delete Account"
+            onPress={() => router.push('/(tabs)/profile/delete-account')}
+            destructive
+          />
+        </View>
 
-      <View style={styles.logoutSection}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.logoutButton}
           onPress={handleLogout}
+          accessibilityRole="button"
+          accessibilityLabel="Logout"
         >
-          <Ionicons name="log-out-outline" size={24} color="#DC2626" />
+          <Ionicons name="log-out-outline" size={20} color="#C44747" />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -246,91 +199,94 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: verticalScale(60),
-    paddingBottom: verticalScale(20),
-    paddingHorizontal: horizontalScale(20),
-    backgroundColor: '#FFFFFF',
-    borderBottomLeftRadius: moderateScale(30),
-    borderBottomRightRadius: moderateScale(30),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    //shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    paddingHorizontal: 12,
+    paddingTop: verticalScale(4),
+    paddingBottom: verticalScale(12),
   },
   backButton: {
-    marginRight: horizontalScale(15),
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerText: {
+    flex: 1,
+    marginLeft: 4,
   },
   title: {
     fontFamily: FONT.bold,
     fontSize: moderateScale(24),
-    color: '#1A2B4B',
+    color: '#12263A',
   },
-  section: {
-    marginTop: verticalScale(20),
+  subtitle: {
+    marginTop: 2,
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(14),
+    color: '#5C6B76',
+  },
+  scrollContent: {
     paddingHorizontal: horizontalScale(20),
+    paddingBottom: verticalScale(32),
   },
   sectionTitle: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(18),
-    color: '#1A2B4B',
-    marginBottom: verticalScale(15),
+    fontSize: moderateScale(13),
+    color: '#5C6B76',
+    marginTop: verticalScale(18),
+    marginBottom: verticalScale(8),
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  group: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    overflow: 'hidden',
   },
   settingItem: {
+    minHeight: 52,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    padding: moderateScale(15),
-    borderRadius: moderateScale(12),
-    marginBottom: verticalScale(10),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    //shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E6EBF0',
+    marginLeft: 16,
   },
   settingText: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(16),
-    color: '#1A2B4B',
+    fontSize: moderateScale(15),
+    color: '#12263A',
   },
-  logoutSection: {
-    marginTop: verticalScale(30),
-    marginBottom: verticalScale(40),
-    paddingHorizontal: horizontalScale(20),
+  destructiveText: {
+    color: '#C44747',
   },
   logoutButton: {
+    marginTop: verticalScale(24),
+    minHeight: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FEE2E2',
-    padding: moderateScale(15),
-    borderRadius: moderateScale(12),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    //shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    gap: 8,
   },
   logoutText: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(16),
-    color: '#DC2626',
-    marginLeft: horizontalScale(8),
+    fontSize: moderateScale(15),
+    color: '#C44747',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: verticalScale(100),
-  },
-  loadingText: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(14),
-    color: '#64748B',
-    marginTop: verticalScale(10),
   },
 });
 
-export default SettingsPage; 
+export default SettingsPage;

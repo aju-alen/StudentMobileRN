@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, ActivityIndicator, ScrollView, Image, TouchableOpacity, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -8,8 +8,10 @@ import { horizontalScale, moderateScale, verticalScale } from '../../utils/metri
 import { FONT, COLORS } from '../../../constants';
 import { Ionicons } from '@expo/vector-icons';
 import StatusBarComponent from '../../components/StatusBarComponent';
+import CoverImage from '../../components/CoverImage';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaView } from "react-native-safe-area-context";
+import { goBack } from '../../utils/navigation';
 
 interface Subject {
   id: string;
@@ -65,10 +67,7 @@ const SavedPage = () => {
       onPress={() => handleItemPress(subject.id)}
       activeOpacity={0.7}
     >
-      <Image 
-        source={{ uri: subject.subjectImage }} 
-        style={styles.subjectImage}
-      />
+      <CoverImage uri={subject.subjectImage} style={styles.cover} />
       <View style={styles.cardContent}>
         <View style={styles.titleRow}>
           <Text style={styles.subjectName} numberOfLines={1}>{subject.subjectName}</Text>
@@ -102,8 +101,18 @@ const SavedPage = () => {
       <SafeAreaView style={styles.mainContainer}>
         <StatusBarComponent />
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Saved Courses</Text>
-          <Text style={styles.headerSubtitle}>Your favorite courses in one place</Text>
+          <TouchableOpacity
+            onPress={() => goBack('/(tabs)/home')}
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="chevron-back" size={moderateScale(24)} color="#12263A" />
+          </TouchableOpacity>
+          <View style={styles.headerText}>
+            <Text style={styles.headerTitle}>Saved Courses</Text>
+            <Text style={styles.headerSubtitle}>Your favorite courses in one place</Text>
+          </View>
         </View>
 
         {loading ? (
@@ -112,7 +121,7 @@ const SavedPage = () => {
           </View>
         ) : error ? (
           <View style={styles.errorContainer}>
-            <Ionicons name="alert-circle-outline" size={moderateScale(48)} color={COLORS.error} />
+            <Ionicons name="alert-circle-outline" size={moderateScale(48)} color="#C2410C" />
             <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity 
               style={styles.retryButton}
@@ -157,23 +166,35 @@ export default SavedPage;
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: '#F4F6F8',
   },
   header: {
-    paddingHorizontal: horizontalScale(20),
-    paddingTop: verticalScale(20),
-    paddingBottom: verticalScale(10),
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: horizontalScale(12),
+    paddingTop: verticalScale(8),
+    paddingBottom: verticalScale(12),
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerText: {
+    flex: 1,
+    marginLeft: horizontalScale(4),
   },
   headerTitle: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(28),
-    color: COLORS.primary,
+    fontSize: moderateScale(22),
+    color: '#12263A',
     marginBottom: verticalScale(4),
   },
   headerSubtitle: {
     fontFamily: FONT.regular,
     fontSize: moderateScale(14),
-    color: COLORS.gray,
+    color: '#5C6B76',
   },
   contentContainer: {
     flex: 1,
@@ -197,7 +218,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: FONT.medium,
     fontSize: moderateScale(16),
-    color: COLORS.error,
+    color: '#C2410C',
     textAlign: 'center',
     marginTop: verticalScale(16),
     marginBottom: verticalScale(20),
@@ -206,12 +227,14 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingHorizontal: horizontalScale(24),
     paddingVertical: verticalScale(12),
-    borderRadius: moderateScale(8),
+    minHeight: 44,
+    borderRadius: moderateScale(12),
+    justifyContent: 'center',
   },
   retryButtonText: {
     fontFamily: FONT.bold,
     fontSize: moderateScale(14),
-    color: COLORS.white,
+    color: '#FFFFFF',
   },
   emptyContainer: {
     flex: 1,
@@ -222,13 +245,13 @@ const styles = StyleSheet.create({
   emptyText: {
     fontFamily: FONT.bold,
     fontSize: moderateScale(20),
-    color: COLORS.black,
+    color: '#12263A',
     marginTop: verticalScale(16),
   },
   emptySubtext: {
     fontFamily: FONT.regular,
     fontSize: moderateScale(14),
-    color: COLORS.gray,
+    color: '#5C6B76',
     marginTop: verticalScale(8),
     marginBottom: verticalScale(24),
   },
@@ -236,68 +259,64 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingHorizontal: horizontalScale(24),
     paddingVertical: verticalScale(12),
-    borderRadius: moderateScale(8),
+    minHeight: 44,
+    borderRadius: moderateScale(12),
+    justifyContent: 'center',
   },
   exploreButtonText: {
     fontFamily: FONT.bold,
     fontSize: moderateScale(14),
-    color: COLORS.white,
+    color: '#FFFFFF',
   },
   cardContainer: {
     flexDirection: 'row',
-    backgroundColor: COLORS.white,
+    backgroundColor: '#FFFFFF',
     borderRadius: moderateScale(16),
-    marginBottom: verticalScale(16),
-    padding: verticalScale(16),
-    shadowColor: COLORS.black,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    //shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    marginBottom: verticalScale(12),
+    padding: verticalScale(12),
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    minHeight: 88,
   },
-  subjectImage: {
-    width: moderateScale(100),
-    height: moderateScale(100),
-    borderRadius: moderateScale(12),
+  cover: {
+    width: 128,
+    borderRadius: 12,
   },
   cardContent: {
     flex: 1,
-    marginLeft: horizontalScale(16),
+    marginLeft: horizontalScale(14),
     justifyContent: 'space-between',
   },
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: verticalScale(8),
+    marginBottom: verticalScale(6),
   },
   subjectName: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(18),
-    color: COLORS.black,
+    fontSize: moderateScale(16),
+    color: '#12263A',
     flex: 1,
     marginRight: horizontalScale(8),
   },
   priceContainer: {
-    backgroundColor: COLORS.primary + '15',
-    paddingHorizontal: horizontalScale(12),
-    paddingVertical: verticalScale(6),
+    backgroundColor: '#EEF3F7',
+    paddingHorizontal: horizontalScale(10),
+    paddingVertical: verticalScale(4),
     borderRadius: moderateScale(8),
   },
   priceText: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(16),
+    fontSize: moderateScale(13),
     color: COLORS.primary,
   },
   subjectDescription: {
     fontFamily: FONT.regular,
-    fontSize: moderateScale(14),
-    color: COLORS.gray,
-    marginBottom: verticalScale(12),
-    lineHeight: moderateScale(20),
+    fontSize: moderateScale(13),
+    color: '#5C6B76',
+    marginBottom: verticalScale(8),
+    lineHeight: moderateScale(18),
   },
   detailsRow: {
     flexDirection: 'row',
@@ -306,9 +325,9 @@ const styles = StyleSheet.create({
     gap: horizontalScale(8),
   },
   detailBadge: {
-    backgroundColor: COLORS.lightGray + '20',
-    paddingHorizontal: horizontalScale(10),
-    paddingVertical: verticalScale(6),
+    backgroundColor: '#F4F6F8',
+    paddingHorizontal: horizontalScale(8),
+    paddingVertical: verticalScale(4),
     borderRadius: moderateScale(8),
     flexDirection: 'row',
     alignItems: 'center',
@@ -319,6 +338,6 @@ const styles = StyleSheet.create({
   detailText: {
     fontFamily: FONT.medium,
     fontSize: moderateScale(12),
-    color: COLORS.gray,
+    color: '#5C6B76',
   },
 }); 

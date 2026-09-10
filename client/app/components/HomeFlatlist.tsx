@@ -6,20 +6,16 @@ import {
   FlatList,
   Dimensions,
 } from "react-native";
-import { Image } from 'expo-image';
 import React, { useEffect, useState } from "react";
 import { router, usePathname } from "expo-router";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ipURL } from "../utils/utils";
+import CoverImage from "./CoverImage";
 import { SIZES } from "../../constants";
 
 const { width } = Dimensions.get('window');
 const CARD_PADDING = 16;
-const IMAGE_SIZE = 90;
-
-const blurhash =
-  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
 interface User {
   isTeacher?: boolean;
@@ -58,7 +54,7 @@ const HomeFlatlist = ({ homeData, handleItemPress }) => {
   }, []);
 
   const handlePressEdit = (item) => {
-    router.push(`../profile/editSubject/${item.id}`);
+    router.push(`/(tabs)/profile/editSubject/${item.id}`);
   };
 
   const handleIPressDelete = async (item) => {
@@ -119,13 +115,7 @@ const HomeFlatlist = ({ homeData, handleItemPress }) => {
               </View>
 
               <View style={styles.contentContainer}>
-                <Image
-                  source={{ uri: item.subjectImage }}
-                  style={styles.image}
-                  placeholder={blurhash}
-                  contentFit="cover"
-                  transition={200}
-                />
+                <CoverImage uri={item.subjectImage} style={styles.cover} />
                 <View style={styles.textContainer}>
                   <TouchableOpacity onPress={() => toggleShowAllText(item.id)}>
                     <Text 
@@ -208,11 +198,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
   },
-  image: {
-    width: IMAGE_SIZE,
-    height: IMAGE_SIZE,
+  cover: {
+    width: 128,
     borderRadius: 8,
-    backgroundColor: '#f0f0f0',
   },
   textContainer: {
     flex: 1,
