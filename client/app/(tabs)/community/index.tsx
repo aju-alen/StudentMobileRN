@@ -7,15 +7,11 @@ import {
   StatusBar,
   ActivityIndicator,
   RefreshControl,
-  Animated,
-  Easing,
-  Dimensions,
   TextInput,
   Keyboard,
-  Platform
 } from "react-native";
 import { Image } from 'expo-image';
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { FONT } from "../../../constants";
@@ -24,107 +20,11 @@ import axios from "axios";
 import { ipURL } from "../../utils/utils";
 import { socket } from "../../utils/socket";
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
-import { COLORS } from "../../../constants";
-import useSafeAreaInsets, { addBasePaddingToTopInset } from "../../hooks/useSafeAreaInsets";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const { width } = Dimensions.get('window');
-
 const blurhash =
-  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
+  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
-const CommunityCard = ({ item, onPress, index }) => {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const opacityAnim = useRef(new Animated.Value(0)).current;
-  const translateYAnim = useRef(new Animated.Value(50)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(opacityAnim, {
-        toValue: 1,
-        duration: 500,
-        delay: index * 100,
-        easing: Easing.bezier(0.4, 0, 0.2, 1),
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateYAnim, {
-        toValue: 0,
-        duration: 500,
-        delay: index * 100,
-        easing: Easing.bezier(0.4, 0, 0.2, 1),
-        useNativeDriver: true,
-      })
-    ]).start();
-  }, []);
-
-  const handlePressIn = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 0.98,
-      friction: 5,
-      tension: 40,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      friction: 3,
-      tension: 40,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  return (
-    <Animated.View style={{
-      opacity: opacityAnim,
-      transform: [
-        { translateY: translateYAnim },
-        { scale: scaleAnim }
-      ]
-    }}>
-      <TouchableOpacity 
-        style={styles.card}
-        onPress={onPress}
-        activeOpacity={1}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-      >
-        <View style={styles.cardImageContainer}>
-          <Image 
-            source={{ uri: item.communityProfileImage }} 
-            style={styles.communityImage}
-            placeholder={blurhash}
-            contentFit="fill"
-            transition={200}
-          />
-          <View style={styles.memberBadge}>
-            <Ionicons name="people" size={12} color="#FFF" />
-            <Text style={styles.memberCount}>{item.users?.length || 0}</Text>
-          </View>
-        </View>
-        
-        <View style={styles.cardContent}>
-          <View style={styles.titleContainer}>
-            <Text style={styles.communityName} numberOfLines={1}>
-              {item.communityName}
-            </Text>
-            <View style={styles.statusIndicator} />
-          </View>
-          
-          <View style={styles.cardFooter}>
-            <View style={styles.tagContainer}>
-              <Text style={styles.tag}>Active</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color="#A0A0A0" />
-          </View>
-        </View>
-      </TouchableOpacity>
-    </Animated.View>
-  );
-};
-
-// Add custom debounce hook at the top of the file
 const useDebounce = (value: string, delay: number) => {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -141,82 +41,51 @@ const useDebounce = (value: string, delay: number) => {
   return debouncedValue;
 };
 
+const CommunityCard = ({ item, onPress }) => {
+  const memberCount = item.users?.length || 0;
+
+  return (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={onPress}
+      activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.communityName}, ${memberCount} members`}
+    >
+      {item.communityProfileImage ? (
+        <Image
+          source={{ uri: item.communityProfileImage }}
+          style={styles.communityImage}
+          placeholder={blurhash}
+          contentFit="cover"
+          transition={200}
+        />
+      ) : (
+        <View style={styles.communityImagePlaceholder}>
+          <Ionicons name="people-outline" size={22} color="#1A4C6E" />
+        </View>
+      )}
+
+      <View style={styles.cardContent}>
+        <Text style={styles.communityName} numberOfLines={1}>
+          {item.communityName}
+        </Text>
+        <Text style={styles.memberText}>
+          {memberCount} {memberCount === 1 ? 'member' : 'members'}
+        </Text>
+      </View>
+      <Ionicons name="chevron-forward" size={18} color="#5C6B76" />
+    </TouchableOpacity>
+  );
+};
+
 const CommunityPage = () => {
-  const insets = useSafeAreaInsets();
   const [communities, setCommunities] = useState([]);
   const [token, setToken] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchAnimation] = useState(new Animated.Value(0));
-  const debouncedSearchQuery = useDebounce(searchQuery, 400); // 500ms delay
-
-  // Animation values
-  const headerOpacity = useRef(new Animated.Value(0)).current;
-  const headerTranslateY = useRef(new Animated.Value(20)).current;
-  const subHeaderOpacity = useRef(new Animated.Value(0)).current;
-  const subHeaderTranslateY = useRef(new Animated.Value(20)).current;
-  const searchButtonScale = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    // Entrance animations
-    Animated.parallel([
-      Animated.timing(headerOpacity, {
-        toValue: 1,
-        duration: 600,
-        easing: Easing.bezier(0.4, 0, 0.2, 1),
-        useNativeDriver: true,
-      }),
-      Animated.timing(headerTranslateY, {
-        toValue: 0,
-        duration: 600,
-        easing: Easing.bezier(0.4, 0, 0.2, 1),
-        useNativeDriver: true,
-      }),
-      Animated.timing(subHeaderOpacity, {
-        toValue: 1,
-        duration: 600,
-        delay: 200,
-        easing: Easing.bezier(0.4, 0, 0.2, 1),
-        useNativeDriver: true,
-      }),
-      Animated.timing(subHeaderTranslateY, {
-        toValue: 0,
-        duration: 600,
-        delay: 200,
-        easing: Easing.bezier(0.4, 0, 0.2, 1),
-        useNativeDriver: true,
-      })
-    ]).start();
-  }, []);
-
-  const handleSearchPress = () => {
-    setIsSearchVisible(prev => !prev);
-    Animated.spring(searchAnimation, {
-      toValue: 1,
-      useNativeDriver: true,
-      tension: 50,
-      friction: 7,
-    }).start();
-  };
-
-  const handleSearchClose = () => {
-    Animated.spring(searchAnimation, {
-      toValue: 0,
-      useNativeDriver: true,
-      tension: 50,
-      friction: 7,
-    }).start(() => {
-      setIsSearchVisible(false);
-      setSearchQuery('');
-      Keyboard.dismiss();
-    });
-  };
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-  };
+  const debouncedSearchQuery = useDebounce(searchQuery, 400);
 
   const getAllCommunities = async () => {
     try {
@@ -235,25 +104,24 @@ const CommunityPage = () => {
       setIsLoading(false);
       setRefreshing(false);
     }
-  }
+  };
 
   useEffect(() => {
     getAllCommunities();
   }, [debouncedSearchQuery]);
 
-  const handlePress = async(item) => {
+  const handlePress = async (item) => {
     try {
       const storedToken = await AsyncStorage.getItem("authToken");
-      const resp = await axios.post(
-        `${ipURL}/api/community/${item.id}`, 
-        {}, 
+      await axios.post(
+        `${ipURL}/api/community/${item.id}`,
+        {},
         { headers: { Authorization: `Bearer ${storedToken || token}` }}
       );
       socket.emit('chat-room', item.id);
       router.push(`/(tabs)/community/${item.id}`);
     } catch (error: any) {
       console.error("Error joining community:", error);
-      // If already part of community, still navigate
       if (error.response?.status === 200 || error.response?.data?.message?.includes('already part')) {
         socket.emit('chat-room', item.id);
         router.push(`/(tabs)/community/${item.id}`);
@@ -261,113 +129,87 @@ const CommunityPage = () => {
         alert(error.response?.data?.message || 'Failed to join community. Please try again.');
       }
     }
-  }
+  };
 
   const onRefresh = () => {
     setRefreshing(true);
     getAllCommunities();
-  }
-
-  // if (isLoading) {
-  //   return (
-  //     <SafeAreaView style={styles.loadingContainer}>
-  //       <ActivityIndicator size="large" color="#007AFF" />
-  //     </SafeAreaView>
-  //   );
-  // }
+  };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <StatusBar barStyle="dark-content" />
-      
-      <Animated.View style={[
-        styles.header,
-        {
-          opacity: headerOpacity,
-          transform: [{ translateY: headerTranslateY }],
-          paddingTop: Platform.OS === 'android' ? addBasePaddingToTopInset(16, insets.top) : undefined
-        }
-      ]}>
+
+      <View style={styles.header}>
         <Text style={styles.headerTitle}>Communities</Text>
-        <TouchableOpacity 
-          style={styles.searchButton}
-          onPress={handleSearchPress}
-        >
-          <Animated.View style={{ transform: [{ scale: searchButtonScale }] }}>
-            <Ionicons name="search-outline" size={22} color="#333" />
-          </Animated.View>
-        </TouchableOpacity>
-      </Animated.View>
+        <Text style={styles.headerSubtitle}>Find a group and join the conversation</Text>
+      </View>
 
-      {isSearchVisible && (
-        <Animated.View 
-          style={[
-            styles.searchContainer,
-            {
-              transform: [{
-                translateY: searchAnimation.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [-20, 0]
-                })
-              }],
-              opacity: searchAnimation
-            }
-          ]}
-        >
-          <View style={styles.searchInputContainer}>
-            <Ionicons name="search" size={20} color={COLORS.gray} style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search communities..."
-              value={searchQuery}
-              onChangeText={handleSearch}
-              autoFocus={true}
-              placeholderTextColor={COLORS.gray}
-            />
-            {/* <TouchableOpacity onPress={handleSearchClose}>
-              <Ionicons name="close-circle" size={20} color={COLORS.gray} />
-            </TouchableOpacity> */}
-          </View>
-        </Animated.View>
-      )}
-
-      <Animated.View style={[
-        styles.subHeader,
-        {
-          opacity: subHeaderOpacity,
-          transform: [{ translateY: subHeaderTranslateY }]
-        }
-      ]}>
-        <Text style={styles.subHeaderText}>
-          Join communities to connect with like-minded people
-        </Text>
-      </Animated.View>
-
-      {isLoading ? <ActivityIndicator size="large" color="#007AFF" style={{margin: 'auto'}} /> : <FlatList
-        data={communities}
-        renderItem={({ item, index }) => (
-          <CommunityCard 
-            item={item} 
-            onPress={() => handlePress(item)} 
-            index={index}
-          />
+      <View style={styles.searchBar}>
+        <Ionicons name="search" size={20} color="#5C6B76" />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search communities"
+          placeholderTextColor="#8A97A3"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          returnKeyType="search"
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity
+            onPress={() => {
+              setSearchQuery('');
+              Keyboard.dismiss();
+            }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="Clear search"
+          >
+            <Ionicons name="close-circle" size={20} color="#5C6B76" />
+          </TouchableOpacity>
         )}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={['#007AFF']}
-            tintColor="#007AFF"
-          />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No communities found</Text>
-          </View>
-        }
-      />}
+      </View>
+
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1A4C6E" />
+        </View>
+      ) : (
+        <FlatList
+          data={communities}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={({ item }) => (
+            <CommunityCard
+              item={item}
+              onPress={() => handlePress(item)}
+            />
+          )}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#1A4C6E']}
+              tintColor="#1A4C6E"
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="people-outline" size={40} color="#5C6B76" />
+              <Text style={styles.emptyText}>
+                {searchQuery ? 'No matching communities' : 'No communities yet'}
+              </Text>
+              <Text style={styles.emptySubtext}>
+                {searchQuery
+                  ? 'Try a different name or pull to refresh.'
+                  : 'Pull to refresh, or check back later.'}
+              </Text>
+            </View>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -377,162 +219,112 @@ export default CommunityPage;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F4F6F8',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: horizontalScale(20),
-    paddingVertical: verticalScale(16),
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    paddingTop: verticalScale(8),
+    paddingBottom: verticalScale(12),
   },
   headerTitle: {
     fontSize: moderateScale(24),
     fontFamily: FONT.bold,
-    color: '#1A1A1A',
+    color: '#12263A',
   },
-  searchButton: {
-    padding: moderateScale(8),
-  },
-  subHeader: {
-    paddingHorizontal: horizontalScale(20),
-    paddingVertical: verticalScale(12),
-    backgroundColor: '#F8F9FA',
-  },
-  subHeaderText: {
+  headerSubtitle: {
+    marginTop: verticalScale(4),
     fontSize: moderateScale(14),
     fontFamily: FONT.regular,
-    color: '#666666',
+    color: '#5C6B76',
+  },
+  searchBar: {
+    marginHorizontal: horizontalScale(20),
+    marginBottom: verticalScale(12),
+    minHeight: 48,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    height: 48,
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(15),
+    color: '#12263A',
   },
   listContainer: {
-    padding: moderateScale(16),
-    gap: verticalScale(16),
+    paddingHorizontal: horizontalScale(20),
+    paddingBottom: verticalScale(24),
   },
   card: {
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: moderateScale(16),
-    padding: moderateScale(12),
-    marginBottom: verticalScale(16),
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
-  },
-  cardImageContainer: {
-    position: 'relative',
+    borderColor: '#E6EBF0',
+    padding: 12,
+    minHeight: 76,
+    marginBottom: 12,
   },
   communityImage: {
-    width: horizontalScale(70),
-    height: verticalScale(70),
-    borderRadius: moderateScale(12),
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: '#D7DEE5',
   },
-  memberBadge: {
-    position: 'absolute',
-    bottom: -8,
-    right: -8,
-    backgroundColor: '#007AFF',
-    flexDirection: 'row',
+  communityImagePlaceholder: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: '#EEF3F7',
     alignItems: 'center',
-    paddingHorizontal: horizontalScale(8),
-    paddingVertical: verticalScale(4),
-    borderRadius: moderateScale(12),
-    gap: 4,
-  },
-  memberCount: {
-    color: '#FFFFFF',
-    fontSize: moderateScale(12),
-    fontFamily: FONT.medium,
+    justifyContent: 'center',
   },
   cardContent: {
     flex: 1,
-    marginLeft: horizontalScale(16),
-    justifyContent: 'space-between',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: horizontalScale(8),
+    marginLeft: 12,
+    marginRight: 8,
   },
   communityName: {
     fontSize: moderateScale(16),
     fontFamily: FONT.semiBold,
-    color: '#1A1A1A',
-    flex: 1,
+    color: '#12263A',
   },
-  statusIndicator: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#4CAF50',
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: verticalScale(8),
-  },
-  tagContainer: {
-    backgroundColor: '#F0F8FF',
-    paddingHorizontal: horizontalScale(8),
-    paddingVertical: verticalScale(4),
-    borderRadius: moderateScale(8),
-  },
-  tag: {
-    fontSize: moderateScale(12),
-    fontFamily: FONT.medium,
-    color: '#007AFF',
+  memberText: {
+    marginTop: 4,
+    fontSize: moderateScale(13),
+    fontFamily: FONT.regular,
+    color: '#5C6B76',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: verticalScale(50),
+    paddingTop: verticalScale(48),
+    paddingHorizontal: horizontalScale(24),
   },
   emptyText: {
+    marginTop: verticalScale(12),
     fontSize: moderateScale(16),
-    fontFamily: FONT.medium,
-    color: '#666666',
+    fontFamily: FONT.bold,
+    color: '#12263A',
+    textAlign: 'center',
   },
-  searchContainer: {
-    paddingHorizontal: horizontalScale(20),
-    paddingVertical: verticalScale(8),
-    backgroundColor: COLORS.white,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.white,
-    borderRadius: moderateScale(12),
-    paddingHorizontal: horizontalScale(15),
-    paddingVertical: verticalScale(10),
-    shadowColor: COLORS.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    //shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    borderBottomWidth: 1,
-    borderColor: COLORS.lightGray,
-  },
-  searchIcon: {
-    marginRight: horizontalScale(10),
-  },
-  searchInput: {
-    flex: 1,
+  emptySubtext: {
+    marginTop: verticalScale(6),
+    fontSize: moderateScale(14),
     fontFamily: FONT.regular,
-    fontSize: moderateScale(16),
-    color: COLORS.primary,
-    paddingVertical: verticalScale(5),
+    color: '#5C6B76',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

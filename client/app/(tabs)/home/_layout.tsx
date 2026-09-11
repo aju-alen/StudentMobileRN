@@ -11,16 +11,17 @@ const HomeLayout = () => {
         <Stack.Screen name='filter' options={{presentation:'modal', headerShown:false, }}/>
         <Stack.Screen name='[subjectId]' options={{ headerShown:true, headerTitle:'Subject' }}/>
         <Stack.Screen name='allSubject' options={{ headerShown:false, headerTitle:'Subject' }}/>
-        <Stack.Screen name='saved' options={{ headerShown:true, headerTitle:'Subject',
-          headerLeft: () => (
-            <Ionicons name="arrow-back" size={24} color="black" onPress={()=>router.back()} style={{ marginLeft: 0 }} />
-          )
-         }}/>
+        <Stack.Screen name='schedule' options={{ headerShown: false }} />
+        <Stack.Screen name='saved' options={{ headerShown:false }}/>
+        <Stack.Screen
+          name="chat/[conversationId]"
+          options={{ headerShown: false, gestureEnabled: false }}
+        />
         <Stack.Screen name='progress' options={{ 
           headerShown: true, 
           headerTitle: 'Progress',
           headerLeft: () => (
-            <Ionicons name="arrow-back" size={24} color="black" onPress={() => router.back()} style={{ marginLeft: 0 }} />
+            <Ionicons name="chevron-back" size={24} color="#12263A" onPress={() => router.back()} style={{ marginLeft: 0 }} />
           )
         }}/>
         

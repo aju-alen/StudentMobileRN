@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
 import { FONT } from '../../constants';
-import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
+import { moderateScale, verticalScale } from '../utils/metrics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import { ipURL } from '../utils/utils';
 import { Ionicons } from '@expo/vector-icons';
 import BookingSummaryModal from './BookingSummaryModal';
 import { axiosWithAuth } from '../utils/customAxios';
-import { router } from 'expo-router';
+import { normalizeHHmm, toUaeParts, uaeDateStr } from '../utils/uaeDateTime';
 
 interface SubjectTopic {
   id: string;
@@ -34,6 +34,15 @@ interface TimeSlot {
   time: string;
   available: boolean;
 }
+
+const formatSlotTime = (timeString: string) => {
+  const time = normalizeHHmm(timeString);
+  const hour = Number(time.slice(0, 2));
+  const minute = time.slice(3, 5);
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minute} ${period}`;
+};
 
 const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, teacherProfileId, subjectId, onClose, visible, courseType = 'SINGLE_STUDENT', subjectTopics, subjectDuration }) => {
   const isPackage = courseType === 'SINGLE_PACKAGE' && subjectTopics && subjectTopics.length > 0;
@@ -75,11 +84,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, teacherPro
       });
 
       // Mark unavailable dates in the calendar
-      const unavailableDates = response.data.unavailableDates || [];
       const marked = {};
-      unavailableDates.forEach((d: string) => {
-        marked[d] = { disabled: true, disableTouchEvent: true, fullBooked: false };
-      });
       setMarkedDates(marked);
 
       // Update time slots based on availability (bookedSlots use HH:mm format)
@@ -87,12 +92,7 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, teacherPro
       const backendBookedSlots: string[] = response.data.bookedSlots || [];
 
       // Normalize times to HH:mm for consistent comparison (handles "9:00" vs "09:00", "1:00" vs "01:00")
-      const normalizeTime = (t: string) => {
-        const parts = String(t || '').trim().split(':');
-        const h = parseInt(parts[0], 10);
-        const m = parts[1] != null ? parseInt(parts[1], 10) : 0;
-        return `${(isNaN(h) ? 0 : h).toString().padStart(2, '0')}:${(isNaN(m) ? 0 : m).toString().padStart(2, '0')}`;
-      };
+      const normalizeTime = (t: string) => normalizeHHmm(t);
 
       // 1) Backend-booked slots (teacher + student existing bookings)
       const normalizedBackend = backendBookedSlots.map(normalizeTime);
@@ -130,13 +130,13 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, teacherPro
       // - Find current local time
       // - Ceil to the next full hour (10:10 → 11:00). If already at an exact hour (10:00),
       //   allow from that hour onward.
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = uaeDateStr();
       const isToday = selectedDate === todayStr;
       let minAllowedHourForToday = 0;
       if (isToday) {
-        const now = new Date();
-        let hour = now.getHours();
-        if (now.getMinutes() > 0 || now.getSeconds() > 0 || now.getMilliseconds() > 0) {
+        const nowUae = toUaeParts(new Date());
+        let hour = nowUae.hour;
+        if (nowUae.minute > 0) {
           hour += 1;
         }
         minAllowedHourForToday = hour;
@@ -233,7 +233,6 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, teacherPro
       Alert.alert('Success', 'Session booked successfully!');
       setShowSummary(false);
       onClose();
-      router.replace('/(tabs)/home');
     } catch (error) {
       console.error('Error booking session:', error);
       Alert.alert('Error', 'Failed to book session');
@@ -251,80 +250,113 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, teacherPro
         onRequestClose={onClose}
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+          <SafeAreaView style={styles.modalContent} edges={['bottom']}>
+            <View style={styles.handle} />
             <View style={styles.header}>
-              <Text style={styles.title}>
-                {isPackage
-                  ? `Book topic ${currentTopicIndex + 1} of ${sortedTopics.length}: ${sortedTopics[currentTopicIndex]?.topicTitle ?? ''}`
-                  : 'Book a Session'}
-              </Text>
-              <TouchableOpacity onPress={onClose}>
-                <Ionicons name="close" size={24} color="#1A4C6E" />
+              <View style={styles.iconButton} />
+              <View style={styles.headerCopy}>
+                <Text style={styles.title} numberOfLines={1}>
+                  {isPackage ? `Topic ${currentTopicIndex + 1} of ${sortedTopics.length}` : 'Book a session'}
+                </Text>
+                {isPackage ? (
+                  <Text style={styles.subtitle} numberOfLines={1}>
+                    {sortedTopics[currentTopicIndex]?.topicTitle ?? ''}
+                  </Text>
+                ) : (
+                  <Text style={styles.subtitle}>Pick a date and time</Text>
+                )}
+              </View>
+              <TouchableOpacity
+                onPress={onClose}
+                style={styles.iconButton}
+                accessibilityRole="button"
+                accessibilityLabel="Close"
+              >
+                <Ionicons name="close" size={22} color="#12263A" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView 
+            <ScrollView
               style={styles.scrollView}
               contentContainerStyle={styles.scrollContent}
               showsVerticalScrollIndicator={false}
             >
-              <Calendar
-                onDayPress={handleDateSelect}
-                markedDates={{
-                  ...markedDates,
-                  [selectedDate]: {
-                    selected: true,
-                    selectedColor: '#2DCB63',
-                    fullBooked: false,
-                  },
-                }}
-                minDate={new Date().toISOString().split('T')[0]}
-                theme={{
-                  todayTextColor: '#2DCB63',
-                  selectedDayBackgroundColor: '#2DCB63',
-                  selectedDayTextColor: '#ffffff',
-                  textDayFontFamily: FONT.regular,
-                  textMonthFontFamily: FONT.bold,
-                  textDayHeaderFontFamily: FONT.medium,
-                  textDayFontSize: moderateScale(14),
-                  textMonthFontSize: moderateScale(16),
-                  textDayHeaderFontSize: moderateScale(14),
-                }}
-              />
+              <View style={styles.calendarCard}>
+                <Calendar
+                  onDayPress={handleDateSelect}
+                  markedDates={{
+                    ...markedDates,
+                    [selectedDate]: {
+                      selected: true,
+                      selectedColor: '#1A4C6E',
+                      fullBooked: false,
+                    },
+                  }}
+                  minDate={uaeDateStr()}
+                  theme={{
+                    backgroundColor: '#FFFFFF',
+                    calendarBackground: '#FFFFFF',
+                    todayTextColor: '#1A4C6E',
+                    selectedDayBackgroundColor: '#1A4C6E',
+                    selectedDayTextColor: '#ffffff',
+                    arrowColor: '#1A4C6E',
+                    monthTextColor: '#12263A',
+                    textSectionTitleColor: '#5C6B76',
+                    dayTextColor: '#12263A',
+                    textDisabledColor: '#A8B3BD',
+                    textDayFontFamily: FONT.regular,
+                    textMonthFontFamily: FONT.bold,
+                    textDayHeaderFontFamily: FONT.medium,
+                    textDayFontSize: moderateScale(14),
+                    textMonthFontSize: moderateScale(16),
+                    textDayHeaderFontSize: moderateScale(12),
+                  }}
+                />
+              </View>
 
               {selectedDate && (
                 <View style={styles.timeSlotsContainer}>
-                  <Text style={styles.timeSlotsTitle}>Available Time Slots</Text>
+                  <Text style={styles.timeSlotsTitle}>Available times</Text>
                   {loading ? (
                     <View style={styles.loadingContainer}>
-                      <ActivityIndicator size="large" color="#2DCB63" />
+                      <ActivityIndicator size="large" color="#1A4C6E" />
                     </View>
                   ) : (
                     <View style={styles.timeSlotsGrid}>
-                      {timeSlots.map((slot, index) => (
-                        <TouchableOpacity
-                          key={index}
-                          style={[
-                            styles.timeSlot,
-                            !slot.available && styles.unavailableSlot
-                          ]}
-                          onPress={() => slot.available && handleTimeSlotSelect(slot.time)}
-                          disabled={!slot.available || loading}
-                        >
-                          <Text style={[
-                            styles.timeSlotText,
-                            !slot.available && styles.unavailableSlotText
-                          ]}>
-                            {slot.time}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
+                      {timeSlots.map((slot, index) => {
+                        const selected = selectedTime === slot.time;
+                        return (
+                          <TouchableOpacity
+                            key={index}
+                            style={[
+                              styles.timeSlot,
+                              selected && styles.selectedSlot,
+                              !slot.available && styles.unavailableSlot,
+                            ]}
+                            onPress={() => slot.available && handleTimeSlotSelect(slot.time)}
+                            disabled={!slot.available || loading}
+                            accessibilityRole="button"
+                            accessibilityLabel={formatSlotTime(slot.time)}
+                            accessibilityState={{ disabled: !slot.available, selected }}
+                          >
+                            <Text
+                              style={[
+                                styles.timeSlotText,
+                                selected && styles.selectedSlotText,
+                                !slot.available && styles.unavailableSlotText,
+                              ]}
+                            >
+                              {formatSlotTime(slot.time)}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
                     </View>
                   )}
                 </View>
               )}
             </ScrollView>
-          </View>
+          </SafeAreaView>
         </View>
       </Modal>
 
@@ -352,51 +384,85 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({ teacherId, teacherPro
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(18, 38, 58, 0.45)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: moderateScale(20),
-    borderTopRightRadius: moderateScale(20),
-    maxHeight: '85%',
+    backgroundColor: '#F4F6F8',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '90%',
     flex: 1,
+  },
+  handle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#D7DEE5',
+    marginTop: 8,
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: moderateScale(20),
-    paddingTop: moderateScale(20),
-    paddingBottom: verticalScale(15),
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    paddingHorizontal: 8,
+    paddingTop: 4,
+    paddingBottom: 8,
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerCopy: {
+    flex: 1,
+    alignItems: 'center',
   },
   title: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(20),
-    color: '#1A4C6E',
+    fontSize: moderateScale(18),
+    color: '#12263A',
+  },
+  subtitle: {
+    marginTop: 2,
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(13),
+    color: '#5C6B76',
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: moderateScale(20),
+    paddingHorizontal: 16,
     paddingBottom: verticalScale(20),
   },
+  calendarCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    overflow: 'hidden',
+    paddingBottom: 8,
+  },
   timeSlotsContainer: {
-    marginTop: verticalScale(25),
+    marginTop: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    padding: 16,
   },
   loadingContainer: {
-    paddingVertical: verticalScale(40),
+    paddingVertical: verticalScale(32),
     alignItems: 'center',
     justifyContent: 'center',
   },
   timeSlotsTitle: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(16),
-    color: '#1A4C6E',
-    marginBottom: verticalScale(15),
+    fontFamily: FONT.semiBold,
+    fontSize: moderateScale(15),
+    color: '#12263A',
+    marginBottom: 12,
   },
   timeSlotsGrid: {
     flexDirection: 'row',
@@ -404,30 +470,36 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   timeSlot: {
-    width: '30%',
-    paddingVertical: verticalScale(12),
-    paddingHorizontal: horizontalScale(8),
-    borderRadius: moderateScale(10),
-    backgroundColor: '#F8F9FA',
-    marginBottom: verticalScale(12),
+    width: '31%',
+    borderRadius: 12,
+    backgroundColor: '#F4F6F8',
+    marginBottom: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: moderateScale(44),
+    minHeight: 44,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#E6EBF0',
+    paddingHorizontal: 4,
+  },
+  selectedSlot: {
+    backgroundColor: '#1A4C6E',
+    borderColor: '#1A4C6E',
   },
   unavailableSlot: {
-    backgroundColor: '#E8E8E8',
-    borderColor: '#D1D5DB',
-    opacity: 0.6,
+    backgroundColor: '#EEF1F4',
+    borderColor: '#E6EBF0',
+    opacity: 0.55,
   },
   timeSlotText: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(14),
-    color: '#1A4C6E',
+    fontSize: moderateScale(13),
+    color: '#12263A',
+  },
+  selectedSlotText: {
+    color: '#FFFFFF',
   },
   unavailableSlotText: {
-    color: '#999999',
+    color: '#8A97A3',
   },
 });
 

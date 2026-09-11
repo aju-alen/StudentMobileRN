@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { createZoomMeeting } from './zoomService.js';
+import { bookingDateStr, fromUaeDateTime } from '../utils/uaeDateTime.js';
 
 const prisma = new PrismaClient();
 
@@ -41,10 +42,9 @@ export const createZoomMeetingsForTeacherBookings = async (teacherEmail) => {
   for (const booking of pendingBookings) {
     try {
       // Construct start time from bookingDate and bookingTime (stored as separate fields)
-      const datePart = booking.bookingDate.toISOString().split('T')[0];
-      const timePart = booking.bookingTime; // assuming HH:mm
-      const dateTimeString = `${datePart}T${timePart}:00+04:00`;
-      const startTime = new Date(dateTimeString);
+      const datePart = bookingDateStr(booking.bookingDate);
+      const timePart = booking.bookingTime;
+      const startTime = fromUaeDateTime(datePart, timePart);
 
       const durationInMinutes =
         typeof booking.bookingMinutes === 'number' && booking.bookingMinutes > 0

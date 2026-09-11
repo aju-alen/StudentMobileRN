@@ -7,7 +7,6 @@ import {
   Alert,
   TouchableOpacity,
   Text,
-  Image,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
@@ -16,7 +15,6 @@ import {
   Modal,
 } from "react-native";
 import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
 import { ipURL } from "../../../utils/utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
@@ -35,6 +33,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Calendar } from 'react-native-calendars';
 import { useRevenueCat } from '../../../providers/RevenueCatProvider';
 import { SafeAreaView } from "react-native-safe-area-context";
+import { prepareCoverImage, COVER_PICKER_ASPECT, COVER_ASPECT } from "../../../utils/coverImage";
+import { fromUaeDateTime, normalizeHHmm, toUaeParts, uaeDateStr } from '../../../utils/uaeDateTime';
+import CoverImage from "../../../components/CoverImage";
 // Add type definition for file object
 type FileObject = {
   uri: string;
@@ -62,6 +63,7 @@ const CreateSubject = () => {
   const [isEulaAccepted, setIsEulaAccepted] = useState(false);
   const [isDocumentsConfirmed, setIsDocumentsConfirmed] = useState(false);
   const [isCreatingSubject, setIsCreatingSubject] = useState(false);
+  const [isUploadingPdfs, setIsUploadingPdfs] = useState(false);
   const EULA_PDF_URL = `https://coachacademic.s3.ap-southeast-1.amazonaws.com/EULA+/COACHACADEM_TOU_(EULA).pdf`;
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -240,12 +242,7 @@ const CreateSubject = () => {
     return slots;
   };
 
-  const normalizeTime = (t: string): string => {
-    const parts = String(t || '').trim().split(':');
-    const h = parseInt(parts[0], 10);
-    const m = parts[1] != null ? parseInt(parts[1], 10) : 0;
-    return `${(isNaN(h) ? 0 : h).toString().padStart(2, '0')}:${(isNaN(m) ? 0 : m).toString().padStart(2, '0')}`;
-  };
+  const normalizeTime = (t: string): string => normalizeHHmm(t);
 
   const fetchTeacherAvailability = async (dateStr: string, durationHours: number, sessionBlockedSlots: string[] = []) => {
     if (!dateStr) return;
@@ -255,9 +252,8 @@ const CreateSubject = () => {
         params: { date: dateStr },
       });
       const booked = (res.data.bookedSlots || []).map(normalizeTime);
-      const unavailable = res.data.unavailableDates || [];
       setTeacherBookedSlots(booked);
-      setTeacherUnavailableDates(unavailable);
+      setTeacherUnavailableDates([]);
       const allBlocked = [...new Set([...booked, ...sessionBlockedSlots.map(normalizeTime)])];
       const baseSlots = generateTimeSlots();
 
@@ -265,13 +261,13 @@ const CreateSubject = () => {
       // - Compare selected calendar date to today's date
       // - Ceil current time to the next whole hour (10:10 → 11:00).
       //   If already at an exact hour (10:00), use that hour as the minimum.
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = uaeDateStr();
       const isToday = dateStr === todayStr;
       let minAllowedHourForToday = 0;
       if (isToday) {
-        const now = new Date();
-        let hour = now.getHours();
-        if (now.getMinutes() > 0 || now.getSeconds() > 0 || now.getMilliseconds() > 0) {
+        const nowUae = toUaeParts(new Date());
+        let hour = nowUae.hour;
+        if (nowUae.minute > 0) {
           hour += 1;
         }
         minAllowedHourForToday = hour;
@@ -337,11 +333,17 @@ const CreateSubject = () => {
       const file = new File(pdfUri);
       if (!file.exists) throw new Error('File does not exist');
   
-      // Store the PDF URI depending on which PDF was picked
+      const nextPdf1 = pdfName === 'pdf1' ? pdfUri : pdf1;
+      const nextPdf2 = pdfName === 'pdf2' ? pdfUri : pdf2;
+
       if (pdfName === 'pdf1') {
         setPdf1(pdfUri);
       } else {
         setPdf2(pdfUri);
+      }
+
+      if (nextPdf1 && nextPdf2 && !isDocumentsConfirmed) {
+        uploadPdfsToAws(nextPdf1, nextPdf2);
       }
   
     } catch (error) {
@@ -359,34 +361,37 @@ const CreateSubject = () => {
     }
   };
 
-  const uploadPdfsToAws = async () => {
-    if (!pdf1 || !pdf2) {
-      Alert.alert('Please select both PDFs before uploading.');
+  const uploadPdfsToAws = async (file1?: string, file2?: string) => {
+    const pdfOne = file1 || pdf1;
+    const pdfTwo = file2 || pdf2;
+    if (!pdfOne || !pdfTwo) {
+      Alert.alert('Add both documents first.');
       return;
     }
+    if (isUploadingPdfs || isDocumentsConfirmed) return;
+
+    setIsUploadingPdfs(true);
     
     try {
-      const uriParts1 = pdf1.split('.');
+      const uriParts1 = pdfOne.split('.');
       const fileType1 = uriParts1[uriParts1.length - 1];
     
-      const uriParts2 = pdf2.split('.');
+      const uriParts2 = pdfTwo.split('.');
       const fileType2 = uriParts2[uriParts2.length - 1];
     
       const formData = new FormData();
     
-      // Append both PDFs with type assertion
       formData.append('pdf1', {
-        uri: pdf1,
+        uri: pdfOne,
         name: `pdf1.${fileType1}`,
         type: 'application/pdf',
       } as unknown as Blob);
       formData.append('pdf2', {
-        uri: pdf2,
+        uri: pdfTwo,
         name: `pdf2.${fileType2}`,
         type: 'application/pdf',
       } as unknown as Blob);
     
-      // Append additional data if needed
       formData.append('uploadKey', 'pdfId');
       formData.append('awsId', awsId);
     
@@ -400,18 +405,19 @@ const CreateSubject = () => {
         }
       );
     
-      // Handle response locations for both PDFs
       setPdf1(response['data']['data1']['Location']);
       setPdf2(response['data']['data2']['Location']);
       setIsDocumentsConfirmed(true);
     
-      Alert.alert('PDFs uploaded successfully.');
+      Alert.alert('Documents uploaded', 'You can publish the course after accepting the agreement.');
     
     } catch (error) {
  
       console.error('PDF upload failed:', error);
-      Alert.alert('PDF upload failed', error.message);
+      Alert.alert('Upload failed', error.message || 'Please try again.');
       setIsDocumentsConfirmed(false);
+    } finally {
+      setIsUploadingPdfs(false);
     }
   };
   const pickImage = async () => {
@@ -426,16 +432,13 @@ const CreateSubject = () => {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
+        aspect: COVER_PICKER_ASPECT,
         quality: 1,
       });
 
       if (!result.canceled) {
         setIsImageUploading(true);
-        const manipResult = await ImageManipulator.manipulateAsync(
-          result.assets[0].uri,
-          [{ resize: { width: 800 } }],
-          { compress: 0.5, format: ImageManipulator.SaveFormat.WEBP }
-        );
+        const manipResult = await prepareCoverImage(result.assets[0].uri);
         
         // Show temporary image while uploading
         setImage(manipResult.uri);
@@ -655,7 +658,7 @@ const CreateSubject = () => {
       //   validationErrors.push("Subject subheading is required");
       // }
       if (subjectPoints.length === 0) {
-        validationErrors.push("At least one skill point is required");
+        validationErrors.push("Add at least one learning outcome. Students see these on your course page.");
         setIsLoading(false);
         return;
       }
@@ -766,30 +769,103 @@ const CreateSubject = () => {
   };
 
   const [inputText, setInputText] = useState("");
+  const [step, setStep] = useState(0);
+  const totalSteps = 4;
 
   const handleInputChange = (text) => {
     setInputText(text);
   };
 
   const handleAddItem = () => {
-    if (inputText.trim() !== "") {
-      setsubjectPoints([...subjectPoints, inputText]);
+    const value = inputText.trim();
+    if (!value) return;
+    if (subjectPoints.some((point) => point.toLowerCase() === value.toLowerCase())) {
       setInputText("");
+      return;
     }
+    setsubjectPoints([...subjectPoints, value]);
+    setInputText("");
+  };
+
+  const handleRemoveSkill = (index: number) => {
+    setsubjectPoints((prev) => prev.filter((_, i) => i !== index));
   };
 
   const getHeaderTitleByCourseType = (type: string) => {
     switch (type) {
       case 'MULTI_STUDENT':
-        return 'Create Multi Student Course';
+        return 'Group class';
       case 'SINGLE_PACKAGE':
-        return 'Create Single Student Package';
+        return '1-on-1 series';
       case 'MULTI_PACKAGE':
-        return 'Create Multi Student Package';
+        return 'Group series';
       case 'SINGLE_STUDENT':
       default:
-        return 'Create Single Student Course';
+        return '1-on-1 class';
     }
+  };
+
+  const getStepTitle = (currentStep: number) => {
+    switch (currentStep) {
+      case 0:
+        return 'About this course';
+      case 1:
+        return 'Who it’s for';
+      case 2:
+        return 'What students will learn';
+      default:
+        return 'Verify and publish';
+    }
+  };
+
+  const validateCurrentStep = () => {
+    if (step === 0) {
+      if (!image) return 'Add a cover image.';
+      if (!subjectName.trim()) return 'Add a course title.';
+      if (!subjectDescription.trim()) return 'Add a short description.';
+      if (!subjectPrice.trim()) return 'Add a price in AED.';
+    }
+    if (step === 1) {
+      if (!subjectBoard.trim()) return 'Choose a curriculum.';
+      if (!subjectGrade.trim()) return 'Choose a grade.';
+      if (!subjectLanguage.trim()) return 'Add the teaching language.';
+      if (!subjectDuration.trim()) return 'Choose the duration.';
+      if (currentCourseType === 'MULTI_STUDENT') {
+        if (!scheduledDateTime) return 'Pick a date and time for the class.';
+        if (scheduledDateTime <= new Date()) return 'Pick a time in the future.';
+      }
+      if (isPackageCourse) {
+        const numTopics = parseInt(numberOfTopics, 10);
+        if (!numberOfTopics || numTopics < 1) return 'Say how many topics this series has.';
+        if (topicBlocks.length !== numTopics) return 'Add hours for each topic.';
+        if (!topicHoursMatchDuration) return `Topic hours must add up to ${subjectDuration} hours.`;
+        if (topicBlocks.some((b) => !(b.topicTitle && b.topicTitle.trim()))) return 'Name each topic.';
+        if (currentCourseType === 'MULTI_PACKAGE' && topicBlocks.some((b) => !b.scheduledDateTime)) {
+          return 'Pick a date and time for each topic.';
+        }
+      }
+    }
+    if (step === 2) {
+      if (subjectPoints.length === 0) return 'Add at least one learning outcome. Students see these on your course page.';
+    }
+    return null;
+  };
+
+  const handleNext = () => {
+    const error = validateCurrentStep();
+    if (error) {
+      Alert.alert('Almost there', error);
+      return;
+    }
+    setStep((prev) => Math.min(prev + 1, totalSteps - 1));
+  };
+
+  const handleBackStep = () => {
+    if (step === 0) {
+      router.back();
+      return;
+    }
+    setStep((prev) => Math.max(prev - 1, 0));
   };
 
   // Auto-save draft to AsyncStorage as user edits
@@ -855,18 +931,37 @@ const CreateSubject = () => {
   ]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <KeyboardAvoidingView 
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.container}
       >
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.headerContainer}>
+        <View style={styles.topBar}>
+          <TouchableOpacity
+            style={styles.topBarButton}
+            onPress={handleBackStep}
+            accessibilityRole="button"
+            accessibilityLabel={step === 0 ? 'Close' : 'Back'}
+          >
+            <Ionicons name={step === 0 ? 'close' : 'chevron-back'} size={24} color="#12263A" />
+          </TouchableOpacity>
+          <View style={styles.topBarCopy}>
             <Text style={styles.headerText}>{getHeaderTitleByCourseType(currentCourseType)}</Text>
-            <Text style={styles.subHeaderText}>Fill in the details to create your subject</Text>
+            <Text style={styles.subHeaderText}>{getStepTitle(step)}</Text>
           </View>
+          <Text style={styles.stepCount}>{step + 1}/{totalSteps}</Text>
+        </View>
 
-          {/* Image Upload Section */}
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${((step + 1) / totalSteps) * 100}%` }]} />
+        </View>
+
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContent}
+        >
+          {step === 0 && (
           <View style={styles.imageSection}>
             <TouchableOpacity 
               style={[
@@ -878,40 +973,40 @@ const CreateSubject = () => {
               disabled={isImageUploading}
             >
               {image ? (
-                <>
-                  <Image source={{ uri: image }} style={styles.uploadedImage} />
+                <View>
+                  <CoverImage uri={image} />
                   {isImageUploading && (
                     <View style={styles.uploadingOverlay}>
                       <ActivityIndicator size="large" color={COLORS.primary} />
                       <Text style={styles.uploadingText}>Uploading...</Text>
                     </View>
                   )}
-                </>
+                </View>
               ) : (
                 <View style={styles.placeholderContainer}>
-                  <Ionicons name="image-outline" size={40} color={welcomeCOLOR.black} />
-                  <Text style={styles.uploadText}>Upload Subject Image</Text>
+                  <Ionicons name="image-outline" size={40} color="#1A4C6E" />
+                  <Text style={styles.uploadText}>Add a cover photo</Text>
+                  <Text style={styles.uploadHint}>Landscape 16:9. Crop so the whole image is in frame.</Text>
                 </View>
               )}
             </TouchableOpacity>
           </View>
+          )}
 
-          {/* Form Fields */}
           <View style={styles.formContainer}>
-            {/* Basic Info Section */}
+            {step === 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Basic Information</Text>
               <FormInput
-                label="Subject Title"
-                info="Enter a clear and concise title for your subject. This will be the main identifier for your course."
-                placeholder="Enter subject title"
+                label="Course title"
+                info="What students will see first."
+                placeholder="e.g. Grade 10 Algebra"
                 value={subjectName}
                 onChangeText={setSubjectName}
               />
               <FormInput
-                label="Description"
-                info="Provide a detailed description of what students will learn in this subject. Include key topics and learning outcomes."
-                placeholder="Brief description of the subject"
+                label="Short description"
+                info="A few sentences on what you will teach."
+                placeholder="What will students learn?"
                 value={subjectDescription}
                 onChangeText={setSubjectDescription}
                 multiline
@@ -919,24 +1014,23 @@ const CreateSubject = () => {
               />
               <FormInput
                 label="Price"
-                info="Set the price for your subject in AED."
-                placeholder="Enter price"
+                info="Students pay this amount in AED."
+                placeholder="0"
                 value={subjectPrice.toString()}
                 onChangeText={(text) => {
-                  // Only allow numbers
                   const numericValue = text.replace(/[^0-9]/g, '');
                   setSubjectPrice(numericValue);
                 }}
                 isPrice
               />
             </View>
+            )}
 
-            {/* Academic Details Section */}
+            {step === 1 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Academic Details</Text>
               <CustomDropdown
-                label="Curricula"
-                info="Select the educational curricula that this subject aligns with."
+                label="Curriculum"
+                info="Which board this course follows."
                 value={subjectBoard}
                 options={[
                   { label: 'CBSE', value: 'CBSE' },
@@ -946,29 +1040,29 @@ const CreateSubject = () => {
                   { label: 'IB', value: 'IB' },
                 ]}
                 onSelect={setSubjectBoard}
-                placeholder="Select educational curricula"
+                placeholder="Choose curriculum"
               />
               <CustomDropdown
                 label="Grade"
-                info="Select the target grade level for this subject."
+                info="The grade this course is for."
                 value={subjectGrade}
                 options={Array.from({ length: 13 }, (_, i) => ({
                   label: `Grade ${i + 1}`,
                   value: (i + 1).toString()
                 }))}
                 onSelect={setSubjectGrade}
-                placeholder="Select grade level"
+                placeholder="Choose grade"
               />
               <FormInput
                 label="Language"
-                info="Specify the primary language of instruction for this subject."
-                placeholder="Teaching language"
+                info="The language you will teach in."
+                placeholder="e.g. English"
                 value={subjectLanguage}
                 onChangeText={setSubjectLanguage}
               />
               <CustomDropdown
                 label="Duration"
-                info={isPackageCourse ? 'Select total hours for this package (3–20). You will split these into topics (max 3h per topic).' : 'Select the total number of hours for this course (capped at 2 hours).'}
+                info={isPackageCourse ? 'Total hours for this series. You will split them into topics.' : 'How long this one class lasts.'}
                 value={subjectDuration}
                 options={isPackageCourse ? Array.from({ length: 18 }, (_, i) => ({ label: `${i + 3} hours`, value: `${i + 3}` })) : [{ label: '1 hour', value: '1' }, { label: '2 hours', value: '2' }]}
                 onSelect={(val) => {
@@ -980,17 +1074,13 @@ const CreateSubject = () => {
               {/* Package course: number of topics and hours per topic (max 3h); multi = date/time per topic */}
               {isPackageCourse && subjectDuration && (
                 <View style={styles.inputWrapper}>
-                  <View style={styles.labelContainer}>
-                    <Text style={styles.inputLabel}>Number of topics</Text>
-                    <TouchableOpacity onPress={() => Alert.alert('Number of topics', 'Split the course into topics. Each topic can be 1–3 hours. Topic hours must add up to the total duration.')} style={styles.infoButton}>
-                      <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
-                    </TouchableOpacity>
-                  </View>
+                  <Text style={styles.inputLabel}>How many topics?</Text>
+                  <Text style={styles.helperText}>Each topic is 1–3 hours. Hours must add up to the total duration.</Text>
                   <View style={styles.inputContainer}>
                     <TextInput
                       style={styles.input}
                       placeholder="e.g. 4"
-                      placeholderTextColor="#666"
+                      placeholderTextColor="#8A97A3"
                       keyboardType="number-pad"
                       value={numberOfTopics}
                       onChangeText={(t) => {
@@ -1066,7 +1156,7 @@ const CreateSubject = () => {
                                 onPress={() => {
                                   setEditingTopicIndex(index);
                                   const d = block.scheduledDateTime;
-                                  setTopicCalendarDate(d ? d.toISOString().split('T')[0] : '');
+                                  setTopicCalendarDate(d ? toUaeParts(d).dateStr : '');
                                   if (!d) setAvailableTimeSlots(generateTimeSlots());
                                 }}
                               >
@@ -1088,12 +1178,11 @@ const CreateSubject = () => {
                                 const sessionBlocked: string[] = [];
                                 topicBlocks.forEach((b, j) => {
                                   if (j === index || !b.scheduledDateTime) return;
-                                  const bDate = b.scheduledDateTime.toISOString().split('T')[0];
-                                  if (bDate !== day.dateString) return;
-                                  const h = b.scheduledDateTime.getUTCHours();
+                                  const parts = toUaeParts(b.scheduledDateTime);
+                                  if (parts.dateStr !== day.dateString) return;
                                   const dur = parseInt(b.hours || '1', 10);
                                   for (let k = 0; k < dur; k++) {
-                                    sessionBlocked.push(`${(h + k).toString().padStart(2, '0')}:00`);
+                                    sessionBlocked.push(`${String(parts.hour + k).padStart(2, '0')}:00`);
                                   }
                                 });
                                 fetchTeacherAvailability(day.dateString, topicHours, sessionBlocked);
@@ -1107,7 +1196,7 @@ const CreateSubject = () => {
                                   [topicCalendarDate]: { selected: true, selectedColor: COLORS.primary },
                                 } : {}),
                               }}
-                              minDate={new Date().toISOString().split('T')[0]}
+                              minDate={uaeDateStr()}
                               theme={{
                                 todayTextColor: COLORS.primary,
                                 selectedDayBackgroundColor: COLORS.primary,
@@ -1131,9 +1220,7 @@ const CreateSubject = () => {
                                         style={[styles.timeSlotChip, !slot.available && styles.timeSlotChipUnavailable]}
                                         onPress={() => {
                                           if (!slot.available) return;
-                                          const [h, m] = slot.time.split(':').map(Number);
-                                          const d = new Date(topicCalendarDate + 'T00:00:00');
-                                          d.setHours(h, m || 0, 0, 0);
+                                          const d = fromUaeDateTime(topicCalendarDate, slot.time);
                                           setTopicBlocks(prev => {
                                             const p = [...prev];
                                             p[index] = { ...p[index], scheduledDateTime: d };
@@ -1191,7 +1278,7 @@ const CreateSubject = () => {
                         },
                       } : {}),
                     }}
-                    minDate={new Date().toISOString().split('T')[0]}
+                    minDate={uaeDateStr()}
                     theme={{
                       todayTextColor: COLORS.primary,
                       selectedDayBackgroundColor: COLORS.primary,
@@ -1219,9 +1306,7 @@ const CreateSubject = () => {
                               style={[styles.timeSlotChip, !slot.available && styles.timeSlotChipUnavailable]}
                               onPress={() => {
                                 if (!slot.available) return;
-                                const [h, m] = slot.time.split(':').map(Number);
-                                const d = new Date(selectedAvailDate + 'T00:00:00');
-                                d.setHours(h, m || 0, 0, 0);
+                                const d = fromUaeDateTime(selectedAvailDate, slot.time);
                                 setScheduledDateTime(d);
                               }}
                               disabled={!slot.available}
@@ -1249,51 +1334,89 @@ const CreateSubject = () => {
                   </View>
                 </View>
               )}
-              <FormInput
-                label="Search Heading"
-                info="Add keywords that will help students find your subject when searching. Use relevant terms and topics."
-                placeholder="What text should students search to find this?"
-                value={subjectSearchHeading}
-                onChangeText={setSubjectSearchHeading}
-              />
             </View>
+            )}
 
-            {/* Skills Section */}
+            {step === 2 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Skills & Points</Text>
+              <View style={styles.explainCard}>
+                <Text style={styles.explainTitle}>This is the “What you’ll learn” list</Text>
+                <Text style={styles.explainBody}>
+                  Students see these numbered points on your course page, under the description, before they enroll. Write short outcomes — one per line — not a full lesson plan.
+                </Text>
+              </View>
+
+              <Text style={styles.inputLabel}>Add a learning outcome</Text>
+              <Text style={styles.helperText}>Type one point, then tap Add. 3–6 points works well.</Text>
               <View style={styles.skillInputContainer}>
                 <TextInput
                   style={styles.skillInput}
-                  placeholder="Add a new skill"
+                  placeholder="e.g. Solve quadratic equations"
                   value={inputText}
                   onChangeText={handleInputChange}
+                  onSubmitEditing={handleAddItem}
+                  returnKeyType="done"
                 />
-                <TouchableOpacity style={styles.addSkillButton} onPress={handleAddItem}>
-                  <Ionicons name="add-circle" size={24} color={COLORS.primary} />
+                <TouchableOpacity
+                  style={[styles.addSkillButton, !inputText.trim() && styles.addSkillButtonDisabled]}
+                  onPress={handleAddItem}
+                  disabled={!inputText.trim()}
+                  accessibilityRole="button"
+                  accessibilityLabel="Add learning outcome"
+                >
+                  <Text style={styles.addSkillButtonText}>Add</Text>
                 </TouchableOpacity>
               </View>
-              {subjectPoints.map((point, index) => (
-                <View key={index} style={styles.skillTag}>
-                  <Text style={styles.skillText}>{point}</Text>
-                </View>
-              ))}
-            </View>
 
-            {/* Document Upload Section */}
+              <Text style={styles.exampleLabel}>Good examples</Text>
+              <Text style={styles.exampleLine}>• Use the quadratic formula to solve for x</Text>
+              <Text style={styles.exampleLine}>• Write a 5-paragraph essay with a clear thesis</Text>
+              <Text style={styles.exampleLine}>• Speak in past tense about a weekend trip</Text>
+              <Text style={styles.exampleSkip}>Skip vague words like “Algebra”, “Chapter 1”, or “Everything in the syllabus”.</Text>
+
+              <View style={styles.previewCard}>
+                <Text style={styles.previewEyebrow}>Preview on the course page</Text>
+                <Text style={styles.previewHeading}>What you’ll learn</Text>
+                {subjectPoints.length === 0 ? (
+                  <Text style={styles.previewEmpty}>Your points will show here as a numbered list.</Text>
+                ) : (
+                  subjectPoints.map((point, index) => (
+                    <View key={`${point}-${index}`} style={styles.previewRow}>
+                      <View style={styles.previewNumber}>
+                        <Text style={styles.previewNumberText}>{index + 1}</Text>
+                      </View>
+                      <Text style={styles.previewPoint}>{point}</Text>
+                      <TouchableOpacity
+                        onPress={() => handleRemoveSkill(index)}
+                        style={styles.removePointButton}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Remove ${point}`}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Ionicons name="close" size={16} color="#5C6B76" />
+                      </TouchableOpacity>
+                    </View>
+                  ))
+                )}
+              </View>
+            </View>
+            )}
+
+            {step === 3 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Verification Documents</Text>
+              <Text style={styles.helperLead}>Add both files. They upload automatically once both are chosen.</Text>
               <View style={styles.documentSection}>
                 <TouchableOpacity
                   style={[styles.documentUpload, pdf1 && styles.documentUploaded]}
                   onPress={() => pickPdf('pdf1')}
                 >
                   <Ionicons 
-                    name={pdf1 ? "document-text" : "document-text-outline"} 
-                    size={24} 
-                    color={pdf1 ? COLORS.primary : "#666"}
+                    name={pdf1 ? "checkmark-circle" : "document-text-outline"} 
+                    size={22} 
+                    color={pdf1 ? "#1A4C6E" : "#5C6B76"}
                   />
                   <Text style={[styles.documentText, pdf1 && styles.documentUploadedText]}>
-                    {pdf1 ? "Subject License Uploaded" : "Upload Subject License"}
+                    {pdf1 ? "Subject license added" : "Add subject license"}
                   </Text>
                 </TouchableOpacity>
 
@@ -1302,72 +1425,93 @@ const CreateSubject = () => {
                   onPress={() => pickPdf('pdf2')}
                 >
                   <Ionicons 
-                    name={pdf2 ? "document-text" : "document-text-outline"} 
-                    size={24} 
-                    color={pdf2 ? COLORS.primary : "#666"}
+                    name={pdf2 ? "checkmark-circle" : "document-text-outline"} 
+                    size={22} 
+                    color={pdf2 ? "#1A4C6E" : "#5C6B76"}
                   />
                   <Text style={[styles.documentText, pdf2 && styles.documentUploadedText]}>
-                    {pdf2 ? "Emirates ID Uploaded" : "Upload Emirates ID"}
+                    {pdf2 ? "Emirates ID added" : "Add Emirates ID"}
                     </Text>
                 </TouchableOpacity>
 
-                {(pdf1 || pdf2) && (
+                {isUploadingPdfs && (
+                  <View style={styles.uploadStatus}>
+                    <ActivityIndicator size="small" color="#1A4C6E" />
+                    <Text style={styles.uploadStatusText}>Uploading documents…</Text>
+                  </View>
+                )}
+                {isDocumentsConfirmed && (
+                  <View style={styles.uploadStatusDone}>
+                    <Ionicons name="checkmark-circle" size={18} color="#1A4C6E" />
+                    <Text style={styles.uploadStatusText}>Documents uploaded</Text>
+                  </View>
+                )}
+                {pdf1 && pdf2 && !isDocumentsConfirmed && !isUploadingPdfs && (
                   <TouchableOpacity 
                     style={styles.uploadDocsButton} 
-                    onPress={uploadPdfsToAws}
-                    activeOpacity={0.7}
+                    onPress={() => uploadPdfsToAws()}
+                    activeOpacity={0.85}
                   >
-                    <View style={styles.uploadDocsButtonContent}>
-                      <Ionicons name="cloud-upload" size={24} color="white" />
-                      <Text style={styles.uploadDocsText}>Upload Documents</Text>
-                    </View>
+                    <Text style={styles.uploadDocsText}>Retry upload</Text>
                   </TouchableOpacity>
                 )}
               </View>
-            </View>
 
-            {/* EULA Section */}
-            <View style={styles.section}>
-              <View style={styles.eulaContainer}>
-                <TouchableOpacity 
-                  style={styles.checkboxContainer}
-                  onPress={() => setIsEulaAccepted(!isEulaAccepted)}
-                >
-                  <View style={[styles.checkbox, isEulaAccepted && styles.checked]}>
-                    {isEulaAccepted && (
-                      <Ionicons name="checkmark" size={16} color="white" />
-                    )}
-                  </View>
-                  <Text style={styles.eulaText}>
-                    I agree to the{' '}
-                    <Text 
-                      style={styles.eulaLink}
-                      onPress={() => Linking.openURL(EULA_PDF_URL)}
-                    >
-                      End User License Agreement (EULA)
-                    </Text>
+              <TouchableOpacity 
+                style={styles.checkboxContainer}
+                onPress={() => setIsEulaAccepted(!isEulaAccepted)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: isEulaAccepted }}
+              >
+                <View style={[styles.checkbox, isEulaAccepted && styles.checked]}>
+                  {isEulaAccepted && (
+                    <Ionicons name="checkmark" size={16} color="white" />
+                  )}
+                </View>
+                <Text style={styles.eulaText}>
+                  I agree to the{' '}
+                  <Text 
+                    style={styles.eulaLink}
+                    onPress={() => Linking.openURL(EULA_PDF_URL)}
+                  >
+                    teaching agreement
                   </Text>
-                </TouchableOpacity>
-              </View>
+                </Text>
+              </TouchableOpacity>
             </View>
+            )}
+          </View>
+        </ScrollView>
 
+        <View style={styles.footer}>
+          {step < totalSteps - 1 ? (
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={handleNext}
+              accessibilityRole="button"
+              accessibilityLabel="Continue"
+            >
+              <Text style={styles.primaryButtonText}>Continue</Text>
+            </TouchableOpacity>
+          ) : (
             <TouchableOpacity
               style={[
-                styles.submitButton,
-                {
-                  backgroundColor: COLORS.primary,
-                  opacity: (!isEulaAccepted || !isDocumentsConfirmed || isLoading || (isPackageCourse && topicBlocks.length > 0 && !topicHoursMatchDuration)) ? 0.5 : 1
-                }
+                styles.primaryButton,
+                (!isEulaAccepted || !isDocumentsConfirmed || isLoading || (isPackageCourse && topicBlocks.length > 0 && !topicHoursMatchDuration)) && styles.primaryButtonDisabled
               ]}
               onPress={handleCreateSubject}
               disabled={!isEulaAccepted || !isDocumentsConfirmed || isLoading || (isPackageCourse && topicBlocks.length > 0 && !topicHoursMatchDuration)}
+              accessibilityRole="button"
+              accessibilityLabel="Publish course"
             >
-              <Text style={styles.submitButtonText}>
-                {isLoading ? <ActivityIndicator size="large" color={COLORS.white} /> : "Create Subject"}
-              </Text>
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Publish course</Text>
+              )}
             </TouchableOpacity>
-          </View>
-        </ScrollView>
+          )}
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -1383,17 +1527,8 @@ interface FormInputProps {
 
 const FormInput = ({ label, info, isPrice = false, isDuration = false, ...props }: FormInputProps) => (
   <View style={styles.inputWrapper}>
-    <View style={styles.labelContainer}>
-      <Text style={styles.inputLabel}>{label}</Text>
-      {info && (
-        <TouchableOpacity 
-          onPress={() => Alert.alert(label, info)}
-          style={styles.infoButton}
-        >
-          <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
-        </TouchableOpacity>
-      )}
-    </View>
+    <Text style={styles.inputLabel}>{label}</Text>
+    {info ? <Text style={styles.helperText}>{info}</Text> : null}
     <View style={styles.inputContainer}>
       <TextInput
         style={[
@@ -1401,18 +1536,18 @@ const FormInput = ({ label, info, isPrice = false, isDuration = false, ...props 
           props.multiline && { height: props.height },
           (isPrice || isDuration) && styles.numericInput
         ]}
-        placeholderTextColor="#666"
+        placeholderTextColor="#8A97A3"
         keyboardType={(isPrice || isDuration) ? "numeric" : "default"}
         {...props}
       />
       {isPrice && (
         <View style={styles.currencySuffix}>
-          <Text style={styles.currencyText}>/AED</Text>
+          <Text style={styles.currencyText}>AED</Text>
         </View>
       )}
       {isDuration && (
         <View style={styles.currencySuffix}>
-          <Text style={styles.currencyText}>/hours</Text>
+          <Text style={styles.currencyText}>hours</Text>
         </View>
       )}
     </View>
@@ -1424,17 +1559,8 @@ const CustomDropdown = ({ label, info, value, options, onSelect, placeholder }) 
 
   return (
     <View style={styles.inputWrapper}>
-      <View style={styles.labelContainer}>
-        <Text style={styles.inputLabel}>{label}</Text>
-        {info && (
-          <TouchableOpacity 
-            onPress={() => Alert.alert(label, info)}
-            style={styles.infoButton}
-          >
-            <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
-          </TouchableOpacity>
-        )}
-      </View>
+      <Text style={styles.inputLabel}>{label}</Text>
+      {info ? <Text style={styles.helperText}>{info}</Text> : null}
       <TouchableOpacity 
         style={styles.dropdownButton}
         onPress={() => setIsOpen(true)}
@@ -1443,9 +1569,9 @@ const CustomDropdown = ({ label, info, value, options, onSelect, placeholder }) 
           styles.dropdownButtonText,
           !value && styles.placeholderText
         ]}>
-          {value || placeholder}
+          {options.find((o) => o.value === value)?.label || value || placeholder}
         </Text>
-        <Ionicons name="chevron-down" size={20} color="#666" />
+        <Ionicons name="chevron-down" size={20} color="#5C6B76" />
       </TouchableOpacity>
 
       <Modal
@@ -1501,27 +1627,227 @@ const CustomDropdown = ({ label, info, value, options, onSelect, placeholder }) 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F4F6F8',
   },
   container: {
     flex: 1,
   },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingTop: 4,
+    paddingBottom: 8,
+  },
+  topBarButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  topBarCopy: {
+    flex: 1,
+    marginLeft: 4,
+  },
   headerContainer: {
     padding: moderateScale(20),
-    backgroundColor: '#fff',
+    backgroundColor: '#F4F6F8',
   },
   headerText: {
-    fontSize: moderateScale(24),
-    fontWeight: 'bold',
-    color: welcomeCOLOR.black,
+    fontSize: moderateScale(18),
+    fontFamily: FONT.bold,
+    color: '#12263A',
   },
   subHeaderText: {
-    fontSize: moderateScale(14),
-    color: '#666',
-    marginTop: verticalScale(5),
+    fontSize: moderateScale(13),
+    fontFamily: FONT.regular,
+    color: '#5C6B76',
+    marginTop: 2,
+  },
+  stepCount: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(13),
+    color: '#5C6B76',
+    marginRight: 12,
+  },
+  progressTrack: {
+    height: 4,
+    backgroundColor: '#E6EBF0',
+    marginHorizontal: 20,
+    borderRadius: 999,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  progressFill: {
+    height: 4,
+    backgroundColor: '#1A4C6E',
+    borderRadius: 999,
+  },
+  scrollContent: {
+    paddingBottom: 24,
   },
   formContainer: {
-    padding: moderateScale(20),
+    paddingHorizontal: moderateScale(20),
+    paddingTop: moderateScale(8),
+  },
+  footer: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E6EBF0',
+  },
+  primaryButton: {
+    minHeight: 52,
+    borderRadius: 12,
+    backgroundColor: '#1A4C6E',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryButtonDisabled: {
+    backgroundColor: '#C5CDD6',
+  },
+  primaryButtonText: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(16),
+    color: '#FFFFFF',
+  },
+  helperLead: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(14),
+    color: '#5C6B76',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  helperText: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(12),
+    color: '#5C6B76',
+    marginBottom: 8,
+  },
+  skillWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  explainCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    padding: 14,
+    marginBottom: 18,
+  },
+  explainTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(16),
+    color: '#12263A',
+    marginBottom: 6,
+  },
+  explainBody: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(14),
+    color: '#5C6B76',
+    lineHeight: 21,
+  },
+  exampleLabel: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(12),
+    color: '#5C6B76',
+    marginTop: 4,
+    marginBottom: 6,
+  },
+  exampleLine: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(13),
+    color: '#12263A',
+    lineHeight: 20,
+  },
+  exampleSkip: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(12),
+    color: '#8A97A3',
+    marginTop: 8,
+    marginBottom: 16,
+    lineHeight: 18,
+  },
+  previewCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    padding: 14,
+  },
+  previewEyebrow: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(11),
+    color: '#5C6B76',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginBottom: 8,
+  },
+  previewHeading: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(16),
+    color: '#12263A',
+    marginBottom: 12,
+  },
+  previewEmpty: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(14),
+    color: '#8A97A3',
+    lineHeight: 20,
+  },
+  previewRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+    gap: 10,
+  },
+  previewNumber: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#EEF3F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 1,
+  },
+  previewNumberText: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(12),
+    color: '#1A4C6E',
+  },
+  previewPoint: {
+    flex: 1,
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(14),
+    color: '#12263A',
+    lineHeight: 20,
+  },
+  removePointButton: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  uploadStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 8,
+  },
+  uploadStatusDone: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 8,
+  },
+  uploadStatusText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(13),
+    color: '#1A4C6E',
   },
   section: {
     marginBottom: verticalScale(24),
@@ -1534,17 +1860,16 @@ const styles = StyleSheet.create({
   },
   imageSection: {
     alignItems: 'center',
-    marginVertical: verticalScale(20),
+    marginTop: verticalScale(8),
+    paddingHorizontal: 20,
   },
   imageUploadContainer: {
-    width: horizontalScale(300),
-    height: verticalScale(150),
-    borderRadius: moderateScale(12),
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: COLORS.primary,
+    width: '100%',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
     overflow: 'hidden',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#FFFFFF',
   },
   imageUploadContainerActive: {
     borderColor: COLORS.primary,
@@ -1556,17 +1881,28 @@ const styles = StyleSheet.create({
   uploadedImage: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
+    resizeMode: 'contain',
   },
   placeholderContainer: {
-    flex: 1,
+    width: '100%',
+    aspectRatio: COVER_ASPECT,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 24,
   },
   uploadText: {
     marginTop: verticalScale(8),
-    color: '#666',
+    color: '#12263A',
     fontSize: moderateScale(14),
+    fontFamily: FONT.medium,
+  },
+  uploadHint: {
+    marginTop: 6,
+    color: '#5C6B76',
+    fontSize: moderateScale(12),
+    fontFamily: FONT.regular,
+    textAlign: 'center',
+    lineHeight: 18,
   },
   inputWrapper: {
     marginBottom: verticalScale(16),
@@ -1579,16 +1915,17 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    borderRadius: moderateScale(8),
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e1e1e1',
+    borderColor: '#E6EBF0',
   },
   input: {
     flex: 1,
     padding: moderateScale(12),
     fontSize: moderateScale(16),
-    color: welcomeCOLOR.black,
+    fontFamily: FONT.regular,
+    color: '#12263A',
   },
   priceInput: {
     flex: 1,
@@ -1611,34 +1948,48 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: verticalScale(12),
-    backgroundColor: '#f8f9fa',
-    borderRadius: moderateScale(8),
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e1e1e1',
+    borderColor: '#E6EBF0',
+    overflow: 'hidden',
   },
   skillInput: {
     flex: 1,
     padding: moderateScale(12),
     fontSize: moderateScale(16),
-    color: welcomeCOLOR.black,
+    fontFamily: FONT.regular,
+    color: '#12263A',
   },
   addSkillButton: {
-    padding: moderateScale(12),
-    borderLeftWidth: 1,
-    borderLeftColor: '#e1e1e1',
+    minWidth: 56,
+    height: 44,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1A4C6E',
+  },
+  addSkillButtonDisabled: {
+    backgroundColor: '#C5CDD6',
+  },
+  addSkillButtonText: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(14),
+    color: '#FFFFFF',
   },
   skillTag: {
-    backgroundColor: '#e3f2fd',
-    borderRadius: moderateScale(16),
-    paddingHorizontal: horizontalScale(12),
-    paddingVertical: verticalScale(6),
-    marginRight: horizontalScale(8),
-    marginBottom: verticalScale(8),
-    alignSelf: 'flex-start',
+    backgroundColor: '#EEF3F7',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   skillText: {
-    color: COLORS.primary,
-    fontSize: moderateScale(14),
+    color: '#1A4C6E',
+    fontSize: moderateScale(13),
+    fontFamily: FONT.medium,
   },
   documentSection: {
     gap: verticalScale(12),
@@ -1778,15 +2129,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#f8f9fa',
-    padding: moderateScale(12),
-    borderRadius: moderateScale(8),
+    backgroundColor: '#FFFFFF',
+    padding: moderateScale(14),
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e1e1e1',
+    borderColor: '#E6EBF0',
+    minHeight: 48,
   },
   dropdownButtonText: {
     fontSize: moderateScale(16),
-    color: welcomeCOLOR.black,
+    fontFamily: FONT.regular,
+    color: '#12263A',
+    flex: 1,
+    marginRight: 8,
   },
   placeholderText: {
     color: '#666',

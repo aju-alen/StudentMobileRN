@@ -1,235 +1,147 @@
-import { FlatList, StyleSheet, Text, TouchableOpacity, View, Animated } from 'react-native'
-import React, { useState, useRef } from 'react'
-import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics'
-import { FONT } from '../../constants/theme'
-import { Image } from 'expo-image'
+import { Dimensions, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React from 'react';
+import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
+import { FONT } from '../../constants/theme';
+import CoverImage from './CoverImage';
 
-const blurhash =
-  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const CARD_WIDTH = Math.min(horizontalScale(268), SCREEN_WIDTH * 0.72);
+const META_INSET = 16;
+const GRADE_RESERVE = 82;
 
 const HorizontalSubjectCard = ({ subjectData, handleItemPress, isHorizontal }) => {
-  // Animation value for card hover effect
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  const handlePressIn = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 0.98,
-      friction: 5,
-      tension: 40,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      friction: 3,
-      tension: 40,
-      useNativeDriver: true,
-    }).start();
-  };
-
   const renderSubjectCard = ({ item }) => (
     <TouchableOpacity
       onPress={() => handleItemPress(item)}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      activeOpacity={0.9}
+      activeOpacity={0.88}
+      style={styles.card}
+      accessibilityRole="button"
+      accessibilityLabel={`${item?.subjectName}, ${item?.subjectBoard}, Grade ${item?.subjectGrade}`}
     >
-      <Animated.View style={[
-        styles.flatlistRecommendedContainer,
-        { transform: [{ scale: scaleAnim }] }
-      ]}>
-        <View style={styles.flatlistInnerContainer}>
-          <Image
-            style={styles.subjectImage}
-            source={{ uri: item?.subjectImage }}
-            placeholder={blurhash}
-            contentFit="cover"
-            transition={300}
-          />
-          <View style={styles.subjectBoardContainer}>
-            <View style={styles.boardChip}>
-              <Text style={styles.subjectBoardText}>{item?.subjectBoard}</Text>
-              <View style={styles.divider} />
-              <Text style={styles.subjectGradeText}>Grade {item?.subjectGrade}</Text>
+      <CoverImage uri={item?.subjectImage}>
+        <View style={styles.metaRow}>
+          {!!item?.subjectBoard && (
+            <View
+              style={[
+                styles.chip,
+                {
+                  maxWidth:
+                    item?.subjectGrade != null && item?.subjectGrade !== ''
+                      ? CARD_WIDTH - META_INSET - GRADE_RESERVE
+                      : CARD_WIDTH - META_INSET,
+                },
+              ]}
+            >
+              <Text style={styles.chipText} numberOfLines={1}>
+                {item.subjectBoard}
+              </Text>
             </View>
-          </View>
-          <Text numberOfLines={1} style={styles.flatlistSubjectNameText}>
-            {item?.subjectName}
-          </Text>
-          <View style={styles.subjectDetailsContainer}>
-            <View style={styles.imageandNameContainer}>
-              <Image
-                style={styles.subjectTeacherImage}
-                source={{ uri: item?.user?.profileImage }}
-                placeholder={blurhash}
-                contentFit="cover"
-                transition={200}
-              />
-              <View style={styles.subjectTeacherNameAndDesignationContainer}>
-                <Text numberOfLines={1} style={styles.subjectTeacherNameText}>
-                  {item?.user.name}
-                </Text>
-                <Text numberOfLines={1} style={styles.subjectTeacherDesignation}>
-                  {item?.user.designation || 'Senior Tutor'}
-                </Text>
-                {item?.maxCapacity > 1 && (
-                  <Text style={styles.enrollmentText}>
-                    {(item?.currentEnrollment ?? 0)} / {item?.maxCapacity} enrolled
-                  </Text>
-                )}
-              </View>
+          )}
+          {item?.subjectGrade != null && item?.subjectGrade !== '' && (
+            <View style={[styles.chip, styles.gradeChip]}>
+              <Text style={styles.chipText} numberOfLines={1}>
+                Grade {item.subjectGrade}
+              </Text>
             </View>
-          </View>
+          )}
         </View>
-      </Animated.View>
+      </CoverImage>
+
+      <View style={styles.body}>
+        <Text numberOfLines={2} style={styles.subjectName}>
+          {item?.subjectName}
+        </Text>
+        <Text numberOfLines={1} style={styles.tutorName}>
+          {item?.user?.name || 'Tutor'}
+        </Text>
+        {item?.maxCapacity > 1 && (
+          <Text style={styles.enrollment}>
+            {(item?.currentEnrollment ?? 0)} / {item.maxCapacity} enrolled
+          </Text>
+        )}
+      </View>
     </TouchableOpacity>
   );
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={subjectData}
-        keyExtractor={(item) => item.id}
-        renderItem={renderSubjectCard}
-        horizontal={isHorizontal}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.flatListContent}
-        snapToInterval={horizontalScale(270)}
-        decelerationRate="fast"
-        snapToAlignment="center"
-      />
-    </View>
+    <FlatList
+      data={subjectData}
+      keyExtractor={(item) => String(item.id)}
+      renderItem={renderSubjectCard}
+      horizontal={isHorizontal}
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.list}
+      snapToInterval={CARD_WIDTH + horizontalScale(12)}
+      decelerationRate="fast"
+      snapToAlignment="start"
+    />
   );
 };
 
 export default HorizontalSubjectCard;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  list: {
+    paddingHorizontal: horizontalScale(20),
+    paddingBottom: verticalScale(4),
   },
-  flatListContent: {
-    paddingHorizontal: horizontalScale(10),
-    paddingVertical: verticalScale(10),
-  },
-  flatlistInnerContainer: {
-    flex: 1,
-    padding: moderateScale(12),
-  },
-  flatlistRecommendedContainer: {
-    height: verticalScale(280),
-    width: horizontalScale(270),
-    marginHorizontal: horizontalScale(8),
+  card: {
+    width: CARD_WIDTH,
+    marginRight: horizontalScale(12),
     backgroundColor: '#FFFFFF',
-    borderRadius: moderateScale(20),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    //shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    borderRadius: moderateScale(18),
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    overflow: 'hidden',
   },
-  subjectImage: {
-    width: '100%',
-    height: verticalScale(160),
-    borderRadius: moderateScale(16),
-  },
-  subjectBoardContainer: {
+  metaRow: {
     position: 'absolute',
-    top: verticalScale(24),
-    left: horizontalScale(24),
-    right: horizontalScale(24),
-  },
-  boardChip: {
+    left: 8,
+    right: 8,
+    bottom: 8,
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    paddingVertical: verticalScale(6),
-    paddingHorizontal: horizontalScale(12),
-    borderRadius: moderateScale(30),
     alignItems: 'center',
+    gap: 6,
+  },
+  chip: {
+    flexShrink: 1,
+    minWidth: 0,
+    backgroundColor: 'rgba(18, 38, 58, 0.88)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    minHeight: 22,
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    //shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
   },
-  divider: {
-    width: 1,
-    height: '80%',
-    backgroundColor: '#DDD',
-    marginHorizontal: horizontalScale(8),
+  gradeChip: {
+    flexShrink: 0,
   },
-  subjectBoardText: {
-    fontFamily: FONT.semiBold,
-    fontSize: moderateScale(12),
-    color: '#333',
-  },
-  subjectGradeText: {
-    fontFamily: FONT.regular,
-    fontSize: moderateScale(12),
-    color: '#666',
-  },
-  flatlistSubjectNameText: {
-    marginTop: verticalScale(12),
-    marginBottom: verticalScale(8),
-    fontFamily: FONT.semiBold,
-    fontSize: moderateScale(16),
-    color: '#222',
-    lineHeight: verticalScale(22),
-  },
-  subjectDetailsContainer: {
-    marginTop: verticalScale(12),
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  imageandNameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  subjectTeacherImage: {
-    height: verticalScale(40),
-    width: horizontalScale(40),
-    borderRadius: moderateScale(20),
-    borderWidth: 2,
-    borderColor: '#FFF',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    //shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  subjectTeacherNameAndDesignationContainer: {
-    marginLeft: horizontalScale(10),
-    flex: 1,
-  },
-  subjectTeacherNameText: {
-    fontFamily: FONT.semiBold,
-    fontSize: moderateScale(14),
-    color: '#333',
-  },
-  subjectTeacherDesignation: {
-    fontFamily: FONT.regular,
-    fontSize: moderateScale(12),
-    color: '#666',
-    marginTop: verticalScale(2),
-  },
-  enrollmentText: {
-    marginTop: verticalScale(4),
+  chipText: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(11),
-    color: '#2DCB63',
+    fontSize: SCREEN_WIDTH < 375 ? 10 : 11,
+    color: '#FFFFFF',
+  },
+  body: {
+    paddingHorizontal: horizontalScale(14),
+    paddingVertical: verticalScale(12),
+    minHeight: verticalScale(88),
+  },
+  subjectName: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(16),
+    color: '#12263A',
+    lineHeight: moderateScale(22),
+  },
+  tutorName: {
+    marginTop: verticalScale(6),
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(13),
+    color: '#5C6B76',
+  },
+  enrollment: {
+    marginTop: verticalScale(6),
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(12),
+    color: '#1F8A4C',
   },
 });

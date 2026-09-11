@@ -8,57 +8,85 @@ import {
   RefreshControl,
   StatusBar,
   ActivityIndicator,
-  Platform,
+  Keyboard,
 } from "react-native";
 import { useFocusEffect } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import { limitTextLength } from "../../utils/helperFunctions";
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {axiosWithAuth} from "../../utils/customAxios";
+import { axiosWithAuth } from "../../utils/customAxios";
 import { ipURL } from "../../utils/utils";
 import { Ionicons } from '@expo/vector-icons';
 import { horizontalScale, verticalScale, moderateScale } from "../../utils/metrics";
 import { socket } from "../../utils/socket";
-import useSafeAreaInsets, { addBasePaddingToTopInset } from "../../hooks/useSafeAreaInsets";
 import { FONT } from "../../../constants/theme";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const blurhash =
-  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
+  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
-// Dummy data for demonstration
+const useDebounce = (value: string, delay: number) => {
+  const [debouncedValue, setDebouncedValue] = useState(value);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+};
+
+const formatPreviewTime = (date?: string | Date) => {
+  if (!date) return '';
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return '';
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) {
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+};
 
 const ChatPage = () => {
-  const insets = useSafeAreaInsets();
-  const [conversation, setConversation] = useState();
+  const [conversation, setConversation] = useState([]);
   const [user, setUser] = useState("");
+  const [isTeacher, setIsTeacher] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-  const [originalConversation, setOriginalConversation] = useState();
+  const [originalConversation, setOriginalConversation] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const debouncedSearchQuery = useDebounce(searchInput, 400);
 
   const getConversation = async () => {
     try {
       setError(null);
       const token = await AsyncStorage.getItem("authToken");
       const userDetails = JSON.parse(await AsyncStorage.getItem("userDetails"));
-      
+
       const resp = await axiosWithAuth.get(`${ipURL}/api/conversation/${userDetails.userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      
-      setConversation(resp.data);
-      setOriginalConversation(resp.data);
+
+      const data = Array.isArray(resp.data) ? resp.data : [];
+      setConversation(data);
+      setOriginalConversation(data);
       setUser(userDetails.userId);
+      setIsTeacher(!!userDetails.isTeacher);
     } catch (error) {
       console.error("Error fetching conversations:", error);
       setError("Failed to load conversations. Please try again.");
+      setConversation([]);
+      setOriginalConversation([]);
     } finally {
       setIsLoading(false);
     }
@@ -81,6 +109,23 @@ const ChatPage = () => {
     }
   }, []);
 
+  const filteredConversations = useMemo(() => {
+    const query = debouncedSearchQuery.trim().toLowerCase();
+    if (!query) return originalConversation;
+
+    return originalConversation.filter((item) => {
+      const otherParty = isTeacher ? item.user : item.client;
+      const name = otherParty?.name || '';
+      const subject = item?.subject?.subjectName || '';
+      const lastMessage = item.messages?.[item.messages.length - 1]?.text || '';
+      return (
+        name.toLowerCase().includes(query) ||
+        subject.toLowerCase().includes(query) ||
+        lastMessage.toLowerCase().includes(query)
+      );
+    });
+  }, [originalConversation, debouncedSearchQuery, isTeacher]);
+
   const handlePress = async (id) => {
     socket.emit("chat-room", id);
     router.push(`/(tabs)/chat/${id}`);
@@ -91,24 +136,25 @@ const ChatPage = () => {
     router.push(`/(tabs)/chat/singleProfile/${profileId}`);
   };
 
-
-  console.log(conversation,'conversation');
-  
-
   const ChatItem = ({ item }) => {
-    const isCurrentUser = user === item.user?.id;
-    const displayName = isCurrentUser ? item.client?.name : item.user?.name;
-    const profileImage = isCurrentUser ? item.client?.profileImage : item.user?.profileImage;
-    const lastMessage = item.messages[item.messages.length - 1]?.text;
+    const otherParty = isTeacher ? item.user : item.client;
+    const displayName = otherParty?.name || 'Conversation';
+    const profileImage = otherParty?.profileImage;
+    const lastMessage = item.messages?.[item.messages.length - 1];
+    const lastMessageText = lastMessage?.text;
+    const lastMessageTime = formatPreviewTime(lastMessage?.createdAt || lastMessage?.timestamp);
+    const subjectName = item?.subject?.subjectName;
 
     return (
-      <TouchableOpacity 
-        onPress={() => handlePress(item.id)} 
+      <TouchableOpacity
+        onPress={() => handlePress(item.id)}
         onLongPress={() => handleLongPress(item.client, item.user)}
-        style={styles.chatCard}
-        activeOpacity={0.7}
+        style={styles.card}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={`${displayName}${subjectName ? `, ${subjectName}` : ''}`}
       >
-        <View style={styles.avatarContainer}>
+        {profileImage ? (
           <Image
             source={{ uri: profileImage }}
             style={styles.avatar}
@@ -116,39 +162,40 @@ const ChatPage = () => {
             contentFit="cover"
             transition={200}
           />
-          {item.client.status === 'online' && (
-            <View style={styles.onlineIndicator} />
-          )}
-        </View>
-        
-        <View style={styles.chatInfo}>
-          <View style={styles.headerContainer}>
-            <View style={styles.nameContainer}>
-              <Text style={styles.nameText}>{displayName}</Text>
-              <Text style={styles.timeText}>{item.lastActive}</Text>
-            </View>
-            <View style={styles.subjectContainer}>
-              <Text style={styles.subjectText}>
-                <Ionicons name="book-outline" size={moderateScale(14)} color="#666" />
-                {' '}{item?.subject?.subjectName}
-              </Text>
-            </View>
+        ) : (
+          <View style={styles.avatarPlaceholder}>
+            <Ionicons name="person-outline" size={22} color="#1A4C6E" />
           </View>
-          {lastMessage && (
-            <View style={styles.messageContainer}>
-              <Text style={styles.messageText}>
-                {limitTextLength(lastMessage, 50)}
-              </Text>
-            </View>
+        )}
+
+        <View style={styles.cardContent}>
+          <View style={styles.nameRow}>
+            <Text style={styles.nameText} numberOfLines={1}>
+              {displayName}
+            </Text>
+            {!!lastMessageTime && (
+              <Text style={styles.timeText}>{lastMessageTime}</Text>
+            )}
+          </View>
+          {!!subjectName && (
+            <Text style={styles.subjectText} numberOfLines={1}>
+              {subjectName}
+            </Text>
+          )}
+          {!!lastMessageText && (
+            <Text style={styles.messageText} numberOfLines={1}>
+              {limitTextLength(lastMessageText, 50)}
+            </Text>
           )}
         </View>
+        <Ionicons name="chevron-forward" size={18} color="#5C6B76" />
       </TouchableOpacity>
     );
   };
 
   if (isLoading && !refreshing) {
     return (
-      <SafeAreaView style={[styles.container, styles.centerContent]}>
+      <SafeAreaView style={[styles.container, styles.centerContent]} edges={['top']}>
         <ActivityIndicator size="large" color="#1A4C6E" />
       </SafeAreaView>
     );
@@ -156,11 +203,13 @@ const ChatPage = () => {
 
   if (error && !refreshing) {
     return (
-      <SafeAreaView style={[styles.container, styles.centerContent]}>
+      <SafeAreaView style={[styles.container, styles.centerContent]} edges={['top']}>
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.retryButton}
           onPress={getConversation}
+          accessibilityRole="button"
+          accessibilityLabel="Retry loading conversations"
         >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
@@ -169,41 +218,48 @@ const ChatPage = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? addBasePaddingToTopInset(16, insets.top) : undefined }]}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar barStyle="dark-content" />
+
+      <View style={styles.header}>
         <Text style={styles.headerTitle}>Messages</Text>
-        {/* <TouchableOpacity style={styles.newChatButton}>
-          <Ionicons name="add-circle-outline" size={moderateScale(24)} color="#1A4C6E" />
-        </TouchableOpacity> */}
+        <Text style={styles.headerSubtitle}>Your conversations with tutors and students</Text>
       </View>
-      
-      {/* <View style={styles.searchContainer}>
-        <Ionicons name="search" size={moderateScale(20)} color="#666" />
+
+      <View style={styles.searchBar}>
+        <Ionicons name="search" size={20} color="#5C6B76" />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search conversations..."
-          placeholderTextColor="#999"
+          placeholder="Search messages"
+          placeholderTextColor="#8A97A3"
           value={searchInput}
-          onChangeText={(text) => {
-            setSearchInput(text);
-          }}
+          onChangeText={setSearchInput}
+          returnKeyType="search"
         />
         {searchInput.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchInput("")}>
-            <Ionicons name="close-circle" size={moderateScale(20)} color="#666" />
+          <TouchableOpacity
+            onPress={() => {
+              setSearchInput('');
+              Keyboard.dismiss();
+            }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="Clear search"
+          >
+            <Ionicons name="close-circle" size={20} color="#5C6B76" />
           </TouchableOpacity>
         )}
-      </View> */}
-      
+      </View>
+
       <FlatList
-        data={conversation}
+        data={filteredConversations}
         renderItem={({ item }) => <ChatItem item={item} />}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.listContainer}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
+          <RefreshControl
+            refreshing={refreshing}
             onRefresh={onRefresh}
             colors={["#1A4C6E"]}
             tintColor="#1A4C6E"
@@ -213,9 +269,15 @@ const ChatPage = () => {
         ListEmptyComponent={
           !refreshing && (
             <View style={styles.emptyContainer}>
-              <Ionicons name="chatbubble-ellipses-outline" size={moderateScale(64)} color="#666" />
-              <Text style={styles.emptyText}>No conversations yet</Text>
-              <Text style={styles.emptySubText}>Start a new conversation to begin chatting</Text>
+              <Ionicons name="chatbubble-ellipses-outline" size={40} color="#5C6B76" />
+              <Text style={styles.emptyText}>
+                {searchInput ? 'No matching conversations' : 'No conversations yet'}
+              </Text>
+              <Text style={styles.emptySubText}>
+                {searchInput
+                  ? 'Try a different name or subject.'
+                  : 'Messages with tutors and students will show up here.'}
+              </Text>
             </View>
           )
         }
@@ -227,142 +289,126 @@ const ChatPage = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F4F6F8',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: moderateScale(20),
-    paddingVertical: moderateScale(16),
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    paddingHorizontal: horizontalScale(20),
+    paddingTop: verticalScale(8),
+    paddingBottom: verticalScale(12),
   },
   headerTitle: {
-    fontSize: moderateScale(28),
+    fontSize: moderateScale(24),
     fontFamily: FONT.bold,
-    color: '#1A4C6E',
+    color: '#12263A',
   },
-  newChatButton: {
-    padding: moderateScale(8),
+  headerSubtitle: {
+    marginTop: verticalScale(4),
+    fontSize: moderateScale(14),
+    fontFamily: FONT.regular,
+    color: '#5C6B76',
   },
-  searchContainer: {
+  searchBar: {
+    marginHorizontal: horizontalScale(20),
+    marginBottom: verticalScale(12),
+    minHeight: 48,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    margin: moderateScale(16),
-    paddingHorizontal: moderateScale(16),
-    borderRadius: moderateScale(16),
-    height: verticalScale(52),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    //shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    paddingHorizontal: 14,
+    gap: 10,
   },
   searchInput: {
     flex: 1,
-    marginLeft: horizontalScale(12),
-    fontSize: moderateScale(16),
-    fontFamily: FONT.regular,
-    color: '#333',
+    height: 48,
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(15),
+    color: '#12263A',
   },
   listContainer: {
-    padding: moderateScale(16),
+    paddingHorizontal: horizontalScale(20),
+    paddingBottom: verticalScale(24),
   },
-  chatCard: {
+  card: {
     flexDirection: 'row',
-    backgroundColor: 'white',
-    borderRadius: moderateScale(20),
-    padding: moderateScale(16),
-    marginBottom: verticalScale(12),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    //shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
-  },
-  avatarContainer: {
-    position: 'relative',
+    borderColor: '#E6EBF0',
+    padding: 12,
+    minHeight: 76,
+    marginBottom: 12,
   },
   avatar: {
-    width: horizontalScale(60),
-    height: verticalScale(60),
-    borderRadius: moderateScale(30),
-    borderWidth: 2,
-    borderColor: '#F0F0F0',
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: '#D7DEE5',
   },
-  onlineIndicator: {
-    position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: moderateScale(14),
-    height: moderateScale(14),
-    borderRadius: moderateScale(7),
-    backgroundColor: '#4CAF50',
-    borderWidth: 2,
-    borderColor: 'white',
-  },
-  chatInfo: {
-    flex: 1,
-    marginLeft: horizontalScale(16),
+  avatarPlaceholder: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: '#EEF3F7',
+    alignItems: 'center',
     justifyContent: 'center',
   },
-  headerContainer: {
-    marginBottom: verticalScale(6),
+  cardContent: {
+    flex: 1,
+    marginLeft: 12,
+    marginRight: 8,
   },
-  nameContainer: {
+  nameRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 8,
   },
   nameText: {
-    fontSize: moderateScale(17),
+    flex: 1,
+    fontSize: moderateScale(16),
     fontFamily: FONT.semiBold,
-    color: '#1A4C6E',
+    color: '#12263A',
   },
   timeText: {
-    fontSize: moderateScale(13),
+    fontSize: moderateScale(12),
     fontFamily: FONT.regular,
-    color: '#666',
-  },
-  subjectContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: verticalScale(4),
+    color: '#8A97A3',
   },
   subjectText: {
-    fontSize: moderateScale(14),
-    fontFamily: FONT.regular,
-    color: '#666',
-  },
-  messageContainer: {
-    marginTop: verticalScale(6),
+    marginTop: 3,
+    fontSize: moderateScale(13),
+    fontFamily: FONT.medium,
+    color: '#5C6B76',
   },
   messageText: {
-    fontSize: moderateScale(14),
+    marginTop: 3,
+    fontSize: moderateScale(13),
     fontFamily: FONT.regular,
-    color: '#666',
+    color: '#5C6B76',
   },
   centerContent: {
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 24,
   },
   errorText: {
     fontFamily: FONT.medium,
     fontSize: moderateScale(16),
-    color: '#FF4A4A',
+    color: '#C44747',
     textAlign: 'center',
     marginBottom: verticalScale(16),
   },
   retryButton: {
+    minHeight: 44,
     backgroundColor: '#1A4C6E',
-    paddingHorizontal: horizontalScale(24),
-    paddingVertical: verticalScale(12),
-    borderRadius: moderateScale(12),
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   retryButtonText: {
     fontFamily: FONT.medium,
@@ -370,23 +416,24 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: verticalScale(48),
+    paddingTop: verticalScale(48),
+    paddingHorizontal: horizontalScale(24),
   },
   emptyText: {
-    fontFamily: FONT.semiBold,
-    fontSize: moderateScale(18),
-    color: '#1A4C6E',
-    marginTop: verticalScale(16),
+    marginTop: verticalScale(12),
+    fontSize: moderateScale(16),
+    fontFamily: FONT.bold,
+    color: '#12263A',
+    textAlign: 'center',
   },
   emptySubText: {
-    fontFamily: FONT.regular,
+    marginTop: verticalScale(6),
     fontSize: moderateScale(14),
-    color: '#666',
-    marginTop: verticalScale(8),
+    fontFamily: FONT.regular,
+    color: '#5C6B76',
     textAlign: 'center',
+    lineHeight: 20,
   },
 });
 

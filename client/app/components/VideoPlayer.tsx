@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     width: width * 0.8,
     height: 200,
     marginRight: 12,
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#000',
   },

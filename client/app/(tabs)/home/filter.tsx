@@ -2,7 +2,7 @@ import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 
 import React from 'react'
 import { Ionicons } from "@expo/vector-icons";
 import { router } from 'expo-router';
-import { COLORS, FONT, SIZES } from '../../../constants';
+import { COLORS, FONT } from '../../../constants';
 import { horizontalScale, verticalScale, moderateScale } from '../../utils/metrics';
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -10,20 +10,26 @@ const Filter = () => {
   const [grade, setGrade] = React.useState('');
   const [board, setBoard] = React.useState('');
   const [tags, setTags] = React.useState('');
-  // const [teacher, setTeacher] = React.useState('');
 
-  console.log(grade,'this is tagsInput');
-  
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView 
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Ionicons name="search" size={24} color={COLORS.primary} />
-          <Text style={styles.headerTitle}>Advanced Search</Text>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.closeButton}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+          >
+            <Ionicons name="close" size={24} color="#12263A" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Advanced search</Text>
+          <View style={styles.closeButton} />
         </View>
 
         <View style={styles.searchSection}>
@@ -93,7 +99,7 @@ export default Filter;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F4F6F8',
   },
   scrollView: {
     flex: 1,
@@ -104,62 +110,61 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: horizontalScale(20),
-    paddingTop: verticalScale(20),
+    paddingHorizontal: horizontalScale(12),
+    paddingTop: verticalScale(4),
     paddingBottom: verticalScale(10),
   },
+  closeButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   headerTitle: {
+    flex: 1,
+    textAlign: 'center',
     fontFamily: FONT.bold,
-    fontSize: moderateScale(24),
-    color: COLORS.primary,
-    marginLeft: horizontalScale(10),
+    fontSize: moderateScale(18),
+    color: '#12263A',
   },
   searchSection: {
     paddingHorizontal: horizontalScale(20),
-    marginTop: verticalScale(20),
+    marginTop: verticalScale(8),
   },
   inputContainer: {
-    marginBottom: verticalScale(20),
+    marginBottom: verticalScale(16),
   },
   label: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(16),
-    color: COLORS.primary,
+    fontSize: moderateScale(14),
+    color: '#12263A',
     marginBottom: verticalScale(8),
   },
   inputWrapper: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: moderateScale(12),
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(14),
     paddingHorizontal: horizontalScale(15),
-    height: verticalScale(50),
+    minHeight: 48,
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E6EBF0',
   },
   input: {
     fontFamily: FONT.regular,
     fontSize: moderateScale(16),
-    color: '#333',
-    height: '100%',
+    color: '#12263A',
+    height: 48,
   },
   searchButton: {
     backgroundColor: COLORS.primary,
-    borderRadius: moderateScale(12),
-    paddingVertical: verticalScale(15),
+    borderRadius: moderateScale(14),
+    minHeight: 52,
     paddingHorizontal: horizontalScale(20),
     marginHorizontal: horizontalScale(20),
-    marginTop: verticalScale(20),
+    marginTop: verticalScale(12),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    //shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   searchButtonText: {
     fontFamily: FONT.bold,

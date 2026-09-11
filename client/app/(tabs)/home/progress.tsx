@@ -1,116 +1,214 @@
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
-import React from 'react';
+import { StyleSheet, Text, View, ScrollView, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
+import React, { useCallback, useState } from 'react';
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
 import { FONT, COLORS } from '../../../constants';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import 'dayjs/locale/en';
+import { axiosWithAuth } from '../../utils/customAxios';
+import { ipURL } from '../../utils/utils';
 
-interface ProgressData {
-  totalSubjects: number;
-  completedSubjects: number;
-  averageScore: number;
-  totalHoursStudied: number;
-  subjectProgress: {
-    subjectId: string;
-    subjectName: string;
-    progress: number;
-    lastStudied: string;
-  }[];
+dayjs.extend(relativeTime);
+dayjs.locale('en');
+
+interface CourseProgress {
+  subjectId: string;
+  subjectName: string;
+  courseType: string;
+  progress: number;
+  completedClasses: number;
+  totalClasses: number;
+  hoursCompleted: number;
+  totalHours: number;
+  lastSessionAt: string | null;
+  nextSessionAt: string | null;
+  studentCount?: number;
 }
 
-const staticProgressData: ProgressData = {
-  totalSubjects: 12,
-  completedSubjects: 4,
-  averageScore: 85,
-  totalHoursStudied: 156,
-  subjectProgress: [
-    {
-      subjectId: '1',
-      subjectName: 'Mathematics',
-      progress: 75,
-      lastStudied: '2 days ago'
-    },
-    {
-      subjectId: '2',
-      subjectName: 'Physics',
-      progress: 60,
-      lastStudied: '1 day ago'
-    },
-    {
-      subjectId: '3',
-      subjectName: 'Chemistry',
-      progress: 45,
-      lastStudied: '3 days ago'
-    },
-    {
-      subjectId: '4',
-      subjectName: 'Biology',
-      progress: 30,
-      lastStudied: '5 days ago'
-    },
-    {
-      subjectId: '5',
-      subjectName: 'English',
-      progress: 90,
-      lastStudied: 'Today'
-    }
-  ]
+interface ProgressResponse {
+  isTeacher: boolean;
+  overview: {
+    totalCourses: number;
+    completedCourses: number;
+    completedClasses: number;
+    upcomingClasses: number;
+    hoursCompleted: number;
+  };
+  courses: CourseProgress[];
+}
+
+const emptyOverview: ProgressResponse['overview'] = {
+  totalCourses: 0,
+  completedCourses: 0,
+  completedClasses: 0,
+  upcomingClasses: 0,
+  hoursCompleted: 0,
+};
+
+const sessionLabel = (course: CourseProgress) => {
+  if (course.lastSessionAt) {
+    return `Last class ${dayjs(course.lastSessionAt).fromNow()}`;
+  }
+  if (course.nextSessionAt) {
+    return `Next class ${dayjs(course.nextSessionAt).fromNow()}`;
+  }
+  return 'No classes scheduled';
 };
 
 const ProgressPage = () => {
+  const [data, setData] = useState<ProgressResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchProgress = useCallback(async () => {
+    try {
+      setError(null);
+      const response = await axiosWithAuth.get(`${ipURL}/api/bookings/progress`);
+      setData(response.data);
+    } catch (err) {
+      console.error('Error fetching progress:', err);
+      setError('Could not load your progress. Pull to retry.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchProgress();
+    }, [fetchProgress])
+  );
+
+  const overview = data?.overview || emptyOverview;
+  const courses = data?.courses || [];
+  const isTeacher = !!data?.isTeacher;
+
   const ProgressCard = ({ title, value, icon }: { title: string; value: string | number; icon: string }) => (
     <View style={styles.progressCard}>
       <View style={styles.cardIconContainer}>
-        <Ionicons name={icon as any} size={24} color={COLORS.primary} />
+        <Ionicons name={icon as any} size={22} color={COLORS.primary} />
       </View>
-      <Text style={styles.cardValue}>{value}</Text>
-      <Text style={styles.cardTitle}>{title}</Text>
+      <View style={styles.cardCopy}>
+        <Text style={styles.cardTitle}>{title}</Text>
+        <Text style={styles.cardValue}>{value}</Text>
+      </View>
     </View>
   );
 
-  const SubjectProgressItem = ({ subject }: { subject: ProgressData['subjectProgress'][0] }) => (
-    <View style={styles.subjectProgressItem}>
+  const SubjectProgressItem = ({ subject }: { subject: CourseProgress }) => (
+    <TouchableOpacity
+      style={styles.subjectProgressItem}
+      onPress={() => router.push(`/(tabs)/home/${subject.subjectId}`)}
+      activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityLabel={subject.subjectName}
+    >
       <View style={styles.subjectProgressHeader}>
         <Text style={styles.subjectName}>{subject.subjectName}</Text>
         <Text style={styles.progressPercentage}>{subject.progress}%</Text>
       </View>
-      <Text style={styles.lastStudied}>Last studied: {subject.lastStudied}</Text>
+      <Text style={styles.lastStudied}>
+        {isTeacher && subject.studentCount != null
+          ? `${subject.studentCount} ${subject.studentCount === 1 ? 'student' : 'students'} · ${sessionLabel(subject)}`
+          : sessionLabel(subject)}
+      </Text>
       <View style={styles.progressBarContainer}>
-        <View style={[styles.progressBar, { width: `${subject.progress}%` }]} />
+        <View style={[styles.progressBar, { width: `${Math.min(100, Math.max(0, subject.progress))}%` }]} />
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Progress</Text>
-          <View style={styles.statsContainer}>
-            <ProgressCard 
-              title="Subjects Completed" 
-              value={`${staticProgressData.completedSubjects}/${staticProgressData.totalSubjects}`}
-              icon="book"
-            />
-            <ProgressCard 
-              title="Average Score" 
-              value={`${staticProgressData.averageScore}%`}
-              icon="trophy"
-            />
-            <ProgressCard 
-              title="Total Hours" 
-              value={staticProgressData.totalHoursStudied}
-              icon="time"
-            />
-          </View>
-        </View>
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, styles.centered]} edges={[]}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.statusText}>Loading your progress</Text>
+      </SafeAreaView>
+    );
+  }
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Subject Progress</Text>
-          {staticProgressData.subjectProgress.map((subject) => (
-            <SubjectProgressItem key={subject.subjectId} subject={subject} />
-          ))}
-        </View>
+  return (
+    <SafeAreaView style={styles.container} edges={[]}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              fetchProgress();
+            }}
+            tintColor={COLORS.primary}
+          />
+        }
+      >
+        {error ? (
+          <View style={styles.statusBlock}>
+            <Ionicons name="alert-circle-outline" size={moderateScale(36)} color="#C2410C" />
+            <Text style={styles.statusText}>{error}</Text>
+          </View>
+        ) : (
+          <>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Overview</Text>
+              <View style={styles.statsContainer}>
+                <ProgressCard
+                  title={isTeacher ? 'Courses' : 'Courses completed'}
+                  value={isTeacher ? overview.totalCourses : `${overview.completedCourses}/${overview.totalCourses}`}
+                  icon="book"
+                />
+                <ProgressCard
+                  title={isTeacher ? 'Classes held' : 'Classes completed'}
+                  value={overview.completedClasses}
+                  icon="checkmark-done"
+                />
+                <ProgressCard
+                  title={isTeacher ? 'Hours taught' : 'Hours completed'}
+                  value={overview.hoursCompleted}
+                  icon="time"
+                />
+              </View>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>By course</Text>
+              {courses.length > 0 ? (
+                courses.map((subject) => (
+                  <SubjectProgressItem key={subject.subjectId} subject={subject} />
+                ))
+              ) : (
+                <View style={styles.emptyState}>
+                  <Ionicons name="stats-chart-outline" size={moderateScale(36)} color="#5C6B76" />
+                  <Text style={styles.emptyTitle}>
+                    {isTeacher ? 'No courses yet' : 'No enrolled courses yet'}
+                  </Text>
+                  <Text style={styles.emptySub}>
+                    {isTeacher
+                      ? 'Courses you create will show hours and classes here.'
+                      : 'Courses you enroll in will show your class progress here.'}
+                  </Text>
+                  {!isTeacher && (
+                    <TouchableOpacity
+                      style={styles.emptyCta}
+                      onPress={() => router.push('/(tabs)/home/allSubject')}
+                      accessibilityRole="button"
+                      accessibilityLabel="Find courses"
+                    >
+                      <Text style={styles.emptyCtaText}>Find courses</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+            </View>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -121,76 +219,71 @@ export default ProgressPage;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F4F6F8',
+  },
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   scrollContent: {
     paddingBottom: verticalScale(24),
   },
   section: {
-    paddingHorizontal: horizontalScale(16),
-    marginTop: verticalScale(24),
-    marginBottom: verticalScale(24),
+    paddingHorizontal: horizontalScale(20),
+    marginTop: verticalScale(20),
   },
   sectionTitle: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(20),
-    color: '#222222',
-    marginBottom: verticalScale(16),
+    fontSize: moderateScale(18),
+    color: '#12263A',
+    marginBottom: verticalScale(12),
   },
   statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: verticalScale(8),
+    gap: verticalScale(10),
   },
   progressCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: moderateScale(12),
-    padding: verticalScale(16),
-    width: '30%',
+    borderRadius: moderateScale(16),
+    padding: verticalScale(14),
+    paddingHorizontal: horizontalScale(14),
+    minHeight: 64,
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
   },
   cardIconContainer: {
-    width: moderateScale(40),
-    height: moderateScale(40),
-    borderRadius: moderateScale(20),
-    backgroundColor: COLORS.primary + '15',
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#EEF3F7',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: verticalScale(8),
+    marginRight: horizontalScale(12),
+  },
+  cardCopy: {
+    flex: 1,
   },
   cardValue: {
     fontFamily: FONT.bold,
     fontSize: moderateScale(18),
-    color: '#222222',
-    marginBottom: verticalScale(4),
+    color: '#12263A',
+    marginTop: verticalScale(2),
   },
   cardTitle: {
     fontFamily: FONT.medium,
-    fontSize: moderateScale(12),
-    color: COLORS.gray,
-    textAlign: 'center',
+    fontSize: moderateScale(13),
+    color: '#5C6B76',
+    textAlign: 'left',
   },
   subjectProgressItem: {
     backgroundColor: '#FFFFFF',
-    borderRadius: moderateScale(12),
+    borderRadius: moderateScale(16),
     padding: verticalScale(16),
-    marginBottom: verticalScale(12),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: verticalScale(10),
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    minHeight: 88,
   },
   subjectProgressHeader: {
     flexDirection: 'row',
@@ -199,9 +292,11 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(4),
   },
   subjectName: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(14),
-    color: '#222222',
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(15),
+    color: '#12263A',
+    flex: 1,
+    marginRight: horizontalScale(8),
   },
   progressPercentage: {
     fontFamily: FONT.semiBold,
@@ -211,18 +306,65 @@ const styles = StyleSheet.create({
   lastStudied: {
     fontFamily: FONT.regular,
     fontSize: moderateScale(12),
-    color: COLORS.gray,
-    marginBottom: verticalScale(8),
+    color: '#5C6B76',
+    marginBottom: verticalScale(10),
   },
   progressBarContainer: {
-    height: verticalScale(8),
-    backgroundColor: '#E5E5E5',
-    borderRadius: moderateScale(4),
+    height: 8,
+    backgroundColor: '#E6EBF0',
+    borderRadius: 4,
     overflow: 'hidden',
   },
   progressBar: {
     height: '100%',
     backgroundColor: COLORS.primary,
-    borderRadius: moderateScale(4),
+    borderRadius: 4,
   },
-}); 
+  statusBlock: {
+    alignItems: 'center',
+    paddingHorizontal: horizontalScale(20),
+    paddingTop: verticalScale(48),
+  },
+  statusText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
+    color: '#5C6B76',
+    textAlign: 'center',
+    marginTop: verticalScale(10),
+  },
+  emptyState: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(16),
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    paddingVertical: verticalScale(28),
+    paddingHorizontal: horizontalScale(16),
+    alignItems: 'center',
+  },
+  emptyTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(16),
+    color: '#12263A',
+    marginTop: verticalScale(12),
+  },
+  emptySub: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(13),
+    color: '#5C6B76',
+    textAlign: 'center',
+    marginTop: verticalScale(6),
+  },
+  emptyCta: {
+    marginTop: verticalScale(16),
+    backgroundColor: COLORS.primary,
+    minHeight: 44,
+    paddingHorizontal: horizontalScale(20),
+    borderRadius: moderateScale(12),
+    justifyContent: 'center',
+  },
+  emptyCtaText: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(14),
+    color: '#FFFFFF',
+  },
+});

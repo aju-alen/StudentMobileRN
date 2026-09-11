@@ -8,6 +8,7 @@ import { Resend } from 'resend';
 dotenv.config();
 import { sendEmailService } from "../services/emailService.js";
 import { createZoomAccountForTeacher, deleteZoomUser } from "../services/zoomService.js";
+import { upcomingCatalogFilter } from "../utils/upcomingCatalog.js";
 const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
 
 
@@ -830,6 +831,7 @@ export const getTeacherProfile = async (req, res, next) => {
         teacherProfile: {
           include: {
             subjects: {
+              where: upcomingCatalogFilter(),
               select: {
                 id: true,
                 subjectName: true,

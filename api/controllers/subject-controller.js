@@ -5,6 +5,8 @@ import { sendEmailService } from "../services/emailService.js";
 import { Resend } from "resend";
 import { sendNotificationByType } from "../services/pushNotificationService.js";
 import { getTeacherBlockedSlotsForDate } from "./bookingController.js";
+import { toUaeParts } from "../utils/uaeDateTime.js";
+import { withUpcomingCatalog, upcomingCatalogFilter } from "../utils/upcomingCatalog.js";
 
 const prisma = new PrismaClient();
 const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
@@ -125,13 +127,12 @@ export const createSubject = async (req, res, next) => {
         // Server-side availability check: teacher must not be double-booked
         if (courseType === 'MULTI_STUDENT' && scheduledDateTime) {
             const d = new Date(scheduledDateTime);
-            const dateStr = d.toISOString().split('T')[0];
-            const startHour = d.getUTCHours();
+            const { dateStr, hour: startHour } = toUaeParts(d);
             const duration = Math.max(1, Math.min(2, parseInt(subjectDuration, 10) || 1));
             const blocked = await getTeacherBlockedSlotsForDate(teacherProfileId, dateStr);
             for (let i = 0; i < duration; i++) {
-                const h = (startHour + i) % 24;
-                const slot = `${h.toString().padStart(2, '0')}:00`;
+                const h = startHour + i;
+                const slot = `${String(h).padStart(2, '0')}:00`;
                 if (blocked.includes(slot)) {
                     return res.status(409).json({
                         message: "You already have a booking or course at this date and time. Please choose another slot.",
@@ -144,26 +145,23 @@ export const createSubject = async (req, res, next) => {
                 const t = topics[i];
                 if (!t.scheduledDateTime) continue;
                 const d = new Date(t.scheduledDateTime);
-                const dateStr = d.toISOString().split('T')[0];
-                const startHour = d.getUTCHours();
+                const { dateStr, hour: startHour } = toUaeParts(d);
                 const duration = Math.max(1, Math.min(3, parseInt(t.hours, 10) || 1));
                 let blocked = await getTeacherBlockedSlotsForDate(teacherProfileId, dateStr);
-                // Also block slots taken by other topics in this same request
                 const requestBlocked = [];
                 for (let j = 0; j < topics.length; j++) {
                     if (j === i || !topics[j].scheduledDateTime) continue;
                     const other = new Date(topics[j].scheduledDateTime);
-                    if (other.toISOString().split('T')[0] !== dateStr) continue;
-                    const oh = other.getUTCHours();
+                    const otherParts = toUaeParts(other);
+                    if (otherParts.dateStr !== dateStr) continue;
                     const odur = Math.max(1, Math.min(3, parseInt(topics[j].hours, 10) || 1));
                     for (let k = 0; k < odur; k++) {
-                        requestBlocked.push(`${(oh + k).toString().padStart(2, '0')}:00`);
+                        requestBlocked.push(`${String(otherParts.hour + k).padStart(2, '0')}:00`);
                     }
                 }
                 blocked = [...new Set([...blocked, ...requestBlocked])];
                 for (let j = 0; j < duration; j++) {
-                    const h = (startHour + j) % 24;
-                    const slot = `${h.toString().padStart(2, '0')}:00`;
+                    const slot = `${String(startHour + j).padStart(2, '0')}:00`;
                     if (blocked.includes(slot)) {
                         return res.status(409).json({
                             message: `Topic ${i + 1} overlaps with an existing booking or course. Please choose another date/time.`,
@@ -338,9 +336,9 @@ export const getAllSubjects = async (req, res, next) => {
         
         if (!q || q === '') {
             const subjects = await prisma.subject.findMany({
-                where: {
+                where: withUpcomingCatalog({
                     subjectVerification: true
-                },
+                }),
                 include: {
                     teacherProfile: {
                         include: {
@@ -370,7 +368,7 @@ export const getAllSubjects = async (req, res, next) => {
         const searchTerm = q.toString().toLowerCase();
         
         const subjects = await prisma.subject.findMany({
-            where: {
+            where: withUpcomingCatalog({
                 AND: [
                     { subjectVerification: true },
                     {
@@ -381,7 +379,7 @@ export const getAllSubjects = async (req, res, next) => {
                         ]
                     }
                 ]
-            },
+            }),
             include: {
                 teacherProfile: {
                     include: {
@@ -473,7 +471,7 @@ export const getAllSubjectsBySearch = async (req, res, next) => {
 
         // Step 4: Fetch filtered subjects
         const subjects = await prisma.subject.findMany({
-            where: filter,
+            where: withUpcomingCatalog(filter),
             include: {
                 teacherProfile: {
                     include: {
@@ -552,13 +550,15 @@ export const getAllSubjectsByAdvanceSearch = async (req, res, next) => {
             };
         }
 
+        const catalogWhere = withUpcomingCatalog(whereCondition);
+
         // Get total count for pagination
         const totalSubjects = await prisma.subject.count({
-            where: whereCondition
+            where: catalogWhere
         });
 
         const subjects = await prisma.subject.findMany({
-            where: whereCondition,
+            where: catalogWhere,
             include: {
                 teacherProfile: {
                     include: {
@@ -893,7 +893,7 @@ export const getRecommendedSubjects = async (req, res, next) => {
         }
 
         const filteredSubjects = await prisma.subject.findMany({
-            where: whereCondition,
+            where: withUpcomingCatalog(whereCondition),
             include: {
                 teacherProfile: {
                     include: {
@@ -943,7 +943,10 @@ export const getSavedSubjects = async (req, res, next) => {
         }
 
         const savedSubjects = await prisma.savedSubject.findMany({
-            where: { studentId: user.studentProfile.id },
+            where: {
+                studentId: user.studentProfile.id,
+                subject: upcomingCatalogFilter(),
+            },
             include: {
                 subject: {
                     include: {
@@ -1073,10 +1076,10 @@ export const getSubjectCapacity = async (req, res, next) => {
 export const getMultiStudentSubjects = async (req, res, next) => {
     try {
         const subjects = await prisma.subject.findMany({
-            where: {
+            where: withUpcomingCatalog({
                 courseType: 'MULTI_STUDENT',
                 subjectVerification: true,
-            },
+            }),
             include: {
                 teacherProfile: {
                     include: {

@@ -6,7 +6,8 @@ import {
   updatePaymentStatus,
   getUpcomingClasses,
   getStudentTeacherAvailability,
-  getMyTeacherAvailability
+  getMyTeacherAvailability,
+  getLearningProgress
 } from '../controllers/bookingController.js';
 import { verifyToken } from '../middlewares/jwt.js';
 
@@ -14,6 +15,7 @@ const router = express.Router();
 
 // Get teacher availability for a specific date
 router.get('/upcoming-classes',verifyToken, getUpcomingClasses);
+router.get('/progress', verifyToken, getLearningProgress);
 
 
 // Create a new booking

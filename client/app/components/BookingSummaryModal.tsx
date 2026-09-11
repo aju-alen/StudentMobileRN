@@ -1,13 +1,18 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator, ScrollView, Image, Alert, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator, ScrollView, Alert, Animated } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { FONT } from '../../constants';
-import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
+import { moderateScale, verticalScale } from '../utils/metrics';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ipURL } from '../utils/utils';
 import { useStripe } from '@stripe/stripe-react-native';
+import { fromUaeDateTime, normalizeHHmm } from '../utils/uaeDateTime';
 
+const blurhash =
+  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
 
 interface TopicSlot {
   subjectTopicId: string;
@@ -25,6 +30,32 @@ interface BookingSummaryModalProps {
   onConfirm: () => void;
   topicSlots?: TopicSlot[];
 }
+
+const formatTime = (timeString: string) => {
+  const time = normalizeHHmm(timeString);
+  const hour = Number(time.slice(0, 2));
+  const minute = time.slice(3, 5);
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minute} ${period}`;
+};
+
+const formatAed = (fils: number) => `AED ${Number(fils) / 100}`;
+
+const dubaiDateOptions: Intl.DateTimeFormatOptions = {
+  weekday: 'long',
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  timeZone: 'Asia/Dubai',
+};
+
+const dubaiTimeOptions: Intl.DateTimeFormatOptions = {
+  hour: 'numeric',
+  minute: '2-digit',
+  hour12: true,
+  timeZone: 'Asia/Dubai',
+};
 
 const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
   visible,
@@ -45,13 +76,7 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
   const [showSuccess, setShowSuccess] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.5)).current;
-  const confettiRef = useRef(null);
-  const [isClosing, setIsClosing] = useState(false);
   const fadeOutAnim = useRef(new Animated.Value(1)).current;
-
-  console.log(subjectData, 'subjectData');
-  console.log(teacherData, 'teacherData');
-  
 
   useEffect(() => {
     const fetchData = async () => {
@@ -101,8 +126,6 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
         const token = await AsyncStorage.getItem('authToken');
         const user = JSON.parse(await AsyncStorage.getItem('userDetails'));
 
-        console.log(user, 'user in payment sheet');
-        
         const response = await fetch(`${ipURL}/api/stripe/payment-sheet`, {
           method: 'POST',
           body: JSON.stringify({
@@ -165,79 +188,47 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
   }, [visible, subjectData, teacherData, topicSlots, initPaymentSheet]);
 
   const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('en-US', options);
+    const raw = String(dateString || '').trim();
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(raw)
+      ? fromUaeDateTime(raw, '12:00')
+      : new Date(dateString);
+    return d.toLocaleDateString('en-US', dubaiDateOptions);
   };
 
-  const SuccessAnimation = () => {
-    useEffect(() => {
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          friction: 8,
-          tension: 40,
-          useNativeDriver: true,
-        }),
-      ]).start();
+  useEffect(() => {
+    if (!showSuccess) return;
 
-      // Start confetti animation
-      if (confettiRef.current) {
-        confettiRef.current.start();
-      }
+    fadeAnim.setValue(0);
+    scaleAnim.setValue(0.5);
+    fadeOutAnim.setValue(1);
 
-      // Start closing sequence after 4 seconds
-      const timer = setTimeout(() => {
-        setIsClosing(true);
-        Animated.timing(fadeOutAnim, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true,
-        }).start(() => {
-          setShowSuccess(false);
-          onConfirm();
-        });
-      }, 4000);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+    ]).start();
 
-      return () => clearTimeout(timer);
-    }, []);
+    const timer = setTimeout(() => {
+      Animated.timing(fadeOutAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }).start(() => {
+        setShowSuccess(false);
+        onConfirm();
+      });
+    }, 4000);
 
-    return (
-      <Animated.View 
-        style={[
-          styles.successContainer,
-          {
-            opacity: fadeOutAnim
-          }
-        ]}
-      >
-        
-        <Animated.View 
-          style={[
-            styles.successContent,
-            {
-              opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }]
-            }
-          ]}
-        >
-          <View style={styles.checkmarkCircle}>
-            <Ionicons name="checkmark" size={50} color="#FFFFFF" />
-          </View>
-          <Text style={styles.successTitle}>Payment Successful!</Text>
-          <Text style={styles.successMessage}>
-            {(subjectData?.courseType === 'MULTI_STUDENT' || subjectData?.courseType === 'MULTI_PACKAGE')
-              ? 'Your enrollment has been confirmed'
-              : 'Your booking has been confirmed'}
-          </Text>
-        </Animated.View>
-      </Animated.View>
-    );
-  };
+    return () => clearTimeout(timer);
+  }, [showSuccess]);
 
   const openPaymentSheet = async () => {
     if (!paymentInitialized) {
@@ -253,7 +244,6 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
         Alert.alert('Payment Error', error.message);
       } else {
         setShowSuccess(true);
-        setIsClosing(false);
         fadeOutAnim.setValue(1);
       }
     } catch (error) {
@@ -264,22 +254,107 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
     }
   };
 
-  if (loadingModal || !subjectData || !teacherData) {
-    return (
-      <Modal
-        visible={visible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={onClose}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <ActivityIndicator size="large" color="#2DCB63" />
+  const isEnrollment =
+    subjectData?.courseType === 'MULTI_STUDENT' || subjectData?.courseType === 'MULTI_PACKAGE';
+  const amountLabel = subjectData ? formatAed(subjectData.subjectPrice) : '';
+
+  const renderSessionDetails = () => {
+    if (subjectData.courseType === 'SINGLE_PACKAGE' && topicSlots?.length) {
+      return topicSlots.map((slot: TopicSlot, idx: number) => {
+        const topic = subjectData.subjectTopics?.find((t: { id: string }) => t.id === slot.subjectTopicId);
+        return (
+          <View key={slot.subjectTopicId} style={styles.topicRow}>
+            <View style={styles.topicIndex}>
+              <Text style={styles.topicIndexText}>{idx + 1}</Text>
+            </View>
+            <View style={styles.topicCopy}>
+              <Text style={styles.topicTitle}>{topic?.topicTitle ?? `Topic ${idx + 1}`}</Text>
+              <Text style={styles.topicMeta}>
+                {formatDate(slot.date)} · {formatTime(slot.time)}
+              </Text>
+            </View>
           </View>
+        );
+      });
+    }
+
+    if (subjectData.courseType === 'MULTI_PACKAGE' && subjectData.subjectTopics?.length) {
+      return (
+        <>
+          {subjectData.subjectTopics.map((topic: { topicTitle: string; hours: number; scheduledAt?: string | null }, idx: number) => (
+            <View key={idx} style={styles.topicRow}>
+              <View style={styles.topicIndex}>
+                <Text style={styles.topicIndexText}>{idx + 1}</Text>
+              </View>
+              <View style={styles.topicCopy}>
+                <Text style={styles.topicTitle}>
+                  {topic.topicTitle}
+                  {topic.hours ? ` · ${topic.hours}h` : ''}
+                </Text>
+                {topic.scheduledAt ? (
+                  <Text style={styles.topicMeta}>
+                    {new Date(topic.scheduledAt).toLocaleString('en-US', {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                      timeZone: 'Asia/Dubai',
+                    })}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+          ))}
+          {subjectData.maxCapacity ? (
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Capacity</Text>
+              <Text style={styles.detailValue}>Up to {subjectData.maxCapacity} students</Text>
+            </View>
+          ) : null}
+        </>
+      );
+    }
+
+    if (subjectData.courseType === 'MULTI_STUDENT') {
+      return (
+        <>
+          {subjectData.scheduledDateTime && (
+            <>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Date</Text>
+                <Text style={styles.detailValue}>
+                  {new Date(subjectData.scheduledDateTime).toLocaleDateString('en-US', dubaiDateOptions)}
+                </Text>
+              </View>
+              <View style={styles.detailRow}>
+                <Text style={styles.detailLabel}>Time</Text>
+                <Text style={styles.detailValue}>
+                  {new Date(subjectData.scheduledDateTime).toLocaleTimeString('en-US', dubaiTimeOptions)}
+                </Text>
+              </View>
+            </>
+          )}
+          {subjectData.maxCapacity ? (
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Capacity</Text>
+              <Text style={styles.detailValue}>Up to {subjectData.maxCapacity} students</Text>
+            </View>
+          ) : null}
+        </>
+      );
+    }
+
+    return (
+      <>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Date</Text>
+          <Text style={styles.detailValue}>{formatDate(date)}</Text>
         </View>
-      </Modal>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Time</Text>
+          <Text style={styles.detailValue}>{formatTime(time)}</Text>
+        </View>
+      </>
     );
-  }
+  };
 
   return (
     <Modal
@@ -289,194 +364,158 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
       onRequestClose={onClose}
     >
       <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
+        <SafeAreaView style={styles.modalContent} edges={['bottom']}>
+          <View style={styles.handle} />
+
           {showSuccess ? (
-            <SuccessAnimation />
+            <Animated.View
+              style={[
+                styles.successContainer,
+                { opacity: fadeOutAnim },
+              ]}
+            >
+              <Animated.View
+                style={[
+                  styles.successContent,
+                  {
+                    opacity: fadeAnim,
+                    transform: [{ scale: scaleAnim }],
+                  },
+                ]}
+              >
+                <View style={styles.checkmarkCircle}>
+                  <Ionicons name="checkmark" size={40} color="#FFFFFF" />
+                </View>
+                <Text style={styles.successTitle}>Payment successful</Text>
+                <Text style={styles.successMessage}>
+                  {isEnrollment
+                    ? 'Your enrollment has been confirmed'
+                    : 'Your booking has been confirmed'}
+                </Text>
+              </Animated.View>
+            </Animated.View>
           ) : (
             <>
               <View style={styles.header}>
-                <TouchableOpacity onPress={onClose} style={styles.backButton}>
-                  <Ionicons name="arrow-back" size={24} color="#1A4C6E" />
+                <TouchableOpacity
+                  onPress={onClose}
+                  style={styles.iconButton}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close"
+                >
+                  <Ionicons name="chevron-back" size={22} color="#12263A" />
                 </TouchableOpacity>
-                <Text style={styles.title}>Booking Summary</Text>
+                <View style={styles.headerCopy}>
+                  <Text style={styles.title}>
+                    {isEnrollment ? 'Review enrollment' : 'Review booking'}
+                  </Text>
+                  <Text style={styles.subtitle}>Confirm the details before you pay</Text>
+                </View>
+                <View style={styles.iconButton} />
               </View>
 
-              <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-                <View style={styles.content}>
-                  {/* Teacher Profile Section */}
-                  <View style={styles.teacherProfileSection}>
-                    <Image
-                      source={{ uri: teacherData.profileImage || 'https://via.placeholder.com/100' }}
-                      style={styles.teacherImage}
-                    />
-                    <View style={styles.teacherInfo}>
-                      <Text style={styles.teacherName}>{teacherData.name}</Text>
-                      <Text style={styles.teacherRole}>Tutor</Text>
-                    </View>
-                  </View>
+              {loadingModal || !subjectData || !teacherData ? (
+                <View style={styles.loadingWrap}>
+                  <ActivityIndicator size="large" color="#1A4C6E" />
+                </View>
+              ) : (
+                <>
+                  <ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={styles.content}
+                    showsVerticalScrollIndicator={false}
+                  >
+                    <View style={styles.card}>
+                      <View style={styles.teacherRow}>
+                        {teacherData.profileImage ? (
+                          <Image
+                            source={{ uri: teacherData.profileImage }}
+                            style={styles.teacherImage}
+                            placeholder={blurhash}
+                            contentFit="cover"
+                            transition={100}
+                          />
+                        ) : (
+                          <View style={[styles.teacherImage, styles.teacherFallback]}>
+                            <Ionicons name="person" size={20} color="#5C6B76" />
+                          </View>
+                        )}
+                        <View style={styles.teacherInfo}>
+                          <Text style={styles.teacherName}>{teacherData.name}</Text>
+                          <Text style={styles.teacherRole}>Tutor</Text>
+                        </View>
+                      </View>
 
-                  {/* Subject Details Section */}
-                  <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                      <Ionicons name="book" size={24} color="#1A4C6E" />
-                      <Text style={styles.sectionTitle}>Subject Details</Text>
-                    </View>
-                    <View style={styles.sectionContent}>
                       <Text style={styles.subjectName}>{subjectData.subjectName}</Text>
-                      <View style={styles.subjectMeta}>
-                        <View style={styles.metaItem}>
-                          <Ionicons name="school" size={16} color="#64748B" />
-                          <Text style={styles.metaText}>{subjectData.subjectBoard}</Text>
-                        </View>
-                        <View style={styles.metaItem}>
-                          <Ionicons name="bookmark" size={16} color="#64748B" />
-                          <Text style={styles.metaText}>Grade {subjectData.subjectGrade}</Text>
-                        </View>
+                      <View style={styles.chipRow}>
+                        {!!subjectData.subjectBoard && (
+                          <View style={styles.chip}>
+                            <Text style={styles.chipText}>{subjectData.subjectBoard}</Text>
+                          </View>
+                        )}
+                        {!!subjectData.subjectGrade && (
+                          <View style={styles.chip}>
+                            <Text style={styles.chipText}>Grade {subjectData.subjectGrade}</Text>
+                          </View>
+                        )}
                       </View>
                     </View>
-                  </View>
 
-                  {/* Session Details Section */}
-                  <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                      <Ionicons name="calendar" size={24} color="#1A4C6E" />
+                    <View style={styles.card}>
                       <Text style={styles.sectionTitle}>
-                        {(subjectData.courseType === 'MULTI_STUDENT' || subjectData.courseType === 'MULTI_PACKAGE') ? 'Course Details' : 'Session Details'}
+                        {isEnrollment ? 'Course details' : 'Session details'}
                       </Text>
-                    </View>
-                    <View style={styles.sectionContent}>
-                      {subjectData.courseType === 'SINGLE_PACKAGE' && topicSlots?.length ? (
-                        <>
-                          {topicSlots.map((slot: TopicSlot, idx: number) => {
-                            const topic = subjectData.subjectTopics?.find((t: { id: string }) => t.id === slot.subjectTopicId);
-                            return (
-                              <View key={slot.subjectTopicId} style={styles.sessionDetail}>
-                                <Ionicons name="book-outline" size={20} color="#64748B" />
-                                <Text style={styles.detailText}>
-                                  {topic?.topicTitle ?? `Topic ${idx + 1}`}: {slot.date} at {slot.time}
-                                </Text>
-                              </View>
-                            );
-                          })}
-                        </>
-                      ) : subjectData.courseType === 'MULTI_PACKAGE' && subjectData.subjectTopics?.length ? (
-                        <>
-                          {subjectData.subjectTopics.map((topic: { topicTitle: string; hours: number; scheduledAt?: string | null }, idx: number) => (
-                            <View key={idx} style={styles.sessionDetail}>
-                              <Ionicons name="book-outline" size={20} color="#64748B" />
-                              <Text style={styles.detailText}>
-                                {topic.topicTitle} ({topic.hours}h)
-                                {topic.scheduledAt ? ` · ${new Date(topic.scheduledAt).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' })}` : ''}
-                              </Text>
-                            </View>
-                          ))}
-                          {subjectData.maxCapacity ? (
-                            <View style={styles.sessionDetail}>
-                              <Ionicons name="people-outline" size={20} color="#64748B" />
-                              <Text style={styles.detailText}>Up to {subjectData.maxCapacity} students</Text>
-                            </View>
-                          ) : null}
-                        </>
-                      ) : subjectData.courseType === 'MULTI_STUDENT' ? (
-                        <>
-                          {subjectData.scheduledDateTime && (
-                            <>
-                              <View style={styles.sessionDetail}>
-                                <Ionicons name="calendar-outline" size={20} color="#64748B" />
-                                <Text style={styles.detailText}>
-                                  {new Date(subjectData.scheduledDateTime).toLocaleDateString('en-US', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric'
-                                  })}
-                                </Text>
-                              </View>
-                              <View style={styles.sessionDetail}>
-                                <Ionicons name="time-outline" size={20} color="#64748B" />
-                                <Text style={styles.detailText}>
-                                  {new Date(subjectData.scheduledDateTime).toLocaleTimeString('en-US', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: true
-                                  })}
-                                </Text>
-                              </View>
-                            </>
-                          )}
-                          {subjectData.maxCapacity && (
-                            <View style={styles.sessionDetail}>
-                              <Ionicons name="people-outline" size={20} color="#64748B" />
-                              <Text style={styles.detailText}>
-                                Up to {subjectData.maxCapacity} students
-                              </Text>
-                            </View>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <View style={styles.sessionDetail}>
-                            <Ionicons name="calendar-outline" size={20} color="#64748B" />
-                            <Text style={styles.detailText}>{formatDate(date)}</Text>
-                          </View>
-                          <View style={styles.sessionDetail}>
-                            <Ionicons name="time-outline" size={20} color="#64748B" />
-                            <Text style={styles.detailText}>{time}</Text>
-                          </View>
-                        </>
+                      {renderSessionDetails()}
+                      {!!subjectData.subjectDuration && (
+                        <View style={styles.detailRow}>
+                          <Text style={styles.detailLabel}>Duration</Text>
+                          <Text style={styles.detailValue}>{subjectData.subjectDuration} hours/session</Text>
+                        </View>
                       )}
-                      <View style={styles.sessionDetail}>
-                        <Ionicons name="hourglass-outline" size={20} color="#64748B" />
-                        <Text style={styles.detailText}>{subjectData.subjectDuration} hours/session</Text>
-                      </View>
                     </View>
-                  </View>
 
-                  {/* Payment Details Section */}
-                  <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                      <Ionicons name="wallet" size={24} color="#1A4C6E" />
-                      <Text style={styles.sectionTitle}>Payment Details</Text>
-                    </View>
-                    <View style={styles.priceContainer}>
+                    <View style={styles.card}>
+                      <Text style={styles.sectionTitle}>Payment</Text>
                       <View style={styles.priceRow}>
-                        <Text style={styles.priceLabel}>Course Fee</Text>
-                        <Text style={styles.price}>AED {(subjectData.subjectPrice) / 100}</Text>
+                        <Text style={styles.priceLabel}>Course fee</Text>
+                        <Text style={styles.priceValue}>{amountLabel}</Text>
                       </View>
                       <View style={styles.priceRow}>
                         <Text style={styles.priceLabel}>Duration</Text>
-                        <Text style={styles.priceValue}>{subjectData.subjectDuration} hours</Text>
+                        <Text style={styles.priceMuted}>{subjectData.subjectDuration} hours</Text>
                       </View>
                       <View style={[styles.priceRow, styles.totalRow]}>
-                        <Text style={styles.totalLabel}>Total Amount</Text>
-                        <Text style={styles.totalPrice}>AED {(subjectData.subjectPrice) / 100}</Text>
+                        <Text style={styles.totalLabel}>Total</Text>
+                        <Text style={styles.totalPrice}>{amountLabel}</Text>
                       </View>
                     </View>
-                  </View>
-                </View>
-              </ScrollView>
+                  </ScrollView>
 
-              <View style={styles.footer}>
-                <TouchableOpacity 
-                  style={[
-                    styles.confirmButton,
-                    (!paymentInitialized || loading) && styles.disabledButton
-                  ]} 
-                  onPress={openPaymentSheet}
-                  disabled={!paymentInitialized || loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#FFFFFF" size="small" />
-                  ) : (
-                    <>
-                      <Ionicons name="checkmark-circle" size={24} color="#FFFFFF" style={styles.confirmIcon} />
-                      <Text style={styles.confirmButtonText}>Confirm Booking</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-              </View>
+                  <View style={styles.footer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.confirmButton,
+                        (!paymentInitialized || loading) && styles.disabledButton,
+                      ]}
+                      onPress={openPaymentSheet}
+                      disabled={!paymentInitialized || loading}
+                      accessibilityRole="button"
+                      accessibilityLabel={paymentInitialized ? `Pay ${amountLabel}` : 'Preparing payment'}
+                    >
+                      {loading ? (
+                        <ActivityIndicator color="#FFFFFF" size="small" />
+                      ) : (
+                        <Text style={styles.confirmButtonText}>
+                          {paymentInitialized ? `Pay ${amountLabel}` : 'Preparing payment'}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
             </>
           )}
-        </View>
+        </SafeAreaView>
       </View>
     </Modal>
   );
@@ -485,188 +524,240 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(18, 38, 58, 0.45)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: moderateScale(20),
-    borderTopRightRadius: moderateScale(20),
-    height: '90%',
-    maxHeight: '90%',
+    backgroundColor: '#F4F6F8',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    height: '92%',
+    maxHeight: '92%',
+  },
+  handle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#D7DEE5',
+    marginTop: 8,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: moderateScale(20),
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    paddingHorizontal: 8,
+    paddingTop: 4,
+    paddingBottom: 8,
   },
-  backButton: {
-    marginRight: horizontalScale(15),
+  iconButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerCopy: {
+    flex: 1,
+    alignItems: 'center',
   },
   title: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(20),
-    color: '#1A4C6E',
+    fontSize: moderateScale(18),
+    color: '#12263A',
+  },
+  subtitle: {
+    marginTop: 2,
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(13),
+    color: '#5C6B76',
+  },
+  loadingWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollView: {
     flex: 1,
   },
   content: {
-    padding: moderateScale(20),
-    flexGrow: 1,
+    paddingHorizontal: 16,
+    paddingBottom: 24,
   },
-  teacherProfileSection: {
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    padding: 16,
+    marginBottom: 12,
+  },
+  teacherRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    padding: moderateScale(15),
-    borderRadius: moderateScale(12),
-    marginBottom: verticalScale(20),
+    marginBottom: 14,
   },
   teacherImage: {
-    width: moderateScale(60),
-    height: moderateScale(60),
-    borderRadius: moderateScale(30),
-    marginRight: horizontalScale(15),
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#D7DEE5',
+  },
+  teacherFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   teacherInfo: {
     flex: 1,
+    marginLeft: 12,
   },
   teacherName: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(18),
-    color: '#1A4C6E',
-    marginBottom: verticalScale(4),
+    fontFamily: FONT.semiBold,
+    fontSize: moderateScale(16),
+    color: '#12263A',
   },
   teacherRole: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(14),
-    color: '#64748B',
-  },
-  section: {
-    marginBottom: verticalScale(25),
-    backgroundColor: '#FFFFFF',
-    borderRadius: moderateScale(12),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    //shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: moderateScale(15),
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  sectionTitle: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(18),
-    color: '#1A4C6E',
-    marginLeft: horizontalScale(10),
-  },
-  sectionContent: {
-    padding: moderateScale(15),
+    marginTop: 2,
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(13),
+    color: '#5C6B76',
   },
   subjectName: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(16),
-    color: '#1A4C6E',
-    marginBottom: verticalScale(10),
+    fontFamily: FONT.semiBold,
+    fontSize: moderateScale(18),
+    color: '#12263A',
+    marginBottom: 10,
   },
-  subjectMeta: {
+  chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: horizontalScale(10),
+    gap: 8,
   },
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F1F5F9',
-    paddingHorizontal: horizontalScale(10),
-    paddingVertical: verticalScale(5),
-    borderRadius: moderateScale(6),
+  chip: {
+    backgroundColor: '#EEF3F7',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
   },
-  metaText: {
+  chipText: {
     fontFamily: FONT.medium,
     fontSize: moderateScale(12),
-    color: '#64748B',
-    marginLeft: horizontalScale(5),
+    color: '#1A4C6E',
   },
-  sessionDetail: {
+  sectionTitle: {
+    fontFamily: FONT.semiBold,
+    fontSize: moderateScale(15),
+    color: '#12263A',
+    marginBottom: 12,
+  },
+  topicRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: verticalScale(12),
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
-  detailText: {
+  topicIndex: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: '#EEF3F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+    marginTop: 1,
+  },
+  topicIndexText: {
+    fontFamily: FONT.semiBold,
+    fontSize: moderateScale(12),
+    color: '#1A4C6E',
+  },
+  topicCopy: {
+    flex: 1,
+  },
+  topicTitle: {
+    fontFamily: FONT.semiBold,
+    fontSize: moderateScale(14),
+    color: '#12263A',
+  },
+  topicMeta: {
+    marginTop: 2,
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(13),
+    color: '#5C6B76',
+    lineHeight: 18,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 10,
+  },
+  detailLabel: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(14),
+    color: '#5C6B76',
+  },
+  detailValue: {
+    flex: 1,
+    textAlign: 'right',
     fontFamily: FONT.medium,
     fontSize: moderateScale(14),
-    color: '#374151',
-    marginLeft: horizontalScale(10),
-  },
-  priceContainer: {
-    padding: moderateScale(15),
+    color: '#12263A',
   },
   priceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: verticalScale(10),
+    marginBottom: 10,
   },
   priceLabel: {
-    fontFamily: FONT.medium,
+    fontFamily: FONT.regular,
     fontSize: moderateScale(14),
-    color: '#64748B',
-  },
-  price: {
-    fontFamily: FONT.bold,
-    fontSize: moderateScale(16),
-    color: '#1A4C6E',
+    color: '#5C6B76',
   },
   priceValue: {
     fontFamily: FONT.medium,
     fontSize: moderateScale(14),
-    color: '#64748B',
+    color: '#12263A',
+  },
+  priceMuted: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(14),
+    color: '#5C6B76',
   },
   totalRow: {
-    marginTop: verticalScale(10),
-    paddingTop: verticalScale(10),
+    marginTop: 6,
+    paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: '#E6EBF0',
+    marginBottom: 0,
   },
   totalLabel: {
-    fontFamily: FONT.bold,
+    fontFamily: FONT.semiBold,
     fontSize: moderateScale(16),
-    color: '#1A4C6E',
+    color: '#12263A',
   },
   totalPrice: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(20),
-    color: '#2DCB63',
+    fontSize: moderateScale(18),
+    color: '#1A4C6E',
   },
   footer: {
-    padding: moderateScale(20),
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: '#E6EBF0',
     backgroundColor: '#FFFFFF',
   },
   confirmButton: {
-    backgroundColor: '#2DCB63',
-    padding: moderateScale(15),
-    borderRadius: moderateScale(10),
-    flexDirection: 'row',
+    backgroundColor: '#1A4C6E',
+    minHeight: 48,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 16,
   },
   disabledButton: {
     backgroundColor: '#A0AEC0',
-    opacity: 0.7,
-  },
-  confirmIcon: {
-    marginRight: horizontalScale(10),
   },
   confirmButtonText: {
     fontFamily: FONT.bold,
@@ -677,41 +768,33 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    height: '100%',
+    paddingHorizontal: 24,
   },
   successContent: {
     alignItems: 'center',
   },
   checkmarkCircle: {
-    width: moderateScale(100),
-    height: moderateScale(100),
-    borderRadius: moderateScale(50),
-    backgroundColor: '#2DCB63',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#1A4C6E',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: verticalScale(20),
-    shadowColor: '#2DCB63',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    //shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    marginBottom: verticalScale(16),
   },
   successTitle: {
     fontFamily: FONT.bold,
-    fontSize: moderateScale(24),
-    color: '#1A4C6E',
-    marginBottom: verticalScale(10),
+    fontSize: moderateScale(22),
+    color: '#12263A',
+    marginBottom: 8,
     textAlign: 'center',
   },
   successMessage: {
-    fontFamily: FONT.medium,
-    fontSize: moderateScale(16),
-    color: '#64748B',
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(15),
+    color: '#5C6B76',
     textAlign: 'center',
+    lineHeight: 22,
   },
 });
 

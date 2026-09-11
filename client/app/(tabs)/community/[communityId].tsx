@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useRef, useState } from "react";
-import { Stack, router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import 'react-native-get-random-values';
@@ -20,9 +20,10 @@ import {
 } from "react-native";
 import {SafeAreaView} from "react-native-safe-area-context";
 import { socket } from "../../utils/socket";
-import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
-import { COLORS, FONT } from "../../../constants";
+import { moderateScale } from "../../utils/metrics";
+import { FONT } from "../../../constants";
 import { axiosWithAuth } from "../../utils/customAxios";
+import { goBack } from "../../utils/navigation";
 import useSafeAreaInsets, { addBasePaddingToInset } from "../../hooks/useSafeAreaInsets";
 
 interface User {
@@ -103,7 +104,7 @@ const CommunityId = () => {
 
   const handleLeaveRoom = useCallback(async () => {
     socket.emit("leave-room-community", { allMessages, chatName });
-    router.replace('/(tabs)/community');
+    goBack('/(tabs)/community');
   }, [allMessages, chatName]);
 
   useEffect(() => {
@@ -222,41 +223,21 @@ const CommunityId = () => {
   const messageCount = allMessages.messages?.length || 0;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Stack.Screen
-        options={{
-          headerStyle: styles.header,
-          headerShadowVisible: false,
-          headerBackVisible: false,
-          gestureEnabled: false,
-          headerLeft: () => (
-            <View style={styles.headerLeft}>
-              <TouchableOpacity onPress={handleLeaveRoom} style={styles.backButton}>
-                <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
-              </TouchableOpacity>
-              <View style={styles.headerTitleContainer}>
-                <Text style={styles.headerTitle} numberOfLines={1}>
-                  {allMessages.communityName}
-                </Text>
-                <Text style={styles.headerSubtitle} numberOfLines={1}>
-                  {allMessages.users?.length || 0} members
-                </Text>
-              </View>
-            </View>
-          ),
-          headerTitle: () => null,
-        }}
-      />
-
+    <SafeAreaView style={styles.container} edges={['top']}>
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color="#1A4C6E" />
         </View>
       ) : (
         <View style={styles.chatWrapper}>
           <View style={styles.communityHeader}>
-            <TouchableOpacity onPress={handleLeaveRoom} style={styles.backButton}>
-              <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
+            <TouchableOpacity
+              onPress={handleLeaveRoom}
+              style={styles.backButton}
+              accessibilityRole="button"
+              accessibilityLabel="Back to communities"
+            >
+              <Ionicons name="chevron-back" size={24} color="#12263A" />
             </TouchableOpacity>
 
             {allMessages.communityProfileImage ? (
@@ -266,7 +247,7 @@ const CommunityId = () => {
               />
             ) : (
               <View style={styles.communityAvatarPlaceholder}>
-                <Ionicons name="people" size={20} color={COLORS.primary} />
+                <Ionicons name="people-outline" size={20} color="#1A4C6E" />
               </View>
             )}
 
@@ -275,63 +256,73 @@ const CommunityId = () => {
                 {allMessages.communityName || 'Community'}
               </Text>
               <Text style={styles.communityHeaderSubtitle} numberOfLines={1}>
-                {memberCount} {memberCount === 1 ? 'member' : 'members'} · {messageCount} {messageCount === 1 ? 'message' : 'messages'}
-              </Text>
-              <Text style={styles.communityHeaderMeta} numberOfLines={1}>
-                {isTeacher ? 'You can post in this community' : 'Tutors only can send messages'}
+                {memberCount} {memberCount === 1 ? 'member' : 'members'}
+                {messageCount > 0 ? ` · ${messageCount} ${messageCount === 1 ? 'message' : 'messages'}` : ''}
               </Text>
             </View>
           </View>
 
           <ScrollView
             style={styles.chatContainer}
+            contentContainerStyle={styles.chatContent}
             ref={scrollViewRef}
             onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+            keyboardShouldPersistTaps="handled"
           >
-            {allMessages.messages?.map((msg, index, arr) => 
-              renderMessage({ msg, index, arr })
+            {(!allMessages.messages || allMessages.messages.length === 0) ? (
+              <View style={styles.emptyChat}>
+                <Text style={styles.emptyChatTitle}>No messages yet</Text>
+                <Text style={styles.emptyChatSub}>
+                  {isTeacher ? 'Be the first to post in this community.' : 'Tutors post here. You can read along.'}
+                </Text>
+              </View>
+            ) : (
+              allMessages.messages.map((msg, index, arr) =>
+                renderMessage({ msg, index, arr })
+              )
             )}
           </ScrollView>
 
           <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={100}
-            style={styles.keyboardAvoidingView}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
           >
             {isTeacher ? (
-              <View style={[styles.inputContainer, { paddingBottom: Platform.OS === 'android' ? addBasePaddingToInset(12, insets.bottom) : undefined }]}>
+              <View style={[styles.inputContainer, { paddingBottom: Platform.OS === 'android' ? addBasePaddingToInset(12, insets.bottom) : 12 }]}>
                 <TextInput
-                  style={[styles.input, { height: Math.max(40, inputHeight) }]}
-                  placeholder="Type your message..."
-                  placeholderTextColor="#95A5A6"
+                  style={[styles.input, { height: Math.min(120, Math.max(44, inputHeight)) }]}
+                  placeholder="Write a message"
+                  placeholderTextColor="#8A97A3"
                   onChangeText={setMessage}
                   value={message}
                   multiline
                   maxLength={1000}
-                  onContentSizeChange={(e) => 
+                  onContentSizeChange={(e) =>
                     setInputHeight(e.nativeEvent.contentSize.height)
                   }
                 />
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[
                     styles.sendButton,
                     !message.trim() && styles.sendButtonDisabled
                   ]}
                   onPress={handleSendMessage}
                   disabled={!message.trim()}
+                  accessibilityRole="button"
+                  accessibilityLabel="Send message"
                 >
                   <Ionicons
                     name="send"
-                    size={24}
-                    color={message.trim() ? COLORS.primary : "#BDC3C7"}
+                    size={18}
+                    color="#FFFFFF"
                   />
                 </TouchableOpacity>
               </View>
             ) : (
-              <View style={[styles.restrictedContainer, { paddingBottom: Platform.OS === 'android' ? addBasePaddingToInset(16, insets.bottom) : undefined }]}>
-                <Ionicons name="lock-closed" size={20} color="#7F8C8D" />
+              <View style={[styles.restrictedContainer, { paddingBottom: Platform.OS === 'android' ? addBasePaddingToInset(16, insets.bottom) : 16 }]}>
+                <Ionicons name="lock-closed-outline" size={18} color="#5C6B76" />
                 <Text style={styles.restrictedText}>
-                  Only tutors can send messages in communities
+                  Only tutors can post in this community
                 </Text>
               </View>
             )}
@@ -345,37 +336,7 @@ const CommunityId = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
-  header: {
-    backgroundColor: "#FFFFFF",
-    elevation: 0,
-    //shadowOpacity: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: horizontalScale(16),
-  },
-  backButton: {
-    padding: moderateScale(8),
-  },
-  headerTitleContainer: {
-    flex: 1,
-    marginLeft: horizontalScale(20),
-  },
-  headerTitle: {
-    fontSize: moderateScale(16),
-    fontFamily: FONT.bold,
-    color: COLORS.primary,
-    marginBottom: verticalScale(2),
-  },
-  headerSubtitle: {
-    fontSize: moderateScale(12),
-    fontFamily: FONT.regular,
-    color: COLORS.gray,
+    backgroundColor: "#F4F6F8",
   },
   loadingContainer: {
     flex: 1,
@@ -384,59 +345,83 @@ const styles = StyleSheet.create({
   },
   chatWrapper: {
     flex: 1,
-    backgroundColor: "#F8F9FA",
+    backgroundColor: "#F4F6F8",
   },
   communityHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: moderateScale(16),
-    paddingVertical: verticalScale(12),
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#F4F6F8',
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#E6EBF0',
   },
-  communityAvatar: {
-    width: moderateScale(44),
-    height: moderateScale(44),
-    borderRadius: moderateScale(22),
-    marginLeft: horizontalScale(4),
-  },
-  communityAvatarPlaceholder: {
-    width: moderateScale(44),
-    height: moderateScale(44),
-    borderRadius: moderateScale(22),
-    marginLeft: horizontalScale(4),
+  backButton: {
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F0F4F8',
+  },
+  communityAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#D7DEE5',
+  },
+  communityAvatarPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EEF3F7',
   },
   communityHeaderContent: {
     flex: 1,
-    marginLeft: horizontalScale(12),
+    marginLeft: 10,
+    marginRight: 8,
   },
   communityHeaderTitle: {
     fontSize: moderateScale(16),
     fontFamily: FONT.bold,
-    color: COLORS.primary,
-    marginBottom: verticalScale(2),
+    color: '#12263A',
   },
   communityHeaderSubtitle: {
+    marginTop: 2,
     fontSize: moderateScale(12),
     fontFamily: FONT.regular,
-    color: COLORS.gray,
-  },
-  communityHeaderMeta: {
-    fontSize: moderateScale(11),
-    fontFamily: FONT.medium,
-    color: '#7F8C8D',
-    marginTop: verticalScale(2),
+    color: '#5C6B76',
   },
   chatContainer: {
     flex: 1,
-    padding: moderateScale(16),
+  },
+  chatContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexGrow: 1,
+  },
+  emptyChat: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingTop: 48,
+  },
+  emptyChatTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(16),
+    color: '#12263A',
+  },
+  emptyChatSub: {
+    marginTop: 6,
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(14),
+    color: '#5C6B76',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   messageRow: {
-    marginVertical: verticalScale(4),
+    marginVertical: 4,
     maxWidth: '85%',
   },
   messageContainer: {
@@ -450,53 +435,49 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   avatarImage: {
-    width: moderateScale(32),
-    height: moderateScale(32),
-    borderRadius: moderateScale(16),
-    marginRight: horizontalScale(8),
-    marginBottom: verticalScale(4),
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    marginRight: 8,
+    marginBottom: 2,
+    backgroundColor: '#D7DEE5',
   },
   messageBubble: {
-    borderRadius: moderateScale(20),
-    padding: moderateScale(12),
-    paddingBottom: moderateScale(8),
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    //shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 8,
   },
   userBubble: {
-    backgroundColor: COLORS.primary,
-    borderBottomRightRadius: moderateScale(4),
+    backgroundColor: '#1A4C6E',
+    borderBottomRightRadius: 4,
   },
   otherBubble: {
     backgroundColor: '#FFFFFF',
-    borderBottomLeftRadius: moderateScale(4),
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    borderBottomLeftRadius: 4,
   },
   senderName: {
     fontSize: moderateScale(12),
     fontFamily: FONT.medium,
-    color: "#7F8C8D",
-    marginBottom: verticalScale(4),
+    color: '#5C6B76',
+    marginBottom: 4,
   },
   messageText: {
-    fontSize: moderateScale(16),
-    lineHeight: moderateScale(22),
+    fontSize: moderateScale(15),
+    lineHeight: 21,
     fontFamily: FONT.regular,
   },
   userMessageText: {
     color: '#FFFFFF',
   },
   otherMessageText: {
-    color: '#2C3E50',
+    color: '#12263A',
   },
   timeText: {
-    fontSize: moderateScale(12),
-    marginTop: verticalScale(4),
+    fontSize: moderateScale(11),
+    marginTop: 4,
     textAlign: 'right',
     fontFamily: FONT.regular,
   },
@@ -504,48 +485,57 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.7)',
   },
   otherTimeText: {
-    color: '#95A5A6',
-  },
-  keyboardAvoidingView: {
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    color: '#8A97A3',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    padding: moderateScale(12),
+    paddingHorizontal: 12,
+    paddingTop: 10,
     backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E6EBF0',
+    gap: 8,
   },
   input: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
-    borderRadius: moderateScale(20),
-    paddingHorizontal: moderateScale(16),
-    paddingVertical: moderateScale(10),
-    fontSize: moderateScale(16),
-    maxHeight: verticalScale(120),
-    color: '#2C3E50',
+    backgroundColor: '#F4F6F8',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 12,
+    fontSize: moderateScale(15),
+    maxHeight: 120,
+    color: '#12263A',
     fontFamily: FONT.regular,
   },
   sendButton: {
-    marginLeft: horizontalScale(12),
-    padding: moderateScale(8),
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#1A4C6E',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sendButtonDisabled: {
-    opacity: 0.5,
+    backgroundColor: '#C5CDD6',
   },
   restrictedContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: moderateScale(16),
-    backgroundColor: '#F8F9FA',
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E6EBF0',
+    gap: 8,
   },
   restrictedText: {
-    marginLeft: horizontalScale(8),
-    color: '#7F8C8D',
-    fontSize: moderateScale(14),
+    color: '#5C6B76',
+    fontSize: moderateScale(13),
     fontFamily: FONT.medium,
   },
 });

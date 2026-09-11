@@ -1,14 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, RefreshControl, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, RefreshControl, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
 import { COLORS, FONT } from '../../../constants';
 import StatusBarComponent from '../../components/StatusBarComponent';
 import SubjectCards from '../../components/SubjectCards';
-import useSafeAreaInsets, { addBasePaddingToTopInset } from '../../hooks/useSafeAreaInsets';
 import { axiosWithAuth } from '../../utils/customAxios';
 import { horizontalScale, moderateScale, verticalScale } from '../../utils/metrics';
+import { goBack } from '../../utils/navigation';
 import { ipURL } from '../../utils/utils';
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -30,14 +30,13 @@ interface PaginationInfo {
 }
 
 const allSubject = () => {
-  const insets = useSafeAreaInsets();
   const [subjectData, setSubjectData] = useState<Subject[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [searchTimeout, setSearchTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
   const [pagination, setPagination] = useState<PaginationInfo>({
     currentPage: 1,
     totalPages: 1,
@@ -89,7 +88,7 @@ const allSubject = () => {
         return;
       }
       fetchSubjects(text);
-    }, 1500);
+    }, 400);
 
     setSearchTimeout(timeout);
   };
@@ -147,13 +146,26 @@ const allSubject = () => {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaView style={styles.mainContainer}>
+      <SafeAreaView style={styles.mainContainer} edges={['top']}>
        <StatusBarComponent />
-        <View style={[styles.header, { paddingTop: Platform.OS === 'android' ? addBasePaddingToTopInset(20, insets.top) : verticalScale(20) }]}>
-          <Text style={styles.headerTitle}>All Courses</Text>
-          {/* <TouchableOpacity onPress={handleFilterPress} style={styles.filterButton}>
-            <Ionicons name="options-outline" size={moderateScale(24)} color={COLORS.primary} />
-          </TouchableOpacity> */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => goBack('/(tabs)/home')}
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="chevron-back" size={moderateScale(24)} color="#12263A" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>All courses</Text>
+          <TouchableOpacity
+            onPress={() => router.push('/(tabs)/home/filter')}
+            style={styles.filterButton}
+            accessibilityRole="button"
+            accessibilityLabel="Advanced search"
+          >
+            <Ionicons name="options-outline" size={moderateScale(22)} color="#1A4C6E" />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.searchContainer}>
@@ -234,42 +246,56 @@ export default allSubject;
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: '#F4F6F8',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: horizontalScale(20),
-    paddingTop: verticalScale(20),
-    paddingBottom: verticalScale(10),
+    paddingHorizontal: horizontalScale(12),
+    paddingTop: verticalScale(4),
+    paddingBottom: verticalScale(8),
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
+    flex: 1,
+    textAlign: 'center',
     fontFamily: FONT.bold,
-    fontSize: moderateScale(24),
-    color: COLORS.primary,
+    fontSize: moderateScale(18),
+    color: '#12263A',
   },
   filterButton: {
-    padding: moderateScale(8),
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.lightGray,
+    backgroundColor: '#FFFFFF',
     marginHorizontal: horizontalScale(20),
-    marginVertical: verticalScale(10),
-    borderRadius: moderateScale(12),
-    paddingHorizontal: horizontalScale(15),
+    marginBottom: verticalScale(12),
+    borderRadius: moderateScale(14),
+    paddingHorizontal: horizontalScale(14),
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: '#E6EBF0',
   },
   searchIcon: {
     marginRight: horizontalScale(10),
   },
   searchInput: {
     flex: 1,
-    height: verticalScale(45),
+    height: 48,
     fontFamily: FONT.medium,
-    fontSize: moderateScale(14),
-    color: COLORS.black,
+    fontSize: moderateScale(15),
+    color: '#12263A',
   },
   clearButton: {
     padding: moderateScale(5),
@@ -292,38 +318,42 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: FONT.medium,
     fontSize: moderateScale(16),
-    color: COLORS.error,
+    color: '#C2410C',
     textAlign: 'center',
     marginBottom: verticalScale(20),
   },
   retryButton: {
     backgroundColor: COLORS.primary,
     paddingHorizontal: horizontalScale(20),
-    paddingVertical: verticalScale(10),
-    borderRadius: moderateScale(8),
+    paddingVertical: verticalScale(12),
+    minHeight: 44,
+    borderRadius: moderateScale(12),
+    justifyContent: 'center',
   },
   retryButtonText: {
     fontFamily: FONT.bold,
     fontSize: moderateScale(14),
-    color: COLORS.white,
+    color: '#FFFFFF',
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: horizontalScale(20),
+    paddingHorizontal: horizontalScale(32),
   },
   emptyText: {
     fontFamily: FONT.bold,
     fontSize: moderateScale(18),
-    color: COLORS.black,
+    color: '#12263A',
     marginTop: verticalScale(20),
   },
   emptySubtext: {
     fontFamily: FONT.regular,
     fontSize: moderateScale(14),
-    color: COLORS.gray,
-    marginTop: verticalScale(10),
+    color: '#5C6B76',
+    marginTop: verticalScale(8),
+    textAlign: 'center',
+    lineHeight: moderateScale(20),
   },
   loadingMoreContainer: {
     paddingVertical: verticalScale(20),
