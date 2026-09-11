@@ -5,12 +5,13 @@ import { getAllSubjectSlugs } from "@/lib/subjects/get-subject";
 import { getAllCityPageSlugs } from "@/lib/locations/get-city-page";
 import { getAllExamPreparationSlugs } from "@/lib/resources/exam-preparation";
 import { getAllParentGuideSlugs } from "@/lib/resources/parent-guides";
-import { getAllBlogSlugs } from "@/lib/resources/blog";
+import { getAllBlogArticles } from "@/lib/resources/blog";
 
 const routes: {
   path: string;
   changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"];
   priority: number;
+  lastModified?: string;
 }[] = [
   { path: "/", changeFrequency: "weekly", priority: 1 },
   { path: "/privacy-policy", changeFrequency: "monthly", priority: 0.5 },
@@ -33,10 +34,11 @@ const routes: {
     priority: 0.8,
   })),
   { path: "/blog", changeFrequency: "weekly", priority: 0.7 },
-  ...getAllBlogSlugs().map((slug) => ({
-    path: `/blog/${slug}`,
-    changeFrequency: "monthly" as const,
+  ...getAllBlogArticles().map((article) => ({
+    path: `/blog/${article.slug}`,
+    changeFrequency: "weekly" as const,
     priority: 0.8,
+    lastModified: article.updatedAt ?? article.publishedAt,
   })),
   ...getAllSubjectSlugs().map((slug) => ({
     path: `/${slug}`,
@@ -74,10 +76,11 @@ const routes: {
     priority: 0.7,
   })),
   { path: "/ar/blog", changeFrequency: "weekly", priority: 0.6 },
-  ...getAllBlogSlugs().map((slug) => ({
-    path: `/ar/blog/${slug}`,
-    changeFrequency: "monthly" as const,
+  ...getAllBlogArticles().map((article) => ({
+    path: `/ar/blog/${article.slug}`,
+    changeFrequency: "weekly" as const,
     priority: 0.7,
+    lastModified: article.updatedAt ?? article.publishedAt,
   })),
   ...getAllSubjectSlugs().map((slug) => ({
     path: `/ar/${slug}`,
@@ -99,7 +102,9 @@ const routes: {
 export default function sitemap(): MetadataRoute.Sitemap {
   return routes.map((route) => ({
     url: canonicalUrl(route.path),
-    lastModified: new Date(),
+    lastModified: route.lastModified
+      ? new Date(`${route.lastModified}T00:00:00Z`)
+      : new Date(),
     changeFrequency: route.changeFrequency,
     priority: route.priority,
   }));

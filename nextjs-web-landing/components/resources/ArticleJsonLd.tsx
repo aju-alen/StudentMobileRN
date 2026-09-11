@@ -12,7 +12,7 @@ export default function ArticleJsonLd({ article }: ArticleJsonLdProps) {
 
   const schema = {
     '@context': 'https://schema.org',
-    '@type': 'Article',
+    '@type': article.categoryPath === '/blog' ? 'BlogPosting' : 'Article',
     headline: article.title,
     description: article.description,
     datePublished: article.publishedAt,
