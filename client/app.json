@@ -7,7 +7,7 @@
       "ios",
       "android"
     ],
-    "version": "1.1.14",
+    "version": "1.1.15",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "splash": {
@@ -29,7 +29,7 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "51"
+      "buildNumber": "52"
     },
     "android": {
       "edgeToEdgeEnabled": true,
