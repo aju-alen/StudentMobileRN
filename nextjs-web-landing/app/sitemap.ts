@@ -5,6 +5,7 @@ import { getAllSubjectSlugs } from "@/lib/subjects/get-subject";
 import { getAllCityPageSlugs } from "@/lib/locations/get-city-page";
 import { getAllExamPreparationSlugs } from "@/lib/resources/exam-preparation";
 import { getAllParentGuideSlugs } from "@/lib/resources/parent-guides";
+import { getAllBlogSlugs } from "@/lib/resources/blog";
 
 const routes: {
   path: string;
@@ -28,6 +29,12 @@ const routes: {
   { path: "/parent-guides", changeFrequency: "weekly", priority: 0.7 },
   ...getAllParentGuideSlugs().map((slug) => ({
     path: `/parent-guides/${slug}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
+  })),
+  { path: "/blog", changeFrequency: "weekly", priority: 0.7 },
+  ...getAllBlogSlugs().map((slug) => ({
+    path: `/blog/${slug}`,
     changeFrequency: "monthly" as const,
     priority: 0.8,
   })),
@@ -63,6 +70,12 @@ const routes: {
   { path: "/ar/parent-guides", changeFrequency: "weekly", priority: 0.6 },
   ...getAllParentGuideSlugs().map((slug) => ({
     path: `/ar/parent-guides/${slug}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  })),
+  { path: "/ar/blog", changeFrequency: "weekly", priority: 0.6 },
+  ...getAllBlogSlugs().map((slug) => ({
+    path: `/ar/blog/${slug}`,
     changeFrequency: "monthly" as const,
     priority: 0.7,
   })),

@@ -13,7 +13,7 @@ export type ResourceBlock =
     }
   | {
       type: 'bullets';
-      items: string[];
+      items: Array<string | InlinePart[]>;
     };
 
 export type ResourceSection = {
@@ -22,12 +22,12 @@ export type ResourceSection = {
   blocks: ResourceBlock[];
 };
 
-export type ResourceCategory = 'Exam Preparation' | 'Parent Guides';
+export type ResourceCategory = 'Exam Preparation' | 'Parent Guides' | 'Blog';
 
 export type ResourceArticle = {
   slug: string;
   category: ResourceCategory;
-  categoryPath: '/exam-preparation' | '/parent-guides';
+  categoryPath: '/exam-preparation' | '/parent-guides' | '/blog';
   title: string;
   description: string;
   primaryKeywords: string[];

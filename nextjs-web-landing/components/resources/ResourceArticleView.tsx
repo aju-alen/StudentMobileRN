@@ -52,8 +52,12 @@ function renderBlock(block: ResourceBlock, index: number, locale: Locale) {
       key={index}
       className="list-disc ps-6 space-y-2 mb-4 text-gray-700 text-base sm:text-lg leading-relaxed"
     >
-      {block.items.map((item) => (
-        <li key={item}>{item}</li>
+      {block.items.map((item, itemIndex) => (
+        <li key={`${index}-${itemIndex}`}>
+          {typeof item === 'string'
+            ? item
+            : renderParts(item, `b-${index}-${itemIndex}`, locale)}
+        </li>
       ))}
     </ul>
   );
@@ -70,7 +74,8 @@ export default function ResourceArticleView({
 }: ResourceArticleViewProps) {
   const copy = t(locale);
   const localized = localizeArticle(article, locale);
-  const publishedLabel = new Date(`${article.publishedAt}T00:00:00`).toLocaleDateString(
+  const displayDate = article.updatedAt ?? article.publishedAt;
+  const dateLabel = new Date(`${displayDate}T00:00:00`).toLocaleDateString(
     locale === 'ar' ? 'ar-AE' : 'en-AE',
     {
       day: 'numeric',
@@ -78,6 +83,9 @@ export default function ResourceArticleView({
       year: 'numeric',
     }
   );
+  const dateCopy = article.updatedAt
+    ? copy.resources.updated
+    : copy.resources.published;
 
   return (
     <article className="home-section home-section-spacing bg-white">
@@ -95,7 +103,7 @@ export default function ResourceArticleView({
             {localized.title}
           </h1>
           <p className="text-base text-gray-500 mb-6">
-            {fill(copy.resources.published, { date: publishedLabel })}
+            {fill(dateCopy, { date: dateLabel })}
           </p>
           {locale === 'ar' ? (
             <p className="text-base text-gray-600 leading-relaxed mb-6">

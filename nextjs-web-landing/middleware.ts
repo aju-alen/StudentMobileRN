@@ -8,6 +8,7 @@ const AR_REWRITE_ROOTS = new Set([
   "child-safeguarding-policy",
   "parent-guides",
   "exam-preparation",
+  "blog",
 ]);
 
 export function middleware(request: NextRequest) {

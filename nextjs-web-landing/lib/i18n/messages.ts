@@ -93,10 +93,14 @@ export type UiMessages = {
     parentGuidesLead: string;
     examTitle: string;
     examLead: string;
+    blogTitle: string;
+    blogLead: string;
     published: string;
+    updated: string;
     englishBodyNote: string;
     parentGuidesCategory: string;
     examCategory: string;
+    blogCategory: string;
   };
   legal: {
     toc: string;
@@ -358,10 +362,15 @@ export const messages: Record<Locale, UiMessages> = {
       examTitle: "Exam Preparation",
       examLead:
         "Clear, parent-focused guides on exam timings, retakes, and revision strategy for students in the UAE.",
+      blogTitle: "Blog",
+      blogLead:
+        "Guides for UAE parents on finding tutors, choosing curricula, and supporting students through exam season.",
       published: "Published {date}",
+      updated: "Last updated {date}",
       englishBodyNote: "The full article below is in English.",
       parentGuidesCategory: "Parent Guides",
       examCategory: "Exam Preparation",
+      blogCategory: "Blog",
     },
     legal: {
       toc: "Table of Contents",
@@ -615,10 +624,15 @@ export const messages: Record<Locale, UiMessages> = {
       examTitle: "التحضير للامتحانات",
       examLead:
         "أدلة واضحة للأهالي حول مواعيد الامتحانات والإعادة وخطة المراجعة لطلاب الإمارات.",
+      blogTitle: "المدونة",
+      blogLead:
+        "أدلة لأهالي الإمارات حول إيجاد المعلمين واختيار المناهج ودعم الطلاب في موسم الامتحانات.",
       published: "نُشر في {date}",
+      updated: "آخر تحديث {date}",
       englishBodyNote: "نص المقال الكامل أدناه بالإنجليزية.",
       parentGuidesCategory: "أدلة الأهالي",
       examCategory: "التحضير للامتحانات",
+      blogCategory: "المدونة",
     },
     legal: {
       toc: "جدول المحتويات",

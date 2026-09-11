@@ -17,6 +17,11 @@ const ARTICLE_AR: Record<
     description:
       "ما يحتاج أهالي الإمارات معرفته عن سلسلة إعادة IGCSE في أكتوبر/نوفمبر 2026 — المواعيد، كيف تعمل الإعادة، وكيفية بناء خطة مراجعة مركّزة قبل النتائج في يناير.",
   },
+  "complete-guide-finding-a-tutor-uae": {
+    title: "الدليل الكامل للعثور على معلم في الإمارات",
+    description:
+      "كل ما يحتاج أهالي الإمارات معرفته لإيجاد المعلم المناسب — كيف يعمل السوق، ما الذي يجب التحقق منه قبل الحجز، إرشاد حسب المنهج، ودعم موسم الامتحانات.",
+  },
 };
 
 export function localizeArticle(
@@ -35,6 +40,8 @@ export function localizeArticle(
     category:
       article.categoryPath === "/parent-guides"
         ? (copy.resources.parentGuidesCategory as ResourceArticle["category"])
-        : (copy.resources.examCategory as ResourceArticle["category"]),
+        : article.categoryPath === "/blog"
+          ? (copy.resources.blogCategory as ResourceArticle["category"])
+          : (copy.resources.examCategory as ResourceArticle["category"]),
   };
 }
