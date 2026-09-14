@@ -14,6 +14,18 @@ const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
 
 const prisma = new PrismaClient();
 
+const omitSensitiveUserFields = (user) => {
+  if (!user || typeof user !== 'object') return user;
+  const {
+    password,
+    passwordResetToken,
+    passwordResetExpires,
+    verificationToken,
+    ...safeUser
+  } = user;
+  return safeUser;
+};
+
 // Helper function to generate 8-character alphanumeric invite code
 const generateInviteCode = () => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -27,7 +39,6 @@ const generateInviteCode = () => {
 export const registerSuperAdmin = async (req, res, next) => {
     try {
         const { name, email, password, profileImage, userDescription, role, permissions } = req.body;
-        console.log(req.body, 'this is the req body');
 
         if (!name || !email || !password) {
             return res.status(400).json({ message: "Please enter all required fields" });
@@ -72,7 +83,7 @@ export const registerSuperAdmin = async (req, res, next) => {
 
         res.status(202).json({
             message: "Super Admin Registered",
-            savedUser: newUser,
+            savedUser: omitSensitiveUserFields(newUser),
             userId: newUser.id,
             adminProfile: newUser.adminProfile
         });
@@ -105,8 +116,6 @@ export const register = async (req, res, next) => {
             teacherCount,
             organizationRole
         } = req.body;
-        
-        console.log(req.body, 'this is the req body');
 
         // Specific validation for required fields
         const missing = [];
@@ -287,7 +296,7 @@ export const register = async (req, res, next) => {
         res.status(202).json({
             message: "User Registered",
             verification_message: "Email has been sent, please verify",
-            savedUser: newUser,
+            savedUser: omitSensitiveUserFields(newUser),
             userId: newUser.id,
             userType: userTypeEnum,
             ...(organization && { organization })
@@ -388,8 +397,7 @@ export const verifyEmail = async (req, res, next) => {
           verificationToken: token,
         },
       });
-      console.log(user, 'this is the user in email check');
-  
+
       if (!user) {
         const wantsJson = req.get('Accept')?.includes('application/json') || req.query.format === 'json';
         if (wantsJson) {
@@ -532,7 +540,6 @@ export const verifyEmail = async (req, res, next) => {
   };
 
   export const login = async (req, res, next) => {
-    console.log(req.body, 'this is the login req body');
     try {
       const { email, password } = req.body || {};
       const trimmedEmail = typeof email === 'string' ? email.trim() : '';
@@ -591,8 +598,7 @@ export const verifyEmail = async (req, res, next) => {
         },
         process.env.SECRET_KEY
       );
-      console.log(user, 'this is the user');
-      
+
       res.status(200).json({
         message: "Login successful",
         token,
@@ -617,7 +623,6 @@ export const verifyEmail = async (req, res, next) => {
   };
 
   export const loginSuperAdmin = async (req, res, next) => {
-    console.log(req.body, 'this is the login req body');
     try {
       const { email, password } = req.body;
   
@@ -661,8 +666,7 @@ export const verifyEmail = async (req, res, next) => {
         },
         process.env.SECRET_KEY
       );
-      console.log(user, 'this is the user');
-      
+
       res.status(200).json({
         message: "Super Admin Login successful",
         token,
@@ -712,8 +716,7 @@ export const verifyEmail = async (req, res, next) => {
   export const singleUser = async (req, res, next) => {
     try {
       const { userId } = req;
-      console.log('first phase ');
-      
+
       // Find the user by ID with profile and related data
       const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -780,9 +783,7 @@ export const verifyEmail = async (req, res, next) => {
         responseData.isTeamLead = user.teacherProfile.isTeamLead;
         responseData.organization = user.teacherProfile.ledOrganization || user.teacherProfile.organization;
       }
-      
-      console.log(responseData, 'this is the user');
-      console.log('second phase ');
+
       res.status(200).json(responseData);
     } catch (err) {
       next(err);
@@ -791,8 +792,6 @@ export const verifyEmail = async (req, res, next) => {
 
 export const updateProfileImage = async (req, res, next) => {
     const { userId } = req;
-    console.log(userId, 'this is the user id');
-    console.log(req.body, 'this is the upload image req in backend');
 
     try {
         const { uploadImage: userId } = req.params;
@@ -813,7 +812,7 @@ export const updateProfileImage = async (req, res, next) => {
             data: { profileImage },
         });
 
-        res.status(200).json({ message: "Profile image updated", savedUser: updatedUser });
+        res.status(200).json({ message: "Profile image updated", savedUser: omitSensitiveUserFields(updatedUser) });
     } catch (err) {
         next(err);
     }
@@ -893,8 +892,6 @@ export const updateMetadata = async (req, res, next) => {
         userDescription: userDescription,
       },
     });
-
-    console.log(updatedUser, 'this is the updated user');
 
     const token = jwt.sign(
       { userId: updatedUser.id, isTeacher: updatedUser.isTeacher, isAdmin: updatedUser.isAdmin, email: updatedUser.email },
@@ -1189,7 +1186,7 @@ export const updateUserHasSeenOnboarding = async (req, res, next) => {
       where: { id: userId },
       data: { hasSeenOnboarding: true },
     });
-    res.status(200).json({ message: "User has seen onboarding", updatedUser });
+    res.status(200).json({ message: "User has seen onboarding", updatedUser: omitSensitiveUserFields(updatedUser) });
   }
   catch(err){
     console.log('error in update user has seen onboarding', err);
@@ -1202,7 +1199,6 @@ export const zoomTest = async (req, res, next) => {
     const { email, name } = req.body;
     console.log(email, name, 'this is the email and name');
     const token = await createZoomAccountForTeacher(email, name);
-    console.log(token, 'this is the token');
     res.status(200).json({ message: "Zoom test successful", token });
   }
   catch(err){
