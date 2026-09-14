@@ -20,6 +20,7 @@ const omitSensitiveUserFields = (user) => {
     password,
     passwordResetToken,
     passwordResetExpires,
+    passwordResetAttempts,
     verificationToken,
     failedLoginCount,
     lockUntil,
@@ -31,6 +32,22 @@ const omitSensitiveUserFields = (user) => {
 const INVALID_LOGIN_MESSAGE = "Invalid email or password";
 const MAX_FAILED_LOGINS = 5;
 const LOCK_DURATION_MS = 15 * 60 * 1000;
+const BCRYPT_COST = 12;
+const MIN_PASSWORD_LENGTH = 10;
+const MAX_OTP_ATTEMPTS = 5;
+const OTP_EXPIRY_MS = 15 * 60 * 1000;
+
+const getPasswordPolicyError = (password, email) => {
+  if (typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
+    return `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
+  }
+  if (email && password.toLowerCase() === String(email).trim().toLowerCase()) {
+    return "Password cannot be the same as your email";
+  }
+  return null;
+};
+
+const hashPassword = (password) => bcrypt.hashSync(password, BCRYPT_COST);
 
 const isAccountLocked = (user) => {
   return Boolean(user?.lockUntil && user.lockUntil > new Date());
@@ -76,7 +93,12 @@ export const registerSuperAdmin = async (req, res, next) => {
             return res.status(400).json({ message: "Please enter all required fields" });
         }
 
-        const hash = bcrypt.hashSync(password, 5);
+        const passwordError = getPasswordPolicyError(password, email);
+        if (passwordError) {
+            return res.status(400).json({ message: passwordError });
+        }
+
+        const hash = hashPassword(password);
 
         // Check if the user already exists
         const existingUser = await prisma.user.findUnique({
@@ -160,13 +182,18 @@ export const register = async (req, res, next) => {
             return res.status(400).json({ message: `Please provide ${fieldList}` });
         }
 
+        const passwordError = getPasswordPolicyError(password, email);
+        if (passwordError) {
+            return res.status(400).json({ message: passwordError });
+        }
+
         // Validate userType
         const validUserTypes = ['STUDENT', 'TEACHER', 'ADMIN', 'ORGANIZATION'];
         if (!validUserTypes.includes(userType.toUpperCase())) {
             return res.status(400).json({ message: "Invalid account type. Please choose Student, Teacher, or Organization." });
         }
 
-        const hash = bcrypt.hashSync(password, 5);
+        const hash = hashPassword(password);
 
         // Check if the user already exists
         const existingUser = await prisma.user.findUnique({
@@ -982,6 +1009,11 @@ export const changePassword = async (req, res, next) => {
       return res.status(400).json({ message: "User not found" });
     }
 
+    const passwordError = getPasswordPolicyError(newPassword, user.email);
+    if (passwordError) {
+      return res.status(400).json({ message: passwordError });
+    }
+
     // Verify current password
     const isCorrect = bcrypt.compareSync(currentPassword, user.password);
     if (!isCorrect) {
@@ -990,7 +1022,7 @@ export const changePassword = async (req, res, next) => {
 
 
     // Hash the new password
-    const hash = bcrypt.hashSync(newPassword, 5);
+    const hash = hashPassword(newPassword);
 
 
     // Update the password
@@ -1045,12 +1077,13 @@ export const forgotPassword = async (req, res, next) => {
       return res.status(200).json({ message: "If an account exists with this email, you will receive a password reset code." });
     }
     const otp = String(crypto.randomInt(100000, 999999));
-    const resetExpires = new Date(Date.now() + 15 * 60 * 1000);
+    const resetExpires = new Date(Date.now() + OTP_EXPIRY_MS);
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        passwordResetToken: otp,
+        passwordResetToken: hashPassword(otp),
         passwordResetExpires: resetExpires,
+        passwordResetAttempts: 0,
       },
     });
     await resend.emails.send({
@@ -1101,16 +1134,48 @@ export const resetPassword = async (req, res, next) => {
     const user = await prisma.user.findUnique({
       where: { email: trimmedEmail },
     });
-    if (!user || user.passwordResetToken !== otpTrimmed || !user.passwordResetExpires || user.passwordResetExpires < new Date()) {
-      return res.status(400).json({ message: "Invalid or expired code. Please request a new password reset." });
+    const invalidResetMessage = "Invalid or expired code. Please request a new password reset.";
+    if (!user || !user.passwordResetToken || !user.passwordResetExpires || user.passwordResetExpires < new Date()) {
+      return res.status(400).json({ message: invalidResetMessage });
     }
-    const hash = bcrypt.hashSync(newPassword, 5);
+    if ((user.passwordResetAttempts || 0) >= MAX_OTP_ATTEMPTS) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          passwordResetToken: null,
+          passwordResetExpires: null,
+          passwordResetAttempts: 0,
+        },
+      });
+      return res.status(400).json({ message: invalidResetMessage });
+    }
+    const isOtpCorrect = bcrypt.compareSync(otpTrimmed, user.passwordResetToken);
+    if (!isOtpCorrect) {
+      const nextAttempts = (user.passwordResetAttempts || 0) + 1;
+      const data = { passwordResetAttempts: nextAttempts };
+      if (nextAttempts >= MAX_OTP_ATTEMPTS) {
+        data.passwordResetToken = null;
+        data.passwordResetExpires = null;
+        data.passwordResetAttempts = 0;
+      }
+      await prisma.user.update({
+        where: { id: user.id },
+        data,
+      });
+      return res.status(400).json({ message: invalidResetMessage });
+    }
+    const passwordError = getPasswordPolicyError(newPassword, trimmedEmail);
+    if (passwordError) {
+      return res.status(400).json({ message: passwordError });
+    }
+    const hash = hashPassword(newPassword);
     await prisma.user.update({
       where: { id: user.id },
       data: {
         password: hash,
         passwordResetToken: null,
         passwordResetExpires: null,
+        passwordResetAttempts: 0,
       },
     });
     res.status(200).json({ message: "Password reset successfully. You can now log in with your new password." });
