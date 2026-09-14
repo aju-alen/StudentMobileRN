@@ -15,6 +15,7 @@ import courseEnrollmentRoutes from './routes/course-enrollment-routes.js';
 import dotenv from 'dotenv';
 import { errorHandler } from './middlewares/errorHandler.js';
 import cors from 'cors';
+import helmet from 'helmet';
 import { createServer } from 'http';
 import s3route from './routes/s3route.js';
 import { initializeSocket } from './socket/socketHandler.js';
@@ -26,28 +27,38 @@ dotenv.config();
 const app = express();
 const server = createServer(app);
 
-// Initialize Socket.IO
-const io = initializeSocket(server);
+const allowedOrigins = [
+  'https://coachacadem.ae',
+  'https://www.coachacadem.ae',
+  'https://coachacadem-webapp.onrender.com',
+  'http://localhost:5173',
+  'http://localhost:8081',
+  'http://localhost:19000',
+  'http://localhost:19006',
+  process.env.FRONTEND_URL,
+].filter(Boolean);
 
-app.use(cors({
-    origin: [
-        "http://localhost:5173",
-        "exp://192.168.0.174:8081",
-        "http://localhost:8081",
-        "http://localhost:19000",
-        "http://192.168.0.174:19006",
-        "https://coachacadem-webapp.onrender.com",
-        "https://coachacadem.ae",
-        "exp://", // Allow all Expo URLs
-        "https://*.expo.dev", // Allow Expo development URLs
-        "https://*.render.com", // Allow Render URLs
-        process.env.FRONTEND_URL, // Allow your production frontend URL
-        "*" // Allow all origins in development
-    ].filter(Boolean), // Remove any undefined values
-    credentials: true, // Allow credentials
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+const corsOptions = {
+  origin(origin, callback) {
+    // Allow non-browser clients (React Native, curl, server-to-server) with no Origin
+    if (!origin) {
+      return callback(null, true);
+    }
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(null, false);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+// Initialize Socket.IO
+const io = initializeSocket(server, allowedOrigins);
+
+app.use(helmet());
+app.use(cors(corsOptions));
 app.use('/api/stripe-webhook', express.raw({type: 'application/json'}), stripeWebhook);
 app.post('/api/zoom/webhook', express.raw({ type: 'application/json' }), zoomWebhook);
 app.use(bodyParser.urlencoded({ extended: true }));

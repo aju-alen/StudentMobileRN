@@ -5,16 +5,19 @@ const prisma = new PrismaClient();
 
 let count = 0;
 
-export const initializeSocket = (server) => {
+export const initializeSocket = (server, allowedOrigins = []) => {
     const io = new Server(server, {
         cors: {
-            origin: [
-                "exp://192.168.0.174:8081",
-                "http://localhost:8081",
-                "http://localhost:19000",
-                "http://192.168.0.174:19006",
-            ],
-        }
+            origin: allowedOrigins.length
+                ? allowedOrigins
+                : [
+                    'http://localhost:8081',
+                    'http://localhost:19000',
+                    'http://localhost:19006',
+                  ],
+            credentials: true,
+            methods: ['GET', 'POST'],
+        },
     });
 
     io.on("connection", (socket) => {
