@@ -133,7 +133,6 @@ const BookingSummaryModal: React.FC<BookingSummaryModalProps> = ({
             currency: 'aed',
             teacherId: teacherId,
             subjectId: subjectId,
-            userId: user.userId,
             date: (subjectData.courseType === 'MULTI_STUDENT' || subjectData.courseType === 'MULTI_PACKAGE') ? '' : date,
             time: (subjectData.courseType === 'MULTI_STUDENT' || subjectData.courseType === 'MULTI_PACKAGE') ? '' : time,
             subjectDuration: subjectData.subjectDuration,

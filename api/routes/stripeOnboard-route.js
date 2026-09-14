@@ -4,8 +4,8 @@ import { verifyToken } from "../middlewares/jwt.js";
 const router = express.Router()
 
 
-router.post('/account', onboardAccountCreate);
-router.post('/account_link', linkOnboardAccount);
+router.post('/account', verifyToken, onboardAccountCreate);
+router.post('/account_link', verifyToken, linkOnboardAccount);
 
 
 export default router;

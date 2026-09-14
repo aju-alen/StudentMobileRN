@@ -4,7 +4,7 @@ import { getPublisherKey, paymentSheet } from '../controllers/stripe-controller.
 import { verifyToken } from '../middlewares/jwt.js';
 
 router.get('/get-publisher-key', getPublisherKey);
-router.post('/payment-sheet', paymentSheet);    
+router.post('/payment-sheet', verifyToken, paymentSheet);    
   
 
 export default router;

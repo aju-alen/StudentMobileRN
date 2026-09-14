@@ -34,7 +34,7 @@ export const getPublisherKey = async (req, res, next) => {
 export const paymentSheet = async (req, res, next) => {
     try {
         const { amount, currency = 'aed', customerId, teacherId, subjectId, date, time, subjectDuration, teacherEmail, subjectName, userEmail, courseType, topicSlots } = req.body;
-        const userId = req.body.userId;
+        const userId = req.userId;
         
         
         // Validate required parameters
@@ -187,7 +187,7 @@ export const paymentSheet = async (req, res, next) => {
                 subjectDuration,
                 teacherEmail,
                 subjectName,
-                userEmail,
+                userEmail: userEmail || req.email || '',
                 courseType: subject.courseType || courseType || 'SINGLE_STUDENT',
                 topicSlots: (subject.courseType === 'SINGLE_PACKAGE' && Array.isArray(topicSlots) && topicSlots.length) ? JSON.stringify(topicSlots) : ''
             }

@@ -5,9 +5,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY,{
   });
 dotenv.config();
 
-export const onboardAccountCreate = async (req, res,next) => {
-  console.log('onboardAccountCreate');
-  
+export const onboardAccountCreate = async (req, res, next) => {
     try {
         const account = await stripe.accounts.create({});
     
@@ -19,14 +17,17 @@ export const onboardAccountCreate = async (req, res,next) => {
           "An error occurred when calling the Stripe API to create an account",
           error
         );
-        res.status(500);
-        res.send({ error: error.message });
+        res.status(500).json({ error: 'Failed to create Stripe account' });
       }
 }
 
-export const linkOnboardAccount = async (req, res,next) => {
+export const linkOnboardAccount = async (req, res, next) => {
     try {
         const { account } = req.body;
+
+        if (!account) {
+          return res.status(400).json({ error: 'Account ID is required' });
+        }
     
         const accountLink = await stripe.accountLinks.create({
           account: account,
@@ -41,7 +42,6 @@ export const linkOnboardAccount = async (req, res,next) => {
           "An error occurred when calling the Stripe API to create an account link:",
           error
         );
-        res.status(500);
-        res.send({ error: error.message });
+        res.status(500).json({ error: 'Failed to create Stripe account link' });
       }
 }
