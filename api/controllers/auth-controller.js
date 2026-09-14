@@ -21,9 +21,41 @@ const omitSensitiveUserFields = (user) => {
     passwordResetToken,
     passwordResetExpires,
     verificationToken,
+    failedLoginCount,
+    lockUntil,
     ...safeUser
   } = user;
   return safeUser;
+};
+
+const INVALID_LOGIN_MESSAGE = "Invalid email or password";
+const MAX_FAILED_LOGINS = 5;
+const LOCK_DURATION_MS = 15 * 60 * 1000;
+
+const isAccountLocked = (user) => {
+  return Boolean(user?.lockUntil && user.lockUntil > new Date());
+};
+
+const registerFailedLogin = async (userId, currentCount = 0) => {
+  const nextCount = currentCount + 1;
+  const data = { failedLoginCount: nextCount };
+  if (nextCount >= MAX_FAILED_LOGINS) {
+    data.lockUntil = new Date(Date.now() + LOCK_DURATION_MS);
+  }
+  await prisma.user.update({
+    where: { id: userId },
+    data,
+  });
+};
+
+const clearFailedLogins = async (userId) => {
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      failedLoginCount: 0,
+      lockUntil: null,
+    },
+  });
 };
 
 // Helper function to generate 8-character alphanumeric invite code
@@ -546,7 +578,7 @@ export const verifyEmail = async (req, res, next) => {
       const trimmedPassword = typeof password === 'string' ? password : '';
 
       if (!trimmedEmail || !trimmedPassword) {
-        return res.status(400).json({ message: "Invalid email or password" });
+        return res.status(400).json({ message: INVALID_LOGIN_MESSAGE });
       }
 
       // Find the user by email with profile
@@ -565,7 +597,11 @@ export const verifyEmail = async (req, res, next) => {
       });
   
       if (!user) {
-        return res.status(400).json({ message: "Invalid email or password" });
+        return res.status(400).json({ message: INVALID_LOGIN_MESSAGE });
+      }
+
+      if (isAccountLocked(user)) {
+        return res.status(400).json({ message: INVALID_LOGIN_MESSAGE });
       }
   
       if (!user.verified) {
@@ -576,8 +612,11 @@ export const verifyEmail = async (req, res, next) => {
       const isCorrect = bcrypt.compareSync(trimmedPassword, user.password);
   
       if (!isCorrect) {
-        return res.status(400).json({ message: "Invalid email or password" });
+        await registerFailedLogin(user.id, user.failedLoginCount || 0);
+        return res.status(400).json({ message: INVALID_LOGIN_MESSAGE });
       }
+
+      await clearFailedLogins(user.id);
 
       // Determine user type and get profile-specific data
       const isTeacher = user.userType === 'TEACHER';
@@ -624,23 +663,33 @@ export const verifyEmail = async (req, res, next) => {
 
   export const loginSuperAdmin = async (req, res, next) => {
     try {
-      const { email, password } = req.body;
+      const { email, password } = req.body || {};
+      const trimmedEmail = typeof email === 'string' ? email.trim() : '';
+      const trimmedPassword = typeof password === 'string' ? password : '';
+
+      if (!trimmedEmail || !trimmedPassword) {
+        return res.status(400).json({ message: INVALID_LOGIN_MESSAGE });
+      }
   
       // Find the user by email with admin profile
       const user = await prisma.user.findUnique({
-        where: { email },
+        where: { email: trimmedEmail },
         include: {
           adminProfile: true
         }
       });
   
       if (!user) {
-        return res.status(400).json({ message: "Invalid email or password" });
+        return res.status(400).json({ message: INVALID_LOGIN_MESSAGE });
       }
 
       // Check if user is an admin
       if (user.userType !== 'ADMIN') {
-        return res.status(400).json({ message: "Invalid email or password" });
+        return res.status(400).json({ message: INVALID_LOGIN_MESSAGE });
+      }
+
+      if (isAccountLocked(user)) {
+        return res.status(400).json({ message: INVALID_LOGIN_MESSAGE });
       }
   
       if (!user.verified) {
@@ -648,11 +697,14 @@ export const verifyEmail = async (req, res, next) => {
       }
   
       // Compare the provided password with the hashed password in the database
-      const isCorrect = bcrypt.compareSync(password, user.password);
+      const isCorrect = bcrypt.compareSync(trimmedPassword, user.password);
   
       if (!isCorrect) {
-        return res.status(400).json({ message: "Invalid email or password" });
+        await registerFailedLogin(user.id, user.failedLoginCount || 0);
+        return res.status(400).json({ message: INVALID_LOGIN_MESSAGE });
       }
+
+      await clearFailedLogins(user.id);
 
       // Determine user type and get profile-specific data
       const isAdmin = user.userType === 'ADMIN';

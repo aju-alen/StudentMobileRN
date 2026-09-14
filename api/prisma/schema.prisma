@@ -72,6 +72,8 @@ model User {
   hasSeenOnboarding   Boolean  @default(false)
   userType            UserType
   pushToken           String?
+  failedLoginCount    Int      @default(0)
+  lockUntil           DateTime?
   createdAt           DateTime @default(now())
   
   // Relations - one of these will be populated based on userType

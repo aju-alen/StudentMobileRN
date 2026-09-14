@@ -21,6 +21,7 @@ import s3route from './routes/s3route.js';
 import { initializeSocket } from './socket/socketHandler.js';
 import { stripeWebhook } from './controllers/stripe-controller.js';
 import { zoomWebhook } from './controllers/zoomController.js';
+import { globalApiLimiter } from './middlewares/rateLimit.js';
 
 dotenv.config();
 
@@ -63,6 +64,7 @@ app.use('/api/stripe-webhook', express.raw({type: 'application/json'}), stripeWe
 app.post('/api/zoom/webhook', express.raw({ type: 'application/json' }), zoomWebhook);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.use(globalApiLimiter);
 app.use('/api/auth', authRoute)
 app.use('/api/subjects', subjectRoute)
 app.use('/api/conversation', conversationRoute)
