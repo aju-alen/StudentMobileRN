@@ -19,6 +19,7 @@ enum UserType {
   STUDENT
   TEACHER
   ADMIN
+  PARENT
 }
 
 enum BookingStatus {
@@ -77,6 +78,7 @@ model User {
   studentProfile      StudentProfile?
   teacherProfile      TeacherProfile?
   adminProfile        AdminProfile?
+  parentProfile       ParentProfile?
 }
 
 // Student-specific data
@@ -133,6 +135,14 @@ model AdminProfile {
   
   // Relations
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Parent-specific data (stub — no parent product logic yet)
+model ParentProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 // Organization model
