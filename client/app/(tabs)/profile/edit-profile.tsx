@@ -22,7 +22,6 @@ const EditProfilePage = () => {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [selectedImageUri, setSelectedImageUri] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [userIdForImageUpload, setUserIdForImageUpload] = useState<string | null>(null);
   const [profileImageVersion, setProfileImageVersion] = useState<string>('0');
 
   useEffect(() => {
@@ -56,23 +55,6 @@ const EditProfilePage = () => {
       console.error('Error fetching user data:', error);
       Alert.alert('Error', 'Failed to load profile data');
     }
-  };
-
-  const resolveUserIdForUpload = async (): Promise<string> => {
-    if (userIdForImageUpload) return userIdForImageUpload;
-
-    const storedUserDetails = await AsyncStorage.getItem('userDetails');
-    if (!storedUserDetails) {
-      throw new Error('User details not found');
-    }
-
-    const parsed = JSON.parse(storedUserDetails);
-    if (!parsed.userId) {
-      throw new Error('User ID not found');
-    }
-
-    setUserIdForImageUpload(parsed.userId);
-    return parsed.userId;
   };
 
   const pickImage = async () => {
@@ -112,8 +94,6 @@ const EditProfilePage = () => {
     setIsUploadingImage(true);
 
     try {
-      const userId = await resolveUserIdForUpload();
-
       const uriParts = selectedImageUri.split('.');
       const fileType = uriParts[uriParts.length - 1];
 
@@ -127,7 +107,7 @@ const EditProfilePage = () => {
       formData.append('awsId', '');
 
       const response = await axiosWithAuth.post(
-        `${ipURL}/api/s3/upload-to-aws/${userId}`,
+        `${ipURL}/api/s3/upload-to-aws`,
         formData,
         {
           headers: {
@@ -141,7 +121,7 @@ const EditProfilePage = () => {
         throw new Error('Image location not returned from server');
       }
 
-      await axiosWithAuth.put(`${ipURL}/api/auth/update-profile/${userId}`, {
+      await axiosWithAuth.put(`${ipURL}/api/auth/update-profile`, {
         profileImage: imageLocation,
       });
 

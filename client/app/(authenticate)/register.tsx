@@ -6,8 +6,6 @@ import axios from 'axios';
 import { ipURL } from '../utils/utils';
 import { COLORS } from '../../constants/theme';
 import { verticalScale, horizontalScale, moderateScale } from '../utils/metrics';
-import * as DocumentPicker from 'expo-document-picker';
-import { File } from 'expo-file-system';
 import useSafeAreaInsets, { addBasePaddingToTopInset, addBasePaddingToInset } from '../hooks/useSafeAreaInsets';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -316,9 +314,6 @@ const RegisterPage = () => {
     const [organizationName, setOrganizationName] = useState('');
     const [organizationEmail, setOrganizationEmail] = useState('');
     const [organizationWebsite, setOrganizationWebsite] = useState('');
-    const [tradeLicensePdf, setTradeLicensePdf] = useState<string | null>(null);
-    const [tradeLicensePdfUri, setTradeLicensePdfUri] = useState<string | null>(null);
-    const [isUploadingTradeLicense, setIsUploadingTradeLicense] = useState(false);
     const [teacherCount, setTeacherCount] = useState('3');
     const [organizationRole, setOrganizationRole] = useState<string>('OWNER');
 
@@ -447,9 +442,6 @@ const RegisterPage = () => {
             if (organizationWebsite.trim() === '') {
                 newErrors.organizationWebsite = 'Website is required';
             }
-            if (!tradeLicensePdfUri) {
-                newErrors.tradeLicensePdf = 'Trade license PDF is required';
-            }
             // Teacher count is fixed at 3 (free tier)
             if (teacherCount !== '3') {
                 newErrors.teacherCount = 'Invalid tutor count';
@@ -467,12 +459,6 @@ const RegisterPage = () => {
         
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
-            return;
-        }
-
-        // For organizations, validate PDF is selected (but not uploaded yet)
-        if (userType === 'organization' && !tradeLicensePdfUri) {
-            setErrors({ ...validationErrors, tradeLicensePdf: 'Trade license PDF is required' });
             return;
         }
 
@@ -504,53 +490,16 @@ const RegisterPage = () => {
         try {
             setIsLoading(true);
             const resp = await axios.post(`${ipURL}/api/auth/register`, user);
-            const userId = resp.data.userId;
             
-            // Upload PDF after registration with actual userId
-            if (userType === 'organization' && tradeLicensePdfUri) {
-                try {
-                    const s3Location = await uploadTradeLicenseToAws(tradeLicensePdfUri, userId);
-                    console.log('Trade license uploaded to:', s3Location);
-                    
-                    // Update the organization record with the trade license location
-                    // Using userId from registration response (no auth token needed)
-                    try {
-                        await axios.put(
-                            `${ipURL}/api/auth/organization/trade-license`,
-                            { 
-                                userId: userId,
-                                tradeLicenseLocation: s3Location 
-                            },
-                            {
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                }
-                            }
-                        );
-                        console.log('Organization trade license updated successfully');
-                    } catch (updateError) {
-                        console.error('Failed to update organization trade license:', updateError);
-                        // Non-critical error - registration succeeded, just log it
-                        Alert.alert(
-                            'Note', 
-                            'Registration successful, but trade license update failed. You can update it later from your profile.'
-                        );
-                    }
-                } catch (uploadError) {
-                    console.error('PDF upload failed:', uploadError);
-                    // Registration succeeded but PDF upload failed
-                    Alert.alert(
-                        'Registration Successful', 
-                        'Your account has been created, but the trade license upload failed. Please upload it later from your profile settings.'
-                    );
-                    router.replace(`/(authenticate)/${userId}`);
-                    setIsLoading(false);
-                    return;
-                }
+            if (userType === 'organization') {
+                Alert.alert(
+                    'Registration Successful',
+                    'Please verify your email, then sign in. You can upload your trade license from Organization settings after logging in.'
+                );
+            } else {
+                Alert.alert('Success', 'Registration successful! Please verify email to login');
             }
-            
-            Alert.alert('Success', 'Registration successful! Please verify email to login');
-            router.replace(`/(authenticate)/${userId}`);
+            router.replace('/(authenticate)/login');
             setIsLoading(false);
         }
         catch (err) {
@@ -568,82 +517,6 @@ const RegisterPage = () => {
             Alert.alert('Limit Reached', 'You can only add up to 3 subjects');
         } else {
             Alert.alert('Invalid Input', 'Please enter a valid subject');
-        }
-    };
-
-    const pickTradeLicensePDF = async () => {
-        try {
-            const result = await DocumentPicker.getDocumentAsync({
-                type: 'application/pdf',
-                copyToCacheDirectory: true,
-            });
-
-            if (result.canceled) {
-                return;
-            }
-
-            const pdfUri = result.assets[0].uri;
-            setTradeLicensePdfUri(pdfUri);
-            clearFieldError('tradeLicensePdf');
-            // Don't upload here - will upload after registration with actual userId
-        } catch (error) {
-            console.error('Error picking PDF:', error);
-            Alert.alert('Error', 'Failed to pick PDF file');
-        }
-    };
-
-    const uploadTradeLicenseToAws = async (pdfUri: string, userId: string) => {
-        if (!pdfUri) {
-            throw new Error('PDF URI is required');
-        }
-
-        try {
-            setIsUploadingTradeLicense(true);
-
-            const uriParts = pdfUri.split('.');
-            const fileType = uriParts[uriParts.length - 1];
-            
-            const file = new File(pdfUri);
-            if (!file.exists) {
-                throw new Error('File does not exist');
-            }
-
-            const fileName = `trade-license-${Date.now()}.${fileType}`;
-
-            const formData = new FormData();
-            formData.append('tradeLicense', {
-                uri: pdfUri,
-                name: fileName,
-                type: 'application/pdf',
-            } as any);
-
-            console.log('Uploading trade license to S3 with userId:', userId);
-
-            const response = await axios.post(
-                `${ipURL}/api/s3/upload-to-aws/organization-trade-license/${userId}`,
-                formData,
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                    },
-                }
-            );
-
-            console.log('Trade license uploaded successfully:', response.data);
-            
-            // Store the S3 location
-            const s3Location = response.data.location || response.data.data?.Location;
-            if (s3Location) {
-                setTradeLicensePdf(s3Location);
-                return s3Location;
-            } else {
-                throw new Error('No location returned from upload');
-            }
-        } catch (error) {
-            console.error('Trade license upload failed:', error);
-            throw error; // Re-throw to handle in handleRegister
-        } finally {
-            setIsUploadingTradeLicense(false);
         }
     };
 
@@ -935,27 +808,10 @@ const RegisterPage = () => {
                             </View>
 
                             <View style={styles.inputGroup}>
-                                <Text style={styles.label}>Trade License PDF</Text>
-                                <TouchableOpacity 
-                                    style={[styles.pdfUploadButton, errors.tradeLicensePdf && styles.inputError]}
-                                    onPress={pickTradeLicensePDF}
-                                    disabled={isUploadingTradeLicense}
-                                >
-                                    {isUploadingTradeLicense ? (
-                                        <>
-                                            <ActivityIndicator size="small" color={COLORS.primary} />
-                                            <Text style={styles.pdfUploadText}>Uploading...</Text>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Ionicons name="document-attach-outline" size={24} color={COLORS.primary} />
-                                            <Text style={styles.pdfUploadText}>
-                                                {tradeLicensePdfUri ? 'PDF Selected ✓' : 'Select Trade License PDF'}
-                                            </Text>
-                                        </>
-                                    )}
-                                </TouchableOpacity>
-                                {errors.tradeLicensePdf && <Text style={styles.errorText}>{errors.tradeLicensePdf}</Text>}
+                                <Text style={styles.label}>Trade License</Text>
+                                <Text style={styles.infoText}>
+                                    After you verify your email and sign in, upload your trade license PDF from Organization settings.
+                                </Text>
                             </View>
 
                             <View style={styles.inputGroup}>

@@ -86,10 +86,11 @@ const LoginPage = () => {
           pathname: '/onboarding',
           params: { userType: resp.data.isTeacher ? 'teacher' : 'student' }
         });
-        const userUpdate = await axios.put(`${ipURL}/api/auth/update-user-has-seen-onboarding`, {
-          userId: resp.data.userId,
-        });
-        console.log(userUpdate, 'User has seen onboarding');
+        await axios.put(
+          `${ipURL}/api/auth/update-user-has-seen-onboarding`,
+          {},
+          { headers: { Authorization: `Bearer ${resp.data.token}` } }
+        );
       } else {
         router.replace(await getPostAuthHref());
       }

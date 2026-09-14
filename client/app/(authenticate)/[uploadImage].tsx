@@ -2,19 +2,27 @@ import React, { useState } from 'react';
 import { Image, View, Alert, TouchableOpacity, Text, StyleSheet, ActivityIndicator, Animated } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-import axios from 'axios';
 import { ipURL } from '../utils/utils.js';
 import { router } from 'expo-router';
-import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants/theme';
 import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { axiosWithAuth } from '../utils/customAxios';
 
 const ProfilePictureUpload = () => {
-  const { uploadImage } = useLocalSearchParams();
   const [image, setImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress] = useState(new Animated.Value(0));
+
+  React.useEffect(() => {
+    (async () => {
+      const token = await AsyncStorage.getItem('authToken');
+      if (!token) {
+        router.replace('/(authenticate)/login');
+      }
+    })();
+  }, []);
 
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -58,14 +66,13 @@ const ProfilePictureUpload = () => {
     formData.append('awsId', '');
 
     try {
-      // Animate progress
       Animated.timing(uploadProgress, {
         toValue: 0.5,
         duration: 1000,
         useNativeDriver: false,
       }).start();
 
-      const response = await axios.post(`${ipURL}/api/s3/upload-to-aws/${uploadImage}`, formData, {
+      const response = await axiosWithAuth.post(`${ipURL}/api/s3/upload-to-aws`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -77,7 +84,7 @@ const ProfilePictureUpload = () => {
         useNativeDriver: false,
       }).start();
 
-      const updateUser = await axios.put(`${ipURL}/api/auth/update-profile/${uploadImage}`, {
+      await axiosWithAuth.put(`${ipURL}/api/auth/update-profile`, {
         profileImage: response.data.data.Location,
       });
 

@@ -791,13 +791,14 @@ export const verifyEmail = async (req, res, next) => {
   };
 
 export const updateProfileImage = async (req, res, next) => {
-    const { userId } = req;
-
     try {
-        const { uploadImage: userId } = req.params;
+        const userId = req.userId;
         const { profileImage } = req.body;
 
-        // Check if the user exists
+        if (!profileImage) {
+            return res.status(400).json({ message: "Profile image is required" });
+        }
+
         const user = await prisma.user.findUnique({
             where: { id: userId },
         });
@@ -806,7 +807,6 @@ export const updateProfileImage = async (req, res, next) => {
             return res.status(400).json({ message: "User not found" });
         }
 
-        // Update the user's profile image
         const updatedUser = await prisma.user.update({
             where: { id: userId },
             data: { profileImage },
@@ -1179,7 +1179,7 @@ catch(err){
 }
 
 export const updateUserHasSeenOnboarding = async (req, res, next) => {
-  const userId = req.body.userId;
+  const userId = req.userId;
 
   try{
     const updatedUser = await prisma.user.update({
@@ -1189,7 +1189,6 @@ export const updateUserHasSeenOnboarding = async (req, res, next) => {
     res.status(200).json({ message: "User has seen onboarding", updatedUser: omitSensitiveUserFields(updatedUser) });
   }
   catch(err){
-    console.log('error in update user has seen onboarding', err);
     next(err);
   }
 }
@@ -1321,13 +1320,8 @@ export const verificationCheck = async (req, res, next) => {
 // Update organization trade license after PDF upload
 // Can be called with userId from registration (no auth required) or with token (auth required)
 export const updateOrganizationTradeLicense = async (req, res, next) => {
-  // Support both authenticated (req.userId) and unauthenticated (req.body.userId) requests
-  const userId = req.userId || req.body.userId;
+  const userId = req.userId;
   const { tradeLicenseLocation } = req.body;
-  
-  if (!userId) {
-    return res.status(400).json({ message: "User ID is required" });
-  }
 
   if (!tradeLicenseLocation) {
     return res.status(400).json({ message: "Trade license location is required" });

@@ -1,4 +1,3 @@
-import axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
@@ -395,8 +394,8 @@ const CreateSubject = () => {
       formData.append('uploadKey', 'pdfId');
       formData.append('awsId', awsId);
     
-      const response = await axios.post(
-        `${ipURL}/api/s3/upload-to-aws/pdf-verify/${createSubjectId}`,
+      const response = await axiosWithAuth.post(
+        `${ipURL}/api/s3/upload-to-aws/pdf-verify`,
         formData,
         {
           headers: {
@@ -479,8 +478,8 @@ const CreateSubject = () => {
       formData.append('uploadKey', 'subjectImageId');
       formData.append('awsId', awsId);
 
-      const response = await axios.post(
-        `${ipURL}/api/s3/upload-to-aws/${createSubjectId}`,
+      const response = await axiosWithAuth.post(
+        `${ipURL}/api/s3/upload-to-aws`,
         formData,
         {
           headers: {

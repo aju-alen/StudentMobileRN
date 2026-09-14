@@ -13,7 +13,6 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
-import axios from 'axios';
 import { FONT } from '../../../../constants';
 import { horizontalScale, moderateScale, verticalScale } from '../../../utils/metrics';
 import { ipURL } from '../../../utils/utils';
@@ -49,7 +48,7 @@ const CreateOrganizationPage = () => {
     fetchUser();
   }, []);
 
-  const uploadTradeLicenseToAws = async (pdfUri: string, uid: string): Promise<string> => {
+  const uploadTradeLicenseToAws = async (pdfUri: string): Promise<string> => {
     const uriParts = pdfUri.split('.');
     const fileType = uriParts[uriParts.length - 1];
     const file = new File(pdfUri);
@@ -63,8 +62,8 @@ const CreateOrganizationPage = () => {
       type: 'application/pdf',
     } as any);
 
-    const response = await axios.post(
-      `${ipURL}/api/s3/upload-to-aws/organization-trade-license/${uid}`,
+    const response = await axiosWithAuth.post(
+      `${ipURL}/api/s3/upload-to-aws/organization-trade-license`,
       formData,
       { headers: { 'Content-Type': 'multipart/form-data' } }
     );
@@ -89,7 +88,7 @@ const CreateOrganizationPage = () => {
       setTradeLicenseUri(pdfUri);
       setError('');
       setUploadingPdf(true);
-      const location = await uploadTradeLicenseToAws(pdfUri, userId);
+      const location = await uploadTradeLicenseToAws(pdfUri);
       setTradeLicenseLocation(location);
     } catch (err: any) {
       console.error(err);
