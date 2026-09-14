@@ -1,6 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import React, { useEffect, useState } from "react";
-import { Tabs, useSegments } from "expo-router";
+import { Tabs, useSegments, router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from 'react-native';
 import { COLORS } from "../../constants"
@@ -11,17 +11,26 @@ import { connectSocket } from "../utils/socket";
 interface UserDetails {
   isTeacher?: boolean;
   isAdmin?: boolean;
+  userType?: string;
 }
 
 const TabsLayout = () => {
   const segments = useSegments() as string[];
   const [userDetails, setUserDetails] = useState<UserDetails>({});
+  const [hasSession, setHasSession] = useState<boolean | null>(null);
   const insets = useSafeAreaInsets();
   
   
   useEffect(() => {
     const getUserDetails = async () => {
       try {
+        const token = await AsyncStorage.getItem("authToken");
+        if (!token) {
+          setHasSession(false);
+          router.replace('/(authenticate)/welcome');
+          return;
+        }
+        setHasSession(true);
         const user = await AsyncStorage.getItem("userDetails");
         if (user) {
           setUserDetails(JSON.parse(user));
@@ -29,6 +38,8 @@ const TabsLayout = () => {
         await connectSocket();
       } catch (error) {
         console.error("Error fetching user details:", error);
+        setHasSession(false);
+        router.replace('/(authenticate)/welcome');
       }
     };
     getUserDetails();
@@ -66,6 +77,12 @@ const TabsLayout = () => {
     //shadowOpacity: 0.1,
     shadowRadius: verticalScale(3),
   };
+
+  const isAdmin = userDetails.userType === 'ADMIN';
+
+  if (hasSession !== true) {
+    return null;
+  }
 
   return (
     <Tabs
@@ -129,7 +146,7 @@ const TabsLayout = () => {
         options={{
           headerShown: false,
           tabBarLabel: "Verify",
-          href: userDetails.isAdmin ? "/verification" : null,
+          href: isAdmin ? "/verification" : null,
         }}
       />
     </Tabs>

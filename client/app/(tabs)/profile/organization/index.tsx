@@ -79,7 +79,7 @@ const OrganizationSettingsPage = () => {
   };
 
   const confirmDeleteOrganization = () => {
-    if (!deletePassword.trim()) {
+    if (!deletePassword) {
       setDeleteError('Please enter your password');
       return;
     }
@@ -96,7 +96,7 @@ const OrganizationSettingsPage = () => {
             try {
               setDeleting(true);
               await axiosWithAuth.delete(`${ipURL}/api/auth/organization`, {
-                data: { password: deletePassword.trim() },
+                data: { password: deletePassword },
               });
               setDeleteModalVisible(false);
               setDeletePassword('');

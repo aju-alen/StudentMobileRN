@@ -4,10 +4,17 @@ const prisma = new PrismaClient();
 
 dotenv.config();
 
+const isConversationParticipant = (conversation, userId) => {
+    return Boolean(
+        conversation &&
+        (conversation.student?.userId === userId || conversation.teacher?.userId === userId)
+    );
+};
+
 export const getAllConversations = async (req, res, next) => {
 
     try {
-        const userId = req.params.userId;
+        const userId = req.userId;
 
         // Get user's profile IDs (could be student or teacher)
         const user = await prisma.user.findUnique({
@@ -149,6 +156,10 @@ export const getSingleConversation = async (req, res, next) => {
             return res.status(400).json({ message: "No conversation found" });
         }
 
+        if (!isConversationParticipant(conversation, req.userId)) {
+            return res.status(403).json({ message: "You are not allowed to perform this action" });
+        }
+
         // Transform response to match expected format
         const response = {
             ...conversation,
@@ -166,10 +177,22 @@ export const getSingleConversation = async (req, res, next) => {
 export const createConversation = async (req, res, next) => {
     try {
         const { userId, clientId, subjectId } = req.body;
+        let studentUserId;
+        let teacherUserId;
 
-        // Get StudentProfile.id from userId (student)
+        if (req.userType === 'STUDENT') {
+            studentUserId = req.userId;
+            teacherUserId = clientId;
+        } else if (req.userType === 'TEACHER') {
+            teacherUserId = req.userId;
+            studentUserId = userId;
+        } else {
+            return res.status(403).json({ message: "You are not allowed to perform this action" });
+        }
+
+        // Get StudentProfile.id from authenticated student
         const studentUser = await prisma.user.findUnique({
-            where: { id: userId },
+            where: { id: studentUserId },
             include: {
                 studentProfile: {
                     select: { id: true }
@@ -181,9 +204,9 @@ export const createConversation = async (req, res, next) => {
             return res.status(400).json({ message: "Student profile not found" });
         }
 
-        // Get TeacherProfile.id from clientId (teacher)
+        // Get TeacherProfile.id from authenticated teacher or requested teacher
         const teacherUser = await prisma.user.findUnique({
-            where: { id: clientId },
+            where: { id: teacherUserId },
             include: {
                 teacherProfile: {
                     select: { id: true }

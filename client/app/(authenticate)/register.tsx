@@ -393,11 +393,11 @@ const RegisterPage = () => {
             newErrors.email = 'Please enter a valid email address';
         }
 
-        if (password.trim() === '') {
+        if (password === '') {
             newErrors.password = 'Password is required';
         }
 
-        if (confirmPassword.trim() === '') {
+        if (confirmPassword === '') {
             newErrors.confirmPassword = 'Please confirm your password';
         } else if (password !== confirmPassword) {
             newErrors.confirmPassword = 'Passwords do not match';
@@ -466,7 +466,7 @@ const RegisterPage = () => {
             name,
             userType,
             email,
-            password: password.trim(),
+            password,
             profileImage,
             userDescription,
             isTeacher: userType === 'teacher' || userType === 'organization',
@@ -485,8 +485,7 @@ const RegisterPage = () => {
                 teacherCount: parseInt(teacherCount),
             }),
         }
-        console.log(user,'user details');
-        
+
         try {
             setIsLoading(true);
             const resp = await axios.post(`${ipURL}/api/auth/register`, user);

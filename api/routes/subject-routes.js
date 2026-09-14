@@ -1,17 +1,17 @@
 import express from "express";
 import { createSubject,getAllSubjectsBySearch,getAllSubjects,getOneSubject,updateSubject,deleteSubject,getAllSubjectsToVerify,verifySubject,getRecommendedSubjects,getSavedSubjects,saveSubject,unsaveSubject,getAllSubjectsByAdvanceSearch,getSubjectCapacity,getMultiStudentSubjects } from "../controllers/subject-controller.js";
-import { verifyToken } from "../middlewares/jwt.js";
+import { verifyToken, requireRole } from "../middlewares/jwt.js";
 const router = express.Router()
 
 router.get('/',verifyToken, getAllSubjects);
 router.get('/search',verifyToken, getAllSubjectsBySearch);
 router.get('/advance-search',verifyToken, getAllSubjectsByAdvanceSearch);
-router.get('/verify',verifyToken, getAllSubjectsToVerify);
+router.get('/verify',verifyToken, requireRole('ADMIN'), getAllSubjectsToVerify);
 router.get('/multi-student',verifyToken, getMultiStudentSubjects);
 router.post('/create',verifyToken, createSubject);
 router.get('/saved',verifyToken, getSavedSubjects);
 
-router.put('/verify/:subjectId',verifyToken, verifySubject);
+router.put('/verify/:subjectId',verifyToken, requireRole('ADMIN'), verifySubject);
 router.get('/capacity/:subjectId',verifyToken, getSubjectCapacity);
 router.post('/get-recommended-subjects',verifyToken, getRecommendedSubjects)
 router.get('/:subjectId',verifyToken, getOneSubject);

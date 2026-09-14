@@ -779,7 +779,7 @@ export const verifySubject = async (req, res, next) => {
     try {
         // Check if the user is an admin
         if (!req.isAdmin) {
-            return res.status(400).json({ message: "Only admin can verify subjects" });
+            return res.status(403).json({ message: "Only admin can verify subjects" });
         }
 
         console.log("Admin access granted");

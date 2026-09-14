@@ -85,6 +85,17 @@ const generateInviteCode = () => {
   return code;
 };
 
+const canManageOrganization = (teacherProfile) => {
+  if (!teacherProfile) return false;
+  if (teacherProfile.isTeamLead) return true;
+  return teacherProfile.organizationRole === 'OWNER' || teacherProfile.organizationRole === 'MANAGER';
+};
+
+const getManagedOrganization = (teacherProfile) => {
+  if (!teacherProfile || !canManageOrganization(teacherProfile)) return null;
+  return teacherProfile.ledOrganization || teacherProfile.organization || null;
+};
+
 export const registerSuperAdmin = async (req, res, next) => {
     try {
         const { name, email, password, profileImage, userDescription, role, permissions } = req.body;
@@ -939,7 +950,6 @@ export const getTeacherProfile = async (req, res, next) => {
     const response = {
       id: user.id,
       name: user.name,
-      email: user.email,
       profileImage: user.profileImage,
       userDescription: user.userDescription,
       userType: user.userType,
@@ -1525,7 +1535,8 @@ export const updateOrganizationCapacity = async (req, res, next) => {
       include: {
         teacherProfile: {
           include: {
-            ledOrganization: true
+            ledOrganization: true,
+            organization: true
           }
         }
       }
@@ -1539,15 +1550,13 @@ export const updateOrganizationCapacity = async (req, res, next) => {
       return res.status(400).json({ message: "Teacher profile not found" });
     }
 
-    // Check if user is a team lead
-    if (!user.teacherProfile.isTeamLead) {
-      return res.status(403).json({ message: "Only team leads can update organization capacity" });
+    if (!canManageOrganization(user.teacherProfile)) {
+      return res.status(403).json({ message: "Only team leads or organization owners/managers can update organization capacity" });
     }
 
-    // Check if user has an organization
-    const organization = user.teacherProfile.ledOrganization;
+    const organization = getManagedOrganization(user.teacherProfile);
     if (!organization) {
-      return res.status(400).json({ message: "User is not a team lead of an organization" });
+      return res.status(400).json({ message: "Organization not found" });
     }
 
     // Update organization capacity
@@ -1758,13 +1767,19 @@ export const inviteTeacherToOrganization = async (req, res, next) => {
       return res.status(400).json({ message: "Email is required" });
     }
 
-    // Get user (team lead) with organization
+    // Get user (team lead or owner/manager) with organization
     const teamLeadUser = await prisma.user.findUnique({
       where: { id: userId },
       include: {
         teacherProfile: {
           include: {
             ledOrganization: {
+              include: {
+                members: true,
+                teamLead: true,
+              }
+            },
+            organization: {
               include: {
                 members: true,
                 teamLead: true,
@@ -1779,11 +1794,11 @@ export const inviteTeacherToOrganization = async (req, res, next) => {
       return res.status(400).json({ message: "User is not a teacher" });
     }
 
-    if (!teamLeadUser.teacherProfile || !teamLeadUser.teacherProfile.isTeamLead) {
-      return res.status(403).json({ message: "Only team leads can invite teachers" });
+    if (!teamLeadUser.teacherProfile || !canManageOrganization(teamLeadUser.teacherProfile)) {
+      return res.status(403).json({ message: "Only team leads or organization owners/managers can invite teachers" });
     }
 
-    const organization = teamLeadUser.teacherProfile.ledOrganization;
+    const organization = getManagedOrganization(teamLeadUser.teacherProfile);
     
     if (!organization) {
       return res.status(400).json({ message: "Organization not found" });
@@ -2053,7 +2068,7 @@ export const deleteOrganization = async (req, res, next) => {
       where: { id: userId },
       include: {
         teacherProfile: {
-          include: { ledOrganization: true },
+          include: { ledOrganization: true, organization: true },
         },
       },
     });
@@ -2062,18 +2077,22 @@ export const deleteOrganization = async (req, res, next) => {
       return res.status(400).json({ message: "User is not a teacher" });
     }
 
+    if (!canManageOrganization(user.teacherProfile)) {
+      return res.status(403).json({ message: "Only team leads or organization owners/managers can delete an organization" });
+    }
+
     const isCorrect = bcrypt.compareSync(password.trim(), user.password);
     if (!isCorrect) {
       return res.status(400).json({ message: "Incorrect password" });
     }
 
-    const organization = user.teacherProfile.ledOrganization;
+    const organization = getManagedOrganization(user.teacherProfile);
     if (!organization) {
-      return res.status(400).json({ message: "You are not the team lead of an organization" });
+      return res.status(400).json({ message: "Organization not found" });
     }
 
     const orgId = organization.id;
-    const teamLeadProfileId = user.teacherProfile.id;
+    const teamLeadProfileId = organization.teamLeadId || user.teacherProfile.id;
 
     await prisma.$transaction([
       prisma.teacherProfile.updateMany({
@@ -2185,13 +2204,19 @@ export const removeTeacherFromOrganization = async (req, res, next) => {
       return res.status(400).json({ message: "Teacher user ID is required" });
     }
 
-    // Get user (team lead) with organization
+    // Get user (team lead or owner/manager) with organization
     const teamLeadUser = await prisma.user.findUnique({
       where: { id: userId },
       include: {
         teacherProfile: {
           include: {
             ledOrganization: {
+              include: {
+                members: true,
+                teamLead: true,
+              }
+            },
+            organization: {
               include: {
                 members: true,
                 teamLead: true,
@@ -2206,11 +2231,11 @@ export const removeTeacherFromOrganization = async (req, res, next) => {
       return res.status(400).json({ message: "User is not a teacher" });
     }
 
-    if (!teamLeadUser.teacherProfile || !teamLeadUser.teacherProfile.isTeamLead) {
-      return res.status(403).json({ message: "Only team leads can remove teachers" });
+    if (!teamLeadUser.teacherProfile || !canManageOrganization(teamLeadUser.teacherProfile)) {
+      return res.status(403).json({ message: "Only team leads or organization owners/managers can remove teachers" });
     }
 
-    const organization = teamLeadUser.teacherProfile.ledOrganization;
+    const organization = getManagedOrganization(teamLeadUser.teacherProfile);
     if (!organization) {
       return res.status(400).json({ message: "Organization not found" });
     }
@@ -2230,6 +2255,10 @@ export const removeTeacherFromOrganization = async (req, res, next) => {
 
     if (!teacherToRemove || !teacherToRemove.teacherProfile) {
       return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    if (teacherToRemove.teacherProfile.id === organization.teamLeadId) {
+      return res.status(400).json({ message: "Cannot remove team lead from organization" });
     }
 
     // Check if teacher is actually in this organization

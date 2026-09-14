@@ -49,6 +49,9 @@ export const paymentSheet = async (req, res, next) => {
                 id: subjectId
             },
             include: {
+                teacherProfile: {
+                    select: { id: true, userId: true },
+                },
                 subjectTopics: {
                     select: { id: true, hours: true, scheduledAt: true, orderIndex: true },
                 },
@@ -71,7 +74,7 @@ export const paymentSheet = async (req, res, next) => {
             });
         }
 
-        const teacherProfileId = await resolveTeacherProfileId(teacherId);
+        const teacherProfileId = subject.teacherId;
         const studentProfileId = await resolveStudentProfileId(userId);
 
         if ((subject.courseType === 'SINGLE_STUDENT' || subject.courseType === 'SINGLE_PACKAGE') && (!teacherProfileId || !studentProfileId)) {
@@ -180,7 +183,7 @@ export const paymentSheet = async (req, res, next) => {
             },
             metadata: {
                 userId,
-                teacherId,
+                teacherId: subject.teacherProfile?.userId || teacherId,
                 subjectId,
                 date: date || '',
                 time: time || '',

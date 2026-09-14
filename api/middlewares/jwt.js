@@ -1,4 +1,7 @@
 import jwt from 'jsonwebtoken'
+
+const KNOWN_USER_TYPES = ['STUDENT', 'TEACHER', 'ADMIN', 'PARENT'];
+
 export const verifyToken = (req,res,next)=>{
     const authHeader = req.headers.authorization;
     if (!authHeader || typeof authHeader !== 'string') {
@@ -19,3 +22,34 @@ export const verifyToken = (req,res,next)=>{
         next()
     });
 }
+
+export const requireRole = (...types) => {
+    const allowed = types.map((type) => String(type).toUpperCase());
+    const unknown = allowed.filter((type) => !KNOWN_USER_TYPES.includes(type));
+    if (unknown.length > 0) {
+        throw new Error(`Unknown user type(s) in requireRole: ${unknown.join(', ')}`);
+    }
+
+    return (req, res, next) => {
+        if (!req.userId || !req.userType) {
+            return res.status(401).json({ message: "You are not authenticated!" });
+        }
+        if (!allowed.includes(req.userType)) {
+            return res.status(403).json({ message: "You are not allowed to perform this action" });
+        }
+        next();
+    };
+};
+
+export const requireSelfParam = (paramName = 'userId') => {
+    return (req, res, next) => {
+        if (!req.userId) {
+            return res.status(401).json({ message: "You are not authenticated!" });
+        }
+        const candidate = req.params?.[paramName] ?? req.body?.[paramName];
+        if (!candidate || String(candidate) !== String(req.userId)) {
+            return res.status(403).json({ message: "You are not allowed to perform this action" });
+        }
+        next();
+    };
+};

@@ -51,7 +51,32 @@ export const getTeacherAvailability = async (req, res, next) => {
 
 export const createBooking = async (req, res, next) => {
   try {
-    const { teacherId, subjectId, studentId, date, time } = req.body;
+    const { subjectId, date, time } = req.body;
+
+    if (req.userType !== 'STUDENT') {
+      return res.status(403).json({ message: "You are not allowed to perform this action" });
+    }
+
+    const studentUser = await prisma.user.findUnique({
+      where: { id: req.userId },
+      include: { studentProfile: { select: { id: true } } }
+    });
+
+    if (!studentUser?.studentProfile) {
+      return res.status(400).json({ message: "Student profile not found" });
+    }
+
+    const subject = await prisma.subject.findUnique({
+      where: { id: subjectId },
+      select: { teacherId: true }
+    });
+
+    if (!subject) {
+      return res.status(404).json({ message: "Subject not found" });
+    }
+
+    const studentId = studentUser.studentProfile.id;
+    const teacherId = subject.teacherId;
 
     // Check if the slot is already booked
     const existingBooking = await prisma.booking.findFirst({
@@ -114,7 +139,16 @@ export const createBooking = async (req, res, next) => {
 
 export const getTeacherBookings = async (req, res, next) => {
   try {
-    const { teacherId } = req.params;
+    const teacherUser = await prisma.user.findUnique({
+      where: { id: req.userId },
+      include: { teacherProfile: { select: { id: true } } }
+    });
+
+    if (!teacherUser?.teacherProfile) {
+      return res.status(403).json({ message: "You are not allowed to perform this action" });
+    }
+
+    const teacherId = teacherUser.teacherProfile.id;
 
     const bookings = await prisma.booking.findMany({
       where: {
@@ -152,7 +186,16 @@ export const getTeacherBookings = async (req, res, next) => {
 
 export const getStudentBookings = async (req, res, next) => {
   try {
-    const { studentId } = req.params;
+    const studentUser = await prisma.user.findUnique({
+      where: { id: req.userId },
+      include: { studentProfile: { select: { id: true } } }
+    });
+
+    if (!studentUser?.studentProfile) {
+      return res.status(403).json({ message: "You are not allowed to perform this action" });
+    }
+
+    const studentId = studentUser.studentProfile.id;
 
     const bookings = await prisma.booking.findMany({
       where: {
@@ -197,6 +240,22 @@ export const updateBookingStatus = async (req, res, next) => {
       return res.status(400).json({ message: "Invalid status" });
     }
 
+    const existing = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        student: { select: { userId: true } },
+        teacher: { select: { userId: true } },
+      },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    if (existing.student.userId !== req.userId && existing.teacher.userId !== req.userId) {
+      return res.status(403).json({ message: "You are not allowed to perform this action" });
+    }
+
     const booking = await prisma.booking.update({
       where: {
         id: bookingId
@@ -239,8 +298,18 @@ export const updateBookingStatus = async (req, res, next) => {
 
 export const setTeacherAvailability = async (req, res, next) => {
   try {
-    const { teacherId } = req.params;
     const { dates } = req.body;
+
+    const teacherUser = await prisma.user.findUnique({
+      where: { id: req.userId },
+      include: { teacherProfile: { select: { id: true } } }
+    });
+
+    if (!teacherUser?.teacherProfile) {
+      return res.status(403).json({ message: "You are not allowed to perform this action" });
+    }
+
+    const teacherId = teacherUser.teacherProfile.id;
 
     if (!Array.isArray(dates)) {
       return res.status(400).json({ message: "Dates must be an array" });

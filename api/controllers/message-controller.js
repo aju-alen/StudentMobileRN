@@ -1,71 +1,95 @@
 import dotenv from "dotenv";
+import crypto from "crypto";
+import { PrismaClient } from '@prisma/client';
+
 dotenv.config();
 
+const prisma = new PrismaClient();
 
+const assertConversationParticipant = async (req, res) => {
+    const conversation = await prisma.conversation.findUnique({
+        where: { id: req.params.conversationId },
+        select: {
+            student: { select: { userId: true } },
+            teacher: { select: { userId: true } },
+        },
+    });
 
-export const getMessages = async (req, res,next) => {
-    console.log(req.params.conversationId);
-  try{
-    const messages = await Message.find({conversationId:req.params.conversationId});
-    if(!messages){
-      return res.status(404).json({message:"No messages found"});
+    if (!conversation) {
+        res.status(400).json({ message: "No conversation found" });
+        return false;
     }
-    return res.status(200).json(messages);
 
-  }
-  catch(err){
+    const isParticipant =
+        conversation.student?.userId === req.userId ||
+        conversation.teacher?.userId === req.userId;
+
+    if (!isParticipant) {
+        res.status(403).json({ message: "You are not allowed to perform this action" });
+        return false;
+    }
+
+    return true;
+};
+
+export const getMessages = async (req, res, next) => {
+  try {
+    const allowed = await assertConversationParticipant(req, res);
+    if (!allowed) return;
+
+    const messages = await prisma.conversationMessage.findMany({
+      where: { conversationId: req.params.conversationId },
+      orderBy: { createdAt: 'asc' },
+    });
+    return res.status(200).json(messages);
+  } catch (err) {
     next(err);
   }
-}
+};
 
-export const createMessage = async (req, res,next) => {
-  const {} =  req.body;
-  const messages = {
-    senderId:req.userId,
-    message:"My Name is Alen"
-  } 
-    try{
-      const findExistingMessage = await Message.findOne({conversationId:req.params.conversationId});
+export const createMessage = async (req, res, next) => {
+  try {
+    const allowed = await assertConversationParticipant(req, res);
+    if (!allowed) return;
 
-      if(findExistingMessage){
-        findExistingMessage.messages.push(messages);
-        const savedMessage = await findExistingMessage.save();
-        if(!savedMessage){
-          return res.status(404).json({message:"No messages found"});
-        }
-        return res.status(200).json(savedMessage);
-      }
-      else{const message = await Message.create({conversationId:req.params.conversationId, messages });
-      if(!message){
-        return res.status(404).json({message:"No messages found"});
-      }
-      return res.status(200).json(message);
+    const text = req.body?.text ?? req.body?.message;
+    if (!text || (typeof text === 'string' && !text.trim())) {
+      return res.status(400).json({ message: "Please provide a message" });
     }
 
-    }
-    catch(err){
-        next(err);
-    }
-}
+    const senderType = req.userType === 'TEACHER' ? 'TEACHER' : 'STUDENT';
+    const message = await prisma.conversationMessage.create({
+      data: {
+        senderId: req.userId,
+        senderType,
+        text: String(text).trim(),
+        messageId: req.body?.messageId || crypto.randomUUID(),
+        conversationId: req.params.conversationId,
+      },
+    });
+    return res.status(200).json(message);
+  } catch (err) {
+    next(err);
+  }
+};
 
-export const openConversation = async (req, res,next) => {
-    const {} =  req.body;
-    const messages = {
-      senderId:req.userId,
-      message:"Hello"
-    }
-    try{
-      const message = await Message.create({conversationId:req.params.conversationId, messages});
-      if(!message){
-        return res.status(404).json({message:"No messages found"});
-      }
-      return res.status(200).json(message);
+export const openConversation = async (req, res, next) => {
+  try {
+    const allowed = await assertConversationParticipant(req, res);
+    if (!allowed) return;
 
-    }
-    catch(err){
-        next(err);
-    }
-}
-
-
-
+    const senderType = req.userType === 'TEACHER' ? 'TEACHER' : 'STUDENT';
+    const message = await prisma.conversationMessage.create({
+      data: {
+        senderId: req.userId,
+        senderType,
+        text: "Hello",
+        messageId: crypto.randomUUID(),
+        conversationId: req.params.conversationId,
+      },
+    });
+    return res.status(200).json(message);
+  } catch (err) {
+    next(err);
+  }
+};

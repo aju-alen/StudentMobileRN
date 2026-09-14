@@ -44,8 +44,7 @@ const LoginPage = () => {
 
   const handleLogin = async () => {
     const trimmedEmail = email.trim();
-    const trimmedPassword = password.trim();
-    if (!trimmedEmail && !trimmedPassword) {
+    if (!trimmedEmail && !password) {
       setError('Please enter your email and password');
       return;
     }
@@ -53,7 +52,7 @@ const LoginPage = () => {
       setError('Please enter your email address');
       return;
     }
-    if (!trimmedPassword) {
+    if (!password) {
       setError('Please enter your password');
       return;
     }
@@ -63,12 +62,11 @@ const LoginPage = () => {
 
     const user = {
       email: trimmedEmail,
-      password: trimmedPassword,
+      password,
     };
 
     try {
       const resp = await axios.post(`${ipURL}/api/auth/login`, user);
-      console.log(resp.data, 'Logged in successfully');
 
       await AsyncStorage.setItem('authToken', resp.data.token);
       await AsyncStorage.setItem('userDetails', JSON.stringify({
@@ -97,7 +95,6 @@ const LoginPage = () => {
         router.replace(await getPostAuthHref());
       }
     } catch (err: any) {
-      console.log(err);
       const data = err.response?.data;
       const msg =
         (data?.message && typeof data.message === 'string' && data.message) ||

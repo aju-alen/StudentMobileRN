@@ -1,14 +1,24 @@
 import { PrismaClient } from '@prisma/client';
 import { EnrollmentStatus } from '@prisma/client';
+import { resolveStudentProfileId } from './bookingController.js';
 
 const prisma = new PrismaClient();
 
 export const createEnrollment = async (req, res, next) => {
   try {
-    const { subjectId, studentId } = req.body;
+    const { subjectId } = req.body;
 
-    if (!subjectId || !studentId) {
-      return res.status(400).json({ error: 'Missing required fields: subjectId and studentId' });
+    if (req.userType !== 'STUDENT') {
+      return res.status(403).json({ error: 'You are not allowed to perform this action' });
+    }
+
+    if (!subjectId) {
+      return res.status(400).json({ error: 'Missing required field: subjectId' });
+    }
+
+    const studentId = await resolveStudentProfileId(req.userId);
+    if (!studentId) {
+      return res.status(400).json({ error: 'Student profile not found' });
     }
 
     // Get subject and check if it's multi-student
@@ -116,10 +126,10 @@ export const createEnrollment = async (req, res, next) => {
 
 export const getStudentEnrollments = async (req, res, next) => {
   try {
-    const { studentId } = req.params;
+    const studentId = await resolveStudentProfileId(req.userId);
 
     if (!studentId) {
-      return res.status(400).json({ error: 'Student ID is required' });
+      return res.status(403).json({ error: 'You are not allowed to perform this action' });
     }
 
     const enrollments = await prisma.courseEnrollment.findMany({
@@ -165,6 +175,24 @@ export const getSubjectEnrollments = async (req, res, next) => {
       return res.status(400).json({ error: 'Subject ID is required' });
     }
 
+    const subject = await prisma.subject.findUnique({
+      where: { id: subjectId },
+      select: { teacherId: true },
+    });
+
+    if (!subject) {
+      return res.status(404).json({ error: 'Subject not found' });
+    }
+
+    const teacherUser = await prisma.user.findUnique({
+      where: { id: req.userId },
+      include: { teacherProfile: { select: { id: true } } },
+    });
+
+    if (!teacherUser?.teacherProfile || teacherUser.teacherProfile.id !== subject.teacherId) {
+      return res.status(403).json({ error: 'You are not allowed to perform this action' });
+    }
+
     const enrollments = await prisma.courseEnrollment.findMany({
       where: {
         subjectId,
@@ -207,10 +235,14 @@ export const cancelEnrollment = async (req, res, next) => {
     const enrollment = await prisma.courseEnrollment.findUnique({
       where: { id: enrollmentId },
       include: {
+        student: {
+          select: { userId: true },
+        },
         subject: {
           select: {
             id: true,
             scheduledDateTime: true,
+            teacherId: true,
           },
         },
       },
@@ -218,6 +250,17 @@ export const cancelEnrollment = async (req, res, next) => {
 
     if (!enrollment) {
       return res.status(404).json({ error: 'Enrollment not found' });
+    }
+
+    const actor = await prisma.user.findUnique({
+      where: { id: req.userId },
+      include: { teacherProfile: { select: { id: true } } },
+    });
+
+    const isStudent = enrollment.student.userId === req.userId;
+    const isTeacher = actor?.teacherProfile?.id === enrollment.subject.teacherId;
+    if (!isStudent && !isTeacher) {
+      return res.status(403).json({ error: 'You are not allowed to perform this action' });
     }
 
     if (enrollment.enrollmentStatus === 'CANCELLED') {

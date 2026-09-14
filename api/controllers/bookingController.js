@@ -79,15 +79,31 @@ export const getTeacherAvailability = async (req, res) => {
 
 export const createBooking = async (req, res) => {
   try {
-    const { teacherId, subjectId, studentId, date, time } = req.body;
+    const { subjectId, date, time } = req.body;
 
-    // Validate required fields
-    if (!teacherId || !subjectId || !studentId || !date || !time) {
+    if (req.userType !== 'STUDENT') {
+      return res.status(403).json({ error: 'You are not allowed to perform this action' });
+    }
+
+    if (!subjectId || !date || !time) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const teacherProfileId = await resolveTeacherProfileId(teacherId);
-    const studentProfileId = (await resolveStudentProfileId(studentId)) || studentId;
+    const studentProfileId = await resolveStudentProfileId(req.userId);
+    if (!studentProfileId) {
+      return res.status(400).json({ error: 'Student profile not found' });
+    }
+
+    const subject = await prisma.subject.findUnique({
+      where: { id: subjectId },
+      select: { subjectPrice: true, teacherId: true }
+    });
+
+    if (!subject) {
+      return res.status(404).json({ error: 'Subject not found' });
+    }
+
+    const teacherProfileId = subject.teacherId;
     const dateStr = String(date).trim().split('T')[0];
     const occupied = await getPairOccupiedSlots(teacherProfileId, studentProfileId, dateStr);
     const requested = requestedSlotsFor(time, 1);
@@ -95,22 +111,11 @@ export const createBooking = async (req, res) => {
       return res.status(400).json({ error: 'This time slot is already booked' });
     }
 
-    // Get subject price
-    const subject = await prisma.subject.findUnique({
-      where: { id: subjectId },
-      select: { subjectPrice: true }
-    });
-
-    if (!subject) {
-      return res.status(404).json({ error: 'Subject not found' });
-    }
-
-    // Create the booking
     const booking = await prisma.booking.create({
       data: {
-        teacherId,
+        teacherId: teacherProfileId,
         subjectId,
-        studentId,
+        studentId: studentProfileId,
         bookingDate: new Date(date),
         bookingTime: time,
         bookingStatus: BookingStatus.PENDING,
@@ -135,6 +140,22 @@ export const updateBookingStatus = async (req, res) => {
       return res.status(400).json({ error: 'Invalid booking status' });
     }
 
+    const existing = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        student: { select: { userId: true } },
+        teacher: { select: { userId: true } },
+      },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    if (existing.student.userId !== req.userId && existing.teacher.userId !== req.userId) {
+      return res.status(403).json({ error: 'You are not allowed to perform this action' });
+    }
+
     const booking = await prisma.booking.update({
       where: { id: bookingId },
       data: { bookingStatus: status }
@@ -151,6 +172,22 @@ export const updatePaymentStatus = async (req, res) => {
   try {
     const { bookingId } = req.params;
     const { paymentCompleted } = req.body;
+
+    const existing = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        student: { select: { userId: true } },
+        teacher: { select: { userId: true } },
+      },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    if (existing.student.userId !== req.userId && existing.teacher.userId !== req.userId) {
+      return res.status(403).json({ error: 'You are not allowed to perform this action' });
+    }
 
     const booking = await prisma.booking.update({
       where: { id: bookingId },
