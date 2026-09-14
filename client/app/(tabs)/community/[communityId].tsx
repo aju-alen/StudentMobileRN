@@ -19,7 +19,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import {SafeAreaView} from "react-native-safe-area-context";
-import { socket } from "../../utils/socket";
+import { socket, connectSocket } from "../../utils/socket";
 import { moderateScale } from "../../utils/metrics";
 import { FONT } from "../../../constants";
 import { axiosWithAuth } from "../../utils/customAxios";
@@ -129,6 +129,7 @@ const CommunityId = () => {
 
         // Join the community chat room when component mounts
         if (chatName) {
+          await connectSocket();
           socket.emit('chat-room', chatName);
         }
 

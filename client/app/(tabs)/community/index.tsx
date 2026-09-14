@@ -18,7 +18,7 @@ import { FONT } from "../../../constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { ipURL } from "../../utils/utils";
-import { socket } from "../../utils/socket";
+import { socket, connectSocket } from "../../utils/socket";
 import { horizontalScale, moderateScale, verticalScale } from "../../utils/metrics";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -118,11 +118,13 @@ const CommunityPage = () => {
         {},
         { headers: { Authorization: `Bearer ${storedToken || token}` }}
       );
+      await connectSocket();
       socket.emit('chat-room', item.id);
       router.push(`/(tabs)/community/${item.id}`);
     } catch (error: any) {
       console.error("Error joining community:", error);
       if (error.response?.status === 200 || error.response?.data?.message?.includes('already part')) {
+        await connectSocket();
         socket.emit('chat-room', item.id);
         router.push(`/(tabs)/community/${item.id}`);
       } else {

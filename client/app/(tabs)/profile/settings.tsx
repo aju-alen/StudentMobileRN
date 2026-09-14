@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { axiosWithAuth } from '../../utils/customAxios';
 import { ipURL } from '../../utils/utils';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { disconnectSocket } from '../../utils/socket';
 
 const SettingsRow = ({ label, onPress, destructive = false, accessibilityLabel }) => (
   <TouchableOpacity
@@ -64,6 +65,7 @@ const SettingsPage = () => {
         {
           text: "Logout",
           onPress: async () => {
+            disconnectSocket();
             await AsyncStorage.removeItem("authToken");
             await AsyncStorage.removeItem("isTeacher");
             router.replace("/(authenticate)/login");

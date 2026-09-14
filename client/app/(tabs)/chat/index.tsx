@@ -20,7 +20,7 @@ import { axiosWithAuth } from "../../utils/customAxios";
 import { ipURL } from "../../utils/utils";
 import { Ionicons } from '@expo/vector-icons';
 import { horizontalScale, verticalScale, moderateScale } from "../../utils/metrics";
-import { socket } from "../../utils/socket";
+import { socket, connectSocket } from "../../utils/socket";
 import { FONT } from "../../../constants/theme";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -127,6 +127,7 @@ const ChatPage = () => {
   }, [originalConversation, debouncedSearchQuery, isTeacher]);
 
   const handlePress = async (id) => {
+    await connectSocket();
     socket.emit("chat-room", id);
     router.push(`/(tabs)/chat/${id}`);
   };

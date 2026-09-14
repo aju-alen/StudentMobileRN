@@ -21,7 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useSegments } from "expo-router";
 import { horizontalScale, verticalScale, moderateScale } from '../utils/metrics';
 import { COLORS, FONT } from "../../constants";
-import { socket } from '../utils/socket';
+import { socket, connectSocket } from '../utils/socket';
 import BookingCalendar from './BookingCalendar';
 import CoverImage from './CoverImage';
 import BookingSummaryModal from './BookingSummaryModal';
@@ -278,6 +278,7 @@ const SubjectPage = ({ subjectId }) => {
     setIsInitializingChat(true);
 
     try {
+        await connectSocket();
         // First check if a conversation already exists
         socket.emit("check-existing-conversation", {
             userId,

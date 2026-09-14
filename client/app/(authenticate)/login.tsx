@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { connectSocket } from '../utils/socket';
 import { router } from 'expo-router';
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -79,6 +80,7 @@ const LoginPage = () => {
         email: resp.data.email,
         userType: resp.data.userType,
       }));
+      await connectSocket();
 
       if (resp.data.hasSeenOnboarding === false) {
         // First time user - redirect to onboarding

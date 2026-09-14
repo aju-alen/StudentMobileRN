@@ -6,6 +6,7 @@ import { Platform } from 'react-native';
 import { COLORS } from "../../constants"
 import { verticalScale, moderateScale, horizontalScale} from "../utils/metrics";
 import useSafeAreaInsets, { addBasePaddingToInset } from "../hooks/useSafeAreaInsets";
+import { connectSocket } from "../utils/socket";
 
 interface UserDetails {
   isTeacher?: boolean;
@@ -25,6 +26,7 @@ const TabsLayout = () => {
         if (user) {
           setUserDetails(JSON.parse(user));
         }
+        await connectSocket();
       } catch (error) {
         console.error("Error fetching user details:", error);
       }

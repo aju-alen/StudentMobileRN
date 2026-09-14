@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { Image } from 'expo-image';
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { socket } from "../../utils/socket";
+import { socket, connectSocket } from "../../utils/socket";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { ipURL } from "../../utils/utils";
@@ -130,9 +130,13 @@ const ConversationId = () => {
 
     fetchConversation();
 
-    if (conversationId) {
-      socket.emit("chat-room", conversationId);
-    }
+    const joinRoom = async () => {
+      await connectSocket();
+      if (conversationId) {
+        socket.emit("chat-room", conversationId);
+      }
+    };
+    joinRoom();
 
     socket.on("server-message", (incoming) => {
       setAllMessages(prev => ({
