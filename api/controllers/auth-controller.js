@@ -1195,8 +1195,15 @@ export const updateUserHasSeenOnboarding = async (req, res, next) => {
 
 export const zoomTest = async (req, res, next) => {
   try{
+    if (req.userType !== 'ADMIN') {
+      return res.status(403).json({ message: 'Only admins can run Zoom test' });
+    }
+
     const { email, name } = req.body;
-    console.log(email, name, 'this is the email and name');
+    if (!email || !name) {
+      return res.status(400).json({ message: 'Email and name are required' });
+    }
+
     const token = await createZoomAccountForTeacher(email, name);
     res.status(200).json({ message: "Zoom test successful", token });
   }
