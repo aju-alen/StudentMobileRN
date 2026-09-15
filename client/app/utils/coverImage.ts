@@ -58,3 +58,7 @@ export const prepareCoverImage = async (uri: string) => {
     format: ImageManipulator.SaveFormat.WEBP,
   });
 };
+
+const coverImage = {};
+
+export default coverImage;

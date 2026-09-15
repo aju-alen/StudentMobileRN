@@ -127,8 +127,12 @@ const SettingsPage = () => {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Text style={styles.sectionTitle}>Account</Text>
         <View style={styles.group}>
-          <SettingsRow label="Edit Profile" onPress={() => router.push('/(tabs)/profile/edit-profile')} />
-          <View style={styles.divider} />
+          {user?.userType !== 'PARENT' && !user?.isParent && (
+            <>
+              <SettingsRow label="Edit Profile" onPress={() => router.push('/(tabs)/profile/edit-profile')} />
+              <View style={styles.divider} />
+            </>
+          )}
           <SettingsRow label="Change Password" onPress={() => router.push('/(tabs)/profile/change-password')} />
           {user?.isTeacher === true && (
             <>

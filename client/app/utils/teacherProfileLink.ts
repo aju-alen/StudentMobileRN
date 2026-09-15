@@ -27,3 +27,7 @@ export async function getPostAuthHref(): Promise<string> {
   if (teacherId) return getTeacherProfileAppPath(teacherId);
   return '/(tabs)/home';
 }
+
+const teacherProfileLink = {};
+
+export default teacherProfileLink;

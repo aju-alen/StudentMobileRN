@@ -29,3 +29,7 @@ export function fromUaeDateTime(dateStr: string, timeStr = '00:00') {
   const time = normalizeHHmm(timeStr);
   return new Date(`${date}T${time}:00+04:00`);
 }
+
+const uaeDateTime = {};
+
+export default uaeDateTime;

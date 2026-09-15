@@ -68,7 +68,10 @@ const ProfilePage = () => {
   const [hasSingleStudentDraft, setHasSingleStudentDraft] = useState(false);
   const [hasMultiStudentDraft, setHasMultiStudentDraft] = useState(false);
   const [hasSinglePackageDraft, setHasSinglePackageDraft] = useState(false);
+  const [hasMultiPackageDraft, setHasMultiPackageDraft] = useState(false);
   const [parentInvites, setParentInvites] = useState([]);
+
+  const isParent = !!(userDetails?.isParent || userDetails?.userType === 'PARENT');
 
   const isMultiStudentSubscribed = !!revenueCatContext?.multiStudentCapacity;
   const isSinglePackageSubscribed = !!revenueCatContext?.hasSinglePackage;
@@ -354,6 +357,24 @@ const ProfilePage = () => {
   const teacherCourses = user.subjects || [];
   const studentCourses = user.userSubjects || [];
   const hasCourses = userDetails?.isTeacher ? teacherCourses.length > 0 : studentCourses.length > 0;
+  const profileAvatar = user.profileImage ? (
+    <Image
+      key={user.profileImage ?? 'default'}
+      source={{
+        uri: user.profileImage,
+        cacheKey: `${user.profileImage ?? 'default'}-${profileImageVersion}`,
+      }}
+      style={styles.profileImage}
+      placeholder={blurhash}
+      contentFit="cover"
+      transition={200}
+      cachePolicy="memory-disk"
+    />
+  ) : (
+    <View style={styles.profileImagePlaceholder}>
+      <Ionicons name="person-outline" size={28} color="#1A4C6E" />
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.screen} edges={['top']}>
@@ -400,37 +421,24 @@ const ProfilePage = () => {
         }
       >
         <View style={styles.identityCard}>
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => router.push('/(tabs)/profile/edit-profile')}
-            accessibilityRole="button"
-            accessibilityLabel="Edit profile photo"
-          >
-            {user.profileImage ? (
-              <Image
-                key={user.profileImage ?? 'default'}
-                source={{
-                  uri: user.profileImage,
-                  cacheKey: `${user.profileImage ?? 'default'}-${profileImageVersion}`,
-                }}
-                style={styles.profileImage}
-                placeholder={blurhash}
-                contentFit="cover"
-                transition={200}
-                cachePolicy="memory-disk"
-              />
-            ) : (
-              <View style={styles.profileImagePlaceholder}>
-                <Ionicons name="person-outline" size={28} color="#1A4C6E" />
-              </View>
-            )}
-          </TouchableOpacity>
+          {isParent ? (
+            profileAvatar
+          ) : (
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.push('/(tabs)/profile/edit-profile')}
+              accessibilityRole="button"
+              accessibilityLabel="Edit profile photo"
+            >
+              {profileAvatar}
+            </TouchableOpacity>
+          )}
           <View style={styles.profileInfo}>
             <View style={styles.nameRow}>
               <Text style={styles.name} numberOfLines={1}>{user.name || 'Your profile'}</Text>
               <View style={styles.roleChip}>
                 <Text style={styles.roleChipText}>
-                  {userDetails?.isTeacher ? 'Tutor' : userDetails?.isParent || userDetails?.userType === 'PARENT' ? 'Parent' : 'Student'}
+                  {userDetails?.isTeacher ? 'Tutor' : isParent ? 'Parent' : 'Student'}
                 </Text>
               </View>
             </View>
@@ -443,6 +451,7 @@ const ProfilePage = () => {
                 ))}
               </View>
             )}
+            {!isParent && (
             <TouchableOpacity
               onPress={() => router.push('/(tabs)/profile/edit-profile')}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -451,6 +460,7 @@ const ProfilePage = () => {
             >
               <Text style={styles.editLink}>Edit profile</Text>
             </TouchableOpacity>
+            )}
           </View>
         </View>
 

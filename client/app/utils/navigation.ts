@@ -7,3 +7,7 @@ export const goBack = (fallback: Href = '/(tabs)/home') => {
   }
   router.replace(fallback);
 };
+
+const navigation = {};
+
+export default navigation;

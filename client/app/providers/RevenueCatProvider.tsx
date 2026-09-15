@@ -40,7 +40,6 @@ const RevenueCatContext = createContext<RevenueCatProps | null>(null);
 
   useEffect(() => {
     const init = async () => {
-       console.log(APIKeys.apple,'api apple key');
       if (Platform.OS === 'android') {
         await Purchases.configure({ apiKey: APIKeys.google });
       } else {

@@ -34,3 +34,7 @@ export function parseTeacherIdFromUrl(input?: string | null): string | null {
   const match = input.match(TEACHER_PATH_RE);
   return match?.[1] ?? null;
 }
+
+const teacherProfilePath = {};
+
+export default teacherProfilePath;

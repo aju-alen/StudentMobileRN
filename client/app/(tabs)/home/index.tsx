@@ -21,6 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { FONT } from '../../../constants';
 import { horizontalScale, verticalScale, moderateScale } from '../../utils/metrics';
 import { StatusBar } from "expo-status-bar";
+import { SafeAreaView } from "react-native-safe-area-context";
 import HorizontalSubjectCard from "../../components/horizontalSubjectCard";
 import ColumnSubjectCards from "../../components/colSubjectCards";
 import VideoPlayer from "../../components/VideoPlayer";

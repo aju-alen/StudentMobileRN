@@ -27,3 +27,7 @@ export const registerForPushNotificationsAsync = async (): Promise<string | null
   const { data } = await Notifications.getExpoPushTokenAsync({ projectId });
   return data ?? null;
 };
+
+const pushNotifications = {};
+
+export default pushNotifications;

@@ -1,12 +1,13 @@
 import crypto from 'crypto';
 import { PrismaClient } from '@prisma/client';
-import { sendEmailService } from '../services/emailService.js';
+import { Resend } from 'resend';
 import {
   getStudentLearningProgressPayload,
   getStudentUpcomingClassesPayload,
 } from './bookingController.js';
 
 const prisma = new PrismaClient();
+const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
 
 const userSelect = {
   id: true,
@@ -146,9 +147,6 @@ export const inviteStudent = async (req, res, next) => {
     if (existing?.status === 'ACCEPTED') {
       return res.status(409).json({ message: 'This student is already linked to your account' });
     }
-    if (existing?.status === 'PENDING') {
-      return res.status(409).json({ message: 'An invite is already pending for this student' });
-    }
 
     const inviteToken = crypto.randomBytes(20).toString('hex');
     const link = existing
@@ -174,13 +172,18 @@ export const inviteStudent = async (req, res, next) => {
       select: { name: true },
     });
 
-    await sendEmailService(
-      studentUser.email,
-      'A parent wants to link to your Coach Academ account',
-      `<p>Hi ${studentUser.name},</p>
-       <p>${parentUser?.name || 'A parent'} wants to link their Coach Academ parent account to yours so they can follow your classes and progress.</p>
-       <p>Open the Coach Academ app and accept or reject this request from your profile.</p>`
-    );
+    try {
+      await resend.emails.send({
+        from: `Support <${process.env.COACH_ACADEM_RESEND_EMAIL}>`,
+        to: studentUser.email,
+        subject: 'A parent wants to link to your Coach Academ account',
+        html: `<p>Hi ${studentUser.name},</p>
+         <p>${parentUser?.name || 'A parent'} wants to link their Coach Academ parent account to yours so they can follow your classes and progress.</p>
+         <p>Open the Coach Academ app and accept or reject this request from your profile.</p>`,
+      });
+    } catch (emailErr) {
+      console.error('Parent invite email failed', emailErr);
+    }
 
     return res.status(201).json({
       message: 'Invite sent. The student must accept before the link is active.',
