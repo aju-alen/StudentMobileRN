@@ -1,6 +1,6 @@
 import express from "express";
-import {  register, verifyEmail,login,singleUser,updateMetadata,getTeacherProfile,changePassword,forgotPassword,resetPassword,deleteAccount,updateProfileImage,verifyPurchase,getActiveStudentCourses,updateUserHasSeenOnboarding,loginSuperAdmin,registerPushToken,zoomTest,verificationCheck,resendZoomInviteEmail,updateOrganizationTradeLicense,updateOrganizationCapacity,getOrganizationMembers,inviteTeacherToOrganization,getOrganizationInviteCode,refreshOrganizationInviteCode,createOrganization,deleteOrganization,joinOrganizationByInvite,removeTeacherFromOrganization } from "../controllers/auth-controller.js";
-import { verifyToken } from "../middlewares/jwt.js";
+import {  register, verifyEmail,login,singleUser,updateMetadata,getTeacherProfile,getAllTeachers,changePassword,forgotPassword,resetPassword,deleteAccount,updateProfileImage,verifyPurchase,getActiveStudentCourses,updateUserHasSeenOnboarding,loginSuperAdmin,registerPushToken,zoomTest,verificationCheck,resendZoomInviteEmail,updateOrganizationTradeLicense,updateOrganizationCapacity,getOrganizationMembers,inviteTeacherToOrganization,getOrganizationInviteCode,refreshOrganizationInviteCode,createOrganization,deleteOrganization,joinOrganizationByInvite,removeTeacherFromOrganization } from "../controllers/auth-controller.js";
+import { verifyToken, optionalVerifyToken } from "../middlewares/jwt.js";
 import { loginLimiter, forgotPasswordLimiter, resetPasswordLimiter } from "../middlewares/rateLimit.js";
 const router = express.Router()
 
@@ -12,7 +12,8 @@ router.put('/change-password', verifyToken, changePassword)
 router.post('/forgot-password', forgotPasswordLimiter, forgotPassword)
 router.post('/reset-password', resetPasswordLimiter, resetPassword)
 router.delete('/delete-account', verifyToken, deleteAccount)
-router.get('/teacher/profile/:teacherProfileId', getTeacherProfile);
+router.get('/teachers', getAllTeachers);
+router.get('/teacher/profile/:teacherProfileId', optionalVerifyToken, getTeacherProfile);
 router.post('/login', loginLimiter, login);
 router.post('/super-admin/login', loginLimiter, loginSuperAdmin);
 router.get('/metadata/verify-purchase/:subjectId',verifyToken, verifyPurchase);

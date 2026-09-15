@@ -162,6 +162,45 @@ const UserTypeScreen = ({ onSelect }) => {
                             </View>
                         )}
                     </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={styles.userTypeButton}
+                        onPress={() => onSelect('parent')}
+                    >
+                        <View style={styles.userTypeIconContainer}>
+                            <Ionicons name="people-outline" size={32} color={COLORS.primary} />
+                        </View>
+                        <Text style={styles.userTypeTitle}>Parent</Text>
+                        <Text style={styles.userTypeDescription}>Follow your child&apos;s classes and progress, and message their tutors</Text>
+                        <TouchableOpacity 
+                            style={styles.knowMoreButton}
+                            onPress={() => toggleExpand('parent')}
+                        >
+                            <Text style={styles.knowMoreText}>Know More</Text>
+                            <Ionicons 
+                                name={expandedCard === 'parent' ? 'chevron-up' : 'chevron-down'} 
+                                size={20} 
+                                color={COLORS.primary} 
+                            />
+                        </TouchableOpacity>
+                        {expandedCard === 'parent' && (
+                            <View style={styles.expandedContent}>
+                                <View style={styles.userTypeFeatures}>
+                                    <View style={styles.featureItem}>
+                                        <Ionicons name="checkmark-circle" size={18} color={COLORS.primary} />
+                                        <Text style={styles.featureText}>Link student accounts</Text>
+                                    </View>
+                                    <View style={styles.featureItem}>
+                                        <Ionicons name="checkmark-circle" size={18} color={COLORS.primary} />
+                                        <Text style={styles.featureText}>See learning activity</Text>
+                                    </View>
+                                    <View style={styles.featureItem}>
+                                        <Ionicons name="checkmark-circle" size={18} color={COLORS.primary} />
+                                        <Text style={styles.featureText}>Chat with purchased tutors</Text>
+                                    </View>
+                                </View>
+                            </View>
+                        )}
+                    </TouchableOpacity>
                 </View>
 
                 <View style={styles.loginContainer}>
@@ -302,7 +341,7 @@ const RegisterPage = () => {
     const [userDescription, setUserDescription] = useState('');
     const [reccomendedSubjects, setReccomendedSubjects] = useState([]);
     const [subjectInput, setSubjectInput] = useState('');
-    const [userType, setUserType] = useState<'student' | 'teacher' | 'organization' | null>(null);
+    const [userType, setUserType] = useState<'student' | 'teacher' | 'organization' | 'parent' | null>(null);
     const [recommendedBoard, setRecommendedBoard] = useState('');
     const [selectedBoards, setSelectedBoards] = useState<string[]>([]);
     const [recommendedGrade, setRecommendedGrade] = useState(0);
@@ -360,7 +399,7 @@ const RegisterPage = () => {
         { label: 'MANAGER', value: 'MANAGER' },
     ];
 
-    const handleUserTypeSelect = (selectedType: 'student' | 'teacher' | 'organization') => {
+    const handleUserTypeSelect = (selectedType: 'student' | 'teacher' | 'organization' | 'parent') => {
         setUserType(selectedType);
         setShowUserType(false);
     };
@@ -407,25 +446,27 @@ const RegisterPage = () => {
             newErrors.userDescription = 'About you is required';
         }
 
-        if (reccomendedSubjects.length === 0) {
-            newErrors.reccomendedSubjects = 'Please add at least one subject';
-        }
-
-        if (userType === 'organization') {
-            if (selectedBoards.length === 0) {
-                newErrors.recommendedBoard = 'Please select at least one curricula';
+        if (userType !== 'parent') {
+            if (reccomendedSubjects.length === 0) {
+                newErrors.reccomendedSubjects = 'Please add at least one subject';
             }
-        } else if (recommendedBoard === '') {
-            newErrors.recommendedBoard = 'Please select a curricula';
-        }
 
-        if (userType === 'teacher' || userType === 'organization') {
-            if (selectedGrades.length === 0) {
-                newErrors.selectedGrades = 'Please select at least one grade';
+            if (userType === 'organization') {
+                if (selectedBoards.length === 0) {
+                    newErrors.recommendedBoard = 'Please select at least one curricula';
+                }
+            } else if (recommendedBoard === '') {
+                newErrors.recommendedBoard = 'Please select a curricula';
             }
-        } else if (userType === 'student') {
-            if (recommendedGrade === 0) {
-                newErrors.recommendedGrade = 'Please select your grade';
+
+            if (userType === 'teacher' || userType === 'organization') {
+                if (selectedGrades.length === 0) {
+                    newErrors.selectedGrades = 'Please select at least one grade';
+                }
+            } else if (userType === 'student') {
+                if (recommendedGrade === 0) {
+                    newErrors.recommendedGrade = 'Please select your grade';
+                }
             }
         }
 
@@ -553,12 +594,23 @@ const RegisterPage = () => {
                         <Text style={styles.title}>
                             Create {
                                 userType === 'organization' ? 'Organization' : 
-                                userType === 'teacher' ? 'Tutor' : 
+                                userType === 'teacher' ? 'Tutor' :
+                                userType === 'parent' ? 'Parent' : 
                                 'Student'
                             } Account
                         </Text>
                         <Text style={styles.subtitle}>Join our learning community</Text>
                     </View>
+
+                    {userType === 'parent' && (
+                        <TouchableOpacity
+                            style={styles.seeTutorsButton}
+                            onPress={() => router.push('/(authenticate)/tutors')}
+                        >
+                            <Ionicons name="school-outline" size={20} color={COLORS.primary} />
+                            <Text style={styles.seeTutorsButtonText}>See all tutors</Text>
+                        </TouchableOpacity>
+                    )}
 
                     <View style={styles.inputGroup} onLayout={(e) => { scrollInputTops.current['name'] = e.nativeEvent.layout.y; }}>
                         <Text style={styles.label}>Name</Text>
@@ -657,6 +709,8 @@ const RegisterPage = () => {
                         {errors.userDescription && <Text style={styles.errorText}>{errors.userDescription}</Text>}
                     </View>
 
+                    {userType !== 'parent' && (
+                    <>
                     <View style={styles.inputGroup} onLayout={(e) => { scrollInputTops.current['subjects'] = e.nativeEvent.layout.y; }}>
                         <Text style={styles.label}>Add Subjects (Max 3)</Text>
                         <View style={styles.subjectContainer}>
@@ -737,6 +791,8 @@ const RegisterPage = () => {
                             hasError={!!errors.recommendedBoard}
                             errorMessage={errors.recommendedBoard || ''}
                         />
+                    )}
+                    </>
                     )}
 
                     {userType === 'organization' && (
@@ -831,6 +887,7 @@ const RegisterPage = () => {
                         </>
                     )}
 
+                    {userType !== 'parent' && (
                     <CustomDropdown
                         label="Grade"
                         value={recommendedGrade}
@@ -855,6 +912,7 @@ const RegisterPage = () => {
                         hasError={!!(errors.recommendedGrade || errors.selectedGrades)}
                         errorMessage={errors.recommendedGrade || errors.selectedGrades || ''}
                     />
+                    )}
 
                     {/* <View style={styles.checkboxContainer}>
                         <Checkbox
@@ -1089,6 +1147,22 @@ const styles = StyleSheet.create({
         borderRadius: moderateScale(8),
         alignItems: 'center',
         marginTop: verticalScale(10),
+    },
+    seeTutorsButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        borderWidth: 1,
+        borderColor: COLORS.primary,
+        borderRadius: moderateScale(8),
+        paddingVertical: verticalScale(12),
+        marginBottom: verticalScale(16),
+    },
+    seeTutorsButtonText: {
+        color: COLORS.primary,
+        fontSize: moderateScale(16),
+        fontWeight: '600',
     },
     registerButtonText: {
         color: '#fff',

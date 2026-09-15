@@ -130,8 +130,12 @@ const SettingsPage = () => {
           <SettingsRow label="Edit Profile" onPress={() => router.push('/(tabs)/profile/edit-profile')} />
           <View style={styles.divider} />
           <SettingsRow label="Change Password" onPress={() => router.push('/(tabs)/profile/change-password')} />
-          <View style={styles.divider} />
-          <SettingsRow label="Edit Subject" onPress={handleEditSubject} />
+          {user?.isTeacher === true && (
+            <>
+              <View style={styles.divider} />
+              <SettingsRow label="Edit Subject" onPress={handleEditSubject} />
+            </>
+          )}
         </View>
 
         {user?.isTeacher === true && (
@@ -143,6 +147,8 @@ const SettingsPage = () => {
           </>
         )}
 
+        {user?.userType !== 'PARENT' && !user?.isParent && (
+          <>
         <Text style={styles.sectionTitle}>Actions</Text>
         <View style={styles.group}>
           <SettingsRow label="Your Reports" onPress={() => router.push('/(tabs)/profile/reports')} />
@@ -155,6 +161,8 @@ const SettingsPage = () => {
             </>
           )}
         </View>
+          </>
+        )}
 
         <Text style={styles.sectionTitle}>Support</Text>
         <View style={styles.group}>

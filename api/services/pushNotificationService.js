@@ -48,12 +48,27 @@ export const sendNotificationByType = async (type, context = {}) => {
   });
   data.type = type;
 
-  const users = await prisma.user.findMany({
-    where: config.recipientQuery,
-    select: { pushToken: true },
-  });
+  let users = [];
+  if (Array.isArray(context.userIds) && context.userIds.length > 0) {
+    users = await prisma.user.findMany({
+      where: {
+        id: { in: context.userIds },
+        pushToken: { not: null },
+        userType: { not: 'PARENT' },
+      },
+      select: { pushToken: true },
+    });
+  } else if (config.recipientQuery) {
+    users = await prisma.user.findMany({
+      where: config.recipientQuery,
+      select: { pushToken: true },
+    });
+  }
 
+  const sentTokens = new Set();
   for (const user of users) {
-    if (user.pushToken) await sendToExpo(user.pushToken, { title, body, data });
+    if (!user.pushToken || sentTokens.has(user.pushToken)) continue;
+    sentTokens.add(user.pushToken);
+    await sendToExpo(user.pushToken, { title, body, data });
   }
 };

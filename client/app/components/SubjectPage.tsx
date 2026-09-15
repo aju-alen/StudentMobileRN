@@ -81,7 +81,7 @@ interface User {
   userType?: UserType;
 }
 
-type UserType = 'TEACHER' | 'ADMIN' | 'STUDENT';
+type UserType = 'TEACHER' | 'ADMIN' | 'STUDENT' | 'PARENT';
 
 const { width } = Dimensions.get('window');
 
@@ -253,7 +253,14 @@ const SubjectPage = ({ subjectId }) => {
   }, [singleSubjectData.courseType, subjectId]);
   const handleChatNow = async () => {
     if (isInitializingChat) {
-      return; // Prevent multiple simultaneous initializations
+      return;
+    }
+
+    if (isUserType === 'TEACHER' || isUserType === 'PARENT' || !isUserType) {
+      alert(isUserType === 'PARENT'
+        ? 'Parents message tutors from the Chat tab after a linked student purchases a course.'
+        : 'Please login as a student to chat');
+      return;
     }
 
     if(!purchaseStatus){
@@ -389,6 +396,9 @@ const SubjectPage = ({ subjectId }) => {
   };
 
   const handleEnrollPress = async () => {
+    if (isUserType === 'TEACHER' || isUserType === 'PARENT' || !isUserType) {
+      return;
+    }
     if (isFixedSchedulePast) {
       alert('This course has already started.');
       return;
@@ -1144,7 +1154,7 @@ const SubjectPage = ({ subjectId }) => {
         <TouchableOpacity 
           style={[
             styles.primaryButton,
-            isUserType === 'TEACHER' && styles.disabledButton,
+            (isUserType === 'TEACHER' || isUserType === 'PARENT' || !isUserType) && styles.disabledButton,
             ((singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && purchaseStatus) && styles.disabledButton,
             isFixedSchedulePast && styles.disabledButton,
           ]} 
@@ -1154,6 +1164,8 @@ const SubjectPage = ({ subjectId }) => {
           }}
           disabled={
             isUserType === 'TEACHER' ||
+            isUserType === 'PARENT' ||
+            !isUserType ||
             isFixedSchedulePast ||
             ((singleSubjectData.courseType === 'MULTI_STUDENT' || singleSubjectData.courseType === 'MULTI_PACKAGE') && purchaseStatus)
           }
@@ -1161,6 +1173,10 @@ const SubjectPage = ({ subjectId }) => {
           <View style={styles.buttonTextContainer}>
             <Text style={styles.primaryButtonText} numberOfLines={2}>
               {isUserType === 'TEACHER'
+                ? "Log in as a student to enroll"
+                : isUserType === 'PARENT'
+                ? "Parents cannot enroll in courses"
+                : !isUserType
                 ? "Log in as a student to enroll"
                 : isFixedSchedulePast
                 ? "This class has started"

@@ -39,6 +39,8 @@ interface User {
   reccomendedSubjects?: string[];
   userSubjects?: SubjectItem[];
   isTeacher?: boolean;
+  isParent?: boolean;
+  userType?: string;
 }
 
 interface SubjectItem {
@@ -66,7 +68,7 @@ const ProfilePage = () => {
   const [hasSingleStudentDraft, setHasSingleStudentDraft] = useState(false);
   const [hasMultiStudentDraft, setHasMultiStudentDraft] = useState(false);
   const [hasSinglePackageDraft, setHasSinglePackageDraft] = useState(false);
-  const [hasMultiPackageDraft, setHasMultiPackageDraft] = useState(false);
+  const [parentInvites, setParentInvites] = useState([]);
 
   const isMultiStudentSubscribed = !!revenueCatContext?.multiStudentCapacity;
   const isSinglePackageSubscribed = !!revenueCatContext?.hasSinglePackage;
@@ -78,6 +80,16 @@ const ProfilePage = () => {
 
       setUser(apiUser.data);
       setUserDetails(apiUser.data);
+      if (apiUser.data?.userType === 'STUDENT' && !apiUser.data?.isTeacher) {
+        try {
+          const invites = await axiosWithAuth.get(`${ipURL}/api/student/parent-invites`);
+          setParentInvites(invites.data || []);
+        } catch (error) {
+          setParentInvites([]);
+        }
+      } else {
+        setParentInvites([]);
+      }
       if (apiUser.data?.id) {
         await refreshDraftFlags(apiUser.data.id);
       }
@@ -418,7 +430,7 @@ const ProfilePage = () => {
               <Text style={styles.name} numberOfLines={1}>{user.name || 'Your profile'}</Text>
               <View style={styles.roleChip}>
                 <Text style={styles.roleChipText}>
-                  {userDetails?.isTeacher ? 'Tutor' : 'Student'}
+                  {userDetails?.isTeacher ? 'Tutor' : userDetails?.isParent || userDetails?.userType === 'PARENT' ? 'Parent' : 'Student'}
                 </Text>
               </View>
             </View>
@@ -451,10 +463,62 @@ const ProfilePage = () => {
           </View>
         </View>
 
+        {parentInvites.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Parent requests</Text>
+            {parentInvites.map((invite) => (
+              <View key={invite.linkId} style={styles.card}>
+                <Text style={styles.aboutText}>
+                  {invite.parent?.name} ({invite.status === 'PENDING' ? 'wants to link' : 'linked'})
+                </Text>
+                {invite.status === 'PENDING' && (
+                  <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                    <TouchableOpacity
+                      onPress={async () => {
+                        await axiosWithAuth.post(`${ipURL}/api/student/parent-invites/${invite.linkId}/accept`);
+                        getUser();
+                      }}
+                    >
+                      <Text style={styles.editLink}>Accept</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={async () => {
+                        await axiosWithAuth.post(`${ipURL}/api/student/parent-invites/${invite.linkId}/reject`);
+                        getUser();
+                      }}
+                    >
+                      <Text style={[styles.editLink, { color: '#C44747' }]}>Reject</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                {invite.status === 'ACCEPTED' && (
+                  <TouchableOpacity
+                    onPress={async () => {
+                      await axiosWithAuth.delete(`${ipURL}/api/student/parent-links/${invite.linkId}`);
+                      getUser();
+                    }}
+                  >
+                    <Text style={[styles.editLink, { color: '#C44747' }]}>Unlink</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+        {!(userDetails?.isParent || userDetails?.userType === 'PARENT') && (
         <View style={styles.section}>
           <CalendarSummary isTeacher={userDetails?.isTeacher} />
         </View>
+        )}
 
+        {userDetails?.isParent || userDetails?.userType === 'PARENT' ? (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Linked students</Text>
+            <Text style={styles.emptyCoursesSub}>
+              Invite and manage students from Home. Parent accounts cannot create courses or join organizations.
+            </Text>
+          </View>
+        ) : (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Your Courses</Text>
@@ -503,6 +567,7 @@ const ProfilePage = () => {
             </View>
           )}
         </View>
+        )}
       </ScrollView>
 
       {(loading || refreshing) && (

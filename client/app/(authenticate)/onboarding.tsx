@@ -21,6 +21,34 @@ import { Ionicons } from '@expo/vector-icons';
 const { width, height } = Dimensions.get('window');
 
 const getSlides = (userType) => {
+  if (userType === 'parent') {
+    return [
+      {
+        id: '1',
+        title: 'Welcome to Coach Academ',
+        description: 'Follow your child\'s tutoring journey from one parent account',
+        image: require('../../assets/images/onboard-1.png'),
+      },
+      {
+        id: '2',
+        title: 'Link your student',
+        description: 'Invite a student account by email. They must accept before you can see their activity.',
+        image: require('../../assets/images/onboard-1.png'),
+      },
+      {
+        id: '3',
+        title: 'See their progress',
+        description: 'View classes, course progress, and upcoming sessions for linked students.',
+        image: require('../../assets/images/onboard-1.png'),
+      },
+      {
+        id: '4',
+        title: 'Message their tutors',
+        description: 'Chat with tutors after a linked student has purchased a course. Ready to start?',
+        image: require('../../assets/images/onboard-1.png'),
+      },
+    ];
+  }
   const commonSlides = [
     {
       id: '1',
@@ -67,7 +95,7 @@ const OnboardingScreen = () => {
 
   // Verify userType on component mount
   useEffect(() => {
-    if (!userType || (userType !== 'teacher' && userType !== 'student')) {
+    if (!userType || (userType !== 'teacher' && userType !== 'student' && userType !== 'parent')) {
       Alert.alert(
         'Error',
         'Invalid user type. Please login again.',

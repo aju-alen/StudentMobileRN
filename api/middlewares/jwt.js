@@ -18,10 +18,19 @@ export const verifyToken = (req,res,next)=>{
         // Derive isTeacher and isAdmin from userType for backward compatibility
         req.isTeacher = payload.userType === 'TEACHER';
         req.isAdmin = payload.userType === 'ADMIN';
+        req.isParent = payload.userType === 'PARENT';
         req.email = payload.email;
         next()
     });
 }
+
+export const optionalVerifyToken = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || typeof authHeader !== 'string' || !authHeader.split(' ')[1]) {
+        return next();
+    }
+    return verifyToken(req, res, next);
+};
 
 export const requireRole = (...types) => {
     const allowed = types.map((type) => String(type).toUpperCase());

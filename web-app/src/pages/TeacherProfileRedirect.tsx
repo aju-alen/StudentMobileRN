@@ -5,16 +5,52 @@ const APP_STORE_URL = 'https://apps.apple.com/us/app/coach-academ/id6745173635';
 const PLAY_STORE_URL =
   'https://play.google.com/store/apps/details?id=com.rise.coachacadem&hl=en';
 
+function getPreferredStoreUrl(userAgent = navigator.userAgent): string {
+  return /Android/i.test(userAgent) ? PLAY_STORE_URL : APP_STORE_URL;
+}
+
 const TeacherProfileRedirect = () => {
   const { teacherId } = useParams<{ teacherId: string }>();
   const appLink = teacherId ? `coachacadem://teacher/${teacherId}` : '';
 
   useEffect(() => {
     if (!appLink) return;
-    const timer = window.setTimeout(() => {
+
+    let storeTimer: number | undefined;
+
+    const cancelStoreRedirect = () => {
+      if (storeTimer !== undefined) {
+        window.clearTimeout(storeTimer);
+        storeTimer = undefined;
+      }
+    };
+
+    const openTimer = window.setTimeout(() => {
       window.location.href = appLink;
+      storeTimer = window.setTimeout(() => {
+        if (document.visibilityState === 'visible') {
+          window.location.href = getPreferredStoreUrl();
+        }
+      }, 1500);
     }, 50);
-    return () => window.clearTimeout(timer);
+
+    const onHide = () => {
+      if (document.visibilityState !== 'visible') {
+        cancelStoreRedirect();
+      }
+    };
+
+    window.addEventListener('pagehide', cancelStoreRedirect);
+    window.addEventListener('blur', cancelStoreRedirect);
+    document.addEventListener('visibilitychange', onHide);
+
+    return () => {
+      window.clearTimeout(openTimer);
+      cancelStoreRedirect();
+      window.removeEventListener('pagehide', cancelStoreRedirect);
+      window.removeEventListener('blur', cancelStoreRedirect);
+      document.removeEventListener('visibilitychange', onHide);
+    };
   }, [appLink]);
 
   return (
@@ -27,8 +63,8 @@ const TeacherProfileRedirect = () => {
           Open this teacher profile in the app
         </h1>
         <p className="text-lg text-gray-600 mb-8">
-          Teacher profiles are only available to logged-in Coach Academ users.
-          Opening the app now. If nothing happens, tap Open in App or install it.
+          Opening the app now. If nothing happens, you will be sent to the store
+          for this device, or tap Open in App or install it.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
           <a

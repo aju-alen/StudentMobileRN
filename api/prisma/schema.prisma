@@ -57,6 +57,18 @@ enum OrganizationRole {
   MANAGER
 }
 
+enum ParentStudentLinkStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  REVOKED
+}
+
+enum ParentMessageSenderType {
+  PARENT
+  TEACHER
+}
+
 // Core authentication and shared fields
 model User {
   id                  String   @id @default(cuid())
@@ -105,6 +117,8 @@ model StudentProfile {
   bookings            Booking[] @relation("StudentBookings")
   userSubjects        UserSubject[]
   courseEnrollments   CourseEnrollment[]
+  parentLinks         ParentStudentLink[]
+  parentConversations ParentConversation[]
 }
 
 // Teacher-specific data
@@ -127,6 +141,7 @@ model TeacherProfile {
   ledOrganization        Organization? @relation("OrganizationLead")
   communityMemberships   CommunityUser[]
   communityMessages      CommunityMessage[]
+  parentConversations    ParentConversation[]
 }
 
 // Admin-specific data
@@ -140,12 +155,51 @@ model AdminProfile {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// Parent-specific data (stub — no parent product logic yet)
 model ParentProfile {
   id     String @id @default(cuid())
   userId String @unique
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  links         ParentStudentLink[]
+  conversations ParentConversation[]
+}
+
+model ParentStudentLink {
+  id               String                   @id @default(cuid())
+  parentProfileId  String
+  studentProfileId String
+  status           ParentStudentLinkStatus  @default(PENDING)
+  inviteToken      String                   @unique
+  createdAt        DateTime                 @default(now())
+  respondedAt      DateTime?
+
+  parent  ParentProfile  @relation(fields: [parentProfileId], references: [id], onDelete: Cascade)
+  student StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([parentProfileId, studentProfileId])
+  @@index([studentProfileId])
+  @@index([status])
+}
+
+model ParentConversation {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  parentProfileId  String
+  teacherProfileId String
+  studentProfileId String
+  subjectId        String
+
+  parent  ParentProfile  @relation(fields: [parentProfileId], references: [id], onDelete: Cascade)
+  teacher TeacherProfile @relation(fields: [teacherProfileId], references: [id], onDelete: Cascade)
+  student StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  subject Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  messages ParentConversationMessage[]
+
+  @@unique([parentProfileId, teacherProfileId, studentProfileId, subjectId])
+  @@index([teacherProfileId])
+  @@index([parentProfileId])
 }
 
 // Organization model
@@ -205,6 +259,7 @@ model Subject {
   stripePurchases     StripePurchases[]
   userSubjects        UserSubject[]
   courseEnrollments   CourseEnrollment[]
+  parentConversations ParentConversation[]
   
   @@unique([id, teacherId])
   @@index([courseType])
@@ -257,6 +312,21 @@ model Conversation {
   subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   subjectId String
   messages  ConversationMessage[]
+}
+
+model ParentConversationMessage {
+  id             String                   @id @default(cuid())
+  senderId       String
+  senderType     ParentMessageSenderType
+  text           String
+  messageId      String                   @unique
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+
+  conversation   ParentConversation       @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversationId String
+
+  @@index([conversationId])
 }
 
 model ConversationMessage {
@@ -440,4 +510,15 @@ model CourseEnrollment {
   @@index([subjectId])
   @@index([studentId])
   @@index([subjectId, enrollmentStatus])
+}
+
+model ClassReminderDispatch {
+  id         String   @id @default(cuid())
+  sourceType String
+  sourceId   String
+  startsAt   DateTime
+  sentAt     DateTime @default(now())
+
+  @@unique([sourceType, sourceId, startsAt])
+  @@index([startsAt])
 }

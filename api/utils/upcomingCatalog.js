@@ -29,6 +29,20 @@ export function withUpcomingCatalog(where = {}, now = new Date()) {
   };
 }
 
+/** Verified courses that belong on public tutor profiles and search. */
+export function publicCatalogFilter(now = new Date()) {
+  return {
+    AND: [
+      { subjectVerification: true },
+      upcomingCatalogFilter(now),
+    ],
+  };
+}
+
+export function isPublicCatalogSubject(subject, now = new Date()) {
+  return Boolean(subject?.subjectVerification) && !isFixedSchedulePast(subject, now);
+}
+
 export function isFixedSchedulePast(subject, now = new Date()) {
   const t = now.getTime();
   if (subject?.courseType === 'MULTI_STUDENT') {

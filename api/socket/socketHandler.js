@@ -1,6 +1,7 @@
 import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
+import { userIsParentConversationParticipant } from '../controllers/parent-controller.js';
 
 const prisma = new PrismaClient();
 
@@ -173,6 +174,13 @@ export const initializeSocket = (server, allowedOrigins = []) => {
           return;
         }
 
+        const canJoinParent = await userIsParentConversationParticipant(socket.userId, roomId);
+        if (canJoinParent) {
+          socket.join(roomId);
+          socket.to(roomId).emit('server-joining-message', 'Welcome to the chat room');
+          return;
+        }
+
         const canJoinCommunity = await userIsCommunityMember(socket.userId, roomId);
         if (canJoinCommunity) {
           socket.join(roomId);
@@ -224,6 +232,51 @@ export const initializeSocket = (server, allowedOrigins = []) => {
         socket.to(payload.conversationId).emit('server-message', payload);
       } catch (err) {
         console.error('Error in send-single-message-to-server:', err);
+      }
+    });
+
+    socket.on('send-parent-message-to-server', async (data) => {
+      try {
+        if (!data?.conversationId || !data?.text || !data?.messageId) {
+          return;
+        }
+
+        const allowed = await userIsParentConversationParticipant(socket.userId, data.conversationId);
+        if (!allowed) {
+          socket.emit('message-error', { error: 'Not a participant in this conversation' });
+          return;
+        }
+
+        const senderType = socket.userType === 'TEACHER' ? 'TEACHER' : 'PARENT';
+        const payload = {
+          ...data,
+          senderId: socket.userId,
+          senderType,
+        };
+
+        try {
+          await prisma.parentConversationMessage.create({
+            data: {
+              text: payload.text,
+              senderId: socket.userId,
+              senderType,
+              messageId: payload.messageId,
+              conversationId: payload.conversationId,
+            },
+          });
+          await prisma.parentConversation.update({
+            where: { id: payload.conversationId },
+            data: { updatedAt: new Date() },
+          });
+        } catch (saveError) {
+          if (saveError.code !== 'P2002') {
+            console.error('Error saving parent message:', saveError);
+          }
+        }
+
+        socket.to(payload.conversationId).emit('server-message', payload);
+      } catch (err) {
+        console.error('Error in send-parent-message-to-server:', err);
       }
     });
 

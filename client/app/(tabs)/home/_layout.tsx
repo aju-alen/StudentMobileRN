@@ -17,7 +17,14 @@ const HomeLayout = () => {
           name="chat/[conversationId]"
           options={{ headerShown: false, gestureEnabled: false }}
         />
-        <Stack.Screen name='progress' options={{ 
+        <Stack.Screen name='child/[studentId]' options={{
+          headerShown: true,
+          headerTitle: 'Student activity',
+          headerLeft: () => (
+            <Ionicons name="chevron-back" size={24} color="#12263A" onPress={() => router.back()} style={{ marginLeft: 0 }} />
+          )
+        }}/>
+        <Stack.Screen name='progress' options={{
           headerShown: true, 
           headerTitle: 'Progress',
           headerLeft: () => (

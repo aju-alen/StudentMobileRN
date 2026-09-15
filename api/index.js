@@ -12,6 +12,8 @@ import zoomRoutes from './routes/zoomRoutes.js';
 import reportRoutes from './routes/report-routes.js';
 import stripeRoutes from './routes/stripe-route.js';
 import courseEnrollmentRoutes from './routes/course-enrollment-routes.js';
+import parentRoute from './routes/parent-route.js';
+import studentParentRoute from './routes/student-parent-route.js';
 import dotenv from 'dotenv';
 import { errorHandler } from './middlewares/errorHandler.js';
 import cors from 'cors';
@@ -22,6 +24,7 @@ import { initializeSocket } from './socket/socketHandler.js';
 import { stripeWebhook } from './controllers/stripe-controller.js';
 import { zoomWebhook } from './controllers/zoomController.js';
 import { globalApiLimiter } from './middlewares/rateLimit.js';
+import { startClassReminderJob } from './services/classReminderService.js';
 
 dotenv.config();
 
@@ -78,6 +81,8 @@ app.use("/api/reviews", reviewRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/enrollments', courseEnrollmentRoutes);
+app.use('/api/parent', parentRoute);
+app.use('/api/student', studentParentRoute);
 app.use(errorHandler)
 app.get('/health', (req, res) => {
     res.status(200).json({ message: "Server is healthy" });
@@ -86,4 +91,5 @@ app.get('/health', (req, res) => {
 const port = process.env.PORT || 3000;
 server.listen(port, () => {
     console.log(`Server is running on port ${port}`);
+    startClassReminderJob();
 })

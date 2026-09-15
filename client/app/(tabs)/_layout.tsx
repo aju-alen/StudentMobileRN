@@ -7,10 +7,14 @@ import { COLORS } from "../../constants"
 import { verticalScale, moderateScale, horizontalScale} from "../utils/metrics";
 import useSafeAreaInsets, { addBasePaddingToInset } from "../hooks/useSafeAreaInsets";
 import { connectSocket } from "../utils/socket";
+import { axiosWithAuth } from "../utils/customAxios";
+import { ipURL } from "../utils/utils";
+import { registerForPushNotificationsAsync, isPushSupported } from "../utils/pushNotifications";
 
 interface UserDetails {
   isTeacher?: boolean;
   isAdmin?: boolean;
+  isParent?: boolean;
   userType?: string;
 }
 
@@ -44,6 +48,26 @@ const TabsLayout = () => {
     };
     getUserDetails();
   }, []);
+
+  useEffect(() => {
+    const roleKnown = Boolean(
+      userDetails.userType || userDetails.isTeacher || userDetails.isAdmin || userDetails.isParent
+    );
+    if (hasSession !== true || !roleKnown) return;
+    const isParentUser = userDetails.userType === 'PARENT' || userDetails.isParent;
+    if (isParentUser || !isPushSupported()) return;
+
+    const register = async () => {
+      const token = await registerForPushNotificationsAsync();
+      if (!token) return;
+      try {
+        await axiosWithAuth.put(`${ipURL}/api/auth/push-token`, { pushToken: token });
+      } catch (error) {
+        console.error('Failed to register push token', error);
+      }
+    };
+    register();
+  }, [hasSession, userDetails.userType, userDetails.isTeacher, userDetails.isAdmin, userDetails.isParent]);
 
   const getTabIcon = (routeName: string, focused: boolean) => {
     const icons = {
@@ -79,6 +103,7 @@ const TabsLayout = () => {
   };
 
   const isAdmin = userDetails.userType === 'ADMIN';
+  const isParent = userDetails.userType === 'PARENT' || userDetails.isParent;
 
   if (hasSession !== true) {
     return null;
@@ -125,6 +150,7 @@ const TabsLayout = () => {
         options={{
           headerShown: false,
           tabBarLabel: "Community",
+          ...(isParent ? { href: null } : {}),
         }}
       />
       <Tabs.Screen

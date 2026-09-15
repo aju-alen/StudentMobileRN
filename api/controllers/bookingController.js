@@ -7,6 +7,7 @@ import {
   fromUaeDateTime,
   slotsFromInstant,
 } from '../utils/uaeDateTime.js';
+import { publicCatalogFilter } from '../utils/upcomingCatalog.js';
 
 const getStartDatetime = (bookingDate, bookingTime) => {
   if (!bookingDate && !bookingTime) return null;
@@ -676,6 +677,253 @@ const buildCourseProgress = ({ subject, bookings = [], now, isTeacher = false })
   };
 };
 
+export async function getTeacherProfileStats(teacherIdParam, { publicOnly = false } = {}) {
+  const empty = {
+    hoursTaught: 0,
+    studentCount: 0,
+    classesHeld: 0,
+    completionPercent: 0,
+    courseCount: 0,
+    reviewCount: 0,
+    upcomingClasses: 0,
+  };
+
+  const teacherProfileId = await resolveTeacherProfileId(teacherIdParam);
+  if (!teacherProfileId) return empty;
+
+  const now = new Date();
+  const subjectWhere = publicOnly
+    ? { AND: [{ teacherId: teacherProfileId }, publicCatalogFilter(now)] }
+    : { teacherId: teacherProfileId };
+
+  const [subjects, bookings, reviewCount] = await Promise.all([
+    prisma.subject.findMany({
+      where: subjectWhere,
+      include: {
+        subjectTopics: { orderBy: { orderIndex: 'asc' } },
+        courseEnrollments: {
+          where: { enrollmentStatus: EnrollmentStatus.CONFIRMED },
+          select: { studentId: true },
+        },
+      },
+    }),
+    prisma.booking.findMany({
+      where: {
+        teacherId: teacherProfileId,
+        bookingStatus: BookingStatus.CONFIRMED,
+      },
+      include: {
+        subjectTopic: { select: { id: true, hours: true } },
+        subject: { select: { subjectDuration: true } },
+      },
+    }),
+    prisma.review.count({
+      where: { subject: { teacherId: teacherProfileId } },
+    }),
+  ]);
+
+  const bookingsBySubject = new Map();
+  const studentIds = new Set();
+  bookings.forEach((booking) => {
+    const list = bookingsBySubject.get(booking.subjectId) || [];
+    list.push(booking);
+    bookingsBySubject.set(booking.subjectId, list);
+    if (booking.studentId) studentIds.add(booking.studentId);
+  });
+  subjects.forEach((subject) => {
+    subject.courseEnrollments?.forEach((enrollment) => {
+      if (enrollment.studentId) studentIds.add(enrollment.studentId);
+    });
+  });
+
+  const courses = subjects.map((subject) =>
+    buildCourseProgress({
+      subject,
+      bookings: bookingsBySubject.get(subject.id) || [],
+      now,
+      isTeacher: true,
+    })
+  );
+
+  const classesHeld = courses.reduce((sum, course) => sum + course.completedClasses, 0);
+  const totalClasses = courses.reduce((sum, course) => sum + course.totalClasses, 0);
+  const hoursTaught = courses.reduce((sum, course) => sum + course.hoursCompleted, 0);
+  const upcomingClasses = Math.max(0, totalClasses - classesHeld);
+
+  return {
+    hoursTaught: Math.round(hoursTaught * 10) / 10,
+    studentCount: studentIds.size,
+    classesHeld,
+    completionPercent: totalClasses > 0 ? Math.round((classesHeld / totalClasses) * 100) : 0,
+    courseCount: courses.length,
+    reviewCount,
+    upcomingClasses,
+  };
+}
+
+export async function getStudentLearningProgressPayload(studentProfileId) {
+  const empty = {
+    isTeacher: false,
+    overview: {
+      totalCourses: 0,
+      completedCourses: 0,
+      completedClasses: 0,
+      upcomingClasses: 0,
+      hoursCompleted: 0,
+    },
+    courses: [],
+  };
+
+  if (!studentProfileId) return empty;
+
+  const now = new Date();
+  const bookingInclude = {
+    subjectTopic: { select: { id: true, hours: true } },
+    subject: { select: { subjectDuration: true } },
+  };
+
+  const [userSubjects, enrollments, bookings] = await Promise.all([
+    prisma.userSubject.findMany({
+      where: { studentId: studentProfileId },
+      include: {
+        subject: {
+          include: {
+            subjectTopics: { orderBy: { orderIndex: 'asc' } },
+          },
+        },
+      },
+    }),
+    prisma.courseEnrollment.findMany({
+      where: {
+        studentId: studentProfileId,
+        enrollmentStatus: EnrollmentStatus.CONFIRMED,
+      },
+      include: {
+        subject: {
+          include: {
+            subjectTopics: { orderBy: { orderIndex: 'asc' } },
+          },
+        },
+      },
+    }),
+    prisma.booking.findMany({
+      where: {
+        studentId: studentProfileId,
+        bookingStatus: BookingStatus.CONFIRMED,
+      },
+      include: bookingInclude,
+    }),
+  ]);
+
+  const subjectMap = new Map();
+  userSubjects.forEach((entry) => {
+    if (entry.subject) subjectMap.set(entry.subject.id, entry.subject);
+  });
+  enrollments.forEach((entry) => {
+    if (entry.subject) subjectMap.set(entry.subject.id, entry.subject);
+  });
+
+  const bookingsBySubject = new Map();
+  bookings.forEach((booking) => {
+    const list = bookingsBySubject.get(booking.subjectId) || [];
+    list.push(booking);
+    bookingsBySubject.set(booking.subjectId, list);
+  });
+
+  const courses = [...subjectMap.values()].map((subject) =>
+    buildCourseProgress({
+      subject,
+      bookings: bookingsBySubject.get(subject.id) || [],
+      now,
+      isTeacher: false,
+    })
+  );
+
+  return {
+    isTeacher: false,
+    overview: {
+      totalCourses: courses.length,
+      completedCourses: courses.filter((course) => course.progress === 100).length,
+      completedClasses: courses.reduce((sum, course) => sum + course.completedClasses, 0),
+      upcomingClasses: courses.filter((course) => course.nextSessionAt).length,
+      hoursCompleted: courses.reduce((sum, course) => sum + course.hoursCompleted, 0),
+    },
+    courses,
+  };
+}
+
+export async function getStudentUpcomingClassesPayload(studentProfileId, limit) {
+  if (!studentProfileId) return [];
+
+  const now = new Date();
+  const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+
+  const upcomingClasses = await prisma.booking.findMany({
+    where: {
+      bookingStatus: BookingStatus.CONFIRMED,
+      studentId: studentProfileId,
+      bookingDate: { gte: startOfToday },
+    },
+    select: {
+      id: true,
+      bookingDate: true,
+      bookingTime: true,
+      bookingZoomUrl: true,
+      subject: {
+        select: {
+          subjectName: true,
+          id: true,
+        },
+      },
+      teacher: {
+        include: {
+          user: {
+            select: {
+              name: true,
+              id: true,
+            },
+          },
+        },
+      },
+      student: {
+        include: {
+          user: {
+            select: {
+              name: true,
+              id: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      bookingDate: 'asc',
+    },
+  });
+
+  const futureClasses = upcomingClasses.filter((b) => {
+    const startsAt = getStartDatetime(b.bookingDate, b.bookingTime);
+    return startsAt && startsAt > now;
+  });
+  const limited = limit != null ? futureClasses.slice(0, limit) : futureClasses;
+
+  return limited.map((booking) => ({
+    id: booking.id,
+    bookingDate: booking.bookingDate,
+    bookingTime: booking.bookingTime,
+    bookingZoomUrl: booking.bookingZoomUrl,
+    subject: booking.subject,
+    teacher: {
+      id: booking.teacher.user.id,
+      name: booking.teacher.user.name,
+    },
+    student: {
+      id: booking.student.user.id,
+      name: booking.student.user.name,
+    },
+  }));
+}
+
 export const getLearningProgress = async (req, res) => {
   try {
     const userId = req.userId;
@@ -756,62 +1004,8 @@ export const getLearningProgress = async (req, res) => {
         })
       );
     } else {
-      const [userSubjects, enrollments, bookings] = await Promise.all([
-        prisma.userSubject.findMany({
-          where: { studentId: profileId },
-          include: {
-            subject: {
-              include: {
-                subjectTopics: { orderBy: { orderIndex: 'asc' } },
-              },
-            },
-          },
-        }),
-        prisma.courseEnrollment.findMany({
-          where: {
-            studentId: profileId,
-            enrollmentStatus: EnrollmentStatus.CONFIRMED,
-          },
-          include: {
-            subject: {
-              include: {
-                subjectTopics: { orderBy: { orderIndex: 'asc' } },
-              },
-            },
-          },
-        }),
-        prisma.booking.findMany({
-          where: {
-            studentId: profileId,
-            bookingStatus: BookingStatus.CONFIRMED,
-          },
-          include: bookingInclude,
-        }),
-      ]);
-
-      const subjectMap = new Map();
-      userSubjects.forEach((entry) => {
-        if (entry.subject) subjectMap.set(entry.subject.id, entry.subject);
-      });
-      enrollments.forEach((entry) => {
-        if (entry.subject) subjectMap.set(entry.subject.id, entry.subject);
-      });
-
-      const bookingsBySubject = new Map();
-      bookings.forEach((booking) => {
-        const list = bookingsBySubject.get(booking.subjectId) || [];
-        list.push(booking);
-        bookingsBySubject.set(booking.subjectId, list);
-      });
-
-      courses = [...subjectMap.values()].map((subject) =>
-        buildCourseProgress({
-          subject,
-          bookings: bookingsBySubject.get(subject.id) || [],
-          now,
-          isTeacher: false,
-        })
-      );
+      const payload = await getStudentLearningProgressPayload(profileId);
+      return res.status(200).json(payload);
     }
 
     const overview = {

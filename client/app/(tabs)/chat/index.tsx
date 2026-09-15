@@ -58,6 +58,7 @@ const ChatPage = () => {
   const [conversation, setConversation] = useState([]);
   const [user, setUser] = useState("");
   const [isTeacher, setIsTeacher] = useState(false);
+  const [isParent, setIsParent] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [originalConversation, setOriginalConversation] = useState([]);
@@ -70,6 +71,18 @@ const ChatPage = () => {
       setError(null);
       const token = await AsyncStorage.getItem("authToken");
       const userDetails = JSON.parse(await AsyncStorage.getItem("userDetails"));
+      const parentUser = userDetails.userType === 'PARENT' || userDetails.isParent;
+      setIsParent(parentUser);
+      setIsTeacher(!!userDetails.isTeacher);
+
+      if (parentUser) {
+        const parentResp = await axiosWithAuth.get(`${ipURL}/api/parent/conversations`);
+        const data = Array.isArray(parentResp.data) ? parentResp.data : [];
+        setConversation(data);
+        setOriginalConversation(data);
+        setUser(userDetails.userId);
+        return;
+      }
 
       const resp = await axiosWithAuth.get(`${ipURL}/api/conversation/${userDetails.userId}`, {
         headers: {
@@ -77,7 +90,12 @@ const ChatPage = () => {
         },
       });
 
-      const data = Array.isArray(resp.data) ? resp.data : [];
+      let data = Array.isArray(resp.data) ? resp.data : [];
+      if (userDetails.isTeacher) {
+        const parentResp = await axiosWithAuth.get(`${ipURL}/api/parent/conversations`);
+        const parentThreads = Array.isArray(parentResp.data) ? parentResp.data : [];
+        data = [...parentThreads, ...data];
+      }
       setConversation(data);
       setOriginalConversation(data);
       setUser(userDetails.userId);
@@ -126,10 +144,14 @@ const ChatPage = () => {
     });
   }, [originalConversation, debouncedSearchQuery, isTeacher]);
 
-  const handlePress = async (id) => {
+  const handlePress = async (item) => {
     await connectSocket();
-    socket.emit("chat-room", id);
-    router.push(`/(tabs)/chat/${id}`);
+    socket.emit("chat-room", item.id);
+    if (item.kind === 'parent' || item.isParentThread) {
+      router.push(`/(tabs)/chat/parent/${item.id}`);
+      return;
+    }
+    router.push(`/(tabs)/chat/${item.id}`);
   };
 
   const handleLongPress = (client, userObj) => {
@@ -141,14 +163,14 @@ const ChatPage = () => {
     const otherParty = isTeacher ? item.user : item.client;
     const displayName = otherParty?.name || 'Conversation';
     const profileImage = otherParty?.profileImage;
-    const lastMessage = item.messages?.[item.messages.length - 1];
+    const lastMessage = item.lastMessage || item.messages?.[item.messages.length - 1];
     const lastMessageText = lastMessage?.text;
     const lastMessageTime = formatPreviewTime(lastMessage?.createdAt || lastMessage?.timestamp);
     const subjectName = item?.subject?.subjectName;
 
     return (
       <TouchableOpacity
-        onPress={() => handlePress(item.id)}
+        onPress={() => handlePress(item)}
         onLongPress={() => handleLongPress(item.client, item.user)}
         style={styles.card}
         activeOpacity={0.85}
@@ -174,6 +196,11 @@ const ChatPage = () => {
             <Text style={styles.nameText} numberOfLines={1}>
               {displayName}
             </Text>
+            {item.isParentThread && (
+              <Text style={styles.subjectText} numberOfLines={1}>
+                Parent{item.childName ? ` · ${item.childName}` : ''}
+              </Text>
+            )}
             {!!lastMessageTime && (
               <Text style={styles.timeText}>{lastMessageTime}</Text>
             )}
@@ -223,8 +250,17 @@ const ChatPage = () => {
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Messages</Text>
-        <Text style={styles.headerSubtitle}>Your conversations with tutors and students</Text>
+        <View>
+          <Text style={styles.headerTitle}>Messages</Text>
+          <Text style={styles.headerSubtitle}>
+            {isParent ? 'Tutors of courses your student has purchased' : 'Your conversations with tutors and students'}
+          </Text>
+        </View>
+        {isParent && (
+          <TouchableOpacity onPress={() => router.push('/(tabs)/chat/new')} accessibilityRole="button">
+            <Ionicons name="create-outline" size={24} color="#12263A" />
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.searchBar}>
@@ -296,6 +332,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: horizontalScale(20),
     paddingTop: verticalScale(8),
     paddingBottom: verticalScale(12),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   headerTitle: {
     fontSize: moderateScale(24),

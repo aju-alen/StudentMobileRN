@@ -7,8 +7,10 @@ import dotenv from "dotenv";
 import { Resend } from 'resend';
 dotenv.config();
 import { sendEmailService } from "../services/emailService.js";
+import { sendNotificationByType } from "../services/pushNotificationService.js";
 import { createZoomAccountForTeacher, deleteZoomUser } from "../services/zoomService.js";
-import { upcomingCatalogFilter } from "../utils/upcomingCatalog.js";
+import { publicCatalogFilter } from "../utils/upcomingCatalog.js";
+import { getTeacherProfileStats, resolveTeacherProfileId } from "./bookingController.js";
 const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
 
 
@@ -199,9 +201,9 @@ export const register = async (req, res, next) => {
         }
 
         // Validate userType
-        const validUserTypes = ['STUDENT', 'TEACHER', 'ADMIN', 'ORGANIZATION'];
+        const validUserTypes = ['STUDENT', 'TEACHER', 'ADMIN', 'ORGANIZATION', 'PARENT'];
         if (!validUserTypes.includes(userType.toUpperCase())) {
-            return res.status(400).json({ message: "Invalid account type. Please choose Student, Teacher, or Organization." });
+            return res.status(400).json({ message: "Invalid account type. Please choose Student, Teacher, Organization, or Parent." });
         }
 
         const hash = hashPassword(password);
@@ -226,6 +228,8 @@ export const register = async (req, res, next) => {
             userTypeEnum = 'STUDENT';
         } else if (userType === 'teacher' || userType === 'organization') {
             userTypeEnum = 'TEACHER'; // Organizations are teachers with special setup
+        } else if (userType === 'parent') {
+            userTypeEnum = 'PARENT';
         } else {
             return res.status(400).json({ message: "Invalid user type" });
         }
@@ -311,6 +315,27 @@ export const register = async (req, res, next) => {
             });
             profile = newUser.adminProfile;
         }
+        else if (userTypeEnum === 'PARENT') {
+            newUser = await prisma.user.create({
+                data: {
+                    name,
+                    email,
+                    password: hash,
+                    profileImage,
+                    userDescription,
+                    userType: 'PARENT',
+                    verificationToken,
+                    hasSeenOnboarding: false,
+                    parentProfile: {
+                        create: {},
+                    }
+                },
+                include: {
+                    parentProfile: true
+                }
+            });
+            profile = newUser.parentProfile;
+        }
 
         // Handle Organization registration
         let organization = null;
@@ -362,6 +387,17 @@ export const register = async (req, res, next) => {
         
         
         sendVerificationEmail(newUser.email, verificationToken, name, isTeacher);
+
+        if (userTypeEnum === 'STUDENT' || userTypeEnum === 'TEACHER') {
+            try {
+                await sendNotificationByType('NEW_SIGNUP', {
+                    userName: newUser.name,
+                    userType: isOrganization ? 'ORGANIZATION' : userTypeEnum,
+                });
+            } catch (pushErr) {
+                console.error('Admin signup push notification error', pushErr);
+            }
+        }
 
         res.status(202).json({
             message: "User Registered",
@@ -630,7 +666,8 @@ export const verifyEmail = async (req, res, next) => {
               organization: true
             }
           },
-          adminProfile: true
+          adminProfile: true,
+          parentProfile: true
         }
       });
   
@@ -660,6 +697,7 @@ export const verifyEmail = async (req, res, next) => {
       const isTeacher = user.userType === 'TEACHER';
       const isAdmin = user.userType === 'ADMIN';
       const isStudent = user.userType === 'STUDENT';
+      const isParent = user.userType === 'PARENT';
       
       let recommendedSubjects = [];
       if (isStudent && user.studentProfile) {
@@ -686,6 +724,8 @@ export const verifyEmail = async (req, res, next) => {
         userProfileImage: user.profileImage,
         isTeacher: isTeacher,
         isAdmin: isAdmin,
+        isParent: isParent,
+        isStudent: isStudent,
         hasSeenOnboarding: user.hasSeenOnboarding,
         email: user.email,
         ...(isTeacher && user.teacherProfile && {
@@ -787,8 +827,8 @@ export const verifyEmail = async (req, res, next) => {
         return res.status(400).json({ message: "Push token is required" });
       }
 
-      if (req.userType !== 'ADMIN') {
-        return res.status(403).json({ message: "Only admins can register push tokens" });
+      if (!['ADMIN', 'STUDENT', 'TEACHER'].includes(req.userType)) {
+        return res.status(403).json({ message: "Push notifications are not available for this account type" });
       }
 
       await prisma.user.update({
@@ -836,7 +876,8 @@ export const verifyEmail = async (req, res, next) => {
               organization: true
             }
           },
-          adminProfile: true
+          adminProfile: true,
+          parentProfile: true
         },
       });
   
@@ -847,6 +888,7 @@ export const verifyEmail = async (req, res, next) => {
       // Format response based on user type
       const isTeacher = user.userType === 'TEACHER';
       const isStudent = user.userType === 'STUDENT';
+      const isParent = user.userType === 'PARENT';
       
       let responseData = {
         id: user.id,
@@ -856,6 +898,8 @@ export const verifyEmail = async (req, res, next) => {
         userType: user.userType,
         isTeacher: isTeacher,
         isAdmin: user.userType === 'ADMIN',
+        isParent: isParent,
+        isStudent: isStudent,
         profileImage: user.profileImage,
         userDescription: user.userDescription,
         hasSeenOnboarding: user.hasSeenOnboarding,
@@ -908,19 +952,97 @@ export const updateProfileImage = async (req, res, next) => {
     }
 };
 
+export const getAllTeachers = async (req, res, next) => {
+  try {
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const pageSize = 12;
+    const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+
+    const catalogFilter = publicCatalogFilter();
+    const where = {
+      userType: 'TEACHER',
+      teacherProfile: {
+        is: {
+          subjects: {
+            some: catalogFilter,
+          },
+        },
+      },
+      ...(q
+        ? {
+            name: {
+              contains: q,
+            },
+          }
+        : {}),
+    };
+
+    const [total, users] = await Promise.all([
+      prisma.user.count({ where }),
+      prisma.user.findMany({
+        where,
+        select: {
+          id: true,
+          name: true,
+          profileImage: true,
+          userDescription: true,
+          teacherProfile: {
+            select: {
+              id: true,
+              _count: {
+                select: {
+                  subjects: {
+                    where: catalogFilter,
+                  },
+                },
+              },
+            },
+          },
+        },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        orderBy: { name: 'asc' },
+      }),
+    ]);
+
+    res.status(200).json({
+      teachers: users.map((user) => ({
+        id: user.id,
+        teacherProfileId: user.teacherProfile?.id,
+        name: user.name,
+        profileImage: user.profileImage,
+        userDescription: user.userDescription,
+        courseCount: user.teacherProfile?._count?.subjects || 0,
+      })),
+      pagination: {
+        currentPage: page,
+        totalPages: Math.max(Math.ceil(total / pageSize), 1),
+        totalTeachers: total,
+        hasMore: page * pageSize < total,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const getTeacherProfile = async (req, res, next) => {
   try{
     const { teacherProfileId } = req.params;
     console.log(teacherProfileId, 'this is the teacher profile id');
-    
-    // Find user by ID (teacherProfileId could be User.id or TeacherProfile.id)
-    const user = await prisma.user.findUnique({
-      where: { id: teacherProfileId },
+
+    const resolvedTeacherProfileId = await resolveTeacherProfileId(teacherProfileId);
+    if (!resolvedTeacherProfileId) {
+      return res.status(400).json({ message: "Teacher profile not found" });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: { teacherProfile: { id: resolvedTeacherProfileId } },
       include: {
         teacherProfile: {
           include: {
             subjects: {
-              where: upcomingCatalogFilter(),
+              where: publicCatalogFilter(),
               select: {
                 id: true,
                 subjectName: true,
@@ -946,7 +1068,32 @@ export const getTeacherProfile = async (req, res, next) => {
       return res.status(400).json({ message: "Teacher profile not found" });
     }
 
-    // Format response to match expected structure
+    const canSeePrivateCourses =
+      req.userType === 'ADMIN' ||
+      (req.userType === 'TEACHER' && req.userId === user.id);
+
+    const subjectSelect = {
+      id: true,
+      subjectName: true,
+      subjectImage: true,
+      subjectBoard: true,
+      subjectGrade: true,
+      subjectPrice: true,
+      subjectVerification: true,
+    };
+
+    const subjects = canSeePrivateCourses
+      ? await prisma.subject.findMany({
+          where: { teacherId: resolvedTeacherProfileId },
+          select: subjectSelect,
+          orderBy: { createdAt: 'desc' },
+        })
+      : user.teacherProfile.subjects || [];
+
+    const stats = await getTeacherProfileStats(resolvedTeacherProfileId, {
+      publicOnly: !canSeePrivateCourses,
+    });
+
     const response = {
       id: user.id,
       name: user.name,
@@ -955,7 +1102,8 @@ export const getTeacherProfile = async (req, res, next) => {
       userType: user.userType,
       isTeamLead: user.teacherProfile.isTeamLead,
       organization: user.teacherProfile.ledOrganization || user.teacherProfile.organization,
-      subjects: user.teacherProfile.subjects || [],
+      subjects,
+      stats,
     };
 
     res.status(200).json(response);

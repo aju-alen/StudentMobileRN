@@ -8,8 +8,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   getPostAuthHref,
   getTeacherProfileAppPath,
+  getTeacherProfileOpenPath,
   parseTeacherIdFromUrl,
-  setPendingTeacherProfileId,
 } from "./utils/teacherProfileLink";
 
 // Keep the splash screen visible while we fetch resources
@@ -38,8 +38,7 @@ export default function Page() {
           if (storedToken) {
             setInitialHref(getTeacherProfileAppPath(teacherIdFromLink));
           } else {
-            await setPendingTeacherProfileId(teacherIdFromLink);
-            setInitialHref('/(authenticate)/welcome');
+            setInitialHref(getTeacherProfileOpenPath(teacherIdFromLink));
           }
         } else if (storedToken) {
           setInitialHref(await getPostAuthHref());

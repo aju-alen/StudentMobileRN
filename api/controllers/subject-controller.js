@@ -6,7 +6,7 @@ import { Resend } from "resend";
 import { sendNotificationByType } from "../services/pushNotificationService.js";
 import { getTeacherBlockedSlotsForDate } from "./bookingController.js";
 import { toUaeParts } from "../utils/uaeDateTime.js";
-import { withUpcomingCatalog, upcomingCatalogFilter } from "../utils/upcomingCatalog.js";
+import { withUpcomingCatalog, upcomingCatalogFilter, isPublicCatalogSubject } from "../utils/upcomingCatalog.js";
 
 const prisma = new PrismaClient();
 const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
@@ -631,7 +631,45 @@ export const getOneSubject = async (req, res, next) => {
         });
 
         if (!subject) {
-            return res.status(400).json({ message: "Subject not found" });
+            return res.status(404).json({ message: "Subject not found" });
+        }
+
+        const isOwner = req.userId && subject.teacherProfile?.user?.id === req.userId;
+        const isAdmin = req.userType === 'ADMIN';
+        const isPublic = isPublicCatalogSubject(subject);
+
+        if (!isPublic && !isOwner && !isAdmin) {
+            let enrolled = false;
+            if (subject.subjectVerification && req.userType === 'STUDENT') {
+                const student = await prisma.user.findUnique({
+                    where: { id: req.userId },
+                    include: { studentProfile: { select: { id: true } } },
+                });
+                if (student?.studentProfile?.id) {
+                    const [purchase, enrollment] = await Promise.all([
+                        prisma.stripePurchases.findFirst({
+                            where: {
+                                studentId: student.studentProfile.id,
+                                subjectId,
+                                purchaseStatus: 'CONFIRMED',
+                            },
+                            select: { id: true },
+                        }),
+                        prisma.courseEnrollment.findFirst({
+                            where: {
+                                studentId: student.studentProfile.id,
+                                subjectId,
+                                enrollmentStatus: 'CONFIRMED',
+                            },
+                            select: { id: true },
+                        }),
+                    ]);
+                    enrolled = Boolean(purchase || enrollment);
+                }
+            }
+            if (!enrolled) {
+                return res.status(404).json({ message: "Subject not found" });
+            }
         }
 
         // Transform response to match expected format

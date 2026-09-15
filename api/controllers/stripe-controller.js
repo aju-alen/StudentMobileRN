@@ -6,6 +6,7 @@ import Stripe from 'stripe';
 import { sendEmailService } from "../services/emailService.js";
 import { Resend } from 'resend';
 import { fromUaeDateTime, normalizeHHmm, parseDateUTC, slotsFromInstant } from "../utils/uaeDateTime.js";
+import { sendNotificationByType } from "../services/pushNotificationService.js";
 import { isFixedSchedulePast } from "../utils/upcomingCatalog.js";
 import {
   findSlotConflict,
@@ -33,6 +34,11 @@ export const getPublisherKey = async (req, res, next) => {
 
 export const paymentSheet = async (req, res, next) => {
     try {
+        if (req.userType !== 'STUDENT') {
+            return res.status(403).json({
+                error: 'You are not allowed to perform this action'
+            });
+        }
         const { amount, currency = 'aed', customerId, teacherId, subjectId, date, time, subjectDuration, teacherEmail, subjectName, userEmail, courseType, topicSlots } = req.body;
         const userId = req.userId;
         
@@ -1025,6 +1031,19 @@ export const stripeWebhook = async (req, res, next) => {
                          
                 console.log('saveTransaction', saveTransaction)
                 console.log('createBooking', createBooking);
+
+                if (saveTransaction) {
+                    try {
+                        await sendNotificationByType('COURSE_PURCHASE', {
+                            studentName: studentUser?.name,
+                            subjectName: chargeSucceeded.metadata.subjectName,
+                            subjectId: chargeSucceeded.metadata.subjectId,
+                            amountAed: (chargeSucceeded.amount / 100).toFixed(2),
+                        });
+                    } catch (pushErr) {
+                        console.error('Admin purchase push notification error', pushErr);
+                    }
+                }
             }
 
                 break;

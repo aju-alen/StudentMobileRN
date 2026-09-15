@@ -10,6 +10,10 @@ export function getTeacherProfileAppPath(userId: string) {
   return `/(tabs)/home/singleProfile/${userId}`;
 }
 
+export function getTeacherProfileOpenPath(userId: string) {
+  return `/teacher/${userId}`;
+}
+
 export function parseTeacherIdFromUrl(input?: string | null): string | null {
   if (!input) return null;
 

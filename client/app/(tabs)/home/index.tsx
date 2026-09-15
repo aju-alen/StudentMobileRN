@@ -28,7 +28,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/en';
 import { axiosWithAuth } from "../../utils/customAxios";
-import { SafeAreaView } from "react-native-safe-area-context";
+import ParentHome from "../../components/ParentHome";
 
 dayjs.extend(relativeTime);
 dayjs.locale('en');
@@ -42,6 +42,8 @@ interface User {
   streakCount?: number;
   totalPoints?: number;
   isTeacher?: boolean;
+  isParent?: boolean;
+  userType?: string;
   completedCourses?: number;
   level?: number;
   nextLevelProgress?: number;
@@ -246,7 +248,7 @@ const HomePage = () => {
   const [hasShownUpdateAlert, setHasShownUpdateAlert] = useState(false);
 
   const firstName = userDetails.userName?.split(' ')[0] || 'there';
-  const roleLabel = user.isTeacher ? 'Tutor' : 'Student';
+  const roleLabel = user.isTeacher ? 'Tutor' : user.isParent || user.userType === 'PARENT' ? 'Parent' : 'Student';
   const featuredCourses = useMemo(() => subjectData.slice(0, 6), [subjectData]);
   const browseCourses = useMemo(() => subjectData.slice(6, 16), [subjectData]);
   const [nextClass, ...laterClasses] = deadlines;
@@ -270,11 +272,12 @@ const HomePage = () => {
 
   const fetchData = async () => {
     try {
-      const [userResponse, subjectsResponse] = await Promise.all([
-        axiosWithAuth.get(`${ipURL}/api/auth/metadata`),
-        axiosWithAuth.get(`${ipURL}/api/subjects/search?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`)
-      ]);
+      const userResponse = await axiosWithAuth.get(`${ipURL}/api/auth/metadata`);
       setUser(userResponse.data);
+      if (userResponse.data?.isParent || userResponse.data?.userType === 'PARENT') {
+        return;
+      }
+      const subjectsResponse = await axiosWithAuth.get(`${ipURL}/api/subjects/search?subjectGrade=${subjectGrade}&subjectBoard=${subjectBoard}&subjectTags=${subjectTags}`);
       setSubjectData(subjectsResponse.data);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -283,6 +286,12 @@ const HomePage = () => {
 
   const fetchDeadlines = async () => {
     try {
+      const stored = await AsyncStorage.getItem('userDetails');
+      const parsed = stored ? JSON.parse(stored) : {};
+      if (parsed.isParent || parsed.userType === 'PARENT') {
+        setDeadlines([]);
+        return;
+      }
       const token = await AsyncStorage.getItem("authToken");
       const response = await axios.get(`${ipURL}/api/bookings/upcoming-classes?limit=2`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -398,6 +407,10 @@ const HomePage = () => {
         <Text style={styles.loadingText}>Loading your home</Text>
       </SafeAreaView>
     );
+  }
+
+  if (user.isParent || user.userType === 'PARENT') {
+    return <ParentHome firstName={firstName} />;
   }
 
   return (

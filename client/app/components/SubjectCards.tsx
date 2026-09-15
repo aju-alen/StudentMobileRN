@@ -10,17 +10,25 @@ const formatPrice = (subjectPrice) => {
   return `AED ${Number(subjectPrice) / 100}`;
 };
 
-const SubjectCards = ({ subjectData, handleItemPress, isHorizontal }) => {
+const SubjectCards = ({ subjectData, handleItemPress, isHorizontal, interactive = true }) => {
   const renderSubjectCard = ({ item }) => {
     const price = formatPrice(item?.subjectPrice);
+    const Wrapper = interactive ? TouchableOpacity : View;
+    const wrapperProps = interactive
+      ? {
+          onPress: () => handleItemPress(item),
+          activeOpacity: 0.88,
+          accessibilityRole: 'button' as const,
+          accessibilityLabel: item?.subjectName,
+        }
+      : {
+          accessibilityLabel: item?.subjectName,
+        };
 
     return (
-      <TouchableOpacity
-        onPress={() => handleItemPress(item)}
+      <Wrapper
+        {...wrapperProps}
         style={[styles.card, isHorizontal && styles.horizontalCard]}
-        activeOpacity={0.88}
-        accessibilityRole="button"
-        accessibilityLabel={item?.subjectName}
       >
         <CoverImage uri={item?.subjectImage} style={styles.cover} />
 
@@ -58,7 +66,7 @@ const SubjectCards = ({ subjectData, handleItemPress, isHorizontal }) => {
             )}
           </View>
         </View>
-      </TouchableOpacity>
+      </Wrapper>
     );
   };
 

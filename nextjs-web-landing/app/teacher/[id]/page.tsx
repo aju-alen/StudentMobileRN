@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: PageProps) {
   return definePageSeo({
     title: 'Teacher Profile',
     description:
-      'This teacher profile is available in the Coach Academ app. Open the app and log in to view it.',
+      'This teacher profile is available in the Coach Academ app. Open the app to view it.',
     primaryKeywords: ['teacher profile', 'Coach Academ'],
     path: `/teacher/${id}`,
     noIndex: true,
@@ -35,7 +35,6 @@ export default async function TeacherProfileLinkPage({ params }: PageProps) {
           Open this teacher profile in the app
         </h1>
         <p className="text-lg sm:text-xl text-gray-600 mb-8 leading-relaxed">
-          Teacher profiles are only available to logged-in Coach Academ users.
           Open the app to continue, or install it first if you do not have it yet.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">

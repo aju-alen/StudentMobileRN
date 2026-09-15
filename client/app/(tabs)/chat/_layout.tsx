@@ -11,6 +11,11 @@ const ChatLayout = () => {
         options={{ headerShown: false, gestureEnabled: false }}
       />
       <Stack.Screen
+        name="parent/[conversationId]"
+        options={{ headerShown: false, gestureEnabled: false }}
+      />
+      <Stack.Screen name="new" options={{ headerShown: false }} />
+      <Stack.Screen
         name="singleProfile/[singleProfileId]"
         options={{
           presentation: 'modal',

@@ -72,6 +72,7 @@ const LoginPage = () => {
       await AsyncStorage.setItem('userDetails', JSON.stringify({
         isTeacher: resp.data.isTeacher,
         isAdmin: resp.data.isAdmin,
+        isParent: resp.data.isParent,
         userId: resp.data.userId,
         userProfileImage: resp.data.userProfileImage,
         userName: resp.data.userName,
@@ -84,7 +85,13 @@ const LoginPage = () => {
         // First time user - redirect to onboarding
         router.replace({
           pathname: '/onboarding',
-          params: { userType: resp.data.isTeacher ? 'teacher' : 'student' }
+          params: {
+            userType: resp.data.isTeacher
+              ? 'teacher'
+              : (resp.data.isParent || resp.data.userType === 'PARENT')
+                ? 'parent'
+                : 'student'
+          }
         });
         await axios.put(
           `${ipURL}/api/auth/update-user-has-seen-onboarding`,

@@ -5,6 +5,7 @@ export {
   TEACHER_PROFILE_WEB_ORIGIN,
   getTeacherProfileShareUrl,
   getTeacherProfileAppPath,
+  getTeacherProfileOpenPath,
   parseTeacherIdFromUrl,
 } from './teacherProfilePath';
 
