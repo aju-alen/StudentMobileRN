@@ -7,6 +7,7 @@ import { sendNotificationByType } from "../services/pushNotificationService.js";
 import { getTeacherBlockedSlotsForDate } from "./bookingController.js";
 import { toUaeParts } from "../utils/uaeDateTime.js";
 import { withUpcomingCatalog, upcomingCatalogFilter, isPublicCatalogSubject } from "../utils/upcomingCatalog.js";
+import { OPS_NOTIFY_EMAILS } from "../utils/opsNotify.js";
 
 const prisma = new PrismaClient();
 const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
@@ -299,13 +300,10 @@ export const createSubject = async (req, res, next) => {
                 </div>
             `;
 
-            // Notify admin about new subject creation using Resend
             try {
-                const adminEmail ="mickeygenerale@gmail.com";
-
                 await resend.emails.send({
                     from: `Support <${process.env.COACH_ACADEM_RESEND_EMAIL}>`,
-                    to: adminEmail,
+                    to: OPS_NOTIFY_EMAILS,
                     subject: `New Subject Created: ${subjectName}`,
                     html: emailHtml,
                 });
@@ -724,18 +722,121 @@ export const updateSubject = async (req, res, next) => {
             return res.status(400).json({ message: "You are not authorized to edit this subject" });
         }
 
-        // Update subject
-        const updatedSubject = await prisma.subject.update({
+        const existing = await prisma.subject.findUnique({
             where: { id: subjectId },
-            data: {
-                ...req.body,
-                subjectVerification: false // Reset verification when updated
+            include: { subjectTopics: { orderBy: { orderIndex: 'asc' } } },
+        });
+        if (!existing) {
+            return res.status(400).json({ message: "Subject not found" });
+        }
+        if (!existing.subjectVerification && !existing.rejectedAt) {
+            return res.status(400).json({ message: "Subject is pending verification and cannot be edited" });
+        }
+
+        const data = {
+            subjectVerification: false,
+            rejectedAt: null,
+            rejectionReason: null,
+        };
+        const body = req.body || {};
+        if (body.subjectName != null) data.subjectName = body.subjectName;
+        if (body.subjectDescription != null) data.subjectDescription = body.subjectDescription;
+        if (body.subjectImage != null) data.subjectImage = body.subjectImage;
+        if (body.subjectBoard != null) data.subjectBoard = body.subjectBoard;
+        if (body.subjectLanguage != null) data.subjectLanguage = body.subjectLanguage;
+        if (body.subjectNameSubHeading != null) data.subjectNameSubHeading = body.subjectNameSubHeading;
+        if (body.subjectSearchHeading != null) data.subjectSearchHeading = body.subjectSearchHeading;
+        if (body.subjectGrade != null) data.subjectGrade = parseInt(body.subjectGrade, 10);
+        if (body.subjectDuration != null) data.subjectDuration = parseInt(body.subjectDuration, 10);
+        if (body.subjectPrice != null) data.subjectPrice = parseInt(body.subjectPrice, 10) * 100;
+        if (body.subjectTags != null) data.subjectTags = body.subjectTags;
+        else if (body.skillTags != null) data.subjectTags = body.skillTags;
+        if (body.subjectPoints != null) data.subjectPoints = body.subjectPoints;
+        if (body.teacherVerification != null) data.teacherVerification = body.teacherVerification;
+        if (body.maxCapacity != null) data.maxCapacity = parseInt(body.maxCapacity, 10);
+        if (body.scheduledDateTime != null) data.scheduledDateTime = new Date(body.scheduledDateTime);
+
+        const topics = Array.isArray(body.topics) ? body.topics : null;
+        const updatedSubject = await prisma.$transaction(async (tx) => {
+            const subject = await tx.subject.update({
+                where: { id: subjectId },
+                data,
+            });
+            if (topics) {
+                await tx.subjectTopic.deleteMany({ where: { subjectId } });
+                if (topics.length > 0) {
+                    await tx.subjectTopic.createMany({
+                        data: topics.map((t, i) => ({
+                            subjectId,
+                            orderIndex: i,
+                            topicTitle: String(t.topicTitle || '').trim(),
+                            hours: parseInt(t.hours, 10),
+                            scheduledAt: t.scheduledDateTime ? new Date(t.scheduledDateTime) : null,
+                        })),
+                    });
+                }
             }
+            return subject;
         });
 
         return res.status(200).json({ message: "Subject Updated", updatedSubject });
     }
     catch (err) {
+        console.log(err);
+        next(err);
+    }
+}
+
+export const resubmitSubject = async (req, res, next) => {
+    try {
+        if (req.userType !== 'TEACHER') {
+            return res.status(400).json({ message: "Only teachers can resubmit subjects" });
+        }
+
+        const { subjectId } = req.params;
+        const user = await prisma.user.findUnique({
+            where: { id: req.userId },
+            include: {
+                teacherProfile: {
+                    include: {
+                        subjects: { select: { id: true } },
+                    },
+                },
+            },
+        });
+
+        if (!user || !user.teacherProfile) {
+            return res.status(400).json({ message: "Teacher profile not found" });
+        }
+
+        const subjectBelongsToTeacher = user.teacherProfile.subjects.some((s) => s.id === subjectId);
+        if (!subjectBelongsToTeacher) {
+            return res.status(400).json({ message: "You are not authorized to resubmit this subject" });
+        }
+
+        const subject = await prisma.subject.findUnique({
+            where: { id: subjectId },
+        });
+
+        if (!subject) {
+            return res.status(400).json({ message: "Subject not found" });
+        }
+
+        if (subject.subjectVerification === true) {
+            return res.status(400).json({ message: "Subject is already verified" });
+        }
+
+        await prisma.subject.update({
+            where: { id: subjectId },
+            data: {
+                subjectVerification: false,
+                rejectedAt: null,
+                rejectionReason: null,
+            },
+        });
+
+        return res.status(200).json({ message: "Subject resubmitted for verification" });
+    } catch (err) {
         console.log(err);
         next(err);
     }
@@ -801,6 +902,7 @@ export const getAllSubjectsToVerify = async (req, res, next) => {
         const subjects = await prisma.subject.findMany({
             where: {
                 subjectVerification: false,
+                rejectedAt: null,
             },
         });
 
@@ -904,6 +1006,103 @@ export const verifySubject = async (req, res, next) => {
         console.log(updatedSubject, "Subject verified successfully");
 
         return res.status(200).json({ message: "Subject Verified" });
+    } catch (err) {
+        console.error(err);
+        next(err);
+    }
+};
+
+export const rejectSubject = async (req, res, next) => {
+    try {
+        if (!req.isAdmin) {
+            return res.status(403).json({ message: "Only admin can reject subjects" });
+        }
+
+        const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
+        if (reason.length < 10) {
+            return res.status(400).json({ message: "Rejection reason must be at least 10 characters" });
+        }
+
+        const subject = await prisma.subject.findUnique({
+            where: { id: req.params.subjectId },
+            include: {
+                teacherProfile: {
+                    include: {
+                        user: {
+                            select: {
+                                email: true,
+                                name: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!subject) {
+            return res.status(400).json({ message: "Subject not found" });
+        }
+
+        if (subject.subjectVerification === true) {
+            return res.status(400).json({ message: "Subject already verified" });
+        }
+
+        if (subject.rejectedAt) {
+            return res.status(400).json({ message: "Subject already rejected" });
+        }
+
+        await prisma.subject.update({
+            where: { id: req.params.subjectId },
+            data: {
+                subjectVerification: false,
+                rejectedAt: new Date(),
+                rejectionReason: reason,
+            },
+        });
+
+        const esc = (s) => (s == null ? '' : String(s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const teacherEmail = subject.teacherProfile?.user?.email;
+        const teacherName = subject.teacherProfile?.user?.name || 'there';
+        const reasonHtml = esc(reason).replace(/\n/g, '<br />');
+
+        if (teacherEmail) {
+            try {
+                await resend.emails.send({
+                    from: `Support <${process.env.COACH_ACADEM_RESEND_EMAIL}>`,
+                    to: teacherEmail,
+                    subject: `Your course "${subject.subjectName}" was not approved`,
+                    html: `
+                <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 0; background-color: #ffffff;">
+                    <div style="background-color: #1A2B4B; padding: 40px 20px; text-align: center;">
+                        <h1 style="color: #ffffff; font-size: 28px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 2px;">Course not approved</h1>
+                    </div>
+                    <div style="padding: 40px 20px; background-color: #ffffff;">
+                        <p style="color: #1A2B4B; font-size: 16px; line-height: 1.6;">Hi ${esc(teacherName)},</p>
+                        <p style="color: #64748B; font-size: 16px; line-height: 1.6;">
+                            Your course <strong style="color: #1A2B4B;">${esc(subject.subjectName)}</strong> was not approved during verification.
+                        </p>
+                        <div style="background-color: #F8FAFC; padding: 24px; margin: 24px 0; border-left: 4px solid #1A2B4B;">
+                            <h3 style="color: #1A2B4B; font-size: 16px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px;">Admin feedback</h3>
+                            <p style="color: #64748B; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">${reasonHtml}</p>
+                        </div>
+                        <p style="color: #64748B; font-size: 14px; line-height: 1.6;">
+                            You can update the course in the Coach Academ app and resubmit it for verification.
+                        </p>
+                        <div style="text-align: center; padding-top: 30px; border-top: 2px solid #F8FAFC;">
+                            <p style="color: #1A2B4B; font-size: 16px; font-weight: 700; margin: 0;">The Coach Academ Team</p>
+                        </div>
+                    </div>
+                </div>
+                    `,
+                });
+            } catch (emailErr) {
+                console.error("Error sending subject rejection email", emailErr);
+            }
+        } else {
+            console.error('Teacher email not found for subject rejection', req.params.subjectId);
+        }
+
+        return res.status(200).json({ message: "Subject rejected" });
     } catch (err) {
         console.error(err);
         next(err);

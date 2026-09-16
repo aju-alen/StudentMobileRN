@@ -6,6 +6,11 @@ import {
   TouchableOpacity,
   Linking,
   Platform,
+  Modal,
+  TextInput,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Alert,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -46,6 +51,9 @@ interface SubjectData {
 const VerifySingleSubject = () => {
   const [subjectData, setSubjectData] = useState<SubjectData>({});
   const [loading, setLoading] = useState(false);
+  const [rejectVisible, setRejectVisible] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejecting, setRejecting] = useState(false);
   const { verifySingleSubject } = useLocalSearchParams();
 
   useEffect(() => {
@@ -96,15 +104,44 @@ const VerifySingleSubject = () => {
           },
         }
       );
-      router.replace('/(tabs)/verification');
+      router.replace('/(tabs)/verification/pending');
     } catch (error) {
       console.error("Error verifying subject:", error);
       alert('Failed to verify subject. Please try again.');
     }
   };
 
-  const handleRejectSubject = async () => {
-    // Implement reject logic
+  const handleRejectSubject = () => {
+    setRejectReason('');
+    setRejectVisible(true);
+  };
+
+  const submitRejectSubject = async () => {
+    const reason = rejectReason.trim();
+    if (reason.length < 10) {
+      Alert.alert('Reason required', 'Please enter a rejection reason of at least 10 characters.');
+      return;
+    }
+    try {
+      setRejecting(true);
+      const token = await AsyncStorage.getItem("authToken");
+      await axios.put(
+        `${ipURL}/api/subjects/reject/${verifySingleSubject}`,
+        { reason },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setRejectVisible(false);
+      router.replace('/(tabs)/verification/pending');
+    } catch (error) {
+      console.error("Error rejecting subject:", error);
+      Alert.alert('Reject failed', 'Failed to reject subject. Please try again.');
+    } finally {
+      setRejecting(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -116,6 +153,7 @@ const VerifySingleSubject = () => {
   };
 
   return (
+    <>
     <ScrollView style={styles.container}>
       <CoverImage uri={subjectData.subjectImage} />
 
@@ -222,15 +260,17 @@ const VerifySingleSubject = () => {
         {/* Action Buttons */}
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={styles.verifyButton}
+            style={[styles.verifyButton, (loading || rejecting) && styles.buttonDisabled]}
             onPress={handleVerifySubject}
+            disabled={loading || rejecting}
           >
             <Ionicons name="checkmark-circle" size={24} color="white" />
             <Text style={styles.buttonText}>Verify Subject</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.rejectButton}
+            style={[styles.rejectButton, (loading || rejecting) && styles.buttonDisabled]}
             onPress={handleRejectSubject}
+            disabled={loading || rejecting}
           >
             <Ionicons name="close-circle" size={24} color="white" />
             <Text style={styles.buttonText}>Reject Subject</Text>
@@ -238,6 +278,65 @@ const VerifySingleSubject = () => {
         </View>
       </View>
     </ScrollView>
+      <Modal
+        animationType="slide"
+        transparent
+        visible={rejectVisible}
+        onRequestClose={() => {
+          if (!rejecting) {
+            setRejectVisible(false);
+          }
+        }}
+      >
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Reject subject</Text>
+            <Text style={styles.modalMessage}>
+              This reason is emailed to the teacher who owns the course.
+            </Text>
+            <TextInput
+              style={styles.reasonInput}
+              placeholder="Explain why this course is not approved"
+              placeholderTextColor="#94A3B8"
+              multiline
+              numberOfLines={5}
+              textAlignVertical="top"
+              value={rejectReason}
+              editable={!rejecting}
+              onChangeText={setRejectReason}
+            />
+            <View style={styles.modalButtonsRow}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => {
+                  if (!rejecting) {
+                    setRejectVisible(false);
+                    setRejectReason('');
+                  }
+                }}
+                disabled={rejecting}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalConfirmButton, rejecting && styles.buttonDisabled]}
+                onPress={submitRejectSubject}
+                disabled={rejecting}
+              >
+                {rejecting ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.modalConfirmText}>Confirm reject</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+    </>
   );
 };
 
@@ -439,6 +538,72 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 32,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1A2B4B',
+  },
+  modalMessage: {
+    marginTop: 8,
+    marginBottom: 12,
+    fontSize: 14,
+    color: '#64748B',
+    lineHeight: 20,
+  },
+  reasonInput: {
+    minHeight: 120,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 15,
+    color: '#1A2B4B',
+    backgroundColor: '#F8FAFC',
+  },
+  modalButtonsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+  },
+  modalCancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    color: '#475569',
+    fontWeight: '600',
+  },
+  modalConfirmButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#f44336',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalConfirmText: {
+    color: '#fff',
     fontWeight: '600',
   },
 });

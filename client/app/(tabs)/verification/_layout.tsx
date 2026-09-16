@@ -37,11 +37,16 @@ const VerificationLayout = () => {
 
   return (
     <Stack>
-    <Stack.Screen name="index" options={{ headerShown: false }} />
-    <Stack.Screen name="[verifySingleSubject]" options={{ headerShown: true, headerTitle:'Subject Verification', headerLeft: () => (
-      <Ionicons name="arrow-back" size={24} color="black" onPress={()=>router.back()} style={{ marginLeft: 0 }} />
-    ) }} />
-</Stack>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="pending" options={{ headerShown: true, headerTitle: 'Pending verification', headerBackTitle: 'Admin' }} />
+      <Stack.Screen name="teachers" options={{ headerShown: true, headerTitle: 'Teachers', headerBackTitle: 'Admin' }} />
+      <Stack.Screen name="organizations" options={{ headerShown: true, headerTitle: 'Organizations', headerBackTitle: 'Admin' }} />
+      <Stack.Screen name="parents" options={{ headerShown: true, headerTitle: 'Parents', headerBackTitle: 'Admin' }} />
+      <Stack.Screen name="purchases" options={{ headerShown: true, headerTitle: 'Purchases', headerBackTitle: 'Admin' }} />
+      <Stack.Screen name="[verifySingleSubject]" options={{ headerShown: true, headerTitle:'Subject Verification', headerLeft: () => (
+        <Ionicons name="arrow-back" size={24} color="black" onPress={()=>router.back()} style={{ marginLeft: 0 }} />
+      ) }} />
+    </Stack>
   )
 }
 

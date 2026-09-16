@@ -7,6 +7,7 @@ import { sendEmailService } from "../services/emailService.js";
 import { Resend } from 'resend';
 import { fromUaeDateTime, normalizeHHmm, parseDateUTC, slotsFromInstant } from "../utils/uaeDateTime.js";
 import { sendNotificationByType } from "../services/pushNotificationService.js";
+import { sendOpsNotifyEmail } from "../utils/opsNotify.js";
 import { isFixedSchedulePast } from "../utils/upcomingCatalog.js";
 import {
   findSlotConflict,
@@ -1033,6 +1034,19 @@ export const stripeWebhook = async (req, res, next) => {
                 console.log('createBooking', createBooking);
 
                 if (saveTransaction) {
+                    sendOpsNotifyEmail({
+                        subject: `Course purchased: ${chargeSucceeded.metadata.subjectName}`,
+                        title: 'Course purchased',
+                        intro: 'A student completed a course purchase.',
+                        rows: [
+                            ['Student', studentUser?.name || ''],
+                            ['Student email', chargeSucceeded.metadata.userEmail || studentUser?.email || ''],
+                            ['Course', chargeSucceeded.metadata.subjectName || ''],
+                            ['Amount (AED)', (chargeSucceeded.amount / 100).toFixed(2)],
+                            ['Course type', courseType || ''],
+                            ['Subject ID', chargeSucceeded.metadata.subjectId || ''],
+                        ],
+                    });
                     try {
                         await sendNotificationByType('COURSE_PURCHASE', {
                             studentName: studentUser?.name,

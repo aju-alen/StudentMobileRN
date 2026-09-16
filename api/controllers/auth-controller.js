@@ -11,6 +11,7 @@ import { sendNotificationByType } from "../services/pushNotificationService.js";
 import { createZoomAccountForTeacher, deleteZoomUser } from "../services/zoomService.js";
 import { publicCatalogFilter } from "../utils/upcomingCatalog.js";
 import { getTeacherProfileStats, resolveTeacherProfileId } from "./bookingController.js";
+import { sendOpsNotifyEmail } from "../utils/opsNotify.js";
 const resend = new Resend(process.env.COACH_ACADEM_RESEND_API_KEY);
 
 
@@ -387,6 +388,19 @@ export const register = async (req, res, next) => {
         
         
         sendVerificationEmail(newUser.email, verificationToken, name, isTeacher);
+
+        const registeredType = isOrganization ? 'ORGANIZATION' : userTypeEnum;
+        sendOpsNotifyEmail({
+            subject: `New ${registeredType} registration: ${name}`,
+            title: 'New registration',
+            intro: 'A new account was created on Coach Academ.',
+            rows: [
+                ['Name', name],
+                ['Email', newUser.email],
+                ['User type', registeredType],
+                ['User ID', newUser.id],
+            ],
+        });
 
         if (userTypeEnum === 'STUDENT' || userTypeEnum === 'TEACHER') {
             try {

@@ -235,7 +235,9 @@ model Subject {
   subjectTags          Json     @default("[]") 
   subjectGrade         Int      @default(10)
   subjectVerification  Boolean  @default(false)
-  teacherVerification  Json     @default("[]") 
+  teacherVerification  Json     @default("[]")
+  rejectedAt           DateTime?
+  rejectionReason      String?  @db.Text
   createdAt            DateTime @default(now())
   
   // Multi-student course fields

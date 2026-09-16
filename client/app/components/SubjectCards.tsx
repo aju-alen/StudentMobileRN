@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import React from 'react';
 import { horizontalScale, moderateScale, verticalScale } from '../utils/metrics';
 import { FONT } from '../../constants/theme';
@@ -10,11 +10,23 @@ const formatPrice = (subjectPrice) => {
   return `AED ${Number(subjectPrice) / 100}`;
 };
 
-const SubjectCards = ({ subjectData, handleItemPress, isHorizontal, interactive = true }) => {
+const SubjectCards = ({
+  subjectData,
+  handleItemPress,
+  isHorizontal,
+  interactive = true,
+  isOwner = false,
+  onEdit,
+  onResubmit,
+  resubmittingId,
+}) => {
   const renderSubjectCard = ({ item }) => {
     const price = formatPrice(item?.subjectPrice);
-    const Wrapper = interactive ? TouchableOpacity : View;
-    const wrapperProps = interactive
+    const isRejected = Boolean(item?.rejectedAt);
+    const isPending = !item?.subjectVerification && !isRejected;
+    const ownerNeedsAction = isOwner && isRejected;
+    const Wrapper = interactive && !ownerNeedsAction ? TouchableOpacity : View;
+    const wrapperProps = interactive && !ownerNeedsAction
       ? {
           onPress: () => handleItemPress(item),
           activeOpacity: 0.88,
@@ -57,14 +69,48 @@ const SubjectCards = ({ subjectData, handleItemPress, isHorizontal, interactive 
                   <Text style={styles.detail}>{item.subjectDuration} hrs</Text>
                 )}
                 {!!item?.subjectLanguage && (
-                  <Text style={styles.detail}>{item.subjectLanguage}</Text>
+                  <Text style={styles.detail} numberOfLines={1}>
+                    {item.subjectLanguage}
+                  </Text>
                 )}
               </View>
             )}
-            {!item?.subjectVerification && (
+            {isRejected ? (
+              <Text style={styles.rejected}>Rejected</Text>
+            ) : isPending ? (
               <Text style={styles.pending}>Pending verification</Text>
-            )}
+            ) : null}
           </View>
+
+          {isOwner && isRejected && item?.rejectionReason ? (
+            <Text style={styles.reason} numberOfLines={3}>
+              {item.rejectionReason}
+            </Text>
+          ) : null}
+
+          {isOwner && isRejected ? (
+            <View style={styles.ownerActions}>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => onEdit?.(item)}
+              >
+                <Text style={styles.editButtonText}>Edit</Text>
+              </TouchableOpacity>
+              {isRejected ? (
+                <TouchableOpacity
+                  style={styles.resubmitButton}
+                  onPress={() => onResubmit?.(item)}
+                  disabled={resubmittingId === item.id}
+                >
+                  {resubmittingId === item.id ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.resubmitButtonText}>Resubmit</Text>
+                  )}
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          ) : null}
         </View>
       </Wrapper>
     );
@@ -136,31 +182,74 @@ const styles = StyleSheet.create({
   },
   footer: {
     marginTop: verticalScale(8),
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: horizontalScale(8),
+    gap: verticalScale(4),
   },
   tutor: {
-    flex: 1,
     fontFamily: FONT.medium,
     fontSize: moderateScale(13),
     color: '#5C6B76',
   },
   detailPair: {
-    flex: 1,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: horizontalScale(10),
   },
   detail: {
+    flexShrink: 1,
     fontFamily: FONT.regular,
     fontSize: moderateScale(12),
     color: '#5C6B76',
   },
   pending: {
+    alignSelf: 'flex-start',
     fontFamily: FONT.medium,
     fontSize: moderateScale(11),
     color: '#B45309',
+  },
+  rejected: {
+    alignSelf: 'flex-start',
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(11),
+    color: '#B91C1C',
+  },
+  reason: {
+    marginTop: verticalScale(8),
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(12),
+    color: '#7F1D1D',
+    lineHeight: moderateScale(16),
+  },
+  ownerActions: {
+    flexDirection: 'row',
+    gap: horizontalScale(8),
+    marginTop: verticalScale(10),
+  },
+  editButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#1A2B4B',
+    borderRadius: moderateScale(10),
+    paddingVertical: verticalScale(8),
+    alignItems: 'center',
+  },
+  editButtonText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(12),
+    color: '#1A2B4B',
+  },
+  resubmitButton: {
+    flex: 1,
+    backgroundColor: '#1A2B4B',
+    borderRadius: moderateScale(10),
+    paddingVertical: verticalScale(8),
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: verticalScale(32),
+  },
+  resubmitButtonText: {
+    fontFamily: FONT.medium,
+    fontSize: moderateScale(12),
+    color: '#FFFFFF',
   },
 });
 

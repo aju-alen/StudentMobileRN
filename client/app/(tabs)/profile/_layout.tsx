@@ -49,7 +49,7 @@ const ProfileLayout = () => {
         ),
       }}
     />
-    <Stack.Screen name="editSubject/[editSubjectId]" options={{presentation:'modal'}}/>
+    <Stack.Screen name="editSubject/[editSubjectId]" options={{ presentation: 'modal', headerShown: false }} />
     <Stack.Screen name="createSubject/[createSubjectId]" options={{ presentation: 'modal', headerShown: false }} />
     <Stack.Screen name="multi-student-paywall" options={{  headerShown: false, headerTitle: 'Multi-Student Subscription' }} />
     <Stack.Screen name="course-paywall" options={{  headerShown: false, headerTitle: 'Course Paywall' }} />

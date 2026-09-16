@@ -51,6 +51,9 @@ interface SubjectItem {
   subjectPrice?: number;
   subjectBoard?: string;
   subjectGrade?: number;
+  subjectVerification?: boolean;
+  rejectedAt?: string | null;
+  rejectionReason?: string | null;
 }
 
 const blurhash = '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[fQj[ayayj[ayfjj[j[ayjuayj[';
@@ -63,6 +66,7 @@ const ProfilePage = () => {
   const [showCourseTypeModal, setShowCourseTypeModal] = useState(false);
   const [isButtonCooldown, setIsButtonCooldown] = useState<boolean>(false);
   const [profileImageVersion, setProfileImageVersion] = useState<string>('0');
+  const [resubmittingId, setResubmittingId] = useState<string | null>(null);
   const revenueCatContext = useRevenueCat();
 
   const [hasSingleStudentDraft, setHasSingleStudentDraft] = useState(false);
@@ -137,6 +141,20 @@ const ProfilePage = () => {
 
   const handleItemPress = (itemId: { id: any }) => {
     router.push(`/(tabs)/profile/${itemId.id}`);
+  };
+
+  const handleResubmitSubject = async (item: { id: string }) => {
+    try {
+      setResubmittingId(item.id);
+      await axiosWithAuth.put(`${ipURL}/api/subjects/resubmit/${item.id}`);
+      Alert.alert('Resubmitted', 'Your course is back in the verification queue.');
+      getUser();
+    } catch (error) {
+      console.error('Error resubmitting subject:', error);
+      Alert.alert('Resubmit failed', 'Could not resubmit this course. Please try again.');
+    } finally {
+      setResubmittingId(null);
+    }
   };
 
   const handleCreateNewSubject = async () => {
@@ -554,6 +572,10 @@ const ProfilePage = () => {
               subjectData={user.subjects}
               handleItemPress={handleItemPress}
               isHorizontal={false}
+              isOwner
+              onEdit={(item) => router.push(`/(tabs)/profile/editSubject/${item.id}`)}
+              onResubmit={handleResubmitSubject}
+              resubmittingId={resubmittingId}
             />
           )}
           {!userDetails?.isTeacher && hasCourses && (

@@ -43,7 +43,10 @@ type FileObject = {
 };
 
 const CreateSubject = () => {
-  const { createSubjectId, courseType, maxCapacity, maxHours } = useLocalSearchParams(); //userId
+  const { createSubjectId, courseType, maxCapacity, maxHours, editSubjectId } = useLocalSearchParams(); //userId
+  const isEditMode = Boolean(editSubjectId);
+  const [editRejectionReason, setEditRejectionReason] = useState('');
+  const [editLoading, setEditLoading] = useState(Boolean(editSubjectId));
   const revenueCatContext = useRevenueCat();
   const [subjectName, setSubjectName] = useState("");
   const [subjectDescription, setSubjectDescription] = useState("");
@@ -105,7 +108,7 @@ const CreateSubject = () => {
   // Add initialization error tracking
   useEffect(() => {
     try {
-      if (!createSubjectId) {
+      if (!createSubjectId && !editSubjectId) {
         throw new Error('createSubjectId is undefined');
       }
 
@@ -175,7 +178,7 @@ const CreateSubject = () => {
   // Load draft (if any) on mount
   useEffect(() => {
     const loadDraftIfExists = async () => {
-      if (!createSubjectId || !currentCourseType) return;
+      if (!createSubjectId || !currentCourseType || isEditMode) return;
       try {
         const key = getDraftKey(createSubjectId, currentCourseType);
         const stored = await AsyncStorage.getItem(key);
@@ -231,6 +234,73 @@ const CreateSubject = () => {
     loadDraftIfExists();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createSubjectId, currentCourseType]);
+
+  useEffect(() => {
+    if (!isEditMode) return;
+    let cancelled = false;
+    const loadExistingSubject = async () => {
+      try {
+        setEditLoading(true);
+        const resp = await axiosWithAuth.get(`${ipURL}/api/subjects/${editSubjectId}`);
+        const subject = resp.data;
+        if (cancelled) return;
+        if (!subject.subjectVerification && !subject.rejectedAt) {
+          Alert.alert(
+            'Pending verification',
+            'This course is still being reviewed and cannot be edited yet.',
+            [{ text: 'OK', onPress: () => router.back() }]
+          );
+          return;
+        }
+        setCurrentCourseType(subject.courseType || 'SINGLE_STUDENT');
+        setSubjectName(subject.subjectName || '');
+        setSubjectDescription(subject.subjectDescription || '');
+        setImage(subject.subjectImage || null);
+        setSubjectPrice(
+          subject.subjectPrice != null ? String(Number(subject.subjectPrice) / 100) : ''
+        );
+        setSubjectBoard(subject.subjectBoard || '');
+        setSubjectGrade(subject.subjectGrade != null ? String(subject.subjectGrade) : '');
+        setSubjectLanguage(subject.subjectLanguage || '');
+        setSubjectNameSubHeading(subject.subjectNameSubHeading || '');
+        setSubjectSearchHeading(subject.subjectSearchHeading || '');
+        setSubjectDuration(subject.subjectDuration != null ? String(subject.subjectDuration) : '');
+        setsubjectPoints(Array.isArray(subject.subjectPoints) ? subject.subjectPoints : []);
+        setCurrentMaxCapacity(subject.maxCapacity || 1);
+        if (subject.scheduledDateTime) {
+          setScheduledDateTime(new Date(subject.scheduledDateTime));
+        }
+        const docs = Array.isArray(subject.teacherVerification) ? subject.teacherVerification : [];
+        setPdf1(docs[0] || null);
+        setPdf2(docs[1] || null);
+        setIsDocumentsConfirmed(docs.length >= 2);
+        setIsEulaAccepted(true);
+        setEditRejectionReason(subject.rejectionReason || '');
+        const topics = Array.isArray(subject.subjectTopics) ? subject.subjectTopics : [];
+        if (topics.length > 0) {
+          setNumberOfTopics(String(topics.length));
+          setTopicBlocks(
+            topics.map((topic) => ({
+              topicTitle: topic.topicTitle || '',
+              hours: String(topic.hours || ''),
+              scheduledDateTime: topic.scheduledAt ? new Date(topic.scheduledAt) : null,
+            }))
+          );
+        }
+      } catch (error) {
+        console.error('Failed to load subject for edit', error);
+        Alert.alert('Error', 'Could not load this course.', [
+          { text: 'OK', onPress: () => router.back() },
+        ]);
+      } finally {
+        if (!cancelled) setEditLoading(false);
+      }
+    };
+    loadExistingSubject();
+    return () => {
+      cancelled = true;
+    };
+  }, [editSubjectId, isEditMode]);
 
   // Generate time slots 09:00–17:00 (HH:mm)
   const generateTimeSlots = (): { time: string; available: boolean }[] => {
@@ -661,12 +731,12 @@ const CreateSubject = () => {
         setIsLoading(false);
         return;
       }
-      if (!pdf1 || !pdf2) {
+      if (!isEditMode && (!pdf1 || !pdf2)) {
         validationErrors.push("Both verification documents are required");
         setIsLoading(false);
         return;
       }
-      if (!isEulaAccepted) {
+      if (!isEditMode && !isEulaAccepted) {
         validationErrors.push("You must accept the EULA to continue");
         setIsLoading(false);
         return;
@@ -724,7 +794,17 @@ const CreateSubject = () => {
       
       const token = await AsyncStorage.getItem("authToken");
 
-      const response = await axiosWithAuth.post(
+      const response = isEditMode
+        ? await axiosWithAuth.post(
+            `${ipURL}/api/subjects/${editSubjectId}`,
+            subject,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
+        : await axiosWithAuth.post(
         `${ipURL}/api/subjects/create`, 
         subject,
         {
@@ -736,18 +816,26 @@ const CreateSubject = () => {
 
       if (response.status === 200 || response.status === 202) {
         try {
-          await AsyncStorage.removeItem(getDraftKey(createSubjectId, currentCourseType));
+          if (!isEditMode) {
+            await AsyncStorage.removeItem(getDraftKey(createSubjectId, currentCourseType));
+          }
         } catch (e) {
           console.error("Failed to remove subject draft", e);
         }
         Alert.alert(
           "Success",
-          "Subject created successfully! The subject will be verified by the admin and will be live soon.",
+          isEditMode
+            ? "Course saved. It will be reviewed again before going live."
+            : "Subject created successfully! The subject will be verified by the admin and will be live soon.",
           [
             {
               text: "OK",
               onPress: () => {
-                router.back();
+                if (isEditMode) {
+                  router.replace("/(tabs)/profile");
+                } else {
+                  router.back();
+                }
               }
             }
           ]
@@ -869,7 +957,7 @@ const CreateSubject = () => {
 
   // Auto-save draft to AsyncStorage as user edits
   useEffect(() => {
-    if (!createSubjectId || !currentCourseType) return;
+    if (!createSubjectId || !currentCourseType || isEditMode) return;
 
     const timeout = setTimeout(() => {
       const key = getDraftKey(createSubjectId, currentCourseType);
@@ -931,6 +1019,11 @@ const CreateSubject = () => {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
+      {editLoading ? (
+        <View style={styles.editLoading}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+      ) : (
       <KeyboardAvoidingView 
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.container}
@@ -945,7 +1038,9 @@ const CreateSubject = () => {
             <Ionicons name={step === 0 ? 'close' : 'chevron-back'} size={24} color="#12263A" />
           </TouchableOpacity>
           <View style={styles.topBarCopy}>
-            <Text style={styles.headerText}>{getHeaderTitleByCourseType(currentCourseType)}</Text>
+            <Text style={styles.headerText}>
+              {isEditMode ? `Edit ${getHeaderTitleByCourseType(currentCourseType).toLowerCase()}` : getHeaderTitleByCourseType(currentCourseType)}
+            </Text>
             <Text style={styles.subHeaderText}>{getStepTitle(step)}</Text>
           </View>
           <Text style={styles.stepCount}>{step + 1}/{totalSteps}</Text>
@@ -960,6 +1055,13 @@ const CreateSubject = () => {
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.scrollContent}
         >
+          {step === 0 && isEditMode && editRejectionReason ? (
+            <View style={styles.rejectBanner}>
+              <Text style={styles.rejectTitle}>This course was rejected</Text>
+              <Text style={styles.rejectReason}>{editRejectionReason}</Text>
+              <Text style={styles.rejectHint}>Update the course, then save to send it back for verification.</Text>
+            </View>
+          ) : null}
           {step === 0 && (
           <View style={styles.imageSection}>
             <TouchableOpacity 
@@ -1501,17 +1603,20 @@ const CreateSubject = () => {
               onPress={handleCreateSubject}
               disabled={!isEulaAccepted || !isDocumentsConfirmed || isLoading || (isPackageCourse && topicBlocks.length > 0 && !topicHoursMatchDuration)}
               accessibilityRole="button"
-              accessibilityLabel="Publish course"
+              accessibilityLabel={isEditMode ? 'Save and resubmit' : 'Publish course'}
             >
               {isLoading ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Text style={styles.primaryButtonText}>Publish course</Text>
+                <Text style={styles.primaryButtonText}>
+                  {isEditMode ? 'Save and resubmit' : 'Publish course'}
+                </Text>
               )}
             </TouchableOpacity>
           )}
         </View>
       </KeyboardAvoidingView>
+      )}
     </SafeAreaView>
   );
 };
@@ -1627,6 +1732,38 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#F4F6F8',
+  },
+  editLoading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rejectBanner: {
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  rejectTitle: {
+    fontFamily: FONT.bold,
+    fontSize: moderateScale(16),
+    color: '#991B1B',
+    marginBottom: 6,
+  },
+  rejectReason: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(14),
+    color: '#7F1D1D',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  rejectHint: {
+    fontFamily: FONT.regular,
+    fontSize: moderateScale(13),
+    color: '#7F1D1D',
+    lineHeight: 18,
   },
   container: {
     flex: 1,
