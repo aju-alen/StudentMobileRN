@@ -23,9 +23,9 @@ const getLabel = (options: BottomTabBarProps['descriptors'][string]['options'], 
   return routeName.charAt(0).toUpperCase() + routeName.slice(1);
 };
 
-type CoachTabBarProps = BottomTabBarProps & { isAdmin?: boolean };
+type CoachTabBarProps = BottomTabBarProps & { isAdmin?: boolean; isParent?: boolean };
 
-const CoachTabBar = ({ state, descriptors, navigation, isAdmin = false }: CoachTabBarProps) => {
+const CoachTabBar = ({ state, descriptors, navigation, isAdmin = false, isParent = false }: CoachTabBarProps) => {
   const insets = useSafeAreaInsets();
 
   return (
@@ -34,6 +34,7 @@ const CoachTabBar = ({ state, descriptors, navigation, isAdmin = false }: CoachT
         const { options } = descriptors[route.key];
         if ((options as { href?: unknown }).href === null) return null;
         if (route.name === 'verification' && !isAdmin) return null;
+        if (route.name === 'community' && isParent) return null;
 
         const focused = state.index === index;
         const color = focused ? ACTIVE : INACTIVE;

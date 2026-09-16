@@ -76,7 +76,7 @@ const TabsLayout = () => {
 
   return (
     <Tabs
-      tabBar={(props) => (hideTabBar ? null : <CoachTabBar {...props} isAdmin={isAdmin} />)}
+      tabBar={(props) => (hideTabBar ? null : <CoachTabBar {...props} isAdmin={isAdmin} isParent={isParent} />)}
       screenOptions={{ headerShown: false }}
     >
       <Tabs.Screen
