@@ -30,6 +30,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/en';
 import { axiosWithAuth } from "../../utils/customAxios";
 import ParentHome from "../../components/ParentHome";
+import CreateCourseCTA from "../../components/CreateCourseCTA";
 
 dayjs.extend(relativeTime);
 dayjs.locale('en');
@@ -468,6 +469,10 @@ const HomePage = () => {
       <Ionicons name="search" size={20} color="#5C6B76" />
       <Text style={styles.searchPlaceholder}>Search courses or tutors</Text>
     </TouchableOpacity>
+
+    {(user.isTeacher || user.userType === 'TEACHER') && (
+      <CreateCourseCTA variant="banner" email={user.email} />
+    )}
 
     {isUpdateAvailable && (
       <View style={styles.updateBanner}>
