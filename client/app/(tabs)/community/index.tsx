@@ -10,6 +10,7 @@ import {
   TextInput,
   Keyboard,
 } from "react-native";
+import { useFocusEffect } from '@react-navigation/native';
 import { Image } from 'expo-image';
 import React, { useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
@@ -41,13 +42,14 @@ const useDebounce = (value: string, delay: number) => {
   return debouncedValue;
 };
 
-const CommunityCard = ({ item, onPress }) => {
+const CommunityCard = ({ item, onPress, isOpening, disabled }) => {
   const memberCount = item.users?.length || 0;
 
   return (
     <TouchableOpacity
       style={styles.card}
       onPress={onPress}
+      disabled={disabled}
       activeOpacity={0.85}
       accessibilityRole="button"
       accessibilityLabel={`${item.communityName}, ${memberCount} members`}
@@ -74,7 +76,11 @@ const CommunityCard = ({ item, onPress }) => {
           {memberCount} {memberCount === 1 ? 'member' : 'members'}
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color="#5C6B76" />
+      {isOpening ? (
+        <ActivityIndicator size="small" color="#1A4C6E" />
+      ) : (
+        <Ionicons name="chevron-forward" size={18} color="#5C6B76" />
+      )}
     </TouchableOpacity>
   );
 };
@@ -85,6 +91,7 @@ const CommunityPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [openingId, setOpeningId] = useState<string | null>(null);
   const debouncedSearchQuery = useDebounce(searchQuery, 400);
 
   const getAllCommunities = async () => {
@@ -110,7 +117,15 @@ const CommunityPage = () => {
     getAllCommunities();
   }, [debouncedSearchQuery]);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      setOpeningId(null);
+    }, [])
+  );
+
   const handlePress = async (item) => {
+    if (openingId) return;
+    setOpeningId(String(item.id));
     try {
       const storedToken = await AsyncStorage.getItem("authToken");
       await axios.post(
@@ -128,6 +143,7 @@ const CommunityPage = () => {
         socket.emit('chat-room', item.id);
         router.push(`/(tabs)/community/${item.id}`);
       } else {
+        setOpeningId(null);
         alert(error.response?.data?.message || 'Failed to join community. Please try again.');
       }
     }
@@ -184,6 +200,8 @@ const CommunityPage = () => {
             <CommunityCard
               item={item}
               onPress={() => handlePress(item)}
+              isOpening={openingId === String(item.id)}
+              disabled={!!openingId}
             />
           )}
           contentContainerStyle={styles.listContainer}

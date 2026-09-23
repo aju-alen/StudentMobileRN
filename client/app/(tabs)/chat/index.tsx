@@ -63,6 +63,7 @@ const ChatPage = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [originalConversation, setOriginalConversation] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [openingId, setOpeningId] = useState<string | null>(null);
   const [error, setError] = useState(null);
   const debouncedSearchQuery = useDebounce(searchInput, 400);
 
@@ -112,6 +113,7 @@ const ChatPage = () => {
 
   useFocusEffect(
     React.useCallback(() => {
+      setOpeningId(null);
       getConversation();
     }, [])
   );
@@ -145,13 +147,20 @@ const ChatPage = () => {
   }, [originalConversation, debouncedSearchQuery, isTeacher]);
 
   const handlePress = async (item) => {
-    await connectSocket();
-    socket.emit("chat-room", item.id);
-    if (item.kind === 'parent' || item.isParentThread) {
-      router.push(`/(tabs)/chat/parent/${item.id}`);
-      return;
+    if (openingId) return;
+    setOpeningId(String(item.id));
+    try {
+      await connectSocket();
+      socket.emit("chat-room", item.id);
+      if (item.kind === 'parent' || item.isParentThread) {
+        router.push(`/(tabs)/chat/parent/${item.id}`);
+        return;
+      }
+      router.push(`/(tabs)/chat/${item.id}`);
+    } catch (error) {
+      console.error("Failed to open conversation:", error);
+      setOpeningId(null);
     }
-    router.push(`/(tabs)/chat/${item.id}`);
   };
 
   const handleLongPress = (client, userObj) => {
@@ -159,7 +168,7 @@ const ChatPage = () => {
     router.push(`/(tabs)/chat/singleProfile/${profileId}`);
   };
 
-  const ChatItem = ({ item }) => {
+  const ChatItem = ({ item, isOpening }) => {
     const otherParty = isTeacher ? item.user : item.client;
     const displayName = otherParty?.name || 'Conversation';
     const profileImage = otherParty?.profileImage;
@@ -172,6 +181,7 @@ const ChatPage = () => {
       <TouchableOpacity
         onPress={() => handlePress(item)}
         onLongPress={() => handleLongPress(item.client, item.user)}
+        disabled={!!openingId}
         style={styles.card}
         activeOpacity={0.85}
         accessibilityRole="button"
@@ -223,7 +233,11 @@ const ChatPage = () => {
             </Text>
           )}
         </View>
-        <Ionicons name="chevron-forward" size={18} color="#5C6B76" />
+        {isOpening ? (
+          <ActivityIndicator size="small" color="#1A4C6E" />
+        ) : (
+          <Ionicons name="chevron-forward" size={18} color="#5C6B76" />
+        )}
       </TouchableOpacity>
     );
   };
@@ -297,7 +311,9 @@ const ChatPage = () => {
 
       <FlatList
         data={filteredConversations}
-        renderItem={({ item }) => <ChatItem item={item} />}
+        renderItem={({ item }) => (
+          <ChatItem item={item} isOpening={openingId === String(item.id)} />
+        )}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={styles.listContainer}
         keyboardShouldPersistTaps="handled"
