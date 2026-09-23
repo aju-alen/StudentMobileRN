@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 export const BaseUrl = () =>
   Platform.OS === 'android' ? 'http://10.0.2.2:8081' : 'http://localhost:8081';
 
-const SOCKET_URL = 'https://api.coachacadem.ae';
+const SOCKET_URL = 'http://10.65.4.6:3000';
 
 export const socket = io(SOCKET_URL, {
   autoConnect: false,
@@ -32,11 +32,11 @@ export async function connectSocket() {
   await new Promise((resolve) => {
     const onConnect = () => {
       cleanup();
-      resolve();
+      resolve(void 0);
     };
     const onError = () => {
       cleanup();
-      resolve();
+      resolve(void 0);
     };
     const cleanup = () => {
       socket.off('connect', onConnect);

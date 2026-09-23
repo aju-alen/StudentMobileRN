@@ -37,11 +37,31 @@ export const getMessages = async (req, res, next) => {
     const allowed = await assertConversationParticipant(req, res);
     if (!allowed) return;
 
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 100));
+    const before = req.query.before;
+
     const messages = await prisma.conversationMessage.findMany({
-      where: { conversationId: req.params.conversationId },
-      orderBy: { createdAt: 'asc' },
+      where: {
+        conversationId: req.params.conversationId,
+        ...(before ? { createdAt: { lt: new Date(before) } } : {}),
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      select: {
+        id: true,
+        senderId: true,
+        senderType: true,
+        type: true,
+        text: true,
+        messageId: true,
+        mediaUrl: true,
+        mediaMime: true,
+        durationMs: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
-    return res.status(200).json(messages);
+    return res.status(200).json(messages.reverse());
   } catch (err) {
     next(err);
   }

@@ -2,6 +2,7 @@ import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import { userIsParentConversationParticipant } from '../controllers/parent-controller.js';
+import { normalizeDirectChatMessage, toConversationMessageCreate } from '../utils/chatMessages.js';
 
 const prisma = new PrismaClient();
 
@@ -197,41 +198,39 @@ export const initializeSocket = (server, allowedOrigins = []) => {
 
     socket.on('send-single-message-to-server', async (data) => {
       try {
-        if (!data?.conversationId || !data?.text || !data?.messageId) {
+        const normalized = normalizeDirectChatMessage(data, socket.userId, socket.userType);
+        if (normalized.error) {
+          socket.emit('message-error', { error: normalized.error, messageId: data?.messageId });
           return;
         }
 
-        const allowed = await userIsConversationParticipant(socket.userId, data.conversationId);
+        const allowed = await userIsConversationParticipant(socket.userId, normalized.payload.conversationId);
         if (!allowed) {
-          socket.emit('message-error', { error: 'Not a participant in this conversation' });
+          socket.emit('message-error', { error: 'Not a participant in this conversation', messageId: normalized.payload.messageId });
           return;
         }
-
-        const senderType = socket.userType === 'TEACHER' ? 'TEACHER' : 'STUDENT';
-        const payload = {
-          ...data,
-          senderId: socket.userId,
-        };
 
         try {
           await prisma.conversationMessage.create({
-            data: {
-              text: payload.text,
-              senderId: socket.userId,
-              senderType,
-              messageId: payload.messageId,
-              conversationId: payload.conversationId,
-            },
+            data: toConversationMessageCreate(normalized.payload),
+          });
+          await prisma.conversation.update({
+            where: { id: normalized.payload.conversationId },
+            data: { updatedAt: new Date() },
           });
         } catch (saveError) {
           if (saveError.code !== 'P2002') {
             console.error('Error saving message:', saveError);
+            socket.emit('message-error', { error: 'Failed to save message', messageId: normalized.payload.messageId });
+            return;
           }
         }
 
-        socket.to(payload.conversationId).emit('server-message', payload);
+        socket.to(normalized.payload.conversationId).emit('server-message', normalized.payload);
+        socket.emit('message-ack', { messageId: normalized.payload.messageId, conversationId: normalized.payload.conversationId });
       } catch (err) {
         console.error('Error in send-single-message-to-server:', err);
+        socket.emit('message-error', { error: 'Failed to send message', messageId: data?.messageId });
       }
     });
 
@@ -338,57 +337,8 @@ export const initializeSocket = (server, allowedOrigins = []) => {
     });
 
     socket.on('leave-room', async (data) => {
-      if (data?.conversationId) {
+      if (data?.conversationId && typeof data.conversationId === 'string') {
         socket.leave(data.conversationId);
-      }
-
-      try {
-        if (!data?.conversationId || !Array.isArray(data.allMessages?.messages)) {
-          return;
-        }
-
-        const allowed = await userIsConversationParticipant(socket.userId, data.conversationId);
-        if (!allowed) return;
-
-        // Only persist this user's own messages from the leave payload
-        const validMessages = data.allMessages.messages.filter(
-          (msg) =>
-            msg.messageId &&
-            msg.text &&
-            (msg.senderId === socket.userId || msg.senderId?.userId === socket.userId)
-        );
-
-        if (validMessages.length === 0) return;
-
-        const senderType = socket.userType === 'TEACHER' ? 'TEACHER' : 'STUDENT';
-
-        const existingMessageIds = await prisma.conversationMessage.findMany({
-          where: {
-            messageId: { in: validMessages.map((msg) => msg.messageId) },
-            conversationId: data.conversationId,
-          },
-          select: { messageId: true },
-        });
-        const existingSet = new Set(existingMessageIds.map((m) => m.messageId));
-
-        const newMessages = validMessages
-          .filter((msg) => !existingSet.has(msg.messageId))
-          .map((msg) => ({
-            text: msg.text,
-            senderId: socket.userId,
-            senderType,
-            messageId: msg.messageId,
-            conversationId: data.conversationId,
-          }));
-
-        if (newMessages.length > 0) {
-          await prisma.conversationMessage.createMany({
-            data: newMessages,
-            skipDuplicates: true,
-          });
-        }
-      } catch (err) {
-        console.error('Error handling leave-room event:', err);
       }
     });
 

@@ -27,7 +27,8 @@
         "applinks:coachacadem.ae"
       ],
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSMicrophoneUsageDescription": "Coach Academ uses the microphone so you can send voice notes in messages."
       },
       "buildNumber": "53"
     },
@@ -84,8 +85,14 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "The app accesses your photos to let you share them with your friends.",
-          "cameraPermission": "The app accesses your camera to let you take photos."
+          "photosPermission": "The app accesses your photos so you can send images in messages.",
+          "cameraPermission": "The app accesses your camera so you can take photos for messages."
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Coach Academ uses the microphone so you can send voice notes in messages."
         }
       ],
       [

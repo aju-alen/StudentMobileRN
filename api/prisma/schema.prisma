@@ -69,6 +69,12 @@ enum ParentMessageSenderType {
   TEACHER
 }
 
+enum ConversationMessageType {
+  TEXT
+  IMAGE
+  AUDIO
+}
+
 // Core authentication and shared fields
 model User {
   id                  String   @id @default(cuid())
@@ -332,17 +338,23 @@ model ParentConversationMessage {
 }
 
 model ConversationMessage {
-  id             String       @id @default(cuid())
-  senderId       String       // References User.id (can be student or teacher)
+  id             String                   @id @default(cuid())
+  senderId       String
   senderType     MessageSenderType
-  text           String
+  type           ConversationMessageType  @default(TEXT)
+  text           String                   @default("") @db.Text
   messageId      String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  
-  // Relations
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  mediaUrl       String?                  @db.Text
+  mediaMime      String?
+  durationMs     Int?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+
+  conversation   Conversation             @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   conversationId String
+
+  @@unique([conversationId, messageId])
+  @@index([conversationId, createdAt])
 }
 
 model Community {

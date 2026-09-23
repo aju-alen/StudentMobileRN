@@ -210,9 +210,16 @@ const ChatPage = () => {
               {subjectName}
             </Text>
           )}
-          {!!lastMessageText && (
+          {!!lastMessage && (
             <Text style={styles.messageText} numberOfLines={1}>
-              {limitTextLength(lastMessageText, 50)}
+              {limitTextLength(
+                lastMessage.type === 'IMAGE'
+                  ? 'Photo'
+                  : lastMessage.type === 'AUDIO'
+                    ? 'Voice note'
+                    : lastMessageText || '',
+                50
+              )}
             </Text>
           )}
         </View>

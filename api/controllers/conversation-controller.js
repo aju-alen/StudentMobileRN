@@ -4,6 +4,22 @@ const prisma = new PrismaClient();
 
 dotenv.config();
 
+const MESSAGE_SELECT = {
+    id: true,
+    senderId: true,
+    senderType: true,
+    type: true,
+    text: true,
+    messageId: true,
+    mediaUrl: true,
+    mediaMime: true,
+    durationMs: true,
+    createdAt: true,
+    updatedAt: true,
+};
+
+const LAST_MESSAGES_LIMIT = 100;
+
 const isConversationParticipant = (conversation, userId) => {
     return Boolean(
         conversation &&
@@ -50,6 +66,7 @@ export const getAllConversations = async (req, res, next) => {
             where: {
                 OR: orConditions,
             },
+            orderBy: { updatedAt: 'desc' },
             include: {
                 student: {
                     include: {
@@ -77,23 +94,18 @@ export const getAllConversations = async (req, res, next) => {
                     },
                 },
                 messages: {
-                    select: {
-                        id: true,
-                        senderId: true,
-                        text: true,
-                        messageId: true,
-                        createdAt: true,
-                        updatedAt: true,
-                    },
+                    orderBy: { createdAt: 'desc' },
+                    take: 1,
+                    select: MESSAGE_SELECT,
                 },
             },
         });
 
-        // Transform response to match expected format
         const transformedConversations = conversations.map(conv => ({
             ...conv,
             user: conv.student.user,
             client: conv.teacher.user,
+            lastMessage: conv.messages?.[0] || null,
         }));
 
         if (!transformedConversations || transformedConversations.length === 0) {
@@ -139,14 +151,9 @@ export const getSingleConversation = async (req, res, next) => {
                     },
                 },
                 messages: {
-                    select: {
-                        id: true,
-                        senderId: true,
-                        text: true,
-                        messageId: true,
-                        createdAt: true,
-                        updatedAt: true,
-                    }
+                    orderBy: { createdAt: 'desc' },
+                    take: LAST_MESSAGES_LIMIT,
+                    select: MESSAGE_SELECT,
                 },
             },
         });
@@ -165,6 +172,7 @@ export const getSingleConversation = async (req, res, next) => {
             ...conversation,
             user: conversation.student.user,
             client: conversation.teacher.user,
+            messages: [...(conversation.messages || [])].reverse(),
         };
 
         // Return the conversation
