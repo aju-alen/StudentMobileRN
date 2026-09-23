@@ -15,6 +15,7 @@ import courseEnrollmentRoutes from './routes/course-enrollment-routes.js';
 import parentRoute from './routes/parent-route.js';
 import studentParentRoute from './routes/student-parent-route.js';
 import adminRoute from './routes/admin-route.js';
+import appRoute from './routes/app-route.js';
 import dotenv from 'dotenv';
 import { errorHandler } from './middlewares/errorHandler.js';
 import cors from 'cors';
@@ -85,6 +86,7 @@ app.use('/api/enrollments', courseEnrollmentRoutes);
 app.use('/api/parent', parentRoute);
 app.use('/api/student', studentParentRoute);
 app.use('/api/admin', adminRoute);
+app.use('/api/app', appRoute);
 app.use(errorHandler)
 app.get('/health', (req, res) => {
     res.status(200).json({ message: "Server is healthy" });
