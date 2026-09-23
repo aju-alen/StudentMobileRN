@@ -6,6 +6,7 @@ import * as Notifications from 'expo-notifications';
 import  StripeProviderWrapper  from './components/StripeProviderWrapper';
 import * as Sentry from '@sentry/react-native';
 import  RevenueCatProvider  from './providers/RevenueCatProvider';
+import AppUpdatePrompt from './components/AppUpdatePrompt';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -31,6 +32,7 @@ const MainLayout = () => {
     <StripeProviderWrapper>
     <RevenueCatProvider>
     <View style={{ flex: 1 }}>
+      <AppUpdatePrompt />
       <StatusBar style="dark" backgroundColor="#FFFFFF" />
       <Stack
         screenOptions={{
