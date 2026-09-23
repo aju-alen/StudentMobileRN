@@ -523,7 +523,7 @@ export const verifyEmail = async (req, res, next) => {
         if (wantsJson) {
           return res.status(400).json({ verified: false, error: 'Invalid or expired verification token' });
         }
-        const errorRedirectUrl = process.env.APP_VERIFY_REDIRECT_ERROR_URL || process.env.APP_VERIFY_BASE_URL;
+        const errorRedirectUrl = process.env.APP_VERIFY_REDIRECT_ERROR_URL;
         if (errorRedirectUrl) {
           const redirectTo = `${errorRedirectUrl.replace(/\/$/, '')}/verify-error`;
           return res.redirect(302, redirectTo);
@@ -538,11 +538,9 @@ export const verifyEmail = async (req, res, next) => {
               <h1 style="color: #ffffff; font-size: 32px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: 2px;">Error</h1>
             </div>
             <div style="padding: 40px 20px; background-color: #ffffff;">
-              <p style="font-size: 20px; color: #1A2B4B; font-weight: 700;">Invalid verification token</p>
-              <p style="font-size: 16px; margin-top: 20px; color: #64748B;">Please check your email for the correct verification link.</p>
-              <p style="font-size: 18px; margin-top: 20px; font-weight: 700; color: #1A2B4B; text-decoration: underline;">
-                Once your email is verified, a Zoom invite will be sent to you. Please check the spam folder if you don't see it in your inbox. Link expires in 30 days.
-              </p>
+              <p style="font-size: 20px; color: #1A2B4B; font-weight: 700;">This verification link cannot be used</p>
+              <p style="font-size: 16px; margin-top: 20px; color: #64748B;">If you already opened the link, your account is verified. Open the Coach Academ app and sign in.</p>
+              <p style="font-size: 16px; margin-top: 20px; color: #64748B;">If you have not verified yet, request a new email from the app and use the latest link.</p>
               <div style="text-align: center; padding-top: 30px; border-top: 2px solid #F8FAFC;">
                 <p style="color: #64748B; font-size: 14px; margin: 0;">The Coach Academ Team</p>
               </div>
@@ -589,8 +587,9 @@ export const verifyEmail = async (req, res, next) => {
         return res.status(202).json({ verified: true, message: 'Account verified successfully' });
       }
 
-      // Redirect to main domain success page if configured (avoids "Dangerous site" on API domain)
-      const successRedirectUrl = process.env.APP_VERIFY_REDIRECT_SUCCESS_URL || process.env.APP_VERIFY_BASE_URL;
+      // Redirect only when a public success page is configured.
+      // APP_VERIFY_BASE_URL is the API host used in the email link, and it has no /verified route.
+      const successRedirectUrl = process.env.APP_VERIFY_REDIRECT_SUCCESS_URL;
       if (successRedirectUrl) {
         const redirectTo = `${successRedirectUrl.replace(/\/$/, '')}/verified`;
         return res.redirect(302, redirectTo);

@@ -7,7 +7,7 @@
       "ios",
       "android"
     ],
-    "version": "1.2.0",
+    "version": "1.2.2",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "splash": {
@@ -30,11 +30,11 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSMicrophoneUsageDescription": "Coach Academ uses the microphone so you can send voice notes in messages."
       },
-      "buildNumber": "61"
+      "buildNumber": "62"
     },
     "android": {
       "edgeToEdgeEnabled": true,
-      "versionCode": 60,
+      "versionCode": 62,
       "icon": "./assets/images/playstore-icon.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/playstore-icon.png",
