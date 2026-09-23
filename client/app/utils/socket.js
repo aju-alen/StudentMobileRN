@@ -1,11 +1,12 @@
 import { io } from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import { ipURL } from './utils';
 
 export const BaseUrl = () =>
   Platform.OS === 'android' ? 'http://10.0.2.2:8081' : 'http://localhost:8081';
 
-const SOCKET_URL = 'http://10.65.4.6:3000';
+const SOCKET_URL = ipURL;
 
 export const socket = io(SOCKET_URL, {
   autoConnect: false,

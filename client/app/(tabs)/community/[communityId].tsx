@@ -12,6 +12,7 @@ import {
   StyleSheet,
   ScrollView,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   ActivityIndicator,
   Image,
@@ -64,6 +65,7 @@ const CommunityId = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [inputHeight, setInputHeight] = useState(40);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -106,6 +108,17 @@ const CommunityId = () => {
     socket.emit("leave-room-community", { allMessages, chatName });
     goBack('/(tabs)/community');
   }, [allMessages, chatName]);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(showEvent, () => setKeyboardOpen(true));
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardOpen(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -230,7 +243,11 @@ const CommunityId = () => {
           <ActivityIndicator size="large" color="#1A4C6E" />
         </View>
       ) : (
-        <View style={styles.chatWrapper}>
+        <KeyboardAvoidingView
+          style={styles.chatWrapper}
+          behavior="padding"
+          keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
+        >
           <View style={styles.communityHeader}>
             <TouchableOpacity
               onPress={handleLeaveRoom}
@@ -284,12 +301,8 @@ const CommunityId = () => {
             )}
           </ScrollView>
 
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
-          >
             {isTeacher ? (
-              <View style={[styles.inputContainer, { paddingBottom: Platform.OS === 'android' ? addBasePaddingToInset(12, insets.bottom) : 12 }]}>
+              <View style={[styles.inputContainer, { paddingBottom: keyboardOpen ? 8 : addBasePaddingToInset(12, insets.bottom) }]}>
                 <TextInput
                   style={[styles.input, { height: Math.min(120, Math.max(44, inputHeight)) }]}
                   placeholder="Write a message"
@@ -320,15 +333,14 @@ const CommunityId = () => {
                 </TouchableOpacity>
               </View>
             ) : (
-              <View style={[styles.restrictedContainer, { paddingBottom: Platform.OS === 'android' ? addBasePaddingToInset(16, insets.bottom) : 16 }]}>
+              <View style={[styles.restrictedContainer, { paddingBottom: keyboardOpen ? 8 : addBasePaddingToInset(16, insets.bottom) }]}>
                 <Ionicons name="lock-closed-outline" size={18} color="#5C6B76" />
                 <Text style={styles.restrictedText}>
                   Only tutors can post in this community
                 </Text>
               </View>
             )}
-          </KeyboardAvoidingView>
-        </View>
+        </KeyboardAvoidingView>
       )}
     </SafeAreaView>
   );

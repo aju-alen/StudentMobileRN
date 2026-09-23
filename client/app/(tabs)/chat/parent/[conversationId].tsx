@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   TouchableOpacity,
   ActivityIndicator,
@@ -57,6 +58,7 @@ const ConversationId = () => {
   const [isTeacher, setIsTeacher] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [inputHeight, setInputHeight] = useState(40);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const { conversationId } = useLocalSearchParams();
@@ -99,6 +101,17 @@ const ConversationId = () => {
     }
     goBack('/(tabs)/chat');
   }, [allMessages, conversationId]);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(showEvent, () => setKeyboardOpen(true));
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardOpen(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -226,7 +239,11 @@ const ConversationId = () => {
           <ActivityIndicator size="large" color="#1A4C6E" />
         </View>
       ) : (
-        <View style={styles.chatWrapper}>
+        <KeyboardAvoidingView
+          style={styles.chatWrapper}
+          behavior="padding"
+          keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top : 0}
+        >
           <View style={styles.chatHeader}>
             <TouchableOpacity
               onPress={handleLeaveRoom}
@@ -282,11 +299,7 @@ const ConversationId = () => {
             )}
           </ScrollView>
 
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 8 : 0}
-          >
-            <View style={[styles.inputContainer, { paddingBottom: Platform.OS === 'android' ? addBasePaddingToInset(12, insets.bottom) : 12 }]}>
+            <View style={[styles.inputContainer, { paddingBottom: keyboardOpen ? 8 : addBasePaddingToInset(12, insets.bottom) }]}>
               <TextInput
                 style={[styles.input, { height: Math.min(120, Math.max(44, inputHeight)) }]}
                 placeholder="Write a message"
@@ -313,8 +326,7 @@ const ConversationId = () => {
                 />
               </TouchableOpacity>
             </View>
-          </KeyboardAvoidingView>
-        </View>
+        </KeyboardAvoidingView>
       )}
     </SafeAreaView>
   );
