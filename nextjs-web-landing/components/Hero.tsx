@@ -61,7 +61,7 @@ type HeroProps = {
 };
 
 export default function Hero({
-  h1 = "The UAE's app-first tutoring platform — KHDA-verified tutors for every curriculum.",
+  h1 = "The UAE's app-first tutoring platform with KHDA-ADEK verified tutors for every curriculum.",
   supporting = "Compare tutor profiles, book in the app, and learn online — IGCSE, IB, A-Level, American, CBSE, and more.",
   getTheApp = "Get the app",
   scanToDownload = "Scan to download on iOS or Android",
@@ -74,7 +74,7 @@ export default function Hero({
       <div className="home-section-inner relative z-10 h-full">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-0 lg:min-h-[760px] xl:min-h-[800px]">
             <div className="order-2 lg:order-1 text-start flex flex-col justify-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-[600] mb-3 lg:mb-2 lg:leading-tight mt-0 lg:mt-36">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-[600] mb-3 lg:mb-2 lg:leading-tight mt-0 lg:mt-36">
               {h1}
             </h1>
             <p className="text-lg sm:text-[1.3rem] text-gray-600 mb-6 sm:mb-8 lg:leading-8">
