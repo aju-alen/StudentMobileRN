@@ -72,7 +72,7 @@ const DevStats = () => {
             <View style={styles.developerCreditLine} />
             <Text style={styles.developerCreditText}>
               <Text style={styles.developerCreditLabel}>From the desk of </Text>
-              <Text style={styles.developerName}>Alenaju</Text>
+              <Text style={styles.developerName}>K</Text>
             </Text>
           </Animated.View>
         )}
